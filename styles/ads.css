@@ -1,0 +1,104 @@
+/* Ad Container Styles */
+.ad-container {
+    margin: 1rem 0;
+    text-align: center;
+    background: rgba(33, 38, 45, 0.3);
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 0.5rem;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.ad-label {
+    font-size: 0.7rem;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+/* Banner Ad */
+.banner-ad {
+    max-width: 728px;
+    height: 90px;
+    margin: 1rem auto;
+}
+
+/* Sidebar Ad */
+.sidebar-ad {
+    width: 100%;
+    max-width: 300px;
+    height: 250px;
+    margin: 1rem 0;
+}
+
+/* Content Ad */
+.content-ad {
+    max-width: 336px;
+    height: 280px;
+    margin: 2rem auto;
+}
+
+/* Footer Ad */
+.footer-ad {
+    max-width: 970px;
+    height: 90px;
+    margin: 1rem auto 0;
+}
+
+/* Chat Content Ad */
+.chat-content-ad {
+    border: 2px dashed #30363d;
+    background: rgba(33, 38, 45, 0.2);
+    margin: 2rem auto !important;
+}
+
+/* Mobile Responsive Ads */
+@media (max-width: 768px) {
+    .banner-ad,
+    .footer-ad {
+        max-width: 320px;
+        height: 50px;
+    }
+    
+    .sidebar-ad {
+        max-width: 300px;
+        height: 250px;
+    }
+    
+    .content-ad {
+        max-width: 300px;
+        height: 250px;
+    }
+}
+
+/* AdSense Specific Styles */
+.adsbygoogle {
+    display: block !important;
+    margin: 0 auto;
+}
+
+/* Hide ads during loading */
+.ad-container.loading {
+    opacity: 0.5;
+}
+
+/* Ad placeholder when blocked */
+.ad-blocked::after {
+    content: "Ad blocked - Consider supporting us!";
+    color: #8b949e;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+/* Premium user - hide ads */
+.premium-user .ad-container {
+    display: none !important;
+}
