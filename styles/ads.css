@@ -1,4 +1,4 @@
-/* Ad Container Styles */
+/* AdSense Container Styles */
 .ad-container {
     margin: 1rem 0;
     text-align: center;
@@ -11,6 +11,14 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.ad-container:hover {
+    background: rgba(33, 38, 45, 0.5);
+    border-color: #58a6ff;
 }
 
 .ad-label {
@@ -19,9 +27,11 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 0.5rem;
+    font-weight: 500;
+    opacity: 0.8;
 }
 
-/* Banner Ad */
+/* Banner Ad - Header */
 .banner-ad {
     max-width: 728px;
     height: 90px;
@@ -34,13 +44,16 @@
     max-width: 300px;
     height: 250px;
     margin: 1rem 0;
+    background: rgba(33, 38, 45, 0.4);
 }
 
-/* Content Ad */
+/* Content Ad - Appears between messages */
 .content-ad {
     max-width: 336px;
     height: 280px;
     margin: 2rem auto;
+    background: rgba(33, 38, 45, 0.2);
+    border: 2px dashed #30363d;
 }
 
 /* Footer Ad */
@@ -50,11 +63,17 @@
     margin: 1rem auto 0;
 }
 
-/* Chat Content Ad */
+/* Chat Content Ad - Special styling */
 .chat-content-ad {
     border: 2px dashed #30363d;
-    background: rgba(33, 38, 45, 0.2);
+    background: rgba(33, 38, 45, 0.15);
     margin: 2rem auto !important;
+    border-radius: 12px;
+}
+
+.chat-content-ad .ad-label {
+    color: #6b7280;
+    font-size: 0.65rem;
 }
 
 /* Mobile Responsive Ads */
@@ -68,11 +87,35 @@
     .sidebar-ad {
         max-width: 300px;
         height: 250px;
+        margin: 0.5rem 0;
     }
     
     .content-ad {
         max-width: 300px;
         height: 250px;
+    }
+    
+    .ad-container {
+        margin: 0.5rem 0;
+        padding: 0.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .banner-ad,
+    .footer-ad {
+        max-width: 300px;
+        height: 50px;
+    }
+    
+    .sidebar-ad {
+        max-width: 280px;
+        height: 200px;
+    }
+    
+    .content-ad {
+        max-width: 280px;
+        height: 200px;
     }
 }
 
@@ -80,25 +123,207 @@
 .adsbygoogle {
     display: block !important;
     margin: 0 auto;
+    text-align: center;
+    background: transparent;
+    border-radius: 4px;
+    overflow: hidden;
 }
 
-/* Hide ads during loading */
+/* Loading state */
 .ad-container.loading {
     opacity: 0.5;
+    position: relative;
 }
 
-/* Ad placeholder when blocked */
-.ad-blocked::after {
-    content: "Ad blocked - Consider supporting us!";
+.ad-container.loading::after {
+    content: "Loading ad...";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #8b949e;
+    font-size: 0.75rem;
+    pointer-events: none;
+}
+
+/* Error state */
+.ad-container.error {
+    background: rgba(248, 81, 73, 0.05);
+    border-color: rgba(248, 81, 73, 0.2);
+}
+
+.ad-container.error::after {
+    content: "Ad failed to load";
+    color: #f85149;
+    font-size: 0.75rem;
+}
+
+/* Ad blocked state */
+.ad-blocked,
+.ad-container.blocked {
+    background: rgba(139, 148, 158, 0.1);
+    border-color: rgba(139, 148, 158, 0.3);
+    min-height: 60px;
+}
+
+.ad-blocked::after,
+.ad-container.blocked::after {
+    content: "Ad blocked - Consider supporting us! ❤️";
     color: #8b949e;
     font-size: 0.8rem;
     display: flex;
     align-items: center;
     justify-content: center;
     height: 100%;
+    text-align: center;
+    padding: 1rem;
+    line-height: 1.4;
 }
 
-/* Premium user - hide ads */
+/* Premium user - hide ads completely */
 .premium-user .ad-container {
     display: none !important;
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+    .ad-container {
+        background: rgba(33, 38, 45, 0.4);
+        border-color: #30363d;
+    }
+    
+    .ad-label {
+        color: #7d8590;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .ad-container {
+        border-width: 2px;
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .ad-label {
+        font-weight: 600;
+        color: #f0f6fc;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .ad-container {
+        transition: none;
+    }
+}
+
+/* Focus styles for accessibility */
+.ad-container:focus-within {
+    outline: 2px solid #58a6ff;
+    outline-offset: 2px;
+}
+
+/* Print styles - hide ads when printing */
+@media print {
+    .ad-container {
+        display: none !important;
+    }
+}
+
+/* Specific positioning for different sections */
+.sidebar .ad-container {
+    background: rgba(22, 27, 34, 0.6);
+    border-color: #21262d;
+}
+
+.main-content .ad-container {
+    background: rgba(33, 38, 45, 0.3);
+}
+
+.chat-area .ad-container {
+    background: rgba(13, 17, 23, 0.4);
+    border: 1px solid #21262d;
+}
+
+/* Animation for ad loading */
+@keyframes adFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.ad-container.loaded {
+    animation: adFadeIn 0.5s ease-out;
+}
+
+/* Hover effects */
+.sidebar-ad:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.banner-ad:hover,
+.footer-ad:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Special styling for lazy-loaded ads */
+[data-ad-lazy] {
+    background: rgba(33, 38, 45, 0.2);
+    border: 1px dashed #30363d;
+}
+
+[data-ad-lazy].loaded {
+    background: rgba(33, 38, 45, 0.4);
+    border: 1px solid #30363d;
+}
+
+/* Empty state for ads that haven't loaded yet */
+.ad-container:empty {
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(33, 38, 45, 0.1),
+        rgba(33, 38, 45, 0.1) 10px,
+        rgba(48, 54, 61, 0.1) 10px,
+        rgba(48, 54, 61, 0.1) 20px
+    );
+}
+
+/* Success state when ad loads */
+.ad-container.success {
+    background: rgba(33, 38, 45, 0.4);
+    border-color: rgba(46, 160, 67, 0.3);
+}
+
+/* Container for ad consent banner styles */
+#adConsentBanner {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+#adConsentBanner button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Ad block message styling */
+#adBlockMessage {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segue UI', 'Roboto', sans-serif;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
