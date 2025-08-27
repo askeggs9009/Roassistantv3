@@ -1,14 +1,14 @@
-// AdSense Configuration and Management
+// AdSense Configuration and Management - Customized for your account
 class AdSenseManager {
     constructor() {
-        this.adClientId = 'ca-pub-XXXXXXXXXXXXXXXXX'; // Replace with your AdSense publisher ID
+        this.adClientId = 'ca-pub-7434697703458325'; // Your actual Publisher ID
         this.isAdBlockDetected = false;
         this.consentGiven = false;
         this.adUnits = {
-            banner: 'XXXXXXXXXX',      // Replace with your ad unit IDs
-            sidebar: 'XXXXXXXXXX',
-            footer: 'XXXXXXXXXX',
-            mobile: 'XXXXXXXXXX'
+            banner: '4559815586',      // Banner ad unit ID
+            sidebar: '4894857501',     // Sidebar ad unit ID
+            footer: '6391772005',      // Footer ad unit ID
+            mobile: '5949467616'       // Mobile ad unit ID
         };
         this.init();
     }
@@ -49,6 +49,7 @@ class AdSenseManager {
         script.onerror = () => {
             console.error('[AdSense] Failed to load AdSense script');
             this.isAdBlockDetected = true;
+            this.showAdBlockMessage();
         };
         document.head.appendChild(script);
     }
@@ -56,34 +57,46 @@ class AdSenseManager {
     // Initialize ads after script loads
     initializeAds() {
         try {
-            // Push ads to AdSense queue
-            (window.adsbygoogle = window.adsbygoogle || []).push({});
+            // Initialize the adsbygoogle array
+            (window.adsbygoogle = window.adsbygoogle || []);
             console.log('[AdSense] Ads initialized');
         } catch (error) {
             console.error('[AdSense] Error initializing ads:', error);
         }
     }
 
-    // Create an ad unit
-    createAdUnit(containerId, adUnitId, adFormat = 'auto', adStyle = {}) {
+    // Create an ad unit with your actual ad codes
+    createAdUnit(containerId, adUnitType, customSize = null) {
         const container = document.getElementById(containerId);
         if (!container) {
             console.error(`[AdSense] Container ${containerId} not found`);
             return;
         }
 
+        // Clear existing content
+        container.innerHTML = '<div class="ad-label">Advertisement</div>';
+
+        // Get ad unit configuration
+        const adConfig = this.getAdConfig(adUnitType, customSize);
+        if (!adConfig) {
+            console.error(`[AdSense] Invalid ad unit type: ${adUnitType}`);
+            return;
+        }
+
         // Create ad element
         const adElement = document.createElement('ins');
         adElement.className = 'adsbygoogle';
-        adElement.style.display = 'block';
+        adElement.style.display = 'inline-block';
+        adElement.style.width = adConfig.width;
+        adElement.style.height = adConfig.height;
         adElement.setAttribute('data-ad-client', this.adClientId);
-        adElement.setAttribute('data-ad-slot', adUnitId);
-        adElement.setAttribute('data-ad-format', adFormat);
-        
-        // Apply custom styles
-        Object.keys(adStyle).forEach(key => {
-            adElement.style[key] = adStyle[key];
-        });
+        adElement.setAttribute('data-ad-slot', adConfig.slot);
+
+        // Add responsive attributes if needed
+        if (adConfig.responsive) {
+            adElement.setAttribute('data-ad-format', 'auto');
+            adElement.setAttribute('data-full-width-responsive', 'true');
+        }
 
         // Add to container
         container.appendChild(adElement);
@@ -91,10 +104,55 @@ class AdSenseManager {
         // Initialize the ad
         try {
             (window.adsbygoogle = window.adsbygoogle || []).push({});
-            console.log(`[AdSense] Ad unit ${adUnitId} created in ${containerId}`);
+            console.log(`[AdSense] Ad unit ${adUnitType} (${adConfig.slot}) created in ${containerId}`);
         } catch (error) {
-            console.error(`[AdSense] Error creating ad unit ${adUnitId}:`, error);
+            console.error(`[AdSense] Error creating ad unit ${adUnitType}:`, error);
         }
+    }
+
+    // Get ad configuration based on type
+    getAdConfig(adUnitType, customSize = null) {
+        const configs = {
+            banner: {
+                slot: this.adUnits.banner,
+                width: '728px',
+                height: '90px',
+                responsive: false
+            },
+            sidebar: {
+                slot: this.adUnits.sidebar,
+                width: '300px',
+                height: '250px',
+                responsive: false
+            },
+            footer: {
+                slot: this.adUnits.footer,
+                width: '970px',
+                height: '90px',
+                responsive: false
+            },
+            mobile: {
+                slot: this.adUnits.mobile,
+                width: '320px',
+                height: '50px',
+                responsive: false
+            },
+            responsive: {
+                slot: this.adUnits.banner, // Use banner slot for responsive ads
+                width: '100%',
+                height: 'auto',
+                responsive: true
+            }
+        };
+
+        return configs[adUnitType] || null;
+    }
+
+    // Create responsive ad that adapts to screen size
+    createResponsiveAd(containerId, primarySlot = 'banner') {
+        const isMobile = window.innerWidth <= 768;
+        const adType = isMobile ? 'mobile' : primarySlot;
+        this.createAdUnit(containerId, adType);
     }
 
     // Show consent banner for GDPR compliance
@@ -122,26 +180,37 @@ class AdSenseManager {
         `;
 
         banner.innerHTML = `
-            
-
-                
-
-                    🍪 We use cookies and ads to support our service
-                
-
-                
-
+            <div style="flex: 1; min-width: 300px;">
+                <div style="color: #f0f6fc; font-weight: 600; margin-bottom: 0.5rem;">
+                    🍪 We use cookies and ads to support our free AI assistant
+                </div>
+                <div style="color: #8b949e; font-size: 0.85rem; line-height: 1.4;">
                     We use Google AdSense to show relevant ads that help keep this AI assistant free. 
                     By continuing, you consent to cookies and data processing. 
-                    Privacy Policy
-                
-
-            
-
-            
-Accept & Continue
-Decline
-
+                    <a href="/privacy-policy.html" style="color: #58a6ff; text-decoration: none;">Privacy Policy</a>
+                </div>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button id="adConsentAccept" style="
+                    background: #238636;
+                    border: none;
+                    border-radius: 6px;
+                    color: white;
+                    padding: 0.75rem 1rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                ">Accept & Continue</button>
+                <button id="adConsentDecline" style="
+                    background: transparent;
+                    border: 1px solid #8b949e;
+                    border-radius: 6px;
+                    color: #8b949e;
+                    padding: 0.75rem 1rem;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                ">Decline</button>
+            </div>
         `;
 
         document.body.appendChild(banner);
@@ -192,25 +261,32 @@ Decline
     // Detect ad blockers
     detectAdBlock() {
         const testAd = document.createElement('div');
-        testAd.innerHTML = ' ';
-        testAd.className = 'adsbox';
-        testAd.style.cssText = 'position: absolute; left: -10000px; top: -10000px;';
+        testAd.innerHTML = '&nbsp;';
+        testAd.className = 'adsbox adsbygoogle';
+        testAd.style.cssText = 'position: absolute; left: -10000px; top: -10000px; width: 1px; height: 1px;';
         document.body.appendChild(testAd);
 
         setTimeout(() => {
-            const isBlocked = testAd.offsetHeight === 0;
+            const isBlocked = testAd.offsetHeight === 0 || !testAd.innerHTML || 
+                           testAd.style.display === 'none' || testAd.style.visibility === 'hidden';
             document.body.removeChild(testAd);
             
             if (isBlocked) {
                 this.isAdBlockDetected = true;
-                this.showAdBlockMessage();
+                console.log('[AdSense] Ad blocker detected');
+                setTimeout(() => this.showAdBlockMessage(), 2000);
+            } else {
+                console.log('[AdSense] No ad blocker detected');
             }
         }, 100);
     }
 
     // Show ad block message
     showAdBlockMessage() {
+        if (document.getElementById('adBlockMessage')) return;
+
         const message = document.createElement('div');
+        message.id = 'adBlockMessage';
         message.style.cssText = `
             background: rgba(248, 81, 73, 0.1);
             border: 1px solid #f85149;
@@ -219,23 +295,32 @@ Decline
             margin: 1rem;
             color: #f85149;
             text-align: center;
+            position: relative;
+            z-index: 999;
         `;
         message.innerHTML = `
-            
-📛 Ad Blocker Detected
-
-            
-
+            <div style="font-weight: 600; margin-bottom: 0.5rem;">📛 Ad Blocker Detected</div>
+            <div style="font-size: 0.85rem; margin-bottom: 1rem;">
                 We use ads to keep this AI assistant free. Please consider disabling your ad blocker or 
-                support us directly.
-            
-
+                <a href="#" onclick="showSupportOptions()" style="color: #58a6ff; text-decoration: none;">support us directly</a>.
+            </div>
+            <button onclick="this.parentElement.remove()" style="
+                background: transparent;
+                border: 1px solid #f85149;
+                border-radius: 4px;
+                color: #f85149;
+                padding: 0.25rem 0.5rem;
+                cursor: pointer;
+                font-size: 0.8rem;
+            ">Dismiss</button>
         `;
         
         // Insert after header
         const header = document.querySelector('.main-header');
-        if (header) {
+        if (header && header.parentNode) {
             header.parentNode.insertBefore(message, header.nextSibling);
+        } else {
+            document.body.appendChild(message);
         }
     }
 
@@ -251,24 +336,36 @@ Decline
             text-align: center;
         `;
         supportDiv.innerHTML = `
-            
-
+            <div style="color: #58a6ff; font-weight: 600; margin-bottom: 0.5rem;">
                 ❤️ Support Our Free AI Assistant
-            
-
-            
-
+            </div>
+            <div style="color: #8b949e; font-size: 0.85rem; margin-bottom: 1rem;">
                 Since you've opted out of ads, consider supporting us through:
-            
-
-            
-❤️ GitHub Sponsors
-☕ Buy us a Coffee
-
+            </div>
+            <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+                <button onclick="window.open('https://github.com/sponsors')" style="
+                    background: #f78166;
+                    border: none;
+                    border-radius: 6px;
+                    color: white;
+                    padding: 0.5rem 1rem;
+                    cursor: pointer;
+                    font-size: 0.85rem;
+                ">❤️ GitHub Sponsors</button>
+                <button onclick="window.open('https://ko-fi.com')" style="
+                    background: #29abe0;
+                    border: none;
+                    border-radius: 6px;
+                    color: white;
+                    padding: 0.5rem 1rem;
+                    cursor: pointer;
+                    font-size: 0.85rem;
+                ">☕ Buy us a Coffee</button>
+            </div>
         `;
         
         const header = document.querySelector('.main-header');
-        if (header) {
+        if (header && header.parentNode) {
             header.parentNode.insertBefore(supportDiv, header.nextSibling);
         }
     }
@@ -282,17 +379,63 @@ Decline
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         const container = entry.target;
-                        const adUnitId = container.getAttribute('data-ad-unit');
-                        const adFormat = container.getAttribute('data-ad-format') || 'auto';
+                        const adUnitType = container.getAttribute('data-ad-type') || 'banner';
                         
-                        this.createAdUnit(container.id, adUnitId, adFormat);
+                        this.createAdUnit(container.id, adUnitType);
                         adObserver.unobserve(container);
+                        console.log(`[AdSense] Lazy loaded ad: ${container.id}`);
                     }
                 });
             }, { threshold: 0.1 });
 
-            adContainers.forEach(container => adObserver.observe(container));
+            adContainers.forEach(container => {
+                adObserver.observe(container);
+            });
+        } else {
+            // Fallback for browsers without Intersection Observer
+            adContainers.forEach(container => {
+                const adUnitType = container.getAttribute('data-ad-type') || 'banner';
+                this.createAdUnit(container.id, adUnitType);
+            });
         }
+    }
+
+    // Check if user is premium (hide ads)
+    checkPremiumStatus() {
+        try {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (user.premium || user.plan === 'premium') {
+                document.body.classList.add('premium-user');
+                console.log('[AdSense] Premium user detected - ads will be hidden');
+                return true;
+            }
+        } catch (error) {
+            console.error('[AdSense] Error checking premium status:', error);
+        }
+        return false;
+    }
+
+    // Initialize all ads after page load
+    initializeAllAds() {
+        if (this.checkPremiumStatus()) {
+            console.log('[AdSense] Premium user - skipping ads');
+            return;
+        }
+
+        if (!this.consentGiven) {
+            console.log('[AdSense] No consent given - skipping ads');
+            return;
+        }
+
+        // Main ads
+        setTimeout(() => {
+            this.createResponsiveAd('headerBannerAd', 'banner');
+            this.createAdUnit('footerAd', 'footer');
+            this.createAdUnit('sidebarAd', 'sidebar');
+        }, 1000);
+
+        // Setup lazy loading for other ads
+        this.setupLazyLoading();
     }
 }
 
@@ -314,24 +457,49 @@ function showSupportOptions() {
     `;
     
     modal.innerHTML = `
-        
-
-            
-Support Our Project
-
-            
-
+        <div style="
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        ">
+            <h2 style="color: #58a6ff; margin-bottom: 1rem;">Support Our Project</h2>
+            <p style="color: #8b949e; margin-bottom: 2rem; line-height: 1.5;">
                 Help us keep the AI assistant free and continuously improve it!
-            
-
-
-            
-❤️ GitHub Sponsors
-☕ Buy us a Coffee
-
-            Close
-        
-
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <button onclick="window.open('https://github.com/sponsors')" style="
+                    background: #238636;
+                    border: none;
+                    border-radius: 8px;
+                    color: white;
+                    padding: 1rem;
+                    cursor: pointer;
+                    font-weight: 600;
+                ">❤️ GitHub Sponsors</button>
+                <button onclick="window.open('https://ko-fi.com')" style="
+                    background: #1f6feb;
+                    border: none;
+                    border-radius: 8px;
+                    color: white;
+                    padding: 1rem;
+                    cursor: pointer;
+                    font-weight: 600;
+                ">☕ Buy us a Coffee</button>
+            </div>
+            <button onclick="this.closest('div').parentElement.remove()" style="
+                background: transparent;
+                border: 1px solid #8b949e;
+                border-radius: 6px;
+                color: #8b949e;
+                padding: 0.5rem 1rem;
+                cursor: pointer;
+                margin-top: 1rem;
+            ">Close</button>
+        </div>
     `;
     
     document.body.appendChild(modal);
@@ -339,5 +507,29 @@ Support Our Project
 
 // Initialize AdSense when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('[AdSense] DOM ready, initializing...');
     window.adSenseManager = new AdSenseManager();
+});
+
+// Initialize ads after page fully loads
+window.addEventListener('load', () => {
+    console.log('[AdSense] Page loaded, initializing ads...');
+    if (window.adSenseManager) {
+        // Small delay to ensure everything is ready
+        setTimeout(() => {
+            window.adSenseManager.initializeAllAds();
+        }, 2000);
+    }
+});
+
+// Handle window resize for responsive ads
+window.addEventListener('resize', () => {
+    if (window.adSenseManager && !window.adSenseManager.checkPremiumStatus()) {
+        // Debounce resize events
+        clearTimeout(window.adSenseManager.resizeTimeout);
+        window.adSenseManager.resizeTimeout = setTimeout(() => {
+            console.log('[AdSense] Window resized, reinitializing responsive ads');
+            // You could reinitialize responsive ads here if needed
+        }, 500);
+    }
 });
