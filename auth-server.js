@@ -42,10 +42,15 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-t
 const users = new Map();
 const pendingVerifications = new Map();
 
-// Dynamic base URL configuration
+// Dynamic base URL configuration for Railway
 const getBaseUrl = () => {
-    // Check if we're in production (Netlify) or development
-    if (process.env.NODE_ENV === 'production' && process.env.BASE_URL) {
+    // Railway sets RAILWAY_STATIC_URL for the deployed app
+    if (process.env.RAILWAY_STATIC_URL) {
+        return `https://${process.env.RAILWAY_STATIC_URL}`;
+    }
+    
+    // Fallback to custom base URL or localhost
+    if (process.env.BASE_URL) {
         return process.env.BASE_URL;
     }
     
@@ -66,32 +71,32 @@ const getGoogleClient = () => {
     );
 };
 
-// TESTING: Usage limits configuration - SET TO 1 FOR TESTING - APPLIES TO ALL USERS
+// Usage limits configuration
 const USAGE_LIMITS = {
     "gpt-4o-mini": {
-        dailyLimit: 1,         // TESTING: 1 message per day for ALL users
-        hourlyLimit: 1,        // TESTING: 1 message per hour for ALL users
-        cost: 0.15,           // $0.15 per 1M input tokens
-        description: "Basic AI model - Testing limits"
+        dailyLimit: 10,
+        hourlyLimit: 5,
+        cost: 0.15,
+        description: "Basic AI model"
     },
     "gpt-4.1": {
-        dailyLimit: 1,         // TESTING: 1 message per day for ALL users
-        hourlyLimit: 1,        // TESTING: 1 message per hour for ALL users
-        cost: 2.00,           // $2.00 per 1M input tokens
-        description: "Advanced AI model - Testing limits"
+        dailyLimit: 5,
+        hourlyLimit: 2,
+        cost: 2.00,
+        description: "Advanced AI model"
     },
     "gpt-5": {
-        dailyLimit: 1,         // TESTING: 1 message per day for ALL users
-        hourlyLimit: 1,        // TESTING: 1 message per hour for ALL users
-        cost: 3.00,           // Estimated $3.00+ per 1M tokens
-        description: "Premium AI model - Testing limits"
+        dailyLimit: 3,
+        hourlyLimit: 1,
+        cost: 3.00,
+        description: "Premium AI model"
     }
 };
 
-// Store for tracking guest usage (in production, use Redis or database)
+// Store for tracking guest usage
 const guestUsage = new Map();
 
-// Helper function to get user identifier (IP + User Agent hash for guests)
+// Helper function to get user identifier
 function getUserIdentifier(req) {
     const token = req.headers['authorization']?.split(' ')[1];
     
@@ -207,7 +212,7 @@ function recordUsage(userIdentifier, model) {
     guestUsage.set(userIdentifier, usage);
 }
 
-// Middleware to check usage limits for ALL users (including authenticated)
+// Middleware to check usage limits
 function checkUsageLimits(req, res, next) {
     const userIdentifier = getUserIdentifier(req);
     const isAuthenticated = req.user !== null;
@@ -215,35 +220,35 @@ function checkUsageLimits(req, res, next) {
     
     console.log(`[USAGE CHECK] User: ${userIdentifier}, Model: ${model}, Auth: ${isAuthenticated}`);
     
-    // CHANGED: Apply limits to ALL users (including authenticated ones)
-    const limitCheck = checkUsageLimit(userIdentifier, model);
-    
-    if (!limitCheck.allowed) {
-        console.log(`[LIMIT REACHED] ${limitCheck.error}`);
-        return res.status(429).json({
-            error: limitCheck.error,
-            resetTime: limitCheck.resetTime,
-            limitsInfo: limitCheck.limitsInfo,
-            upgradeMessage: isAuthenticated ? 
-                "Even premium users have limits during testing. Contact support for unlimited access." :
-                "Sign up for unlimited access to all models!",
-            requiresAuth: !isAuthenticated,
-            signUpUrl: "/login.html",
-            userType: isAuthenticated ? "authenticated" : "guest"
+    // Apply limits to guests only
+    if (!isAuthenticated) {
+        const limitCheck = checkUsageLimit(userIdentifier, model);
+        
+        if (!limitCheck.allowed) {
+            console.log(`[LIMIT REACHED] ${limitCheck.error}`);
+            return res.status(429).json({
+                error: limitCheck.error,
+                resetTime: limitCheck.resetTime,
+                limitsInfo: limitCheck.limitsInfo,
+                upgradeMessage: "Sign up for unlimited access to all models!",
+                requiresAuth: true,
+                signUpUrl: "/login.html",
+                userType: "guest"
+            });
+        }
+        
+        // Record this usage
+        recordUsage(userIdentifier, model);
+        console.log(`[USAGE RECORDED] Guest user: ${userIdentifier}`);
+        
+        // Add usage info to response headers
+        res.set({
+            'X-Usage-Hourly': `${limitCheck.limitsInfo.hourlyUsed + 1}/${limitCheck.limitsInfo.hourlyLimit}`,
+            'X-Usage-Daily': `${limitCheck.limitsInfo.dailyUsed + 1}/${limitCheck.limitsInfo.dailyLimit}`,
+            'X-Rate-Limit-Model': model,
+            'X-User-Type': 'guest'
         });
     }
-    
-    // Record this usage
-    recordUsage(userIdentifier, model);
-    console.log(`[USAGE RECORDED] User: ${userIdentifier} (${isAuthenticated ? 'authenticated' : 'guest'})`);
-    
-    // Add usage info to response headers
-    res.set({
-        'X-Usage-Hourly': `${limitCheck.limitsInfo.hourlyUsed + 1}/${limitCheck.limitsInfo.hourlyLimit}`,
-        'X-Usage-Daily': `${limitCheck.limitsInfo.dailyUsed + 1}/${limitCheck.limitsInfo.dailyLimit}`,
-        'X-Rate-Limit-Model': model,
-        'X-User-Type': isAuthenticated ? 'authenticated' : 'guest'
-    });
     
     next();
 }
@@ -251,34 +256,18 @@ function checkUsageLimits(req, res, next) {
 // Email transporter
 let emailTransporter = null;
 
-console.log('[EMAIL CONFIG CHECK]');
-console.log('EMAIL_USER:', process.env.EMAIL_USER ? `${process.env.EMAIL_USER.substring(0, 3)}***@${process.env.EMAIL_USER.split('@')[1]}` : '[NOT SET]');
-console.log('EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD ? `[SET] (${process.env.EMAIL_PASSWORD.length} characters)` : '[NOT SET]');
-console.log('EMAIL_FROM:', process.env.EMAIL_FROM ? `${process.env.EMAIL_FROM.substring(0, 3)}***@${process.env.EMAIL_FROM.split('@')[1]}` : '[Will use EMAIL_USER]');
-
 // Initialize email transporter
 async function initializeEmailTransporter() {
     console.log('\n[EMAIL INIT] Initializing Email System...');
     
     if (!nodemailer) {
         console.log('[CRITICAL] Nodemailer not available!');
-        console.log('[INFO] Please install nodemailer: npm install nodemailer');
-        console.log('[INFO] Then restart the server');
         return false;
     }
     
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-        console.log('[CRITICAL] Email configuration missing!');
-        console.log('[INFO] Email verification is REQUIRED for this application');
-        console.log('\n[CONFIG] Add these to your .env file:');
-        console.log('EMAIL_USER=your-email@gmail.com');
-        console.log('EMAIL_PASSWORD=your-gmail-app-password');
-        console.log('EMAIL_FROM=your-email@gmail.com  # Optional');
-        console.log('\n[HELP] For Gmail App Password:');
-        console.log('1. Enable 2-factor authentication');
-        console.log('2. Visit: https://myaccount.google.com/apppasswords');
-        console.log('3. Generate App Password for "Mail"');
-        console.log('4. Use the 16-character password (no spaces)');
+        console.log('[WARNING] Email configuration missing!');
+        console.log('[INFO] Email verification will be disabled');
         return false;
     }
 
@@ -292,15 +281,14 @@ async function initializeEmailTransporter() {
                 pass: process.env.EMAIL_PASSWORD
             },
             tls: {
-                rejectUnauthorized: false // Accept self-signed certificates
+                rejectUnauthorized: false
             },
-            secure: false, // Use STARTTLS instead of direct SSL
-            requireTLS: true // Require TLS encryption
+            secure: false,
+            requireTLS: true
         });
 
         console.log('[EMAIL] Testing connection...');
         
-        // Test the connection
         await new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {
                 reject(new Error('Connection test timeout (10 seconds)'));
@@ -317,25 +305,10 @@ async function initializeEmailTransporter() {
         });
         
         console.log('[SUCCESS] Email system verified and ready!');
-        console.log(`[EMAIL] Emails will be sent from: ${process.env.EMAIL_FROM || process.env.EMAIL_USER}`);
         return true;
 
     } catch (error) {
         console.log('[ERROR] Email system failed:', error.message);
-        
-        if (error.code === 'EAUTH' || error.responseCode === 535) {
-            console.log('\n[AUTH ERROR SOLUTIONS]');
-            console.log('1. Verify 2-factor authentication is enabled');
-            console.log('2. Generate new App Password at: https://myaccount.google.com/apppasswords');
-            console.log('3. Copy the 16-character password exactly (no spaces)');
-            console.log('4. Do NOT use your regular Gmail password');
-        } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
-            console.log('\n[CONNECTION ERROR] Check:');
-            console.log('1. Internet connection');
-            console.log('2. Firewall settings');
-            console.log('3. VPN/proxy settings');
-        }
-        
         emailTransporter = null;
         return false;
     }
@@ -349,7 +322,7 @@ function generateVerificationCode() {
 // Send verification email
 async function sendVerificationEmail(email, code, name = null) {
     if (!emailTransporter) {
-        throw new Error('Email system not configured. Please check server logs for email setup instructions.');
+        throw new Error('Email system not configured.');
     }
 
     const mailOptions = {
@@ -369,7 +342,7 @@ async function sendVerificationEmail(email, code, name = null) {
                 <div style="background: white; padding: 30px; border-radius: 12px; margin-top: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
                     <h2 style="color: #0d1117; margin-top: 0; font-size: 20px;">Verify Your Email Address</h2>
                     <p style="color: #586069; line-height: 1.6; font-size: 16px;">
-                        ${name ? `Hi ${name}, t` : 'T'}hanks for signing up! To complete your account setup and start using the AI assistant with unlimited access, please enter the verification code below:
+                        ${name ? `Hi ${name}, t` : 'T'}hanks for signing up! Please enter the verification code below:
                     </p>
                     
                     <div style="background: linear-gradient(135deg, #f6f8fa 0%, #e1e4e8 100%); border: 2px solid #d0d7de; border-radius: 12px; padding: 25px; text-align: center; margin: 25px 0;">
@@ -378,23 +351,6 @@ async function sendVerificationEmail(email, code, name = null) {
                         </div>
                         <p style="margin: 0; color: #656d76; font-size: 14px; font-weight: 500;">This code expires in 15 minutes</p>
                     </div>
-                    
-                    <div style="background: #fff8c5; border: 1px solid #d4ac0d; border-radius: 8px; padding: 12px; margin: 20px 0;">
-                        <p style="margin: 0; color: #7d6608; font-size: 14px; line-height: 1.4;">
-                            <strong>Security Note:</strong> If you didn't create this account, you can safely ignore this email.
-                        </p>
-                    </div>
-                    
-                    <div style="text-align: center; margin-top: 25px;">
-                        <p style="color: #656d76; font-size: 14px; margin: 0;">
-                            Having trouble? Check your spam folder or contact support.
-                        </p>
-                    </div>
-                </div>
-                
-                <div style="text-align: center; padding: 20px; color: #656d76; font-size: 12px;">
-                    <p style="margin: 0;">This email was sent by Roblox Luau AI Assistant</p>
-                    <p style="margin: 5px 0 0 0;">© 2024 - Powered by AI for Roblox Development</p>
                 </div>
             </div>
         `
@@ -404,7 +360,6 @@ async function sendVerificationEmail(email, code, name = null) {
         console.log(`[EMAIL] Sending verification to ${email}...`);
         const result = await emailTransporter.sendMail(mailOptions);
         console.log('[SUCCESS] Verification email sent!');
-        console.log(`[EMAIL] Message ID: ${result.messageId}`);
         return true;
     } catch (error) {
         console.error('[ERROR] Failed to send verification email:', error.message);
@@ -420,11 +375,11 @@ const MODEL_CONFIGS = {
     },
     "gpt-4.1": {
         model: "gpt-4",
-        requiresAuth: false  // Available to guests with limits
+        requiresAuth: false
     },
     "gpt-5": {
         model: "gpt-4",
-        requiresAuth: false  // Available to guests with limits
+        requiresAuth: false
     }
 };
 
@@ -555,6 +510,100 @@ app.post("/auth/signup", async (req, res) => {
                 details: 'There was an issue with our email service. Please check your email address and try again.'
             });
         }
+
+    } catch (error) {
+        console.error("[ERROR] Signup error:", error);
+        res.status(500).json({ error: 'Internal server error occurred during signup' });
+    }
+});
+
+// Email verification
+app.post("/auth/verify-email", async (req, res) => {
+    try {
+        const { email, verificationCode } = req.body;
+
+        console.log(`\n[VERIFY] Email verification attempt for: ${email}`);
+
+        if (!email || !verificationCode) {
+            return res.status(400).json({ error: 'Email and verification code are required' });
+        }
+
+        if (!/^\d{6}$/.test(verificationCode)) {
+            return res.status(400).json({ error: 'Verification code must be 6 digits' });
+        }
+
+        const pendingVerification = pendingVerifications.get(email);
+
+        if (!pendingVerification) {
+            return res.status(400).json({ 
+                error: 'No pending verification found for this email. Please sign up again.',
+                action: 'signup_required'
+            });
+        }
+
+        if (Date.now() > pendingVerification.expires) {
+            console.log(`[ERROR] Verification code expired for ${email}`);
+            pendingVerifications.delete(email);
+            return res.status(400).json({ 
+                error: 'Verification code has expired. Please sign up again.',
+                action: 'signup_required'
+            });
+        }
+
+        pendingVerification.attempts = (pendingVerification.attempts || 0) + 1;
+        
+        if (pendingVerification.attempts > 5) {
+            console.log(`[ERROR] Too many verification attempts for ${email}`);
+            pendingVerifications.delete(email);
+            return res.status(429).json({ 
+                error: 'Too many failed attempts. Please sign up again.',
+                action: 'signup_required'
+            });
+        }
+
+        if (pendingVerification.verificationCode !== verificationCode) {
+            console.log(`[ERROR] Invalid verification code for ${email}. Attempt ${pendingVerification.attempts}/5`);
+            return res.status(400).json({ 
+                error: `Invalid verification code. ${5 - pendingVerification.attempts} attempts remaining.`,
+                attemptsRemaining: 5 - pendingVerification.attempts
+            });
+        }
+
+        console.log(`[SUCCESS] Email verification successful for ${email}`);
+
+        const user = {
+            id: Date.now().toString(),
+            email: pendingVerification.email,
+            password: pendingVerification.password,
+            name: pendingVerification.name,
+            createdAt: new Date(),
+            provider: 'email',
+            emailVerified: true,
+            lastLogin: new Date()
+        };
+
+        users.set(email, user);
+        pendingVerifications.delete(email);
+
+        const token = jwt.sign(
+            { id: user.id, email: user.email },
+            JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        console.log(`[SUCCESS] User account created for ${email}`);
+
+        res.json({
+            token,
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                createdAt: user.createdAt,
+                emailVerified: user.emailVerified
+            },
+            message: 'Account created and verified successfully! Welcome to Roblox Luau AI!'
+        });
 
     } catch (error) {
         console.error("[ERROR] Email verification error:", error);
@@ -733,38 +782,11 @@ app.get("/auth/google/callback", async (req, res) => {
     }
 });
 
-// TESTING: Reset all usage data for testing
-app.post("/reset-usage", (req, res) => {
-    guestUsage.clear();
-    console.log('[TESTING] All usage data cleared (affects all users)');
-    res.json({ 
-        message: "Usage data cleared successfully",
-        note: "All users (guests and authenticated) can now use models again"
-    });
-});
-
-// TESTING: Debug current usage
-app.get("/debug-usage", optionalAuthenticateToken, (req, res) => {
-    const userIdentifier = getUserIdentifier(req);
-    const usage = guestUsage.get(userIdentifier);
-    const isAuthenticated = req.user !== null;
-    
-    res.json({
-        userIdentifier: userIdentifier,
-        userType: isAuthenticated ? "authenticated" : "guest",
-        usage: usage || "No usage data found",
-        totalActiveUsers: guestUsage.size,
-        limits: USAGE_LIMITS,
-        note: "All users have limits during testing"
-    });
-});
-
-// API endpoint to get current usage limits for ALL users
+// API endpoint to get current usage limits
 app.get("/usage-limits", optionalAuthenticateToken, (req, res) => {
     const userIdentifier = getUserIdentifier(req);
     const isAuthenticated = req.user !== null;
     
-    // CHANGED: Show limits for all users, not just guests
     const limits = {};
     
     Object.entries(USAGE_LIMITS).forEach(([model, config]) => {
@@ -782,25 +804,21 @@ app.get("/usage-limits", optionalAuthenticateToken, (req, res) => {
     });
     
     res.json({
-        type: isAuthenticated ? "authenticated_with_limits" : "guest",
+        type: isAuthenticated ? "authenticated" : "guest",
         limits: limits,
         message: isAuthenticated ? 
-            "Testing mode: All users have limits. Contact support for unlimited access." :
-            "Sign up to track your usage and get priority support",
-        upgradeIncentive: isAuthenticated ? {
-            testing: true,
-            contactSupport: true,
-            features: ["Priority Support", "Account Management", "Usage Analytics"]
-        } : {
-            unlimited: false, // Changed during testing
-            noWaiting: false,
+            "Unlimited access to all models" :
+            "Sign up for unlimited access to all models",
+        upgradeIncentive: isAuthenticated ? null : {
+            unlimited: true,
+            noWaiting: true,
             priority: true,
-            features: ["Account Management", "Usage Analytics", "Priority Support"]
+            features: ["Unlimited Usage", "All Models", "Priority Support"]
         }
     });
 });
 
-// AI chat endpoint with usage limits for ALL users
+// AI chat endpoint with usage limits
 app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) => {
     try {
         const { prompt, model = "gpt-4o-mini" } = req.body;
@@ -821,25 +839,25 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             temperature: 0.7
         });
 
-        // Add usage info to response for ALL users
+        // Add usage info to response for guests
         const userIdentifier = getUserIdentifier(req);
-        const limitCheck = checkUsageLimit(userIdentifier, model);
-        
         let responseData = { 
             reply: response.choices[0].message.content, 
-            model: model,
-            usageInfo: {
+            model: model
+        };
+
+        if (!isAuthenticated) {
+            const limitCheck = checkUsageLimit(userIdentifier, model);
+            responseData.usageInfo = {
                 dailyUsed: limitCheck.limitsInfo.dailyUsed,
                 dailyLimit: USAGE_LIMITS[model].dailyLimit,
                 hourlyUsed: limitCheck.limitsInfo.hourlyUsed,
                 hourlyLimit: USAGE_LIMITS[model].hourlyLimit,
-                userType: isAuthenticated ? "authenticated" : "guest",
+                userType: "guest",
                 upgradeMessage: limitCheck.limitsInfo.dailyUsed >= USAGE_LIMITS[model].dailyLimit - 1 ? 
-                    (isAuthenticated ? 
-                        "Testing mode: Contact support for unlimited access." :
-                        "You're almost out! Sign up for account management.") : null
-            }
-        };
+                    "You're almost out! Sign up for unlimited access." : null
+            };
+        }
 
         res.json(responseData);
     } catch (error) {
@@ -857,7 +875,7 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
     }
 });
 
-// Get available models with usage info for ALL users
+// Get available models with usage info
 app.get("/models", optionalAuthenticateToken, (req, res) => {
     const isAuthenticated = req.user !== null;
     const userIdentifier = getUserIdentifier(req);
@@ -866,20 +884,22 @@ app.get("/models", optionalAuthenticateToken, (req, res) => {
         const modelInfo = {
             name: key,
             model: MODEL_CONFIGS[key].model,
-            requiresAuth: false // Changed: no auth required, but all have limits
+            requiresAuth: false
         };
 
-        // Show limits for ALL users
-        const limitCheck = checkUsageLimit(userIdentifier, key);
-        const limits = USAGE_LIMITS[key];
-        
-        modelInfo.limits = {
-            dailyUsed: limitCheck.limitsInfo ? limitCheck.limitsInfo.dailyUsed : 0,
-            dailyLimit: limits.dailyLimit,
-            hourlyUsed: limitCheck.limitsInfo ? limitCheck.limitsInfo.hourlyUsed : 0,
-            hourlyLimit: limits.hourlyLimit,
-            description: limits.description
-        };
+        // Show limits for guests only
+        if (!isAuthenticated) {
+            const limitCheck = checkUsageLimit(userIdentifier, key);
+            const limits = USAGE_LIMITS[key];
+            
+            modelInfo.limits = {
+                dailyUsed: limitCheck.limitsInfo ? limitCheck.limitsInfo.dailyUsed : 0,
+                dailyLimit: limits.dailyLimit,
+                hourlyUsed: limitCheck.limitsInfo ? limitCheck.limitsInfo.hourlyUsed : 0,
+                hourlyLimit: limits.hourlyLimit,
+                description: limits.description
+            };
+        }
 
         return modelInfo;
     });
@@ -887,10 +907,9 @@ app.get("/models", optionalAuthenticateToken, (req, res) => {
     res.json({ 
         models,
         isAuthenticated,
-        allUsersHaveLimits: true, // New flag
         message: isAuthenticated ? 
-            "Testing mode: All users have usage limits" : 
-            "Sign up for account management and priority support"
+            "Unlimited access to all models" : 
+            "Sign up for unlimited access to all models"
     });
 });
 
@@ -936,6 +955,15 @@ app.get("/", (req, res) => {
     res.redirect('/index.html');
 });
 
+// Health check endpoint for Railway
+app.get("/health", (req, res) => {
+    res.status(200).json({ 
+        status: "healthy", 
+        timestamp: new Date().toISOString(),
+        baseUrl: getBaseUrl()
+    });
+});
+
 // Start server
 async function startServer() {
     if (!nodemailer) {
@@ -949,136 +977,42 @@ async function startServer() {
     const port = process.env.PORT || 3000;
     const baseUrl = getBaseUrl();
     
-    app.listen(port, () => {
-        console.log("\n" + "=".repeat(50));
+    app.listen(port, '0.0.0.0', () => {
+        console.log("\n" + "=".repeat(60));
         console.log("[SUCCESS] Roblox Luau AI Server Running");
-        console.log(`[URL] ${baseUrl}`);
+        console.log(`[PORT] ${port}`);
+        console.log(`[BASE_URL] ${baseUrl}`);
+        console.log(`[HEALTH] ${baseUrl}/health`);
         console.log(`[LOGIN] ${baseUrl}/login.html`);
         console.log(`[CHAT] ${baseUrl}/index.html`);
         console.log(`[EMAIL] ${emailTransporter ? "ENABLED" : "DISABLED"}`);
-        console.log("[LIMITS] ENABLED FOR ALL USERS (TESTING MODE)");
-        console.log(`[BASE_URL] ${baseUrl}`);
+        console.log(`[ENVIRONMENT] ${process.env.NODE_ENV || 'development'}`);
         
-        console.log("\n[TESTING USAGE LIMITS] (ALL USERS):");
+        // Railway-specific logs
+        if (process.env.RAILWAY_STATIC_URL) {
+            console.log(`[RAILWAY] Deployed on Railway`);
+            console.log(`[RAILWAY_URL] https://${process.env.RAILWAY_STATIC_URL}`);
+        }
+        
+        console.log("\n[USAGE LIMITS] (Guests Only):");
         Object.entries(USAGE_LIMITS).forEach(([model, limits]) => {
             console.log(`   ${model}: ${limits.dailyLimit}/day, ${limits.hourlyLimit}/hour`);
         });
         
-        console.log("\n[TESTING NOTES]");
-        console.log("   - Both guests AND authenticated users have limits");
-        console.log("   - Use POST /reset-usage to clear all usage data");
-        console.log("   - Use GET /debug-usage to check current usage");
-        
-        console.log("\n[TESTING ENDPOINTS]");
-        console.log("   POST /reset-usage - Clear all usage data");
-        console.log("   GET /debug-usage - Check current usage");
-        console.log("   GET /usage-limits - Check limits status");
+        console.log("\n[GOOGLE OAUTH]");
+        console.log(`   Redirect URI: ${baseUrl}/auth/google/callback`);
+        console.log(`   Make sure this is added to Google Cloud Console`);
         
         if (!emailTransporter) {
-            console.log("\n[WARNING] Email verification is REQUIRED!");
-            if (!nodemailer) {
-                console.log("[INSTALL] npm install nodemailer");
-            } else {
-                console.log("[CONFIG] Configure email in .env file to enable signups");
-            }
+            console.log("\n[WARNING] Email verification is DISABLED!");
+            console.log("[INFO] Set EMAIL_USER and EMAIL_PASSWORD environment variables to enable");
         }
         
-        console.log("=".repeat(50) + "\n");
+        console.log("=".repeat(60) + "\n");
     });
 }
 
-startServer(); Signup error:", error);
-        res.status(500).json({ error: 'Internal server error occurred during signup' });
-    }
+startServer().catch(error => {
+    console.error('[FATAL] Failed to start server:', error);
+    process.exit(1);
 });
-
-// Email verification
-app.post("/auth/verify-email", async (req, res) => {
-    try {
-        const { email, verificationCode } = req.body;
-
-        console.log(`\n[VERIFY] Email verification attempt for: ${email}`);
-
-        if (!email || !verificationCode) {
-            return res.status(400).json({ error: 'Email and verification code are required' });
-        }
-
-        if (!/^\d{6}$/.test(verificationCode)) {
-            return res.status(400).json({ error: 'Verification code must be 6 digits' });
-        }
-
-        const pendingVerification = pendingVerifications.get(email);
-
-        if (!pendingVerification) {
-            return res.status(400).json({ 
-                error: 'No pending verification found for this email. Please sign up again.',
-                action: 'signup_required'
-            });
-        }
-
-        if (Date.now() > pendingVerification.expires) {
-            console.log(`[ERROR] Verification code expired for ${email}`);
-            pendingVerifications.delete(email);
-            return res.status(400).json({ 
-                error: 'Verification code has expired. Please sign up again.',
-                action: 'signup_required'
-            });
-        }
-
-        pendingVerification.attempts = (pendingVerification.attempts || 0) + 1;
-        
-        if (pendingVerification.attempts > 5) {
-            console.log(`[ERROR] Too many verification attempts for ${email}`);
-            pendingVerifications.delete(email);
-            return res.status(429).json({ 
-                error: 'Too many failed attempts. Please sign up again.',
-                action: 'signup_required'
-            });
-        }
-
-        if (pendingVerification.verificationCode !== verificationCode) {
-            console.log(`[ERROR] Invalid verification code for ${email}. Attempt ${pendingVerification.attempts}/5`);
-            return res.status(400).json({ 
-                error: `Invalid verification code. ${5 - pendingVerification.attempts} attempts remaining.`,
-                attemptsRemaining: 5 - pendingVerification.attempts
-            });
-        }
-
-        console.log(`[SUCCESS] Email verification successful for ${email}`);
-
-        const user = {
-            id: Date.now().toString(),
-            email: pendingVerification.email,
-            password: pendingVerification.password,
-            name: pendingVerification.name,
-            createdAt: new Date(),
-            provider: 'email',
-            emailVerified: true,
-            lastLogin: new Date()
-        };
-
-        users.set(email, user);
-        pendingVerifications.delete(email);
-
-        const token = jwt.sign(
-            { id: user.id, email: user.email },
-            JWT_SECRET,
-            { expiresIn: '7d' }
-        );
-
-        console.log(`[SUCCESS] User account created for ${email}`);
-
-        res.json({
-            token,
-            user: {
-                id: user.id,
-                email: user.email,
-                name: user.name,
-                createdAt: user.createdAt,
-                emailVerified: user.emailVerified
-            },
-            message: 'Account created and verified successfully! Welcome to Roblox Luau AI!'
-        });
-
-    } catch (error) {
-        console.error("[ERROR]
