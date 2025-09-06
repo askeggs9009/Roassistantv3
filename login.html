@@ -309,7 +309,8 @@
 
         <!-- Social Login Methods -->
         <div class="auth-methods">
-            <a href="/auth/google" class="auth-button google">
+            <!-- UPDATED: Points to Railway backend for Google OAuth -->
+            <a href="https://roassistantv3-production.up.railway.app/auth/google" class="auth-button google">
                 <div class="auth-icon">
                     <svg viewBox="0 0 24 24" width="20" height="20">
                         <path fill="#ea4335" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -322,7 +323,7 @@
             </a>
 
             <a href="/index.html" class="auth-button back-button">
-                â† Back to AI Assistant
+                ← Back to AI Assistant
             </a>
         </div>
 
@@ -380,6 +381,9 @@
     </div>
 
     <script>
+        // UPDATED: Use Railway backend for API calls
+        const API_BASE_URL = 'https://roassistantv3-production.up.railway.app';
+        
         let isSignUp = false;
 
         function toggleForm() {
@@ -400,7 +404,7 @@
                 toggleLink.textContent = 'Sign in';
                 nameGroup.style.display = 'flex';
                 verificationInfo.style.display = 'block';
-                verificationInfo.innerHTML = 'ðŸ“§ You\'ll receive a verification code via email to complete your registration.';
+                verificationInfo.innerHTML = '📧 You\'ll receive a verification code via email to complete your registration.';
             } else {
                 loginTitle.textContent = 'Welcome Back';
                 loginSubtitle.textContent = 'Sign in to your Roblox Luau AI Assistant';
@@ -469,7 +473,7 @@
                     ? { email, password, name: name || undefined }
                     : { email, password };
 
-                const response = await fetch(`http://localhost:3000${endpoint}`, {
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -515,7 +519,7 @@
         window.addEventListener('load', function() {
             const token = localStorage.getItem('authToken');
             if (token) {
-                fetch('http://localhost:3000/auth/verify', {
+                fetch(`${API_BASE_URL}/auth/verify`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
