@@ -42,6 +42,30 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-t
 const users = new Map();
 const pendingVerifications = new Map();
 
+// Dynamic base URL configuration
+const getBaseUrl = () => {
+    // Check if we're in production (Netlify) or development
+    if (process.env.NODE_ENV === 'production' && process.env.BASE_URL) {
+        return process.env.BASE_URL;
+    }
+    
+    // For local development
+    const port = process.env.PORT || 3000;
+    return `http://localhost:${port}`;
+};
+
+// Google OAuth2 client with dynamic redirect URI
+const getGoogleClient = () => {
+    const baseUrl = getBaseUrl();
+    console.log(`[OAUTH] Using base URL: ${baseUrl}`);
+    
+    return new google.auth.OAuth2(
+        process.env.GOOGLE_CLIENT_ID,
+        process.env.GOOGLE_CLIENT_SECRET,
+        `${baseUrl}/auth/google/callback`
+    );
+};
+
 // TESTING: Usage limits configuration - SET TO 1 FOR TESTING - APPLIES TO ALL USERS
 const USAGE_LIMITS = {
     "gpt-4o-mini": {
@@ -388,13 +412,6 @@ async function sendVerificationEmail(email, code, name = null) {
     }
 }
 
-// Google OAuth2 client
-const googleClient = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    `${process.env.BASE_URL || 'http://localhost:3000'}/auth/google/callback`
-);
-
 // Available model configurations
 const MODEL_CONFIGS = {
     "gpt-4o-mini": {
@@ -540,100 +557,6 @@ app.post("/auth/signup", async (req, res) => {
         }
 
     } catch (error) {
-        console.error("[ERROR] Signup error:", error);
-        res.status(500).json({ error: 'Internal server error occurred during signup' });
-    }
-});
-
-// Email verification
-app.post("/auth/verify-email", async (req, res) => {
-    try {
-        const { email, verificationCode } = req.body;
-
-        console.log(`\n[VERIFY] Email verification attempt for: ${email}`);
-
-        if (!email || !verificationCode) {
-            return res.status(400).json({ error: 'Email and verification code are required' });
-        }
-
-        if (!/^\d{6}$/.test(verificationCode)) {
-            return res.status(400).json({ error: 'Verification code must be 6 digits' });
-        }
-
-        const pendingVerification = pendingVerifications.get(email);
-
-        if (!pendingVerification) {
-            return res.status(400).json({ 
-                error: 'No pending verification found for this email. Please sign up again.',
-                action: 'signup_required'
-            });
-        }
-
-        if (Date.now() > pendingVerification.expires) {
-            console.log(`[ERROR] Verification code expired for ${email}`);
-            pendingVerifications.delete(email);
-            return res.status(400).json({ 
-                error: 'Verification code has expired. Please sign up again.',
-                action: 'signup_required'
-            });
-        }
-
-        pendingVerification.attempts = (pendingVerification.attempts || 0) + 1;
-        
-        if (pendingVerification.attempts > 5) {
-            console.log(`[ERROR] Too many verification attempts for ${email}`);
-            pendingVerifications.delete(email);
-            return res.status(429).json({ 
-                error: 'Too many failed attempts. Please sign up again.',
-                action: 'signup_required'
-            });
-        }
-
-        if (pendingVerification.verificationCode !== verificationCode) {
-            console.log(`[ERROR] Invalid verification code for ${email}. Attempt ${pendingVerification.attempts}/5`);
-            return res.status(400).json({ 
-                error: `Invalid verification code. ${5 - pendingVerification.attempts} attempts remaining.`,
-                attemptsRemaining: 5 - pendingVerification.attempts
-            });
-        }
-
-        console.log(`[SUCCESS] Email verification successful for ${email}`);
-
-        const user = {
-            id: Date.now().toString(),
-            email: pendingVerification.email,
-            password: pendingVerification.password,
-            name: pendingVerification.name,
-            createdAt: new Date(),
-            provider: 'email',
-            emailVerified: true,
-            lastLogin: new Date()
-        };
-
-        users.set(email, user);
-        pendingVerifications.delete(email);
-
-        const token = jwt.sign(
-            { id: user.id, email: user.email },
-            JWT_SECRET,
-            { expiresIn: '7d' }
-        );
-
-        console.log(`[SUCCESS] User account created for ${email}`);
-
-        res.json({
-            token,
-            user: {
-                id: user.id,
-                email: user.email,
-                name: user.name,
-                createdAt: user.createdAt,
-                emailVerified: user.emailVerified
-            },
-            message: 'Account created and verified successfully! Welcome to Roblox Luau AI!'
-        });
-
-    } catch (error) {
         console.error("[ERROR] Email verification error:", error);
         res.status(500).json({ error: 'Internal server error during email verification' });
     }
@@ -754,6 +677,7 @@ app.get("/auth/verify", authenticateToken, (req, res) => {
 
 // Google OAuth
 app.get("/auth/google", (req, res) => {
+    const googleClient = getGoogleClient();
     const scopes = ['email', 'profile'];
     const authUrl = googleClient.generateAuthUrl({
         access_type: 'offline',
@@ -765,6 +689,7 @@ app.get("/auth/google", (req, res) => {
 app.get("/auth/google/callback", async (req, res) => {
     try {
         const { code } = req.query;
+        const googleClient = getGoogleClient();
         const { tokens } = await googleClient.getToken(code);
         googleClient.setCredentials(tokens);
 
@@ -794,7 +719,8 @@ app.get("/auth/google/callback", async (req, res) => {
             { expiresIn: '7d' }
         );
 
-        res.redirect(`/login-success.html?token=${token}&user=${encodeURIComponent(JSON.stringify({
+        const baseUrl = getBaseUrl();
+        res.redirect(`${baseUrl}/login-success.html?token=${token}&user=${encodeURIComponent(JSON.stringify({
             id: user.id,
             email: user.email,
             name: user.name,
@@ -802,7 +728,8 @@ app.get("/auth/google/callback", async (req, res) => {
         }))}`);
     } catch (error) {
         console.error("[ERROR] Google auth error:", error);
-        res.redirect('/login.html?error=google_auth_failed');
+        const baseUrl = getBaseUrl();
+        res.redirect(`${baseUrl}/login.html?error=google_auth_failed`);
     }
 });
 
@@ -1019,14 +946,18 @@ async function startServer() {
     
     await initializeEmailTransporter();
     
-    app.listen(3000, () => {
+    const port = process.env.PORT || 3000;
+    const baseUrl = getBaseUrl();
+    
+    app.listen(port, () => {
         console.log("\n" + "=".repeat(50));
         console.log("[SUCCESS] Roblox Luau AI Server Running");
-        console.log("[URL] http://localhost:3000");
-        console.log("[LOGIN] http://localhost:3000/login.html");
-        console.log("[CHAT] http://localhost:3000/index.html");
+        console.log(`[URL] ${baseUrl}`);
+        console.log(`[LOGIN] ${baseUrl}/login.html`);
+        console.log(`[CHAT] ${baseUrl}/index.html`);
         console.log(`[EMAIL] ${emailTransporter ? "ENABLED" : "DISABLED"}`);
         console.log("[LIMITS] ENABLED FOR ALL USERS (TESTING MODE)");
+        console.log(`[BASE_URL] ${baseUrl}`);
         
         console.log("\n[TESTING USAGE LIMITS] (ALL USERS):");
         Object.entries(USAGE_LIMITS).forEach(([model, limits]) => {
@@ -1056,4 +987,98 @@ async function startServer() {
     });
 }
 
-startServer();
+startServer(); Signup error:", error);
+        res.status(500).json({ error: 'Internal server error occurred during signup' });
+    }
+});
+
+// Email verification
+app.post("/auth/verify-email", async (req, res) => {
+    try {
+        const { email, verificationCode } = req.body;
+
+        console.log(`\n[VERIFY] Email verification attempt for: ${email}`);
+
+        if (!email || !verificationCode) {
+            return res.status(400).json({ error: 'Email and verification code are required' });
+        }
+
+        if (!/^\d{6}$/.test(verificationCode)) {
+            return res.status(400).json({ error: 'Verification code must be 6 digits' });
+        }
+
+        const pendingVerification = pendingVerifications.get(email);
+
+        if (!pendingVerification) {
+            return res.status(400).json({ 
+                error: 'No pending verification found for this email. Please sign up again.',
+                action: 'signup_required'
+            });
+        }
+
+        if (Date.now() > pendingVerification.expires) {
+            console.log(`[ERROR] Verification code expired for ${email}`);
+            pendingVerifications.delete(email);
+            return res.status(400).json({ 
+                error: 'Verification code has expired. Please sign up again.',
+                action: 'signup_required'
+            });
+        }
+
+        pendingVerification.attempts = (pendingVerification.attempts || 0) + 1;
+        
+        if (pendingVerification.attempts > 5) {
+            console.log(`[ERROR] Too many verification attempts for ${email}`);
+            pendingVerifications.delete(email);
+            return res.status(429).json({ 
+                error: 'Too many failed attempts. Please sign up again.',
+                action: 'signup_required'
+            });
+        }
+
+        if (pendingVerification.verificationCode !== verificationCode) {
+            console.log(`[ERROR] Invalid verification code for ${email}. Attempt ${pendingVerification.attempts}/5`);
+            return res.status(400).json({ 
+                error: `Invalid verification code. ${5 - pendingVerification.attempts} attempts remaining.`,
+                attemptsRemaining: 5 - pendingVerification.attempts
+            });
+        }
+
+        console.log(`[SUCCESS] Email verification successful for ${email}`);
+
+        const user = {
+            id: Date.now().toString(),
+            email: pendingVerification.email,
+            password: pendingVerification.password,
+            name: pendingVerification.name,
+            createdAt: new Date(),
+            provider: 'email',
+            emailVerified: true,
+            lastLogin: new Date()
+        };
+
+        users.set(email, user);
+        pendingVerifications.delete(email);
+
+        const token = jwt.sign(
+            { id: user.id, email: user.email },
+            JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        console.log(`[SUCCESS] User account created for ${email}`);
+
+        res.json({
+            token,
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                createdAt: user.createdAt,
+                emailVerified: user.emailVerified
+            },
+            message: 'Account created and verified successfully! Welcome to Roblox Luau AI!'
+        });
+
+    } catch (error) {
+        console.error("[ERROR]
