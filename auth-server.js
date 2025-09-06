@@ -659,6 +659,8 @@ app.get("/auth/google", (req, res) => {
     res.redirect(authUrl);
 });
 
+// Replace the Google OAuth callback function in your auth-server.js with this:
+
 app.get("/auth/google/callback", async (req, res) => {
     try {
         const { code } = req.query;
@@ -692,8 +694,9 @@ app.get("/auth/google/callback", async (req, res) => {
             { expiresIn: '7d' }
         );
 
-        const baseUrl = getBaseUrl();
-        res.redirect(`${baseUrl}/login-success.html?token=${token}&user=${encodeURIComponent(JSON.stringify({
+        // UPDATED: Redirect to Netlify domain instead of Railway domain
+        const frontendUrl = 'https://musical-youtiao-b05928.netlify.app';
+        res.redirect(`${frontendUrl}/login-success.html?token=${token}&user=${encodeURIComponent(JSON.stringify({
             id: user.id,
             email: user.email,
             name: user.name,
@@ -701,8 +704,9 @@ app.get("/auth/google/callback", async (req, res) => {
         }))}`);
     } catch (error) {
         console.error("[ERROR] Google auth error:", error);
-        const baseUrl = getBaseUrl();
-        res.redirect(`${baseUrl}/login.html?error=google_auth_failed`);
+        // Redirect to Netlify domain on error too
+        const frontendUrl = 'https://musical-youtiao-b05928.netlify.app';
+        res.redirect(`${frontendUrl}/login.html?error=google_auth_failed`);
     }
 });
 
