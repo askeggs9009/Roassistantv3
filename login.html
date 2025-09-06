@@ -1,3 +1,4 @@
+<!-- 2. UPDATED login.html - Replace the existing login.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Roblox Luau AI Assistant - Login</title>
     <style>
+        /* Keep your existing styles - they're perfect */
         * {
             margin: 0;
             padding: 0;
@@ -309,7 +311,8 @@
 
         <!-- Social Login Methods -->
         <div class="auth-methods">
-            <a href="/auth/google" class="auth-button google">
+            <!-- UPDATED Google OAuth URL for Netlify -->
+            <a href="/.netlify/functions/auth/auth/google" class="auth-button google">
                 <div class="auth-icon">
                     <svg viewBox="0 0 24 24" width="20" height="20">
                         <path fill="#ea4335" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -322,7 +325,7 @@
             </a>
 
             <a href="/index.html" class="auth-button back-button">
-                â† Back to AI Assistant
+                ← Back to AI Assistant
             </a>
         </div>
 
@@ -400,7 +403,7 @@
                 toggleLink.textContent = 'Sign in';
                 nameGroup.style.display = 'flex';
                 verificationInfo.style.display = 'block';
-                verificationInfo.innerHTML = 'ðŸ“§ You\'ll receive a verification code via email to complete your registration.';
+                verificationInfo.innerHTML = '📧 You\'ll receive a verification code via email to complete your registration.';
             } else {
                 loginTitle.textContent = 'Welcome Back';
                 loginSubtitle.textContent = 'Sign in to your Roblox Luau AI Assistant';
@@ -469,7 +472,8 @@
                     ? { email, password, name: name || undefined }
                     : { email, password };
 
-                const response = await fetch(`http://localhost:3000${endpoint}`, {
+                // UPDATED: Use Netlify function URL
+                const response = await fetch(`/.netlify/functions/auth${endpoint}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -481,17 +485,13 @@
 
                 if (response.ok) {
                     if (isSignUp && data.requiresVerification) {
-                        // Store email for verification page
                         localStorage.setItem('pendingVerificationEmail', email);
-                        
                         showSuccess(data.message);
                         
-                        // Redirect to verification page after short delay
                         setTimeout(() => {
                             window.location.href = `/verify-email.html?email=${encodeURIComponent(email)}`;
                         }, 1500);
                     } else {
-                        // Regular login success
                         localStorage.setItem('authToken', data.token);
                         localStorage.setItem('user', JSON.stringify(data.user));
                         
@@ -515,7 +515,8 @@
         window.addEventListener('load', function() {
             const token = localStorage.getItem('authToken');
             if (token) {
-                fetch('http://localhost:3000/auth/verify', {
+                // UPDATED: Use Netlify function URL for token verification
+                fetch('/.netlify/functions/auth/auth/verify', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
