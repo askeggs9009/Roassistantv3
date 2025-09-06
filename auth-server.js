@@ -10,20 +10,16 @@ import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import crypto from 'crypto';
 
-// Create require function for CommonJS modules
 const require = createRequire(import.meta.url);
 
-// Import nodemailer using CommonJS
 let nodemailer = null;
 try {
     nodemailer = require('nodemailer');
     console.log('[SUCCESS] Nodemailer imported successfully');
 } catch (error) {
     console.log('[ERROR] Failed to import nodemailer:', error.message);
-    console.log('[INFO] Install nodemailer with: npm install nodemailer');
 }
 
-// Fix for ES modules __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -42,24 +38,17 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-t
 const users = new Map();
 const pendingVerifications = new Map();
 
-// Dynamic base URL configuration for Railway
 const getBaseUrl = () => {
-    // Railway sets RAILWAY_STATIC_URL for the deployed app
     if (process.env.RAILWAY_STATIC_URL) {
         return `https://${process.env.RAILWAY_STATIC_URL}`;
     }
-    
-    // Fallback to custom base URL or localhost
     if (process.env.BASE_URL) {
         return process.env.BASE_URL;
     }
-    
-    // For local development
     const port = process.env.PORT || 3000;
     return `http://localhost:${port}`;
 };
 
-// Google OAuth2 client with dynamic redirect URI
 const getGoogleClient = () => {
     const baseUrl = getBaseUrl();
     console.log(`[OAUTH] Using base URL: ${baseUrl}`);
@@ -71,7 +60,6 @@ const getGoogleClient = () => {
     );
 };
 
-// Usage limits configuration
 const USAGE_LIMITS = {
     "gpt-4o-mini": {
         dailyLimit: 10,
@@ -93,10 +81,8 @@ const USAGE_LIMITS = {
     }
 };
 
-// Store for tracking guest usage
 const guestUsage = new Map();
 
-// Helper function to get user identifier
 function getUserIdentifier(req) {
     const token = req.headers['authorization']?.split(' ')[1];
     
@@ -109,7 +95,6 @@ function getUserIdentifier(req) {
         }
     }
     
-    // For guests, use IP + simplified user agent hash
     const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
     const userAgent = req.headers['user-agent'] || '';
     const hash = crypto
@@ -121,7 +106,6 @@ function getUserIdentifier(req) {
     return `guest_${hash}`;
 }
 
-// Function to check if user is within usage limits
 function checkUsageLimit(userIdentifier, model) {
     const limits = USAGE_LIMITS[model];
     if (!limits) {
@@ -132,7 +116,6 @@ function checkUsageLimit(userIdentifier, model) {
     const oneHour = 60 * 60 * 1000;
     const oneDay = 24 * oneHour;
     
-    // Initialize user usage tracking
     if (!guestUsage.has(userIdentifier)) {
         guestUsage.set(userIdentifier, {
             hourlyUsage: [],
@@ -143,11 +126,9 @@ function checkUsageLimit(userIdentifier, model) {
     
     const usage = guestUsage.get(userIdentifier);
     
-    // Clean old entries
     usage.hourlyUsage = usage.hourlyUsage.filter(timestamp => now - timestamp < oneHour);
     usage.dailyUsage = usage.dailyUsage.filter(timestamp => now - timestamp < oneDay);
     
-    // Check hourly limit
     if (usage.hourlyUsage.length >= limits.hourlyLimit) {
         const oldestRequest = Math.min(...usage.hourlyUsage);
         const resetTime = new Date(oldestRequest + oneHour);
@@ -164,7 +145,6 @@ function checkUsageLimit(userIdentifier, model) {
         };
     }
     
-    // Check daily limit
     if (usage.dailyUsage.length >= limits.dailyLimit) {
         const oldestRequest = Math.min(...usage.dailyUsage);
         const resetTime = new Date(oldestRequest + oneDay);
@@ -192,7 +172,6 @@ function checkUsageLimit(userIdentifier, model) {
     };
 }
 
-// Function to record usage
 function recordUsage(userIdentifier, model) {
     const now = Date.now();
     
@@ -212,7 +191,6 @@ function recordUsage(userIdentifier, model) {
     guestUsage.set(userIdentifier, usage);
 }
 
-// Middleware to check usage limits
 function checkUsageLimits(req, res, next) {
     const userIdentifier = getUserIdentifier(req);
     const isAuthenticated = req.user !== null;
@@ -220,7 +198,6 @@ function checkUsageLimits(req, res, next) {
     
     console.log(`[USAGE CHECK] User: ${userIdentifier}, Model: ${model}, Auth: ${isAuthenticated}`);
     
-    // Apply limits to guests only
     if (!isAuthenticated) {
         const limitCheck = checkUsageLimit(userIdentifier, model);
         
@@ -237,11 +214,9 @@ function checkUsageLimits(req, res, next) {
             });
         }
         
-        // Record this usage
         recordUsage(userIdentifier, model);
         console.log(`[USAGE RECORDED] Guest user: ${userIdentifier}`);
         
-        // Add usage info to response headers
         res.set({
             'X-Usage-Hourly': `${limitCheck.limitsInfo.hourlyUsed + 1}/${limitCheck.limitsInfo.hourlyLimit}`,
             'X-Usage-Daily': `${limitCheck.limitsInfo.dailyUsed + 1}/${limitCheck.limitsInfo.dailyLimit}`,
@@ -253,21 +228,18 @@ function checkUsageLimits(req, res, next) {
     next();
 }
 
-// Email transporter
 let emailTransporter = null;
 
-// Initialize email transporter
 async function initializeEmailTransporter() {
     console.log('\n[EMAIL INIT] Initializing Email System...');
     
     if (!nodemailer) {
-        console.log('[CRITICAL] Nodemailer not available!');
+        console.log('[WARNING] Nodemailer not available!');
         return false;
     }
     
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-        console.log('[WARNING] Email configuration missing!');
-        console.log('[INFO] Email verification will be disabled');
+        console.log('[WARNING] Email configuration missing - email verification disabled');
         return false;
     }
 
@@ -287,11 +259,9 @@ async function initializeEmailTransporter() {
             requireTLS: true
         });
 
-        console.log('[EMAIL] Testing connection...');
-        
         await new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {
-                reject(new Error('Connection test timeout (10 seconds)'));
+                reject(new Error('Connection test timeout'));
             }, 10000);
 
             emailTransporter.verify((error, success) => {
@@ -314,12 +284,10 @@ async function initializeEmailTransporter() {
     }
 }
 
-// Generate verification code
 function generateVerificationCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Send verification email
 async function sendVerificationEmail(email, code, name = null) {
     if (!emailTransporter) {
         throw new Error('Email system not configured.');
@@ -330,35 +298,20 @@ async function sendVerificationEmail(email, code, name = null) {
         to: email,
         subject: 'Verify Your Roblox Luau AI Assistant Account',
         html: `
-            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
-                <div style="background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #21262d 100%); color: white; padding: 30px; border-radius: 12px; text-align: center;">
-                    <div style="width: 60px; height: 60px; background: linear-gradient(45deg, #00d4ff, #9d4edd); border-radius: 15px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 24px; margin-bottom: 20px;">
-                        RL
-                    </div>
-                    <h1 style="margin: 0; font-size: 24px; font-weight: 600;">Welcome to Roblox Luau AI!</h1>
-                    <p style="margin: 10px 0 0 0; color: #8b949e; font-size: 16px;">Your intelligent assistant for Roblox game development</p>
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h1>Welcome to Roblox Luau AI!</h1>
+                <p>Thanks for signing up! Please enter this verification code:</p>
+                <div style="background: #f0f0f0; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; margin: 20px 0;">
+                    ${code}
                 </div>
-                
-                <div style="background: white; padding: 30px; border-radius: 12px; margin-top: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
-                    <h2 style="color: #0d1117; margin-top: 0; font-size: 20px;">Verify Your Email Address</h2>
-                    <p style="color: #586069; line-height: 1.6; font-size: 16px;">
-                        ${name ? `Hi ${name}, t` : 'T'}hanks for signing up! Please enter the verification code below:
-                    </p>
-                    
-                    <div style="background: linear-gradient(135deg, #f6f8fa 0%, #e1e4e8 100%); border: 2px solid #d0d7de; border-radius: 12px; padding: 25px; text-align: center; margin: 25px 0;">
-                        <div style="font-size: 36px; font-weight: bold; color: #0d1117; letter-spacing: 4px; font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace; margin-bottom: 8px;">
-                            ${code}
-                        </div>
-                        <p style="margin: 0; color: #656d76; font-size: 14px; font-weight: 500;">This code expires in 15 minutes</p>
-                    </div>
-                </div>
+                <p>This code expires in 15 minutes.</p>
             </div>
         `
     };
 
     try {
         console.log(`[EMAIL] Sending verification to ${email}...`);
-        const result = await emailTransporter.sendMail(mailOptions);
+        await emailTransporter.sendMail(mailOptions);
         console.log('[SUCCESS] Verification email sent!');
         return true;
     } catch (error) {
@@ -367,7 +320,6 @@ async function sendVerificationEmail(email, code, name = null) {
     }
 }
 
-// Available model configurations
 const MODEL_CONFIGS = {
     "gpt-4o-mini": {
         model: "gpt-4o-mini",
@@ -383,7 +335,6 @@ const MODEL_CONFIGS = {
     }
 };
 
-// System prompt
 const SYSTEM_PROMPT = `You are a helpful Roblox Luau scripting assistant. You specialize in:
 
 1. Creating Roblox Luau scripts for various game mechanics
@@ -396,7 +347,6 @@ When providing code, always use proper Luau syntax and follow Roblox scripting b
 
 Be helpful, clear, and provide working examples when possible.`;
 
-// Middleware functions
 function optionalAuthenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -429,12 +379,11 @@ function authenticateToken(req, res, next) {
     });
 }
 
-// User registration
 app.post("/auth/signup", async (req, res) => {
     try {
         const { email, password, name } = req.body;
 
-        console.log(`\n[SIGNUP] Attempt for: ${email}`);
+        console.log(`[SIGNUP] Attempt for: ${email}`);
 
         if (!email || !password) {
             return res.status(400).json({ error: 'Email and password are required' });
@@ -454,10 +403,8 @@ app.post("/auth/signup", async (req, res) => {
         }
 
         if (!emailTransporter) {
-            console.log('[ERROR] Email verification attempted but email system not configured');
             return res.status(503).json({ 
-                error: 'Email verification system is not configured. Please contact the administrator.',
-                details: 'The server needs email configuration to send verification codes.'
+                error: 'Email verification system is not configured. Please contact the administrator.'
             });
         }
 
@@ -477,8 +424,6 @@ app.post("/auth/signup", async (req, res) => {
         const verificationCode = generateVerificationCode();
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        console.log(`[SIGNUP] Generated verification code for ${email}`);
-
         pendingVerifications.set(email, {
             email,
             password: hashedPassword,
@@ -492,8 +437,6 @@ app.post("/auth/signup", async (req, res) => {
         try {
             await sendVerificationEmail(email, verificationCode, name);
             
-            console.log(`[SUCCESS] Verification email sent to ${email}`);
-            
             res.json({
                 message: 'Verification code sent to your email. Please check your inbox and spam folder.',
                 email: email,
@@ -506,8 +449,7 @@ app.post("/auth/signup", async (req, res) => {
             pendingVerifications.delete(email);
             
             res.status(500).json({ 
-                error: 'Failed to send verification email. Please try again later.',
-                details: 'There was an issue with our email service. Please check your email address and try again.'
+                error: 'Failed to send verification email. Please try again later.'
             });
         }
 
@@ -517,12 +459,9 @@ app.post("/auth/signup", async (req, res) => {
     }
 });
 
-// Email verification
 app.post("/auth/verify-email", async (req, res) => {
     try {
         const { email, verificationCode } = req.body;
-
-        console.log(`\n[VERIFY] Email verification attempt for: ${email}`);
 
         if (!email || !verificationCode) {
             return res.status(400).json({ error: 'Email and verification code are required' });
@@ -542,7 +481,6 @@ app.post("/auth/verify-email", async (req, res) => {
         }
 
         if (Date.now() > pendingVerification.expires) {
-            console.log(`[ERROR] Verification code expired for ${email}`);
             pendingVerifications.delete(email);
             return res.status(400).json({ 
                 error: 'Verification code has expired. Please sign up again.',
@@ -553,7 +491,6 @@ app.post("/auth/verify-email", async (req, res) => {
         pendingVerification.attempts = (pendingVerification.attempts || 0) + 1;
         
         if (pendingVerification.attempts > 5) {
-            console.log(`[ERROR] Too many verification attempts for ${email}`);
             pendingVerifications.delete(email);
             return res.status(429).json({ 
                 error: 'Too many failed attempts. Please sign up again.',
@@ -562,14 +499,11 @@ app.post("/auth/verify-email", async (req, res) => {
         }
 
         if (pendingVerification.verificationCode !== verificationCode) {
-            console.log(`[ERROR] Invalid verification code for ${email}. Attempt ${pendingVerification.attempts}/5`);
             return res.status(400).json({ 
                 error: `Invalid verification code. ${5 - pendingVerification.attempts} attempts remaining.`,
                 attemptsRemaining: 5 - pendingVerification.attempts
             });
         }
-
-        console.log(`[SUCCESS] Email verification successful for ${email}`);
 
         const user = {
             id: Date.now().toString(),
@@ -591,8 +525,6 @@ app.post("/auth/verify-email", async (req, res) => {
             { expiresIn: '7d' }
         );
 
-        console.log(`[SUCCESS] User account created for ${email}`);
-
         res.json({
             token,
             user: {
@@ -611,12 +543,9 @@ app.post("/auth/verify-email", async (req, res) => {
     }
 });
 
-// Resend verification
 app.post("/auth/resend-verification", async (req, res) => {
     try {
         const { email } = req.body;
-
-        console.log(`\n[RESEND] Verification request for: ${email}`);
 
         if (!email) {
             return res.status(400).json({ error: 'Email address is required' });
@@ -656,8 +585,6 @@ app.post("/auth/resend-verification", async (req, res) => {
         try {
             await sendVerificationEmail(email, verificationCode, pendingVerification.name);
             
-            console.log(`[SUCCESS] New verification code sent to ${email}`);
-            
             res.json({
                 message: 'New verification code sent to your email.',
                 expiresIn: '15 minutes'
@@ -676,7 +603,6 @@ app.post("/auth/resend-verification", async (req, res) => {
     }
 });
 
-// User login
 app.post("/auth/login", async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -719,12 +645,10 @@ app.post("/auth/login", async (req, res) => {
     }
 });
 
-// Token verification
 app.get("/auth/verify", authenticateToken, (req, res) => {
     res.json({ valid: true, user: req.user });
 });
 
-// Google OAuth
 app.get("/auth/google", (req, res) => {
     const googleClient = getGoogleClient();
     const scopes = ['email', 'profile'];
@@ -782,7 +706,6 @@ app.get("/auth/google/callback", async (req, res) => {
     }
 });
 
-// API endpoint to get current usage limits
 app.get("/usage-limits", optionalAuthenticateToken, (req, res) => {
     const userIdentifier = getUserIdentifier(req);
     const isAuthenticated = req.user !== null;
@@ -818,7 +741,6 @@ app.get("/usage-limits", optionalAuthenticateToken, (req, res) => {
     });
 });
 
-// AI chat endpoint with usage limits
 app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) => {
     try {
         const { prompt, model = "gpt-4o-mini" } = req.body;
@@ -839,7 +761,6 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             temperature: 0.7
         });
 
-        // Add usage info to response for guests
         const userIdentifier = getUserIdentifier(req);
         let responseData = { 
             reply: response.choices[0].message.content, 
@@ -875,7 +796,6 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
     }
 });
 
-// Get available models with usage info
 app.get("/models", optionalAuthenticateToken, (req, res) => {
     const isAuthenticated = req.user !== null;
     const userIdentifier = getUserIdentifier(req);
@@ -887,7 +807,6 @@ app.get("/models", optionalAuthenticateToken, (req, res) => {
             requiresAuth: false
         };
 
-        // Show limits for guests only
         if (!isAuthenticated) {
             const limitCheck = checkUsageLimit(userIdentifier, key);
             const limits = USAGE_LIMITS[key];
@@ -913,11 +832,9 @@ app.get("/models", optionalAuthenticateToken, (req, res) => {
     });
 });
 
-// Clean up expired verifications and old usage data
 setInterval(() => {
     const now = Date.now();
     
-    // Clean expired verifications
     const expiredVerifications = [];
     for (const [email, verification] of pendingVerifications.entries()) {
         if (now > verification.expires) {
@@ -927,35 +844,25 @@ setInterval(() => {
     
     expiredVerifications.forEach(email => {
         pendingVerifications.delete(email);
-        console.log(`[CLEANUP] Expired verification for ${email}`);
     });
     
-    // Clean old usage data
     const oneDay = 24 * 60 * 60 * 1000;
     for (const [userIdentifier, usage] of guestUsage.entries()) {
-        // Remove entries older than 24 hours
         usage.hourlyUsage = usage.hourlyUsage.filter(timestamp => now - timestamp < 60 * 60 * 1000);
         usage.dailyUsage = usage.dailyUsage.filter(timestamp => now - timestamp < oneDay);
         
-        // Remove users with no recent activity
         if (usage.hourlyUsage.length === 0 && usage.dailyUsage.length === 0) {
             guestUsage.delete(userIdentifier);
         } else {
             guestUsage.set(userIdentifier, usage);
         }
     }
-    
-    if (expiredVerifications.length > 0 || guestUsage.size > 0) {
-        console.log(`[CLEANUP] ${expiredVerifications.length} expired verifications, ${guestUsage.size} active users`);
-    }
-}, 60 * 60 * 1000); // Run every hour
+}, 60 * 60 * 1000);
 
-// Default route
 app.get("/", (req, res) => {
     res.redirect('/index.html');
 });
 
-// Health check endpoint for Railway
 app.get("/health", (req, res) => {
     res.status(200).json({ 
         status: "healthy", 
@@ -964,13 +871,8 @@ app.get("/health", (req, res) => {
     });
 });
 
-// Start server
 async function startServer() {
-    if (!nodemailer) {
-        console.log('[CRITICAL] Nodemailer could not be imported');
-        console.log('[INFO] Please install nodemailer: npm install nodemailer');
-        console.log('[INFO] Then restart the server');
-    }
+    console.log('\n[INIT] Starting Roblox Luau AI Server...');
     
     await initializeEmailTransporter();
     
@@ -983,15 +885,10 @@ async function startServer() {
         console.log(`[PORT] ${port}`);
         console.log(`[BASE_URL] ${baseUrl}`);
         console.log(`[HEALTH] ${baseUrl}/health`);
-        console.log(`[LOGIN] ${baseUrl}/login.html`);
-        console.log(`[CHAT] ${baseUrl}/index.html`);
         console.log(`[EMAIL] ${emailTransporter ? "ENABLED" : "DISABLED"}`);
-        console.log(`[ENVIRONMENT] ${process.env.NODE_ENV || 'development'}`);
         
-        // Railway-specific logs
         if (process.env.RAILWAY_STATIC_URL) {
-            console.log(`[RAILWAY] Deployed on Railway`);
-            console.log(`[RAILWAY_URL] https://${process.env.RAILWAY_STATIC_URL}`);
+            console.log(`[RAILWAY] https://${process.env.RAILWAY_STATIC_URL}`);
         }
         
         console.log("\n[USAGE LIMITS] (Guests Only):");
@@ -1001,18 +898,12 @@ async function startServer() {
         
         console.log("\n[GOOGLE OAUTH]");
         console.log(`   Redirect URI: ${baseUrl}/auth/google/callback`);
-        console.log(`   Make sure this is added to Google Cloud Console`);
-        
-        if (!emailTransporter) {
-            console.log("\n[WARNING] Email verification is DISABLED!");
-            console.log("[INFO] Set EMAIL_USER and EMAIL_PASSWORD environment variables to enable");
-        }
         
         console.log("=".repeat(60) + "\n");
     });
 }
 
 startServer().catch(error => {
-    console.error('[FATAL] Failed to start server:', error);
+    console.error('[FATAL] Server startup failed:', error);
     process.exit(1);
 });
