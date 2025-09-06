@@ -1438,7 +1438,10 @@
             return div.innerHTML;
         }
 
-        // Send message function with usage limits integration
+        // 3. UPDATED index.html - Update the JavaScript section at the bottom
+// Replace the existing sendMessage function and API calls with this:
+
+        // Send message function with Netlify URLs
         async function sendMessage() {
             const messageInput = document.getElementById('messageInput');
             const sendButton = document.getElementById('sendButton');
@@ -1489,7 +1492,8 @@
                     headers["Authorization"] = `Bearer ${authToken}`;
                 }
 
-                const response = await fetch("http://localhost:3000/ask", {
+                // UPDATED: Use Netlify function URL
+                const response = await fetch("/.netlify/functions/auth/ask", {
                     method: "POST",
                     headers: headers,
                     body: JSON.stringify({ 
@@ -1528,12 +1532,94 @@
                     }
                 }
             } catch (error) {
-                addMessage('⚠️ Connection Error: Make sure your server is running on http://localhost:3000', false);
+                addMessage('⚠️ Connection Error: Make sure your server is running properly', false);
             } finally {
                 sendButton.disabled = false;
                 sendButton.textContent = 'Send';
                 messageInput.focus();
             }
+        }
+
+        // UPDATED: Usage limits manager with Netlify URLs
+        class UsageLimitsManager {
+            constructor() {
+                this.limits = {};
+                this.isAuthenticated = false;
+                this.currentUsage = {};
+            }
+
+            // Initialize usage limits
+            async init() {
+                await this.fetchUsageLimits();
+                this.updateModelSelector();
+                this.showUsageBanner();
+            }
+
+            // Fetch current usage limits from server
+            async fetchUsageLimits() {
+                try {
+                    const headers = {};
+                    if (authToken) {
+                        headers['Authorization'] = `Bearer ${authToken}`;
+                    }
+
+                    // UPDATED: Use Netlify function URL
+                    const response = await fetch('/.netlify/functions/auth/usage-limits', {
+                        headers: headers
+                    });
+
+                    const data = await response.json();
+                    this.isAuthenticated = data.type === 'authenticated';
+                    this.limits = data.limits;
+
+                    console.log('Usage limits loaded:', data);
+                } catch (error) {
+                    console.error('Failed to fetch usage limits:', error);
+                }
+            }
+
+            // ... rest of the UsageLimitsManager methods stay the same ...
+        }
+
+        // UPDATED: Check authentication status
+        function checkAuth() {
+            console.log('Checking auth...');
+            authToken = localStorage.getItem('authToken');
+            const user = localStorage.getItem('user');
+
+            if (authToken && user) {
+                // UPDATED: Verify token with Netlify function
+                fetch('/.netlify/functions/auth/auth/verify', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        try {
+                            const userData = JSON.parse(user);
+                            showLoggedInUser(userData);
+                            isLoggedIn = true;
+                        } catch (error) {
+                            showGuestUser();
+                            isLoggedIn = false;
+                        }
+                    } else {
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('user');
+                        showGuestUser();
+                        isLoggedIn = false;
+                    }
+                })
+                .catch(() => {
+                    showGuestUser();
+                    isLoggedIn = false;
+                });
+            } else {
+                showGuestUser();
+                isLoggedIn = false;
+            }
+            updateModelSelector();
         }
 
         // Save message to current chat
