@@ -30,7 +30,7 @@
         </div>
 
         <button class="new-chat-btn" onclick="startNewChat()">
-            <span>➕</span>
+            <span>âž•</span>
             New chat
         </button>
 
@@ -43,15 +43,15 @@
             <!-- Main Navigation -->
             <div class="nav-section">
                 <div class="nav-item active" onclick="setActiveNav(this, 'chats')">
-                    <span class="nav-icon">💬</span>
+                    <span class="nav-icon">ðŸ’¬</span>
                     Chats
                 </div>
                 <div class="nav-item" onclick="setActiveNav(this, 'projects')">
-                    <span class="nav-icon">📂</span>
+                    <span class="nav-icon">ðŸ“‚</span>
                     Projects
                 </div>
                 <div class="nav-item" onclick="setActiveNav(this, 'scripts')">
-                    <span class="nav-icon">🔧</span>
+                    <span class="nav-icon">ðŸ”§</span>
                     Scripts
                 </div>
             </div>
@@ -77,7 +77,7 @@
         <!-- Header -->
         <div class="main-header">
             <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleSidebar()">
-                ☰
+                â˜°
             </button>
             <div class="header-title" id="chatTitle">New Chat</div>
             <select class="model-selector" id="modelSelector">
@@ -97,31 +97,31 @@
             <div class="messages-container" id="messagesContainer">
                 <!-- Welcome Screen -->
                 <div class="welcome-screen" id="welcomeScreen">
-                    <div class="welcome-icon">🚀</div>
+                    <div class="welcome-icon">ðŸš€</div>
                     <h1 class="welcome-title">Welcome to Roblox Luau AI</h1>
                     <p class="welcome-subtitle">Your intelligent assistant for Roblox game development</p>
                     
                     <div class="quick-actions">
                         <div class="quick-action" onclick="useQuickAction('Create a simple script that makes a part glow when touched')">
-                            <span class="action-icon">✨</span>
+                            <span class="action-icon">âœ¨</span>
                             <div class="action-title">Create Script</div>
                             <div class="action-desc">Generate Luau scripts for your Roblox game</div>
                         </div>
                         
                         <div class="quick-action" onclick="useQuickAction('Debug this error: attempt to index nil with HeadQuest')">
-                            <span class="action-icon">🐛</span>
+                            <span class="action-icon">ðŸ›</span>
                             <div class="action-title">Debug Code</div>
                             <div class="action-desc">Fix errors and optimize your scripts</div>
                         </div>
                         
                         <div class="quick-action" onclick="useQuickAction('Explain how RemoteEvents work in Roblox')">
-                            <span class="action-icon">📚</span>
+                            <span class="action-icon">ðŸ“š</span>
                             <div class="action-title">Learn Concepts</div>
                             <div class="action-desc">Understand Roblox development concepts</div>
                         </div>
                         
                         <div class="quick-action" onclick="useQuickAction('Create a shop GUI with purchase functionality')">
-                            <span class="action-icon">🎮</span>
+                            <span class="action-icon">ðŸŽ®</span>
                             <div class="action-title">Build Systems</div>
                             <div class="action-desc">Design game mechanics and systems</div>
                         </div>
@@ -139,7 +139,7 @@
                         <!-- Input row -->
                         <div class="input-row">
                             <button class="attach-button" id="attachButton" onclick="openFileDialog()" title="Add file or image">
-                                <span>📎</span>
+                                <span>ðŸ“Ž</span>
                             </button>
                             <textarea 
                                 class="input-area" 
@@ -158,7 +158,7 @@
                 <!-- Drag & Drop Overlay -->
                 <div class="drag-overlay" id="dragOverlay" style="display: none;">
                     <div class="drag-content">
-                        <div class="drag-icon">📁</div>
+                        <div class="drag-icon">ðŸ“</div>
                         <div class="drag-text">Drop files here to upload</div>
                         <div class="drag-subtext">Images, code files, and documents</div>
                     </div>
@@ -320,7 +320,7 @@
 
                 if (hasLimits) {
                     const upgradeBtn = document.createElement('button');
-                    upgradeBtn.textContent = '✨ Sign Up for Unlimited';
+                    upgradeBtn.textContent = 'âœ¨ Sign Up for Unlimited';
                     upgradeBtn.style.cssText = `
                         background: linear-gradient(45deg, #238636, #2ea043);
                         border: none;
@@ -363,7 +363,7 @@
                     
                     this.showLimitReachedModal(error.error, timeUntilReset, model);
                 } else {
-                    addMessage(`🚫 ${error.error}`, false, true);
+                    addMessage(`ðŸš« ${error.error}`, false, true);
                 }
             }
 
@@ -413,7 +413,7 @@
                 `;
 
                 modalContent.innerHTML = `
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">⏰</div>
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">â°</div>
                     <h2 style="color: #f85149; margin-bottom: 1rem; font-size: 1.3rem;">Usage Limit Reached</h2>
                     <p style="color: #e6edf3; margin-bottom: 1.5rem; line-height: 1.5;">${message}</p>
                     <p style="color: #8b949e; margin-bottom: 2rem; font-size: 0.9rem;">
@@ -442,7 +442,7 @@
                             font-weight: 600;
                             transition: all 0.2s ease;
                         " onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
-                            ✨ Sign Up for Unlimited
+                            âœ¨ Sign Up for Unlimited
                         </button>
                     </div>
                 `;
@@ -510,7 +510,7 @@
 
                 prompt.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
-                        <div style="font-size: 1.5rem;">⚡</div>
+                        <div style="font-size: 1.5rem;">âš¡</div>
                         <div style="font-weight: 600; flex: 1;">Almost Out!</div>
                         <button onclick="this.closest('#upgradePrompt').remove()" style="
                             background: none;
@@ -520,7 +520,7 @@
                             padding: 0.25rem;
                             border-radius: 4px;
                         " onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='none'">
-                            ×
+                            Ã—
                         </button>
                     </div>
                     <p style="margin: 0 0 1rem 0; line-height: 1.4;">${message}</p>
@@ -867,18 +867,18 @@
                                 <div class="file-name">${fileData.name}</div>
                                 <div class="file-size">${formatFileSize(fileData.size)}</div>
                             </div>
-                            <button class="file-remove" onclick="removeAttachment('${fileId}')" title="Remove">×</button>
+                            <button class="file-remove" onclick="removeAttachment('${fileId}')" title="Remove">Ã—</button>
                         `;
                     };
                     reader.readAsDataURL(fileData.file);
                 } else {
                     attachment.innerHTML = `
-                        <div class="file-icon">🖼️</div>
+                        <div class="file-icon">ðŸ–¼ï¸</div>
                         <div class="file-info">
                             <div class="file-name">${fileData.name}</div>
                             <div class="file-size">${formatFileSize(fileData.size)}</div>
                         </div>
-                        <button class="file-remove" onclick="removeAttachment('${fileId}')" title="Remove">×</button>
+                        <button class="file-remove" onclick="removeAttachment('${fileId}')" title="Remove">Ã—</button>
                     `;
                 }
             } else {
@@ -889,7 +889,7 @@
                         <div class="file-name">${fileData.name}</div>
                         <div class="file-size">${formatFileSize(fileData.size)}</div>
                     </div>
-                    <button class="file-remove" onclick="removeAttachment('${fileId}')" title="Remove">×</button>
+                    <button class="file-remove" onclick="removeAttachment('${fileId}')" title="Remove">Ã—</button>
                 `;
             }
 
@@ -920,13 +920,13 @@
         function getFileIcon(fileName, mimeType) {
             const extension = fileName.split('.').pop().toLowerCase();
             
-            if (mimeType && mimeType.includes('lua')) return '🎮';
-            if (['lua', 'luau'].includes(extension)) return '🎮';
-            if (['js', 'json'].includes(extension)) return '⚡';
-            if (['txt', 'md'].includes(extension)) return '📄';
-            if (mimeType && mimeType.includes('image')) return '🖼️';
+            if (mimeType && mimeType.includes('lua')) return 'ðŸŽ®';
+            if (['lua', 'luau'].includes(extension)) return 'ðŸŽ®';
+            if (['js', 'json'].includes(extension)) return 'âš¡';
+            if (['txt', 'md'].includes(extension)) return 'ðŸ“„';
+            if (mimeType && mimeType.includes('image')) return 'ðŸ–¼ï¸';
             
-            return '📄';
+            return 'ðŸ“„';
         }
 
         // Format file size
@@ -988,7 +988,7 @@
             const userProfile = document.getElementById('userProfile');
             if (userProfile) {
                 userProfile.innerHTML = `
-                    <div class="user-avatar">👤</div>
+                    <div class="user-avatar">ðŸ‘¤</div>
                     <div class="user-info">
                         <div class="user-name">Guest User</div>
                         <div class="user-plan">Free Plan - <span style="color: #58a6ff; cursor: pointer;" onclick="window.location.href='/login.html'">Sign In for More</span></div>
@@ -1017,7 +1017,7 @@
             if (selectedModel !== 'gpt-4o-mini') {
                 selectedModel = 'gpt-4o-mini';
                 document.getElementById('modelSelector').value = selectedModel;
-                addMessage('🔄 Switched to GPT-4o Mini (Guest access)', false, true);
+                addMessage('ðŸ”„ Switched to GPT-4o Mini (Guest access)', false, true);
             }
         }
 
@@ -1134,31 +1134,31 @@
             if (messagesContainer) {
                 messagesContainer.innerHTML = `
                     <div class="welcome-screen" id="welcomeScreen">
-                        <div class="welcome-icon">🚀</div>
+                        <div class="welcome-icon">ðŸš€</div>
                         <h1 class="welcome-title">Welcome to Roblox Luau AI</h1>
                         <p class="welcome-subtitle">Your intelligent assistant for Roblox game development</p>
                         
                         <div class="quick-actions">
                             <div class="quick-action" onclick="useQuickAction('Create a simple script that makes a part glow when touched')">
-                                <span class="action-icon">✨</span>
+                                <span class="action-icon">âœ¨</span>
                                 <div class="action-title">Create Script</div>
                                 <div class="action-desc">Generate Luau scripts for your Roblox game</div>
                             </div>
                             
                             <div class="quick-action" onclick="useQuickAction('Debug this error: attempt to index nil with HeadQuest')">
-                                <span class="action-icon">🐛</span>
+                                <span class="action-icon">ðŸ›</span>
                                 <div class="action-title">Debug Code</div>
                                 <div class="action-desc">Fix errors and optimize your scripts</div>
                             </div>
                             
                             <div class="quick-action" onclick="useQuickAction('Explain how RemoteEvents work in Roblox')">
-                                <span class="action-icon">📚</span>
+                                <span class="action-icon">ðŸ“š</span>
                                 <div class="action-title">Learn Concepts</div>
                                 <div class="action-desc">Understand Roblox development concepts</div>
                             </div>
                             
                             <div class="quick-action" onclick="useQuickAction('Create a shop GUI with purchase functionality')">
-                                <span class="action-icon">🎮</span>
+                                <span class="action-icon">ðŸŽ®</span>
                                 <div class="action-title">Build Systems</div>
                                 <div class="action-desc">Design game mechanics and systems</div>
                             </div>
@@ -1197,7 +1197,7 @@
                 `;
                 
                 let hasLimits = false;
-                let usageHTML = '<h3 style="color: #58a6ff; margin-bottom: 1rem; font-size: 1.1rem;">📊 Your Usage Today</h3>';
+                let usageHTML = '<h3 style="color: #58a6ff; margin-bottom: 1rem; font-size: 1.1rem;">ðŸ“Š Your Usage Today</h3>';
                 usageHTML += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">';
                 
                 Object.entries(usageLimitsManager.limits).forEach(([model, limits]) => {
@@ -1248,7 +1248,7 @@
                             transition: all 0.2s ease;
                             font-size: 0.95rem;
                         " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
-                            ✨ Get Unlimited Access
+                            âœ¨ Get Unlimited Access
                         </button>
                     `;
                     
@@ -1327,7 +1327,7 @@
                 
                 messageText.innerHTML = `
                     <div style="margin-bottom: 0.5rem;">
-                        <strong>📷 ${fileData.name}</strong>
+                        <strong>ðŸ“· ${fileData.name}</strong>
                     </div>
                     ${imageSrc ? `<img src="${imageSrc}" alt="${fileData.name}" style="max-width: 100%; max-height: 300px; border-radius: 8px; display: block;">` : ''}
                 `;
@@ -1386,7 +1386,7 @@
             
             const avatar = document.createElement('div');
             avatar.className = 'message-avatar';
-            avatar.textContent = isUser ? 'U' : (isSystem ? '⚙️' : 'AI');
+            avatar.textContent = isUser ? 'U' : (isSystem ? 'âš™ï¸' : 'AI');
             
             const contentDiv = document.createElement('div');
             contentDiv.className = 'message-content';
@@ -1438,10 +1438,7 @@
             return div.innerHTML;
         }
 
-        // 3. UPDATED index.html - Update the JavaScript section at the bottom
-// Replace the existing sendMessage function and API calls with this:
-
-        // Send message function with Netlify URLs
+        // Send message function with usage limits integration
         async function sendMessage() {
             const messageInput = document.getElementById('messageInput');
             const sendButton = document.getElementById('sendButton');
@@ -1492,8 +1489,7 @@
                     headers["Authorization"] = `Bearer ${authToken}`;
                 }
 
-                // UPDATED: Use Netlify function URL
-                const response = await fetch("/.netlify/functions/auth/ask", {
+                const response = await fetch("http://localhost:3000/ask", {
                     method: "POST",
                     headers: headers,
                     body: JSON.stringify({ 
@@ -1513,113 +1509,31 @@
                             await usageLimitsManager.updateUsageAfterRequest(selectedModel, data.usageInfo);
                         }
                     } else {
-                        addMessage('⚠️ Error: ' + (data.error || 'Unknown error occurred'), false);
+                        addMessage('âš ï¸ Error: ' + (data.error || 'Unknown error occurred'), false);
                     }
                 } else if (response.status === 429) {
                     // Handle usage limit errors
                     usageLimitsManager.handleUsageLimitError(data, selectedModel);
                 } else {
                     if (response.status === 403 && data.requiresAuth) {
-                        addMessage(`🔒 ${data.error}`, false, true);
+                        addMessage(`ðŸ”’ ${data.error}`, false, true);
                         
                         if (data.availableModel) {
                             selectedModel = data.availableModel;
                             document.getElementById('modelSelector').value = selectedModel;
-                            addMessage(`🔄 Switched to ${selectedModel} (available for guests)`, false, true);
+                            addMessage(`ðŸ”„ Switched to ${selectedModel} (available for guests)`, false, true);
                         }
                     } else {
-                        addMessage('⚠️ Error: ' + (data.error || 'Unknown error occurred'), false);
+                        addMessage('âš ï¸ Error: ' + (data.error || 'Unknown error occurred'), false);
                     }
                 }
             } catch (error) {
-                addMessage('⚠️ Connection Error: Make sure your server is running properly', false);
+                addMessage('âš ï¸ Connection Error: Make sure your server is running on http://localhost:3000', false);
             } finally {
                 sendButton.disabled = false;
                 sendButton.textContent = 'Send';
                 messageInput.focus();
             }
-        }
-
-        // UPDATED: Usage limits manager with Netlify URLs
-        class UsageLimitsManager {
-            constructor() {
-                this.limits = {};
-                this.isAuthenticated = false;
-                this.currentUsage = {};
-            }
-
-            // Initialize usage limits
-            async init() {
-                await this.fetchUsageLimits();
-                this.updateModelSelector();
-                this.showUsageBanner();
-            }
-
-            // Fetch current usage limits from server
-            async fetchUsageLimits() {
-                try {
-                    const headers = {};
-                    if (authToken) {
-                        headers['Authorization'] = `Bearer ${authToken}`;
-                    }
-
-                    // UPDATED: Use Netlify function URL
-                    const response = await fetch('/.netlify/functions/auth/usage-limits', {
-                        headers: headers
-                    });
-
-                    const data = await response.json();
-                    this.isAuthenticated = data.type === 'authenticated';
-                    this.limits = data.limits;
-
-                    console.log('Usage limits loaded:', data);
-                } catch (error) {
-                    console.error('Failed to fetch usage limits:', error);
-                }
-            }
-
-            // ... rest of the UsageLimitsManager methods stay the same ...
-        }
-
-        // UPDATED: Check authentication status
-        function checkAuth() {
-            console.log('Checking auth...');
-            authToken = localStorage.getItem('authToken');
-            const user = localStorage.getItem('user');
-
-            if (authToken && user) {
-                // UPDATED: Verify token with Netlify function
-                fetch('/.netlify/functions/auth/auth/verify', {
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`
-                    }
-                })
-                .then(response => {
-                    if (response.ok) {
-                        try {
-                            const userData = JSON.parse(user);
-                            showLoggedInUser(userData);
-                            isLoggedIn = true;
-                        } catch (error) {
-                            showGuestUser();
-                            isLoggedIn = false;
-                        }
-                    } else {
-                        localStorage.removeItem('authToken');
-                        localStorage.removeItem('user');
-                        showGuestUser();
-                        isLoggedIn = false;
-                    }
-                })
-                .catch(() => {
-                    showGuestUser();
-                    isLoggedIn = false;
-                });
-            } else {
-                showGuestUser();
-                isLoggedIn = false;
-            }
-            updateModelSelector();
         }
 
         // Save message to current chat
@@ -1684,7 +1598,7 @@
                         <div class="chat-time">${timeAgo}</div>
                         <div class="chat-menu">
                             <button class="menu-btn" onclick="deleteChat('${chat.id}', event)" title="Delete chat">
-                                🗑️
+                                ðŸ—‘ï¸
                             </button>
                         </div>
                     </div>
