@@ -339,13 +339,17 @@
             await verifyEmail(verificationCode);
         });
 
+        // 4. UPDATED verify-email.html - Update the JavaScript section
+// Replace the verifyEmail and resendVerificationCode functions with these:
+
         // Verify email with code
         async function verifyEmail(code) {
             setLoading(true);
             clearMessages();
 
             try {
-                const response = await fetch('http://localhost:3000/auth/verify-email', {
+                // UPDATED: Use Netlify function URL
+                const response = await fetch('/.netlify/functions/auth/auth/verify-email', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -388,7 +392,8 @@
             clearMessages();
 
             try {
-                const response = await fetch('http://localhost:3000/auth/resend-verification', {
+                // UPDATED: Use Netlify function URL
+                const response = await fetch('/.netlify/functions/auth/auth/resend-verification', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -412,7 +417,6 @@
                 setResendLoading(false);
             }
         }
-
         // Start countdown for resend button
         function startResendCountdown() {
             let countdown = 60;
