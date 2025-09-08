@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing - Roblox Luau AI Assistant</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/pricing.css">
+</head>
+<body>
+    <div class="pricing-page">
+        <!-- Header -->
+        <header class="pricing-header">
+            <div class="header-content">
+                <a href="/index.html" class="logo">
+                    <div class="logo-icon">RL</div>
+                    <span class="logo-text">Roblox Luau AI</span>
+                </a>
+                <nav class="header-nav">
+                    <a href="/index.html" class="nav-link">Home</a>
+                    <a href="/about.html" class="nav-link">About</a>
+                    <a href="/pricing.html" class="nav-link active">Pricing</a>
+                    <button class="sign-in-btn" onclick="window.location.href='/login.html'">Sign In</button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="pricing-hero">
+            <h1 class="hero-title">Choose Your Plan</h1>
+            <p class="hero-subtitle">Start free, upgrade when you need more power</p>
+            
+            <!-- Billing Toggle -->
+            <div class="billing-toggle">
+                <span class="billing-label">Monthly</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="billingToggle" onchange="toggleBilling()">
+                    <span class="toggle-slider"></span>
+                </label>
+                <span class="billing-label">
+                    Annual
+                    <span class="discount-badge">Save 20%</span>
+                </span>
+            </div>
+        </section>
+
+        <!-- Pricing Cards -->
+        <section class="pricing-cards">
+            <!-- Free Tier -->
+            <div class="pricing-card free">
+                <div class="card-header">
+                    <h2 class="plan-name">Free</h2>
+                    <div class="plan-price">
+                        <span class="currency">$</span>
+                        <span class="amount">0</span>
+                        <span class="period">/month</span>
+                    </div>
+                    <p class="plan-description">Perfect for getting started</p>
+                </div>
+                
+                <div class="card-features">
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <span class="feature-text">10 messages per day</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <span class="feature-text">GPT-4o Mini model only</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <span class="feature-text">Basic script generation</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <span class="feature-text">Community support</span>
+                    </div>
+                    <div class="feature disabled">
+                        <span class="feature-icon">✗</span>
+                        <span class="feature-text">Advanced models</span>
+                    </div>
+                    <div class="feature disabled">
+                        <span class="feature-icon">✗</span>
+                        <span class="feature-text">Priority support</span>
+                    </div>
+                    <div class="feature disabled">
+                        <span class="feature-icon">✗</span>
+                        <span class="feature-text">Projects & Scripts</span>
+                    </div>
+                </div>
+                
+                <button class="plan-button secondary" onclick="selectPlan('free')">
+                    Current Plan
+                </button>
+            </div>
+
+            <!-- Pro Tier (Most Popular) -->
+            <div class="pricing-card pro popular">
+                <div class="popular-badge">Most Popular</div>
+                <div class="card-header">
+                    <h2 class="plan-name">Pro</h2>
+                    <div class="plan-price">
+                        <span class="currency">$</span>
+                        <span class="amount monthly-price">12</span>
+                        <span class="amount annual-price" style="display: none;">10</span>
+                        <span class="period">/month</span>
+                    </div>
+                    <p class="plan-description">For serious developers</p>
+                </div>
+                
+                <div class="card-features">
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <span class="feature-text"><strong>500 messages per day</strong></span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <span class="feature-text">Access to GPT-4.1</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <span class="feature-text">Advanced script generation</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <span class="feature-text">Code debugging & optimization</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <span class="feature-text">Save unlimited scripts</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <span class="feature-text">5 active projects</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <span class="feature-text">Email support</span>
+                    </div>
+                </div>
+                
+                <button class="plan-button primary" onclick="selectPlan('pro')">
+                    Start Pro Trial
+                </button>
+            </div>
+
+            <!-- Enterprise Tier -->
+            <div class="pricing-card enterprise">
+                <div class="card-header">
+                    <h2 class="plan-name">Enterprise</h2>
+                    <div class="plan-price">
+                        <span class="currency">$</span>
+                        <span class="amount monthly-price">29</span>
+                        <span class="amount annual-price" style="display: none;">24</span>
+                        <span class="period">/month</span>
+                    </div>
+                    <p class="plan-description">Maximum power & flexibility</p>
+                </div>
+                
+                <div class="card-features">
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <span class="feature-text"><strong>Unlimited messages</strong></span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <span class="feature-text">Access to GPT-5 (fastest)</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <span class="feature-text">All GPT models included</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <span class="feature-text">Advanced game systems</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <span class="feature-text">Unlimited projects</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <span class="feature-text">Team collaboration</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <span class="feature-text">Priority 24/7 support</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <span class="feature-text">Custom integrations</span>
+                    </div>
+                </div>
+                
+                <button class="plan-button premium" onclick="selectPlan('enterprise')">
+                    Start Enterprise Trial
+                </button>
+            </div>
+        </section>
+
+        <!-- Comparison Table -->
+        <section class="comparison-section">
+            <h2 class="section-title">Detailed Feature Comparison</h2>
+            <div class="comparison-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Features</th>
+                            <th>Free</th>
+                            <th class="highlighted">Pro</th>
+                            <th>Enterprise</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="feature-name">Daily Messages</td>
+                            <td>10</td>
+                            <td class="highlighted">500</td>
+                            <td>Unlimited</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">GPT-4o Mini</td>
+                            <td>✓</td>
+                            <td class="highlighted">✓</td>
+                            <td>✓</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">GPT-4.1</td>
+                            <td>—</td>
+                            <td class="highlighted">✓</td>
+                            <td>✓</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">GPT-5 (Latest)</td>
+                            <td>—</td>
+                            <td class="highlighted">—</td>
+                            <td>✓</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">Script Storage</td>
+                            <td>5 scripts</td>
+                            <td class="highlighted">Unlimited</td>
+                            <td>Unlimited</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">Projects</td>
+                            <td>—</td>
+                            <td class="highlighted">5 active</td>
+                            <td>Unlimited</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">File Uploads</td>
+                            <td>1 MB</td>
+                            <td class="highlighted">10 MB</td>
+                            <td>50 MB</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">Response Speed</td>
+                            <td>Standard</td>
+                            <td class="highlighted">Fast</td>
+                            <td>Priority</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">Support</td>
+                            <td>Community</td>
+                            <td class="highlighted">Email (24h)</td>
+                            <td>Priority 24/7</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">API Access</td>
+                            <td>—</td>
+                            <td class="highlighted">—</td>
+                            <td>✓</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section class="faq-section">
+            <h2 class="section-title">Frequently Asked Questions</h2>
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <h3 class="faq-question">Can I change plans anytime?</h3>
+                    <p class="faq-answer">Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll prorate any differences.</p>
+                </div>
+                <div class="faq-item">
+                    <h3 class="faq-question">Is there a free trial?</h3>
+                    <p class="faq-answer">All paid plans come with a 7-day free trial. No credit card required to start!</p>
+                </div>
+                <div class="faq-item">
+                    <h3 class="faq-question">What payment methods do you accept?</h3>
+                    <p class="faq-answer">We accept all major credit cards, debit cards, and PayPal through our secure Stripe payment system.</p>
+                </div>
+                <div class="faq-item">
+                    <h3 class="faq-question">Can I cancel my subscription?</h3>
+                    <p class="faq-answer">You can cancel your subscription at any time. You'll continue to have access until the end of your billing period.</p>
+                </div>
+                <div class="faq-item">
+                    <h3 class="faq-question">Do you offer student discounts?</h3>
+                    <p class="faq-answer">Yes! Students get 30% off all paid plans with a valid .edu email address.</p>
+                </div>
+                <div class="faq-item">
+                    <h3 class="faq-question">What happens if I exceed my limits?</h3>
+                    <p class="faq-answer">You'll be notified when approaching limits. Free users will be prompted to upgrade, while paid users can add extra capacity.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <h2 class="cta-title">Ready to Level Up Your Roblox Development?</h2>
+            <p class="cta-subtitle">Join thousands of developers creating amazing games with AI assistance</p>
+            <button class="cta-button" onclick="window.location.href='/login.html'">
+                Start Your Free Trial
+            </button>
+        </section>
+
+        <!-- Footer -->
+        <footer class="pricing-footer">
+            <div class="footer-content">
+                <div class="footer-links">
+                    <a href="/terms-of-service.html">Terms</a>
+                    <a href="/privacy-policy.html">Privacy</a>
+                    <a href="/about.html">About</a>
+                    <a href="mailto:support@robloxluauai.com">Contact</a>
+                </div>
+                <div class="footer-text">
+                    © 2025 Roblox Luau AI Assistant. All rights reserved.
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Stripe Checkout Modal -->
+    <div id="checkoutModal" class="checkout-modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeCheckout()">&times;</span>
+            <h2 id="modalTitle">Complete Your Purchase</h2>
+            <div id="stripeContainer"></div>
+        </div>
+    </div>
+
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        // Pricing configuration
+        const PRICES = {
+            pro: {
+                monthly: 12,
+                annual: 10,
+                stripePriceId: {
+                    monthly: 'price_pro_monthly',
+                    annual: 'price_pro_annual'
+                }
+            },
+            enterprise: {
+                monthly: 29,
+                annual: 24,
+                stripePriceId: {
+                    monthly: 'price_enterprise_monthly',
+                    annual: 'price_enterprise_annual'
+                }
+            }
+        };
+
+        let isAnnual = false;
+        let selectedPlan = null;
+
+        // Toggle between monthly and annual billing
+        function toggleBilling() {
+            isAnnual = document.getElementById('billingToggle').checked;
+            
+            // Update all price displays
+            document.querySelectorAll('.monthly-price').forEach(el => {
+                el.style.display = isAnnual ? 'none' : 'inline';
+            });
+            
+            document.querySelectorAll('.annual-price').forEach(el => {
+                el.style.display = isAnnual ? 'inline' : 'none';
+            });
+            
+            // Update the period text
+            if (isAnnual) {
+                document.querySelectorAll('.period').forEach(el => {
+                    el.textContent = '/month (billed annually)';
+                });
+            } else {
+                document.querySelectorAll('.period').forEach(el => {
+                    el.textContent = '/month';
+                });
+            }
+        }
+
+        // Handle plan selection
+        async function selectPlan(plan) {
+            // Check if user is logged in
+            const authToken = localStorage.getItem('authToken');
+            
+            if (plan === 'free') {
+                if (authToken) {
+                    // Downgrade to free plan
+                    if (confirm('Are you sure you want to downgrade to the free plan? You will lose access to premium features.')) {
+                        await downgradeToPlan('free');
+                    }
+                } else {
+                    window.location.href = '/index.html';
+                }
+                return;
+            }
+            
+            if (!authToken) {
+                // Store selected plan and redirect to login
+                localStorage.setItem('pendingPlan', JSON.stringify({
+                    plan: plan,
+                    billing: isAnnual ? 'annual' : 'monthly'
+                }));
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            // User is logged in, proceed with checkout
+            selectedPlan = plan;
+            await initializeCheckout(plan);
+        }
+
+        // Initialize Stripe checkout
+        async function initializeCheckout(plan) {
+            const modal = document.getElementById('checkoutModal');
+            const modalTitle = document.getElementById('modalTitle');
+            
+            modalTitle.textContent = `Subscribe to ${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`;
+            modal.style.display = 'flex';
+            
+            try {
+                // Call backend to create checkout session
+                const response = await fetch('/api/create-checkout-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    },
+                    body: JSON.stringify({
+                        plan: plan,
+                        billing: isAnnual ? 'annual' : 'monthly'
+                    })
+                });
+                
+                const { sessionId, error } = await response.json();
+                
+                if (error) {
+                    alert('Error creating checkout session: ' + error);
+                    closeCheckout();
+                    return;
+                }
+                
+                // Redirect to Stripe Checkout
+                const stripe = Stripe('your_stripe_public_key'); // You'll need to add your Stripe public key
+                await stripe.redirectToCheckout({ sessionId });
+                
+            } catch (error) {
+                console.error('Checkout error:', error);
+                alert('Failed to initialize checkout. Please try again.');
+                closeCheckout();
+            }
+        }
+
+        // Close checkout modal
+        function closeCheckout() {
+            document.getElementById('checkoutModal').style.display = 'none';
+        }
+
+        // Handle downgrade
+        async function downgradeToPlan(plan) {
+            try {
+                const response = await fetch('/api/change-plan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    },
+                    body: JSON.stringify({ plan: plan })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Your plan has been updated successfully!');
+                    window.location.href = '/index.html';
+                } else {
+                    alert('Failed to update plan: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error changing plan:', error);
+                alert('Failed to update plan. Please try again.');
+            }
+        }
+
+        // Check for pending plan after login
+        window.addEventListener('load', function() {
+            const pendingPlan = localStorage.getItem('pendingPlan');
+            if (pendingPlan) {
+                const planData = JSON.parse(pendingPlan);
+                localStorage.removeItem('pendingPlan');
+                
+                // Set billing type
+                isAnnual = planData.billing === 'annual';
+                document.getElementById('billingToggle').checked = isAnnual;
+                toggleBilling();
+                
+                // Auto-select the plan
+                setTimeout(() => {
+                    selectPlan(planData.plan);
+                }, 500);
+            }
+            
+            // Check current user plan
+            checkUserPlan();
+        });
+
+        // Check and display current user plan
+        async function checkUserPlan() {
+            const authToken = localStorage.getItem('authToken');
+            if (!authToken) return;
+            
+            try {
+                const response = await fetch('/api/user-subscription', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.plan && data.plan !== 'free') {
+                    // Update button for current plan
+                    const planButtons = {
+                        'pro': document.querySelector('.pro .plan-button'),
+                        'enterprise': document.querySelector('.enterprise .plan-button')
+                    };
+                    
+                    if (planButtons[data.plan]) {
+                        planButtons[data.plan].textContent = 'Current Plan';
+                        planButtons[data.plan].classList.add('current');
+                        planButtons[data.plan].disabled = true;
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking user plan:', error);
+            }
+        }
+    </script>
+</body>
+</html>

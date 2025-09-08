@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Successful - Roblox Luau AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #21262d 100%);
+            min-height: 100vh;
+            color: #f0f6fc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .success-container {
+            background: rgba(33, 38, 45, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid #30363d;
+            border-radius: 20px;
+            padding: 3rem;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, #2ea043, #238636);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 40px;
+            animation: checkmark 0.5s ease;
+        }
+
+        @keyframes checkmark {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .success-title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #2ea043, #238636);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .success-message {
+            color: #8b949e;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .plan-details {
+            background: rgba(46, 160, 67, 0.1);
+            border: 1px solid rgba(46, 160, 67, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        .plan-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #f0f6fc;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .feature-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #e6edf3;
+        }
+
+        .feature-icon {
+            color: #2ea043;
+            font-weight: bold;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.875rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #58a6ff, #1f6feb);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(88, 166, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid #30363d;
+            color: #8b949e;
+        }
+
+        .btn-secondary:hover {
+            border-color: #58a6ff;
+            color: #58a6ff;
+        }
+
+        .loading {
+            color: #58a6ff;
+            margin-top: 1rem;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(88, 166, 255, 0.3);
+            border-top: 2px solid #58a6ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container">
+        <div class="success-icon">✓</div>
+        <h1 class="success-title">Welcome to Pro!</h1>
+        <p class="success-message">
+            Your subscription has been activated successfully. You now have access to all premium features!
+        </p>
+
+        <div class="plan-details" id="planDetails">
+            <h2 class="plan-name" id="planName">Loading your plan...</h2>
+            <div class="feature-list" id="featureList">
+                <div class="loading">
+                    <span class="spinner"></span>
+                    Fetching your subscription details...
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-buttons">
+            <a href="/index.html" class="btn btn-primary">Start Using AI Assistant</a>
+            <a href="/account.html" class="btn btn-secondary">Manage Subscription</a>
+        </div>
+    </div>
+
+    <script>
+        // Get session ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+
+        // Fetch subscription details
+        async function loadSubscriptionDetails() {
+            const authToken = localStorage.getItem('authToken');
+            
+            if (!authToken) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/user-subscription', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                const data = await response.json();
+                displayPlanDetails(data);
+            } catch (error) {
+                console.error('Error loading subscription:', error);
+                displayDefaultPlan();
+            }
+        }
+
+        function displayPlanDetails(subscription) {
+            const planName = document.getElementById('planName');
+            const featureList = document.getElementById('featureList');
+            
+            const planNames = {
+                'pro': 'Pro Plan',
+                'enterprise': 'Enterprise Plan'
+            };
+
+            const planFeatures = {
+                'pro': [
+                    '500 messages per day',
+                    'Access to GPT-4.1',
+                    'Advanced script generation',
+                    'Unlimited script storage',
+                    '5 active projects',
+                    'Email support'
+                ],
+                'enterprise': [
+                    'Unlimited messages',
+                    'Access to all GPT models',
+                    'Advanced game systems',
+                    'Unlimited projects',
+                    'Team collaboration',
+                    'Priority 24/7 support',
+                    'Custom integrations'
+                ]
+            };
+
+            planName.textContent = planNames[subscription.plan] || 'Your Plan';
+            
+            const features = planFeatures[subscription.plan] || planFeatures['pro'];
+            featureList.innerHTML = features.map(feature => `
+                <div class="feature">
+                    <span class="feature-icon">✓</span>
+                    <span>${feature}</span>
+                </div>
+            `).join('');
+        }
+
+        function displayDefaultPlan() {
+            const planName = document.getElementById('planName');
+            const featureList = document.getElementById('featureList');
+            
+            planName.textContent = 'Premium Plan Activated';
+            featureList.innerHTML = `
+                <div class="feature">
+                    <span class="feature-icon">✓</span>
+                    <span>Enhanced AI models unlocked</span>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">✓</span>
+                    <span>Increased message limits</span>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">✓</span>
+                    <span>Priority support enabled</span>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">✓</span>
+                    <span>Advanced features available</span>
+                </div>
+            `;
+        }
+
+        // Load details on page load
+        window.addEventListener('load', loadSubscriptionDetails);
+    </script>
+</body>
+</html>

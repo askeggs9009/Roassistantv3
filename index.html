@@ -8,7 +8,216 @@
     <link rel="stylesheet" href="styles/sidebar.css">
     <link rel="stylesheet" href="styles/chat.css">
     <link rel="stylesheet" href="styles/responsive.css">
+    
+    <!-- AdSense Integration -->
+    <link rel="stylesheet" href="styles/ads.css">
+    <script src="js/adsense.js"></script>
+
+    <!-- Google AdSense Verification Code -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7434697703458325"
+            crossorigin="anonymous"></script>
+
+    <style>
+        /* Subscription Status Styles */
+        .subscription-status {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.5rem 1rem;
+            background: rgba(33, 38, 45, 0.6);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            margin-right: 1rem;
+        }
+
+        .plan-badge {
+            background: linear-gradient(45deg, #58a6ff, #1f6feb);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .plan-badge.free {
+            background: linear-gradient(45deg, #8b949e, #6e7681);
+        }
+
+        .plan-badge.pro {
+            background: linear-gradient(45deg, #58a6ff, #1f6feb);
+        }
+
+        .plan-badge.enterprise {
+            background: linear-gradient(45deg, #9d4edd, #7c3aed);
+        }
+
+        .usage-counter {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #8b949e;
+            font-size: 0.85rem;
+        }
+
+        .usage-bar {
+            width: 100px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .usage-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #58a6ff, #1f6feb);
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+
+        .usage-fill.warning {
+            background: linear-gradient(90deg, #d4ac0d, #f39c12);
+        }
+
+        .usage-fill.danger {
+            background: linear-gradient(90deg, #f85149, #da3633);
+        }
+
+        .upgrade-prompt {
+            display: none;
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: linear-gradient(135deg, #161b22, #21262d);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.5rem;
+            max-width: 350px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            animation: slideInUp 0.3s ease;
+        }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .upgrade-prompt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .upgrade-prompt-title {
+            font-weight: 600;
+            color: #f0f6fc;
+        }
+
+        .upgrade-prompt-close {
+            background: none;
+            border: none;
+            color: #8b949e;
+            cursor: pointer;
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+
+        .upgrade-prompt-message {
+            color: #8b949e;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            line-height: 1.4;
+        }
+
+        .upgrade-prompt-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .upgrade-btn {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+        }
+
+        .upgrade-btn.primary {
+            background: linear-gradient(45deg, #238636, #2ea043);
+            color: white;
+        }
+
+        .upgrade-btn.primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(46, 160, 67, 0.4);
+        }
+
+        .upgrade-btn.secondary {
+            background: transparent;
+            border: 1px solid #30363d;
+            color: #8b949e;
+        }
+
+        .upgrade-btn.secondary:hover {
+            border-color: #58a6ff;
+            color: #58a6ff;
+        }
+
+        .model-locked {
+            position: relative;
+        }
+
+        .model-locked::after {
+            content: '🔒';
+            position: absolute;
+            right: 35px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.8rem;
+        }
+
+        .usage-warning {
+            background: rgba(212, 172, 13, 0.1);
+            border: 1px solid rgba(212, 172, 13, 0.3);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin: 1rem;
+            color: #d4ac0d;
+            font-size: 0.85rem;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .usage-limit-reached {
+            background: rgba(248, 81, 73, 0.1);
+            border: 1px solid rgba(248, 81, 73, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem;
+            color: #f85149;
+            text-align: center;
+            display: none;
+        }
+    </style>
 </head>
+
 <body>
     <!-- Sidebar Overlay for Mobile -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
@@ -25,6 +234,11 @@
             New chat
         </button>
 
+        <!-- Sidebar Ad Container -->
+        <div id="sidebarAd" class="ad-container sidebar-ad" data-ad-lazy data-ad-type="sidebar">
+            <div class="ad-label">Advertisement</div>
+        </div>
+
         <div class="sidebar-nav">
             <!-- Main Navigation -->
             <div class="nav-section">
@@ -39,6 +253,10 @@
                 <div class="nav-item" onclick="setActiveNav(this, 'scripts')">
                     <span class="nav-icon">🔧</span>
                     Scripts
+                </div>
+                <div class="nav-item" onclick="window.location.href='/pricing.html'" style="color: #58a6ff;">
+                    <span class="nav-icon">💎</span>
+                    Upgrade Plan
                 </div>
             </div>
 
@@ -66,11 +284,38 @@
                 ☰
             </button>
             <div class="header-title" id="chatTitle">New Chat</div>
+            
+            <!-- Subscription Status -->
+            <div class="subscription-status" id="subscriptionStatus" style="display: none;">
+                <div class="plan-badge" id="planBadge">Free</div>
+                <div class="usage-counter">
+                    <span id="usageText">0/10</span>
+                    <div class="usage-bar">
+                        <div class="usage-fill" id="usageFill" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+            
             <select class="model-selector" id="modelSelector">
                 <option value="gpt-4o-mini">GPT-4o Mini</option>
                 <option value="gpt-4.1">GPT-4.1</option>
                 <option value="gpt-5">GPT-5</option>
             </select>
+        </div>
+
+        <!-- Usage Warning -->
+        <div id="usageWarning" class="usage-warning">
+            ⚠️ You're approaching your daily message limit. Consider upgrading for unlimited access!
+        </div>
+
+        <!-- Usage Limit Reached -->
+        <div id="usageLimitReached" class="usage-limit-reached">
+            🚫 Daily message limit reached. <a href="/pricing.html" style="color: #58a6ff;">Upgrade now</a> for unlimited messages!
+        </div>
+
+        <!-- Header Banner Ad -->
+        <div id="headerBannerAd" class="ad-container banner-ad">
+            <div class="ad-label">Advertisement</div>
         </div>
 
         <!-- Chat Area -->
@@ -146,9 +391,47 @@
                 </div>
             </div>
         </div>
+
+        <!-- Footer Ad -->
+        <div id="footerAd" class="ad-container footer-ad">
+            <div class="ad-label">Advertisement</div>
+        </div>
+    </div>
+
+    <!-- Upgrade Prompt -->
+    <div class="upgrade-prompt" id="upgradePrompt">
+        <div class="upgrade-prompt-header">
+            <div class="upgrade-prompt-title">🚀 Unlock More Power</div>
+            <button class="upgrade-prompt-close" onclick="closeUpgradePrompt()">×</button>
+        </div>
+        <div class="upgrade-prompt-message" id="upgradePromptMessage">
+            You've used 8 of your 10 daily messages. Upgrade to Pro for 500 messages per day!
+        </div>
+        <div class="upgrade-prompt-buttons">
+            <button class="upgrade-btn primary" onclick="window.location.href='/pricing.html'">
+                View Plans
+            </button>
+            <button class="upgrade-btn secondary" onclick="closeUpgradePrompt()">
+                Maybe Later
+            </button>
+        </div>
     </div>
 
     <script>
+        // DYNAMIC API CONFIGURATION - Updated for production deployment
+        const getApiBaseUrl = () => {
+            // Check if we're running on localhost (development)
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                return 'http://localhost:3000';
+            }
+            
+            // For production, point to Railway backend
+            return 'https://roassistantv3-production.up.railway.app';
+        };
+
+        const API_BASE_URL = getApiBaseUrl();
+        console.log(`[CONFIG] Using API Base URL: ${API_BASE_URL}`);
+
         // Global variables
         let currentChatId = null;
         let chats = JSON.parse(localStorage.getItem('roblox_ai_chats') || '[]');
@@ -158,6 +441,23 @@
         let selectedModel = 'gpt-4o-mini';
         let currentView = 'chats';
         let attachedFiles = [];
+
+        // Subscription management
+        let userSubscription = {
+            plan: 'free',
+            limits: {
+                daily_messages: 10,
+                models: ['gpt-4o-mini']
+            },
+            usage: {
+                daily_messages: 0,
+                daily_limit: 10
+            }
+        };
+
+        // Message counter for ad insertion
+        let messageCount = 0;
+        const AD_FREQUENCY = 5; // Show ad every 5 messages
 
         // Usage limits management
         class UsageLimitsManager {
@@ -182,7 +482,7 @@
                         headers['Authorization'] = `Bearer ${authToken}`;
                     }
 
-                    const response = await fetch('http://localhost:3000/usage-limits', {
+                    const response = await fetch(`${API_BASE_URL}/usage-limits`, {
                         headers: headers
                     });
 
@@ -312,9 +612,9 @@
                     banner.appendChild(upgradeBtn);
 
                     const mainContent = document.querySelector('.main-content');
-                    const mainHeader = document.querySelector('.main-header');
-                    if (mainContent && mainHeader) {
-                        mainContent.insertBefore(banner, mainHeader.nextSibling);
+                    const headerBannerAd = document.getElementById('headerBannerAd');
+                    if (mainContent && headerBannerAd) {
+                        mainContent.insertBefore(banner, headerBannerAd.nextSibling);
                     }
                 }
             }
@@ -545,6 +845,127 @@
         // Create global instance
         const usageLimitsManager = new UsageLimitsManager();
 
+        // Check and display subscription status
+        async function checkSubscriptionStatus() {
+            const authToken = localStorage.getItem('authToken');
+            if (!authToken) {
+                // Show free plan status
+                updateSubscriptionUI({
+                    plan: 'free',
+                    limits: { daily_messages: 10, models: ['gpt-4o-mini'] },
+                    usage: { daily_messages: 0, daily_limit: 10 }
+                });
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/user-subscription`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    userSubscription = data;
+                    updateSubscriptionUI(data);
+                }
+            } catch (error) {
+                console.error('Error checking subscription:', error);
+            }
+        }
+
+        // Update UI with subscription information
+        function updateSubscriptionUI(subscription) {
+            const statusDiv = document.getElementById('subscriptionStatus');
+            const planBadge = document.getElementById('planBadge');
+            const usageText = document.getElementById('usageText');
+            const usageFill = document.getElementById('usageFill');
+            const modelSelector = document.getElementById('modelSelector');
+            
+            // Show subscription status
+            statusDiv.style.display = 'flex';
+            
+            // Update plan badge
+            planBadge.textContent = subscription.plan.toUpperCase();
+            planBadge.className = `plan-badge ${subscription.plan}`;
+            
+            // Update usage counter
+            const used = subscription.usage?.daily_messages || 0;
+            const limit = subscription.limits?.daily_messages || 10;
+            
+            if (limit === -1) {
+                usageText.textContent = '∞';
+                usageFill.style.width = '0%';
+            } else {
+                usageText.textContent = `${used}/${limit}`;
+                const percentage = (used / limit) * 100;
+                usageFill.style.width = `${Math.min(percentage, 100)}%`;
+                
+                // Update fill color based on usage
+                if (percentage >= 90) {
+                    usageFill.className = 'usage-fill danger';
+                    showUsageWarning('limit');
+                } else if (percentage >= 70) {
+                    usageFill.className = 'usage-fill warning';
+                    showUsageWarning('approaching');
+                } else {
+                    usageFill.className = 'usage-fill';
+                }
+            }
+            
+            // Update model selector based on available models
+            const availableModels = subscription.limits?.models || ['gpt-4o-mini'];
+            Array.from(modelSelector.options).forEach(option => {
+                if (!availableModels.includes(option.value)) {
+                    option.disabled = true;
+                    option.classList.add('model-locked');
+                    if (!option.text.includes('(Upgrade Required)')) {
+                        option.text += ' (Upgrade Required)';
+                    }
+                } else {
+                    option.disabled = false;
+                    option.classList.remove('model-locked');
+                    option.text = option.text.replace(' (Upgrade Required)', '');
+                }
+            });
+            
+            // Hide ads for paid users
+            if (subscription.plan !== 'free') {
+                document.body.classList.add('premium-user');
+            }
+        }
+
+        // Show usage warnings
+        function showUsageWarning(type) {
+            const warningDiv = document.getElementById('usageWarning');
+            const limitDiv = document.getElementById('usageLimitReached');
+            
+            if (type === 'approaching') {
+                warningDiv.style.display = 'block';
+                limitDiv.style.display = 'none';
+            } else if (type === 'limit') {
+                warningDiv.style.display = 'none';
+                limitDiv.style.display = 'block';
+            }
+        }
+
+        // Show upgrade prompt
+        function showUpgradePrompt(message) {
+            const prompt = document.getElementById('upgradePrompt');
+            const promptMessage = document.getElementById('upgradePromptMessage');
+            
+            promptMessage.textContent = message || 'Unlock more features with a Pro or Enterprise plan!';
+            prompt.style.display = 'block';
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                closeUpgradePrompt();
+            }, 10000);
+        }
+
+        function closeUpgradePrompt() {
+            document.getElementById('upgradePrompt').style.display = 'none';
+        }
+
         // Initialize the app
         function initApp() {
             console.log('Initializing app...');
@@ -556,6 +977,32 @@
             setTimeout(() => {
                 usageLimitsManager.init();
             }, 500);
+        }
+
+        // Function to insert content ads during chat
+        function insertContentAd() {
+            if (document.body.classList.contains('premium-user')) {
+                return; // No ads for premium users
+            }
+
+            const messagesContainer = document.getElementById('messagesContainer');
+            const template = document.getElementById('chatContentAdTemplate');
+            if (!template) return;
+            
+            const adElement = template.content.cloneNode(true);
+            
+            // Create unique ID for this ad
+            const adId = 'chatAd' + Date.now();
+            adElement.querySelector('.ad-container').id = adId;
+            
+            messagesContainer.appendChild(adElement);
+            
+            // Initialize the ad with AdSense
+            if (window.adSenseManager) {
+                setTimeout(() => {
+                    window.adSenseManager.createResponsiveAd(adId, 'banner');
+                }, 1000);
+            }
         }
 
         // Setup event listeners
@@ -910,11 +1357,14 @@
         function showLoggedInUser(userData) {
             const userProfile = document.getElementById('userProfile');
             if (userProfile) {
+                const planText = userData.subscription?.plan || 'free';
+                const planDisplay = planText.charAt(0).toUpperCase() + planText.slice(1);
+                
                 userProfile.innerHTML = `
                     <div class="user-avatar">${(userData.name || userData.email || 'U').charAt(0).toUpperCase()}</div>
                     <div class="user-info">
                         <div class="user-name">${userData.name || userData.email || 'User'}</div>
-                        <div class="user-plan">Premium User</div>
+                        <div class="user-plan">${planDisplay} Plan</div>
                     </div>
                     <button onclick="logout()" style="background: #f85149; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
                         Logout
@@ -1062,6 +1512,7 @@
         // Start new chat
         function startNewChat() {
             currentChatId = null;
+            messageCount = 0; // Reset message counter for ads
             document.getElementById('chatTitle').textContent = 'New Chat';
             showWelcomeScreen();
             clearAttachments();
@@ -1237,104 +1688,6 @@
             }
         }
 
-        // Send message function with usage limits integration
-        async function sendMessage() {
-            const messageInput = document.getElementById('messageInput');
-            const sendButton = document.getElementById('sendButton');
-            
-            if (!messageInput || !sendButton) return;
-            
-            const message = messageInput.value.trim();
-            
-            if (!message && attachedFiles.length === 0) return;
-
-            sendButton.disabled = true;
-            sendButton.textContent = 'Sending...';
-            
-            if (attachedFiles.length > 0) {
-                for (const fileData of attachedFiles) {
-                    await addFileToChat(fileData);
-                }
-            }
-
-            if (message) {
-                addMessage(message, true);
-            }
-            
-            let combinedPrompt = '';
-            
-            if (attachedFiles.length > 0) {
-                combinedPrompt += 'I have attached the following files:\n\n';
-                attachedFiles.forEach((file, index) => {
-                    combinedPrompt += `${index + 1}. ${file.name} (${file.type})\n`;
-                    if (file.content) {
-                        combinedPrompt += `Content:\n${file.content}\n\n`;
-                    }
-                });
-            }
-            
-            if (message) {
-                combinedPrompt += message;
-            }
-            
-            messageInput.value = '';
-            messageInput.style.height = 'auto';
-            clearAttachments();
-
-            try {
-                const headers = { "Content-Type": "application/json" };
-                
-                if (isLoggedIn && authToken) {
-                    headers["Authorization"] = `Bearer ${authToken}`;
-                }
-
-                const response = await fetch("http://localhost:3000/ask", {
-                    method: "POST",
-                    headers: headers,
-                    body: JSON.stringify({ 
-                        prompt: combinedPrompt,
-                        model: selectedModel 
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    if (data.reply) {
-                        addMessage(data.reply, false);
-                        
-                        // Update usage info for guests
-                        if (data.usageInfo) {
-                            await usageLimitsManager.updateUsageAfterRequest(selectedModel, data.usageInfo);
-                        }
-                    } else {
-                        addMessage('⚠️ Error: ' + (data.error || 'Unknown error occurred'), false);
-                    }
-                } else if (response.status === 429) {
-                    // Handle usage limit errors
-                    usageLimitsManager.handleUsageLimitError(data, selectedModel);
-                } else {
-                    if (response.status === 403 && data.requiresAuth) {
-                        addMessage(`🔒 ${data.error}`, false, true);
-                        
-                        if (data.availableModel) {
-                            selectedModel = data.availableModel;
-                            document.getElementById('modelSelector').value = selectedModel;
-                            addMessage(`🔄 Switched to ${selectedModel} (available for guests)`, false, true);
-                        }
-                    } else {
-                        addMessage('⚠️ Error: ' + (data.error || 'Unknown error occurred'), false);
-                    }
-                }
-            } catch (error) {
-                addMessage('⚠️ Connection Error: Make sure your server is running on http://localhost:3000', false);
-            } finally {
-                sendButton.disabled = false;
-                sendButton.textContent = 'Send';
-                messageInput.focus();
-            }
-        }
-
         // Add file to chat display
         async function addFileToChat(fileData) {
             const welcomeScreen = document.getElementById('welcomeScreen');
@@ -1401,7 +1754,7 @@
             saveMessageToChat(fileMessage, true);
         }
 
-        // Add message to chat
+        // Add message to chat with ad insertion
         function addMessage(content, isUser = false, isSystem = false) {
             const welcomeScreen = document.getElementById('welcomeScreen');
             if (welcomeScreen) {
@@ -1410,6 +1763,14 @@
 
             const messagesContainer = document.getElementById('messagesContainer');
             if (!messagesContainer) return;
+
+            // Insert content ad every AD_FREQUENCY messages (only for non-premium users)
+            if (!isSystem && !isUser && !document.body.classList.contains('premium-user')) {
+                messageCount++;
+                if (messageCount % AD_FREQUENCY === 0) {
+                    insertContentAd();
+                }
+            }
 
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
@@ -1471,6 +1832,119 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        // Send message function with usage limits integration
+        async function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const sendButton = document.getElementById('sendButton');
+            
+            if (!messageInput || !sendButton) return;
+            
+            const message = messageInput.value.trim();
+            
+            if (!message && attachedFiles.length === 0) return;
+
+            // CHECK SUBSCRIPTION LIMITS
+            if (userSubscription.limits.daily_messages !== -1 && 
+                userSubscription.usage.daily_messages >= userSubscription.limits.daily_messages) {
+                showUsageWarning('limit');
+                showUpgradePrompt('You\'ve reached your daily message limit. Upgrade now for more messages!');
+                return;
+            }
+
+            sendButton.disabled = true;
+            sendButton.textContent = 'Sending...';
+            
+            if (attachedFiles.length > 0) {
+                for (const fileData of attachedFiles) {
+                    await addFileToChat(fileData);
+                }
+            }
+
+            if (message) {
+                addMessage(message, true);
+            }
+            
+            let combinedPrompt = '';
+            
+            if (attachedFiles.length > 0) {
+                combinedPrompt += 'I have attached the following files:\n\n';
+                attachedFiles.forEach((file, index) => {
+                    combinedPrompt += `${index + 1}. ${file.name} (${file.type})\n`;
+                    if (file.content) {
+                        combinedPrompt += `Content:\n${file.content}\n\n`;
+                    }
+                });
+            }
+            
+            if (message) {
+                combinedPrompt += message;
+            }
+            
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            clearAttachments();
+
+            try {
+                const headers = { "Content-Type": "application/json" };
+                
+                if (isLoggedIn && authToken) {
+                    headers["Authorization"] = `Bearer ${authToken}`;
+                }
+
+                const response = await fetch(`${API_BASE_URL}/ask`, {
+                    method: "POST",
+                    headers: headers,
+                    body: JSON.stringify({ 
+                        prompt: combinedPrompt,
+                        model: selectedModel 
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (data.reply) {
+                        addMessage(data.reply, false);
+                        
+                        // Update usage info for guests
+                        if (data.usageInfo) {
+                            await usageLimitsManager.updateUsageAfterRequest(selectedModel, data.usageInfo);
+                        }
+
+                        // Update subscription usage
+                        if (userSubscription.limits.daily_messages !== -1) {
+                            userSubscription.usage.daily_messages++;
+                            updateSubscriptionUI(userSubscription);
+                        }
+                    } else {
+                        addMessage('⚠️ Error: ' + (data.error || 'Unknown error occurred'), false);
+                    }
+                } else if (response.status === 429) {
+                    // Handle usage limit errors
+                    usageLimitsManager.handleUsageLimitError(data, selectedModel);
+                } else {
+                    if (response.status === 403 && data.requiresAuth) {
+                        addMessage(`🔒 ${data.error}`, false, true);
+                        
+                        if (data.availableModel) {
+                            selectedModel = data.availableModel;
+                            document.getElementById('modelSelector').value = selectedModel;
+                            addMessage(`🔄 Switched to ${selectedModel} (available for guests)`, false, true);
+                        }
+                    } else {
+                        addMessage('⚠️ Error: ' + (data.error || 'Unknown error occurred'), false);
+                    }
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+                addMessage('⚠️ Connection Error: Make sure your server is running at ' + API_BASE_URL, false);
+            } finally {
+                sendButton.disabled = false;
+                sendButton.textContent = 'Send';
+                messageInput.focus();
+            }
         }
 
         // Save message to current chat
@@ -1549,6 +2023,8 @@
             if (!chat) return;
 
             currentChatId = chatId;
+            messageCount = chat.messages.length; // Set message count for ad insertion
+            
             const chatTitle = document.getElementById('chatTitle');
             if (chatTitle) {
                 chatTitle.textContent = chat.title;
@@ -1558,7 +2034,7 @@
             if (messagesContainer) {
                 messagesContainer.innerHTML = '';
                 
-                chat.messages.forEach(message => {
+                chat.messages.forEach((message, index) => {
                     addMessage(message.content, message.isUser, false);
                 });
             }
@@ -1631,11 +2107,50 @@
             }
         }
 
-        // Initialize app when page loads
+        // Check premium status
+        function checkPremiumStatus() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (user.premium || user.plan === 'premium') {
+                document.body.classList.add('premium-user');
+                console.log('[AdSense] Premium user detected - ads hidden');
+            }
+        }
+
+        // Initialize app when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, initializing app...');
             initApp();
+            
+            // Check subscription status and refresh periodically
+            checkSubscriptionStatus();
+            setInterval(checkSubscriptionStatus, 60000); // Refresh every minute
+            
+            // Check premium status on load
+            checkPremiumStatus();
         });
+
+        // Check for project parameter in URL
+        function checkProjectParameter() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectId = urlParams.get('project');
+            
+            if (projectId) {
+                // Load project context if needed
+                console.log('Loading project context:', projectId);
+                // You can implement project-specific logic here
+            }
+        }
+
+        // Check premium status on auth changes
+        document.addEventListener('authStatusChanged', checkPremiumStatus);
     </script>
+
+    <!-- Content Ad Template for Chat -->
+    <template id="chatContentAdTemplate">
+        <div class="ad-container content-ad chat-content-ad" style="margin: 2rem auto;">
+            <div class="ad-label">Advertisement</div>
+        </div>
+    </template>
+
 </body>
 </html>
