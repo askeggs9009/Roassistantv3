@@ -27,9 +27,26 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+// Enhanced CORS configuration to fix OAuth issues
+app.use(cors({
+    origin: [
+        'https://musical-youtiao-b05928.netlify.app',
+        'http://localhost:3000',
+        'http://localhost:5000',
+        'http://127.0.0.1:5500',
+        process.env.FRONTEND_URL
+    ].filter(Boolean),
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
 app.use(express.json());
 app.use(express.static(__dirname));
+
+// Trust proxy for accurate IP detection
+app.set('trust proxy', 1);
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -117,26 +134,47 @@ setInterval(() => {
     }
 }, 60000); // Check every minute
 
+// FIXED: Improved base URL detection to prevent OAuth redirect URI issues
 const getBaseUrl = () => {
+    // Remove trailing slash if present in BASE_URL
+    if (process.env.BASE_URL) {
+        return process.env.BASE_URL.replace(/\/$/, '');
+    }
+    
     if (process.env.RAILWAY_STATIC_URL) {
         return `https://${process.env.RAILWAY_STATIC_URL}`;
     }
-    if (process.env.BASE_URL) {
-        return process.env.BASE_URL;
-    }
+    
     const port = process.env.PORT || 3000;
     return `http://localhost:${port}`;
 };
 
+// FIXED: Enhanced Google OAuth client with proper error handling
 const getGoogleClient = () => {
     const baseUrl = getBaseUrl();
-    console.log(`[OAUTH] Using base URL: ${baseUrl}`);
+    const redirectUri = `${baseUrl}/auth/google/callback`;
     
-    return new google.auth.OAuth2(
-        process.env.GOOGLE_CLIENT_ID,
-        process.env.GOOGLE_CLIENT_SECRET,
-        `${baseUrl}/auth/google/callback`
-    );
+    console.log(`[OAUTH] Base URL: ${baseUrl}`);
+    console.log(`[OAUTH] Redirect URI: ${redirectUri}`);
+    
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+        console.error('[ERROR] Google OAuth credentials missing!');
+        throw new Error('Google OAuth credentials not configured');
+    }
+    
+    try {
+        const client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            redirectUri
+        );
+        
+        console.log('[SUCCESS] Google OAuth client created');
+        return client;
+    } catch (error) {
+        console.error('[ERROR] Failed to create Google OAuth client:', error);
+        throw error;
+    }
 };
 
 const USAGE_LIMITS = {
@@ -416,6 +454,7 @@ function checkUsageLimits(req, res, next) {
 
 let emailTransporter = null;
 
+// Enhanced email transporter initialization
 async function initializeEmailTransporter() {
     console.log('\n[EMAIL INIT] Initializing Email System...');
     
@@ -482,15 +521,34 @@ async function sendVerificationEmail(email, code, name = null) {
     const mailOptions = {
         from: `"Roblox Luau AI" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
         to: email,
-        subject: 'Verify Your Roblox Luau AI Assistant Account',
+        subject: '🔐 Your Verification Code - Roblox Luau AI',
         html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h1>Welcome to Roblox Luau AI!</h1>
-                <p>Thanks for signing up! Please enter this verification code:</p>
-                <div style="background: #f0f0f0; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; margin: 20px 0;">
-                    ${code}
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa; padding: 20px; border-radius: 10px;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h1 style="color: #343a40; margin: 0;">Welcome to Roblox Luau AI! 🎮</h1>
                 </div>
-                <p>This code expires in 15 minutes.</p>
+                
+                <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h2 style="color: #495057; margin-top: 0;">Verify Your Email Address</h2>
+                    <p style="color: #6c757d; line-height: 1.5;">
+                        Hi ${name || 'there'}! 👋<br><br>
+                        Thank you for signing up! To complete your registration, please use the verification code below:
+                    </p>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <div style="display: inline-block; background: #007bff; color: white; font-size: 24px; font-weight: bold; padding: 15px 30px; border-radius: 8px; letter-spacing: 3px;">
+                            ${code}
+                        </div>
+                    </div>
+                    
+                    <p style="color: #6c757d; line-height: 1.5;">
+                        This code will expire in <strong>15 minutes</strong>. If you didn't create an account, you can safely ignore this email.
+                    </p>
+                    
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #6c757d; font-size: 14px;">
+                        <p>Need help? Contact us at <a href="mailto:${process.env.EMAIL_FROM}" style="color: #007bff;">${process.env.EMAIL_FROM}</a></p>
+                    </div>
+                </div>
             </div>
         `
     };
@@ -538,7 +596,7 @@ function authenticateToken(req, res, next) {
     });
 }
 
-// Stripe Webhook Handler
+// Stripe Webhook Handler (Stripe webhooks need raw body)
 app.post('/webhook/stripe', express.raw({type: 'application/json'}), async (req, res) => {
     const sig = req.headers['stripe-signature'];
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -623,6 +681,129 @@ async function handleSubscriptionChange(subscription) {
         }
     }
 }
+
+// Health check endpoint with enhanced OAuth info
+app.get("/health", (req, res) => {
+    res.status(200).json({ 
+        status: "healthy", 
+        timestamp: new Date().toISOString(),
+        baseUrl: getBaseUrl(),
+        oauth: {
+            configured: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+            redirectUri: `${getBaseUrl()}/auth/google/callback`
+        },
+        subscriptionPlans: Object.keys(SUBSCRIPTION_PLANS),
+        activeUsers: users.size,
+        activeGuests: guestUsage.size
+    });
+});
+
+// FIXED: Enhanced Google OAuth routes with comprehensive error handling
+app.get("/auth/google", (req, res) => {
+    try {
+        const googleClient = getGoogleClient();
+        const scopes = ['email', 'profile'];
+        
+        const authUrl = googleClient.generateAuthUrl({
+            access_type: 'offline',
+            scope: scopes,
+            prompt: 'consent',
+            include_granted_scopes: true
+        });
+        
+        console.log('[OAUTH] Redirecting to Google auth URL');
+        res.redirect(authUrl);
+    } catch (error) {
+        console.error('[ERROR] Google auth initiation failed:', error);
+        const frontendUrl = process.env.FRONTEND_URL || 'https://musical-youtiao-b05928.netlify.app';
+        res.redirect(`${frontendUrl}/login.html?error=oauth_setup_failed`);
+    }
+});
+
+app.get("/auth/google/callback", async (req, res) => {
+    const frontendUrl = process.env.FRONTEND_URL || 'https://musical-youtiao-b05928.netlify.app';
+    
+    try {
+        const { code, error: oauthError } = req.query;
+        
+        if (oauthError) {
+            console.error('[ERROR] OAuth error from Google:', oauthError);
+            return res.redirect(`${frontendUrl}/login.html?error=oauth_denied`);
+        }
+        
+        if (!code) {
+            console.error('[ERROR] No authorization code received');
+            return res.redirect(`${frontendUrl}/login.html?error=no_code`);
+        }
+        
+        console.log('[OAUTH] Processing callback with code:', code.substring(0, 20) + '...');
+        
+        const googleClient = getGoogleClient();
+        
+        // Exchange code for tokens
+        const { tokens } = await googleClient.getToken(code);
+        googleClient.setCredentials(tokens);
+        
+        console.log('[OAUTH] Tokens received, fetching user info');
+        
+        // Get user information
+        const oauth2 = google.oauth2({ version: 'v2', auth: googleClient });
+        const { data } = await oauth2.userinfo.get();
+        
+        console.log('[OAUTH] User info retrieved:', data.email);
+        
+        // Create or update user
+        let user = users.get(data.email);
+        if (!user) {
+            user = {
+                id: Date.now().toString(),
+                email: data.email,
+                name: data.name,
+                picture: data.picture,
+                createdAt: new Date(),
+                provider: 'google',
+                emailVerified: true,
+                lastLogin: new Date(),
+                subscription: { plan: 'free', status: 'active' }
+            };
+            users.set(data.email, user);
+            console.log('[OAUTH] New user created:', data.email);
+        } else {
+            user.lastLogin = new Date();
+            console.log('[OAUTH] Existing user logged in:', data.email);
+        }
+        
+        // Generate JWT token
+        const token = jwt.sign(
+            { id: user.id, email: user.email },
+            JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+        
+        console.log('[OAUTH] JWT token generated, redirecting to frontend');
+        
+        // Redirect with token and user data
+        const userDataEncoded = encodeURIComponent(JSON.stringify({
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            picture: user.picture,
+            subscription: user.subscription
+        }));
+        
+        res.redirect(`${frontendUrl}/login-success.html?token=${token}&user=${userDataEncoded}`);
+        
+    } catch (error) {
+        console.error("[ERROR] Google OAuth callback error:", error);
+        console.error("[ERROR] Error details:", {
+            message: error.message,
+            stack: error.stack,
+            code: error.code
+        });
+        
+        res.redirect(`${frontendUrl}/login.html?error=google_auth_failed&details=${encodeURIComponent(error.message)}`);
+    }
+});
 
 // Create Stripe Checkout Session
 app.post("/api/create-checkout-session", authenticateToken, async (req, res) => {
@@ -1046,65 +1227,6 @@ app.get("/auth/verify", authenticateToken, (req, res) => {
     });
 });
 
-app.get("/auth/google", (req, res) => {
-    const googleClient = getGoogleClient();
-    const scopes = ['email', 'profile'];
-    const authUrl = googleClient.generateAuthUrl({
-        access_type: 'offline',
-        scope: scopes,
-    });
-    res.redirect(authUrl);
-});
-
-app.get("/auth/google/callback", async (req, res) => {
-    try {
-        const { code } = req.query;
-        const googleClient = getGoogleClient();
-        const { tokens } = await googleClient.getToken(code);
-        googleClient.setCredentials(tokens);
-
-        const oauth2 = google.oauth2({ version: 'v2', auth: googleClient });
-        const { data } = await oauth2.userinfo.get();
-
-        let user = users.get(data.email);
-        if (!user) {
-            user = {
-                id: Date.now().toString(),
-                email: data.email,
-                name: data.name,
-                picture: data.picture,
-                createdAt: new Date(),
-                provider: 'google',
-                emailVerified: true,
-                lastLogin: new Date(),
-                subscription: { plan: 'free', status: 'active' }
-            };
-            users.set(data.email, user);
-        } else {
-            user.lastLogin = new Date();
-        }
-
-        const token = jwt.sign(
-            { id: user.id, email: user.email },
-            JWT_SECRET,
-            { expiresIn: '7d' }
-        );
-
-        const frontendUrl = process.env.FRONTEND_URL || 'https://musical-youtiao-b05928.netlify.app';
-        res.redirect(`${frontendUrl}/login-success.html?token=${token}&user=${encodeURIComponent(JSON.stringify({
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            picture: user.picture,
-            subscription: user.subscription
-        }))}`);
-    } catch (error) {
-        console.error("[ERROR] Google auth error:", error);
-        const frontendUrl = process.env.FRONTEND_URL || 'https://musical-youtiao-b05928.netlify.app';
-        res.redirect(`${frontendUrl}/login.html?error=google_auth_failed`);
-    }
-});
-
 app.get("/usage-limits", optionalAuthenticateToken, (req, res) => {
     const userIdentifier = getUserIdentifier(req);
     const isAuthenticated = req.user !== null;
@@ -1300,17 +1422,6 @@ app.get("/", (req, res) => {
     res.redirect('/index.html');
 });
 
-app.get("/health", (req, res) => {
-    res.status(200).json({ 
-        status: "healthy", 
-        timestamp: new Date().toISOString(),
-        baseUrl: getBaseUrl(),
-        subscriptionPlans: Object.keys(SUBSCRIPTION_PLANS),
-        activeUsers: users.size,
-        activeGuests: guestUsage.size
-    });
-});
-
 async function startServer() {
     console.log('\n[INIT] Starting Roblox Luau AI Server with Subscription System...');
     
@@ -1344,6 +1455,8 @@ async function startServer() {
         });
         
         console.log("\n[GOOGLE OAUTH]");
+        console.log(`   Client ID: ${process.env.GOOGLE_CLIENT_ID ? 'CONFIGURED' : 'MISSING'}`);
+        console.log(`   Client Secret: ${process.env.GOOGLE_CLIENT_SECRET ? 'CONFIGURED' : 'MISSING'}`);
         console.log(`   Redirect URI: ${baseUrl}/auth/google/callback`);
         
         console.log("=".repeat(60) + "\n");
