@@ -9,7 +9,6 @@ import path from "path";
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import crypto from 'crypto';
-import Stripe from 'stripe';
 
 const require = createRequire(import.meta.url);
 
@@ -35,122 +34,54 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
 const users = new Map();
 const pendingVerifications = new Map();
 
-// Subscription Plans Configuration
+// Subscription plans configuration
 const SUBSCRIPTION_PLANS = {
     free: {
         name: 'Free',
         limits: {
             daily_messages: 10,
-            models: ['gpt-4o-mini'],
-            max_file_size: 1048576, // 1MB
-            scripts_storage: 5,
-            projects: 0,
-            support: 'community'
-        }
+            models: ['gpt-4o-mini']
+        },
+        features: ['Basic AI assistant', 'Limited daily messages', 'Community support']
     },
     pro: {
         name: 'Pro',
         limits: {
             daily_messages: 500,
-            models: ['gpt-4o-mini', 'gpt-4.1'],
-            max_file_size: 10485760, // 10MB
-            scripts_storage: -1, // unlimited
-            projects: 5,
-            support: 'email'
+            models: ['gpt-4o-mini', 'gpt-4.1']
         },
-        stripe_price_ids: {
-            monthly: process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
-            annual: process.env.STRIPE_PRO_ANNUAL_PRICE_ID
-        }
+        features: ['Advanced AI models', '500 messages/day', 'Priority support', 'No ads']
     },
     enterprise: {
         name: 'Enterprise',
         limits: {
-            daily_messages: -1, // unlimited
-            models: ['gpt-4o-mini', 'gpt-4.1', 'gpt-5'],
-            max_file_size: 52428800, // 50MB
-            scripts_storage: -1, // unlimited
-            projects: -1, // unlimited
-            support: 'priority'
+            daily_messages: -1, // Unlimited
+            models: ['gpt-4o-mini', 'gpt-4.1', 'gpt-5']
         },
-        stripe_price_ids: {
-            monthly: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID,
-            annual: process.env.STRIPE_ENTERPRISE_ANNUAL_PRICE_ID
-        }
+        features: ['All AI models', 'Unlimited messages', 'Premium support', 'Custom integrations']
     }
 };
 
-// Usage tracking with subscription tiers
-const userUsage = new Map();
+// Daily usage tracking
+const dailyUsage = new Map();
 
-function getUserPlan(userId) {
-    const user = users.get(userId);
-    if (!user) return SUBSCRIPTION_PLANS.free;
-    
-    const plan = user.subscription?.plan || 'free';
-    return SUBSCRIPTION_PLANS[plan] || SUBSCRIPTION_PLANS.free;
+// Reset daily usage at midnight
+function resetDailyUsage() {
+    dailyUsage.clear();
+    console.log('[USAGE] Daily usage reset');
 }
 
-function checkSubscriptionLimits(userId, model) {
-    const userPlan = getUserPlan(userId);
-    const limits = userPlan.limits;
-    
-    // Check if model is allowed in plan
-    if (!limits.models.includes(model)) {
-        return {
-            allowed: false,
-            error: `${model} is not available in your ${userPlan.name} plan. Please upgrade to access this model.`,
-            requiresUpgrade: true,
-            availableModels: limits.models
-        };
+// Schedule daily reset (runs at midnight)
+setInterval(() => {
+    const now = new Date();
+    if (now.getHours() === 0 && now.getMinutes() === 0) {
+        resetDailyUsage();
     }
-    
-    // Check daily message limit
-    if (limits.daily_messages !== -1) {
-        const today = new Date().toDateString();
-        if (!userUsage.has(userId)) {
-            userUsage.set(userId, {});
-        }
-        
-        const usage = userUsage.get(userId);
-        if (!usage[today]) {
-            usage[today] = 0;
-        }
-        
-        if (usage[today] >= limits.daily_messages) {
-            return {
-                allowed: false,
-                error: `Daily message limit reached (${limits.daily_messages} messages). Upgrade for more messages!`,
-                requiresUpgrade: true,
-                resetTime: new Date(new Date().setHours(24, 0, 0, 0))
-            };
-        }
-    }
-    
-    return { allowed: true };
-}
-
-function recordUserUsage(userId) {
-    const today = new Date().toDateString();
-    if (!userUsage.has(userId)) {
-        userUsage.set(userId, {});
-    }
-    
-    const usage = userUsage.get(userId);
-    if (!usage[today]) {
-        usage[today] = 0;
-    }
-    usage[today]++;
-    
-    userUsage.set(userId, usage);
-}
+}, 60000); // Check every minute
 
 const getBaseUrl = () => {
     if (process.env.RAILWAY_STATIC_URL) {
@@ -174,32 +105,255 @@ const getGoogleClient = () => {
     );
 };
 
-const MODEL_CONFIGS = {
+const USAGE_LIMITS = {
     "gpt-4o-mini": {
-        model: "gpt-4o-mini",
-        requiresPlan: 'free'
+        dailyLimit: 10,
+        hourlyLimit: 5,
+        cost: 0.15,
+        description: "Basic AI model"
     },
     "gpt-4.1": {
-        model: "gpt-4",
-        requiresPlan: 'pro'
+        dailyLimit: 5,
+        hourlyLimit: 2,
+        cost: 2.00,
+        description: "Advanced AI model"
     },
     "gpt-5": {
-        model: "gpt-4-turbo-preview",
-        requiresPlan: 'enterprise'
+        dailyLimit: 3,
+        hourlyLimit: 1,
+        cost: 3.00,
+        description: "Premium AI model"
     }
 };
 
-const SYSTEM_PROMPT = `You are a helpful Roblox Luau scripting assistant. You specialize in:
+const guestUsage = new Map();
 
-1. Creating Roblox Luau scripts for various game mechanics
-2. Debugging existing Roblox code
-3. Explaining Roblox Studio concepts and best practices
-4. Helping with game development workflows
-5. Providing optimized and clean code solutions
+function getUserIdentifier(req) {
+    const token = req.headers['authorization']?.split(' ')[1];
+    
+    if (token) {
+        try {
+            const decoded = jwt.verify(token, JWT_SECRET);
+            return `user_${decoded.id}`;
+        } catch (error) {
+            // Invalid token, treat as guest
+        }
+    }
+    
+    const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    const userAgent = req.headers['user-agent'] || '';
+    const hash = crypto
+        .createHash('md5')
+        .update(ip + userAgent)
+        .digest('hex')
+        .substring(0, 8);
+    
+    return `guest_${hash}`;
+}
 
-When providing code, always use proper Luau syntax and follow Roblox scripting best practices. Include comments to explain complex logic and suggest where scripts should be placed (ServerScriptService, StarterPlayerScripts, etc.).
+// Get user's current subscription
+function getUserSubscription(user) {
+    if (!user) {
+        return {
+            plan: 'free',
+            ...SUBSCRIPTION_PLANS.free,
+            usage: {
+                daily_messages: 0,
+                daily_limit: 10
+            }
+        };
+    }
 
-Be helpful, clear, and provide working examples when possible.`;
+    const plan = user.subscription?.plan || 'free';
+    const planConfig = SUBSCRIPTION_PLANS[plan];
+    
+    if (!planConfig) {
+        console.error(`[SUBSCRIPTION] Invalid plan: ${plan}`);
+        return getUserSubscription(null); // Return free plan as fallback
+    }
+
+    // Get today's usage
+    const today = new Date().toISOString().split('T')[0];
+    const usageKey = `${user.id}_${today}`;
+    const todayUsage = dailyUsage.get(usageKey) || 0;
+
+    return {
+        plan: plan,
+        ...planConfig,
+        usage: {
+            daily_messages: todayUsage,
+            daily_limit: planConfig.limits.daily_messages
+        }
+    };
+}
+
+// Check if user can send message
+function canUserSendMessage(user) {
+    const subscription = getUserSubscription(user);
+    
+    // Unlimited plan
+    if (subscription.limits.daily_messages === -1) {
+        return { allowed: true };
+    }
+    
+    // Check daily limit
+    if (subscription.usage.daily_messages >= subscription.limits.daily_messages) {
+        return {
+            allowed: false,
+            error: `Daily message limit reached (${subscription.limits.daily_messages} messages). Upgrade your plan for more messages.`,
+            subscription: subscription
+        };
+    }
+    
+    return { allowed: true };
+}
+
+// Increment user's daily usage
+function incrementUserUsage(user) {
+    if (!user) return;
+    
+    const today = new Date().toISOString().split('T')[0];
+    const usageKey = `${user.id}_${today}`;
+    const currentUsage = dailyUsage.get(usageKey) || 0;
+    dailyUsage.set(usageKey, currentUsage + 1);
+    
+    console.log(`[USAGE] User ${user.email} usage: ${currentUsage + 1}`);
+}
+
+function checkUsageLimit(userIdentifier, model) {
+    const limits = USAGE_LIMITS[model];
+    if (!limits) {
+        return { allowed: false, error: "Invalid model" };
+    }
+    
+    const now = Date.now();
+    const oneHour = 60 * 60 * 1000;
+    const oneDay = 24 * oneHour;
+    
+    if (!guestUsage.has(userIdentifier)) {
+        guestUsage.set(userIdentifier, {
+            hourlyUsage: [],
+            dailyUsage: [],
+            totalUsage: 0
+        });
+    }
+    
+    const usage = guestUsage.get(userIdentifier);
+    
+    usage.hourlyUsage = usage.hourlyUsage.filter(timestamp => now - timestamp < oneHour);
+    usage.dailyUsage = usage.dailyUsage.filter(timestamp => now - timestamp < oneDay);
+    
+    if (usage.hourlyUsage.length >= limits.hourlyLimit) {
+        const oldestRequest = Math.min(...usage.hourlyUsage);
+        const resetTime = new Date(oldestRequest + oneHour);
+        return {
+            allowed: false,
+            error: `Hourly limit reached for ${model}. You can use this model ${limits.hourlyLimit} times per hour.`,
+            resetTime: resetTime,
+            limitsInfo: {
+                hourlyUsed: usage.hourlyUsage.length,
+                hourlyLimit: limits.hourlyLimit,
+                dailyUsed: usage.dailyUsage.length,
+                dailyLimit: limits.dailyLimit
+            }
+        };
+    }
+    
+    if (usage.dailyUsage.length >= limits.dailyLimit) {
+        const oldestRequest = Math.min(...usage.dailyUsage);
+        const resetTime = new Date(oldestRequest + oneDay);
+        return {
+            allowed: false,
+            error: `Daily limit reached for ${model}. You can use this model ${limits.dailyLimit} times per day.`,
+            resetTime: resetTime,
+            limitsInfo: {
+                hourlyUsed: usage.hourlyUsage.length,
+                hourlyLimit: limits.hourlyLimit,
+                dailyUsed: usage.dailyUsage.length,
+                dailyLimit: limits.dailyLimit
+            }
+        };
+    }
+    
+    return {
+        allowed: true,
+        limitsInfo: {
+            hourlyUsed: usage.hourlyUsage.length,
+            hourlyLimit: limits.hourlyLimit,
+            dailyUsed: usage.dailyUsage.length,
+            dailyLimit: limits.dailyLimit
+        }
+    };
+}
+
+function recordUsage(userIdentifier, model) {
+    const now = Date.now();
+    
+    if (!guestUsage.has(userIdentifier)) {
+        guestUsage.set(userIdentifier, {
+            hourlyUsage: [],
+            dailyUsage: [],
+            totalUsage: 0
+        });
+    }
+    
+    const usage = guestUsage.get(userIdentifier);
+    usage.hourlyUsage.push(now);
+    usage.dailyUsage.push(now);
+    usage.totalUsage++;
+    
+    guestUsage.set(userIdentifier, usage);
+}
+
+function checkUsageLimits(req, res, next) {
+    const userIdentifier = getUserIdentifier(req);
+    const isAuthenticated = req.user !== null;
+    const model = req.body.model || "gpt-4o-mini";
+    
+    console.log(`[USAGE CHECK] User: ${userIdentifier}, Model: ${model}, Auth: ${isAuthenticated}`);
+    
+    if (!isAuthenticated) {
+        const limitCheck = checkUsageLimit(userIdentifier, model);
+        
+        if (!limitCheck.allowed) {
+            console.log(`[LIMIT REACHED] ${limitCheck.error}`);
+            return res.status(429).json({
+                error: limitCheck.error,
+                resetTime: limitCheck.resetTime,
+                limitsInfo: limitCheck.limitsInfo,
+                upgradeMessage: "Sign up for unlimited access to all models!",
+                requiresAuth: true,
+                signUpUrl: "/login.html",
+                userType: "guest"
+            });
+        }
+        
+        recordUsage(userIdentifier, model);
+        console.log(`[USAGE RECORDED] Guest user: ${userIdentifier}`);
+        
+        res.set({
+            'X-Usage-Hourly': `${limitCheck.limitsInfo.hourlyUsed + 1}/${limitCheck.limitsInfo.hourlyLimit}`,
+            'X-Usage-Daily': `${limitCheck.limitsInfo.dailyUsed + 1}/${limitCheck.limitsInfo.dailyLimit}`,
+            'X-Rate-Limit-Model': model,
+            'X-User-Type': 'guest'
+        });
+    } else {
+        // Check subscription limits for authenticated users
+        const user = users.get(req.user.email);
+        const canSend = canUserSendMessage(user);
+        
+        if (!canSend.allowed) {
+            return res.status(429).json({
+                error: canSend.error,
+                subscription: canSend.subscription,
+                upgradeMessage: "Upgrade your plan for more messages!",
+                upgradeUrl: "/pricing.html"
+            });
+        }
+    }
+    
+    next();
+}
 
 let emailTransporter = null;
 
@@ -293,6 +447,48 @@ async function sendVerificationEmail(email, code, name = null) {
     }
 }
 
+const MODEL_CONFIGS = {
+    "gpt-4o-mini": {
+        model: "gpt-4o-mini",
+        requiresAuth: false
+    },
+    "gpt-4.1": {
+        model: "gpt-4",
+        requiresAuth: false
+    },
+    "gpt-5": {
+        model: "gpt-4",
+        requiresAuth: false
+    }
+};
+
+const SYSTEM_PROMPT = `You are a helpful Roblox Luau scripting assistant. You specialize in:
+
+1. Creating Roblox Luau scripts for various game mechanics
+2. Debugging existing Roblox code
+3. Explaining Roblox Studio concepts and best practices
+4. Helping with game development workflows
+5. Providing optimized and clean code solutions
+
+When providing code, always use proper Luau syntax and follow Roblox scripting best practices. Include comments to explain complex logic and suggest where scripts should be placed (ServerScriptService, StarterPlayerScripts, etc.).
+
+Be helpful, clear, and provide working examples when possible.`;
+
+function optionalAuthenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+        req.user = null;
+        return next();
+    }
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        req.user = err ? null : user;
+        next();
+    });
+}
+
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -310,230 +506,58 @@ function authenticateToken(req, res, next) {
     });
 }
 
-// Stripe Webhook Handler
-app.post('/webhook/stripe', express.raw({type: 'application/json'}), async (req, res) => {
-    const sig = req.headers['stripe-signature'];
-    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-    let event;
-
+// NEW: Get user subscription endpoint
+app.get("/api/user-subscription", authenticateToken, (req, res) => {
     try {
-        event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-    } catch (err) {
-        console.error('[STRIPE] Webhook signature verification failed:', err.message);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-
-    // Handle the event
-    switch (event.type) {
-        case 'checkout.session.completed':
-            const session = event.data.object;
-            await handleSuccessfulSubscription(session);
-            break;
-            
-        case 'customer.subscription.updated':
-        case 'customer.subscription.deleted':
-            const subscription = event.data.object;
-            await handleSubscriptionChange(subscription);
-            break;
-            
-        default:
-            console.log(`[STRIPE] Unhandled event type ${event.type}`);
-    }
-
-    res.json({received: true});
-});
-
-async function handleSuccessfulSubscription(session) {
-    const userEmail = session.customer_email;
-    const user = users.get(userEmail);
-    
-    if (user) {
-        const subscription = await stripe.subscriptions.retrieve(session.subscription);
-        const priceId = subscription.items.data[0].price.id;
-        
-        // Determine plan based on price ID
-        let plan = 'free';
-        if (priceId === process.env.STRIPE_PRO_MONTHLY_PRICE_ID || 
-            priceId === process.env.STRIPE_PRO_ANNUAL_PRICE_ID) {
-            plan = 'pro';
-        } else if (priceId === process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || 
-                   priceId === process.env.STRIPE_ENTERPRISE_ANNUAL_PRICE_ID) {
-            plan = 'enterprise';
-        }
-        
-        user.subscription = {
-            plan: plan,
-            stripeCustomerId: session.customer,
-            stripeSubscriptionId: session.subscription,
-            status: 'active',
-            currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-            cancelAtPeriodEnd: subscription.cancel_at_period_end
-        };
-        
-        users.set(userEmail, user);
-        console.log(`[SUBSCRIPTION] User ${userEmail} upgraded to ${plan}`);
-    }
-}
-
-async function handleSubscriptionChange(subscription) {
-    // Find user by Stripe customer ID
-    for (const [email, user] of users.entries()) {
-        if (user.subscription?.stripeCustomerId === subscription.customer) {
-            if (subscription.status === 'canceled' || subscription.status === 'unpaid') {
-                user.subscription.status = 'canceled';
-                user.subscription.plan = 'free';
-            } else {
-                user.subscription.status = subscription.status;
-                user.subscription.currentPeriodEnd = new Date(subscription.current_period_end * 1000);
-                user.subscription.cancelAtPeriodEnd = subscription.cancel_at_period_end;
-            }
-            
-            users.set(email, user);
-            console.log(`[SUBSCRIPTION] Updated subscription for ${email}: ${subscription.status}`);
-            break;
-        }
-    }
-}
-
-// Create Stripe Checkout Session
-app.post("/api/create-checkout-session", authenticateToken, async (req, res) => {
-    try {
-        const { plan, billing } = req.body;
         const user = users.get(req.user.email);
-        
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
         
-        const planConfig = SUBSCRIPTION_PLANS[plan];
-        if (!planConfig || !planConfig.stripe_price_ids) {
-            return res.status(400).json({ error: 'Invalid plan selected' });
-        }
-        
-        const priceId = planConfig.stripe_price_ids[billing];
-        if (!priceId) {
-            return res.status(400).json({ error: 'Invalid billing period' });
-        }
-        
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            line_items: [{
-                price: priceId,
-                quantity: 1,
-            }],
-            mode: 'subscription',
-            success_url: `${getBaseUrl()}/subscription-success.html?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${getBaseUrl()}/pricing.html`,
-            customer_email: user.email,
-            metadata: {
-                userId: user.id,
-                plan: plan
-            },
-            allow_promotion_codes: true,
-            billing_address_collection: 'auto',
-        });
-        
-        res.json({ sessionId: session.id });
+        const subscription = getUserSubscription(user);
+        res.json(subscription);
     } catch (error) {
-        console.error('[ERROR] Failed to create checkout session:', error);
-        res.status(500).json({ error: 'Failed to create checkout session' });
+        console.error('[ERROR] Getting user subscription:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// Get User Subscription Status
-app.get("/api/user-subscription", authenticateToken, async (req, res) => {
-    try {
-        const user = users.get(req.user.email);
-        
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-        
-        const subscription = user.subscription || { plan: 'free', status: 'active' };
-        const plan = SUBSCRIPTION_PLANS[subscription.plan] || SUBSCRIPTION_PLANS.free;
-        
-        // Get current usage
-        const today = new Date().toDateString();
-        const usage = userUsage.get(user.email)?.[today] || 0;
-        
-        res.json({
-            plan: subscription.plan,
-            status: subscription.status,
-            limits: plan.limits,
-            usage: {
-                daily_messages: usage,
-                daily_limit: plan.limits.daily_messages
-            },
-            currentPeriodEnd: subscription.currentPeriodEnd,
-            cancelAtPeriodEnd: subscription.cancelAtPeriodEnd
-        });
-    } catch (error) {
-        console.error('[ERROR] Failed to get subscription:', error);
-        res.status(500).json({ error: 'Failed to get subscription status' });
-    }
-});
-
-// Cancel Subscription
-app.post("/api/cancel-subscription", authenticateToken, async (req, res) => {
-    try {
-        const user = users.get(req.user.email);
-        
-        if (!user || !user.subscription?.stripeSubscriptionId) {
-            return res.status(400).json({ error: 'No active subscription found' });
-        }
-        
-        const subscription = await stripe.subscriptions.update(
-            user.subscription.stripeSubscriptionId,
-            { cancel_at_period_end: true }
-        );
-        
-        user.subscription.cancelAtPeriodEnd = true;
-        users.set(req.user.email, user);
-        
-        res.json({
-            success: true,
-            message: 'Subscription will be canceled at the end of the billing period',
-            endDate: new Date(subscription.current_period_end * 1000)
-        });
-    } catch (error) {
-        console.error('[ERROR] Failed to cancel subscription:', error);
-        res.status(500).json({ error: 'Failed to cancel subscription' });
-    }
-});
-
-// Change Plan (Upgrade/Downgrade)
-app.post("/api/change-plan", authenticateToken, async (req, res) => {
+// NEW: Update user subscription (for admin/payment processing)
+app.post("/api/user-subscription", authenticateToken, (req, res) => {
     try {
         const { plan } = req.body;
-        const user = users.get(req.user.email);
         
+        if (!SUBSCRIPTION_PLANS[plan]) {
+            return res.status(400).json({ error: 'Invalid subscription plan' });
+        }
+        
+        const user = users.get(req.user.email);
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
         
-        if (plan === 'free') {
-            // Downgrade to free - cancel subscription
-            if (user.subscription?.stripeSubscriptionId) {
-                await stripe.subscriptions.cancel(user.subscription.stripeSubscriptionId);
-            }
-            
-            user.subscription = { plan: 'free', status: 'active' };
-            users.set(req.user.email, user);
-            
-            return res.json({ success: true, message: 'Downgraded to free plan' });
-        }
+        // Update user subscription
+        user.subscription = {
+            plan: plan,
+            updatedAt: new Date().toISOString()
+        };
         
-        // For upgrades, redirect to checkout
+        users.set(req.user.email, user);
+        
+        const subscription = getUserSubscription(user);
         res.json({ 
-            success: false, 
-            redirect: true,
-            message: 'Please use the checkout process to upgrade your plan'
+            message: `Subscription updated to ${plan}`,
+            subscription: subscription 
         });
     } catch (error) {
-        console.error('[ERROR] Failed to change plan:', error);
-        res.status(500).json({ error: 'Failed to change plan' });
+        console.error('[ERROR] Updating user subscription:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
+});
+
+// NEW: Get available subscription plans
+app.get("/api/subscription-plans", (req, res) => {
+    res.json(SUBSCRIPTION_PLANS);
 });
 
 app.post("/auth/signup", async (req, res) => {
@@ -560,38 +584,8 @@ app.post("/auth/signup", async (req, res) => {
         }
 
         if (!emailTransporter) {
-            // If email not configured, create account directly
-            const hashedPassword = await bcrypt.hash(password, 10);
-            const user = {
-                id: Date.now().toString(),
-                email: email,
-                password: hashedPassword,
-                name: name,
-                createdAt: new Date(),
-                provider: 'email',
-                emailVerified: false,
-                lastLogin: new Date(),
-                subscription: { plan: 'free', status: 'active' }
-            };
-            
-            users.set(email, user);
-            
-            const token = jwt.sign(
-                { id: user.id, email: user.email },
-                JWT_SECRET,
-                { expiresIn: '7d' }
-            );
-            
-            return res.json({
-                token,
-                user: {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    createdAt: user.createdAt,
-                    subscription: user.subscription
-                },
-                message: 'Account created successfully!'
+            return res.status(503).json({ 
+                error: 'Email verification system is not configured. Please contact the administrator.'
             });
         }
 
@@ -701,7 +695,10 @@ app.post("/auth/verify-email", async (req, res) => {
             provider: 'email',
             emailVerified: true,
             lastLogin: new Date(),
-            subscription: { plan: 'free', status: 'active' }
+            subscription: {
+                plan: 'free',
+                createdAt: new Date().toISOString()
+            }
         };
 
         users.set(email, user);
@@ -729,6 +726,66 @@ app.post("/auth/verify-email", async (req, res) => {
     } catch (error) {
         console.error("[ERROR] Email verification error:", error);
         res.status(500).json({ error: 'Internal server error during email verification' });
+    }
+});
+
+app.post("/auth/resend-verification", async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ error: 'Email address is required' });
+        }
+
+        const pendingVerification = pendingVerifications.get(email);
+
+        if (!pendingVerification) {
+            return res.status(400).json({ 
+                error: 'No pending verification found for this email. Please sign up again.',
+                action: 'signup_required'
+            });
+        }
+
+        const timeSinceLastRequest = Date.now() - pendingVerification.timestamp;
+        if (timeSinceLastRequest < 60000) {
+            const waitTime = Math.ceil((60000 - timeSinceLastRequest) / 1000);
+            return res.status(429).json({ 
+                error: `Please wait ${waitTime} seconds before requesting another verification code.`,
+                retryAfter: waitTime
+            });
+        }
+
+        if (!emailTransporter) {
+            return res.status(503).json({ 
+                error: 'Email system is not available. Please try again later.' 
+            });
+        }
+
+        const verificationCode = generateVerificationCode();
+        
+        pendingVerification.verificationCode = verificationCode;
+        pendingVerification.timestamp = Date.now();
+        pendingVerification.expires = Date.now() + (15 * 60 * 1000);
+        pendingVerification.attempts = 0;
+
+        try {
+            await sendVerificationEmail(email, verificationCode, pendingVerification.name);
+            
+            res.json({
+                message: 'New verification code sent to your email.',
+                expiresIn: '15 minutes'
+            });
+
+        } catch (emailError) {
+            console.error('[ERROR] Failed to resend verification email:', emailError.message);
+            res.status(500).json({ 
+                error: 'Failed to send verification email. Please try again later.' 
+            });
+        }
+
+    } catch (error) {
+        console.error("[ERROR] Resend verification error:", error);
+        res.status(500).json({ error: 'Internal server error during resend' });
     }
 });
 
@@ -766,7 +823,7 @@ app.post("/auth/login", async (req, res) => {
                 name: user.name,
                 createdAt: user.createdAt,
                 emailVerified: user.emailVerified,
-                subscription: user.subscription
+                subscription: user.subscription || { plan: 'free' }
             }
         });
     } catch (error) {
@@ -781,7 +838,7 @@ app.get("/auth/verify", authenticateToken, (req, res) => {
         valid: true, 
         user: {
             ...req.user,
-            subscription: user?.subscription || { plan: 'free', status: 'active' }
+            subscription: user?.subscription || { plan: 'free' }
         }
     });
 });
@@ -817,7 +874,10 @@ app.get("/auth/google/callback", async (req, res) => {
                 provider: 'google',
                 emailVerified: true,
                 lastLogin: new Date(),
-                subscription: { plan: 'free', status: 'active' }
+                subscription: {
+                    plan: 'free',
+                    createdAt: new Date().toISOString()
+                }
             };
             users.set(data.email, user);
         } else {
@@ -830,7 +890,7 @@ app.get("/auth/google/callback", async (req, res) => {
             { expiresIn: '7d' }
         );
 
-        const frontendUrl = process.env.FRONTEND_URL || 'https://musical-youtiao-b05928.netlify.app';
+        const frontendUrl = 'https://musical-youtiao-b05928.netlify.app';
         res.redirect(`${frontendUrl}/login-success.html?token=${token}&user=${encodeURIComponent(JSON.stringify({
             id: user.id,
             email: user.email,
@@ -840,20 +900,64 @@ app.get("/auth/google/callback", async (req, res) => {
         }))}`);
     } catch (error) {
         console.error("[ERROR] Google auth error:", error);
-        const frontendUrl = process.env.FRONTEND_URL || 'https://musical-youtiao-b05928.netlify.app';
+        const frontendUrl = 'https://musical-youtiao-b05928.netlify.app';
         res.redirect(`${frontendUrl}/login.html?error=google_auth_failed`);
     }
 });
 
-app.post("/ask", authenticateToken, async (req, res) => {
+app.get("/usage-limits", optionalAuthenticateToken, (req, res) => {
+    const userIdentifier = getUserIdentifier(req);
+    const isAuthenticated = req.user !== null;
+    
+    const limits = {};
+    
+    Object.entries(USAGE_LIMITS).forEach(([model, config]) => {
+        const limitCheck = checkUsageLimit(userIdentifier, model);
+        limits[model] = {
+            dailyLimit: config.dailyLimit,
+            hourlyLimit: config.hourlyLimit,
+            dailyUsed: limitCheck.limitsInfo ? limitCheck.limitsInfo.dailyUsed : 0,
+            hourlyUsed: limitCheck.limitsInfo ? limitCheck.limitsInfo.hourlyUsed : 0,
+            dailyRemaining: config.dailyLimit - (limitCheck.limitsInfo ? limitCheck.limitsInfo.dailyUsed : 0),
+            hourlyRemaining: config.hourlyLimit - (limitCheck.limitsInfo ? limitCheck.limitsInfo.hourlyUsed : 0),
+            description: config.description,
+            cost: config.cost
+        };
+    });
+    
+    res.json({
+        type: isAuthenticated ? "authenticated" : "guest",
+        limits: limits,
+        message: isAuthenticated ? 
+            "Unlimited access to all models" :
+            "Sign up for unlimited access to all models",
+        upgradeIncentive: isAuthenticated ? null : {
+            unlimited: true,
+            noWaiting: true,
+            priority: true,
+            features: ["Unlimited Usage", "All Models", "Priority Support"]
+        }
+    });
+});
+
+app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) => {
     try {
         const { prompt, model = "gpt-4o-mini" } = req.body;
-        const userId = req.user.email;
+        const isAuthenticated = req.user !== null;
 
-        // Check subscription limits
-        const limitCheck = checkSubscriptionLimits(userId, model);
-        if (!limitCheck.allowed) {
-            return res.status(403).json(limitCheck);
+        // Check if authenticated user can use this model
+        if (isAuthenticated) {
+            const user = users.get(req.user.email);
+            const subscription = getUserSubscription(user);
+            
+            if (!subscription.limits.models.includes(model)) {
+                return res.status(403).json({ 
+                    error: `Model ${model} requires a higher subscription plan.`,
+                    availableModels: subscription.limits.models,
+                    subscription: subscription,
+                    upgradeUrl: "/pricing.html"
+                });
+            }
         }
 
         const config = MODEL_CONFIGS[model];
@@ -871,23 +975,37 @@ app.post("/ask", authenticateToken, async (req, res) => {
             temperature: 0.7
         });
 
-        // Record usage
-        recordUserUsage(userId);
-
-        // Get updated usage info
-        const userPlan = getUserPlan(userId);
-        const today = new Date().toDateString();
-        const usage = userUsage.get(userId)?.[today] || 0;
-
-        res.json({ 
+        const userIdentifier = getUserIdentifier(req);
+        let responseData = { 
             reply: response.choices[0].message.content, 
-            model: model,
-            usageInfo: {
-                messagesUsed: usage,
-                dailyLimit: userPlan.limits.daily_messages,
-                plan: userPlan.name
-            }
-        });
+            model: model
+        };
+
+        if (isAuthenticated) {
+            // Increment user usage for authenticated users
+            const user = users.get(req.user.email);
+            incrementUserUsage(user);
+            
+            const subscription = getUserSubscription(user);
+            responseData.subscription = {
+                plan: subscription.plan,
+                usage: subscription.usage,
+                limits: subscription.limits
+            };
+        } else {
+            const limitCheck = checkUsageLimit(userIdentifier, model);
+            responseData.usageInfo = {
+                dailyUsed: limitCheck.limitsInfo.dailyUsed,
+                dailyLimit: USAGE_LIMITS[model].dailyLimit,
+                hourlyUsed: limitCheck.limitsInfo.hourlyUsed,
+                hourlyLimit: USAGE_LIMITS[model].hourlyLimit,
+                userType: "guest",
+                upgradeMessage: limitCheck.limitsInfo.dailyUsed >= USAGE_LIMITS[model].dailyLimit - 1 ? 
+                    "You're almost out! Sign up for unlimited access." : null
+            };
+        }
+
+        res.json(responseData);
     } catch (error) {
         console.error("[ERROR] AI Error:", error);
         
@@ -903,79 +1021,80 @@ app.post("/ask", authenticateToken, async (req, res) => {
     }
 });
 
-app.get("/models", authenticateToken, (req, res) => {
-    const userId = req.user.email;
-    const userPlan = getUserPlan(userId);
+app.get("/models", optionalAuthenticateToken, (req, res) => {
+    const isAuthenticated = req.user !== null;
+    const userIdentifier = getUserIdentifier(req);
+    
+    let availableModels = ['gpt-4o-mini']; // Default for guests
+    
+    if (isAuthenticated) {
+        const user = users.get(req.user.email);
+        const subscription = getUserSubscription(user);
+        availableModels = subscription.limits.models;
+    }
     
     const models = Object.keys(MODEL_CONFIGS).map(key => {
         const modelInfo = {
             name: key,
             model: MODEL_CONFIGS[key].model,
-            available: userPlan.limits.models.includes(key),
-            requiresPlan: MODEL_CONFIGS[key].requiresPlan
+            requiresAuth: !availableModels.includes(key)
         };
-        
+
+        if (!isAuthenticated) {
+            const limitCheck = checkUsageLimit(userIdentifier, key);
+            const limits = USAGE_LIMITS[key];
+            
+            modelInfo.limits = {
+                dailyUsed: limitCheck.limitsInfo ? limitCheck.limitsInfo.dailyUsed : 0,
+                dailyLimit: limits.dailyLimit,
+                hourlyUsed: limitCheck.limitsInfo ? limitCheck.limitsInfo.hourlyUsed : 0,
+                hourlyLimit: limits.hourlyLimit,
+                description: limits.description
+            };
+        }
+
         return modelInfo;
     });
     
     res.json({ 
         models,
-        currentPlan: userPlan.name,
-        limits: userPlan.limits
+        isAuthenticated,
+        availableModels,
+        message: isAuthenticated ? 
+            "Access based on your subscription plan" : 
+            "Sign up for access to more models"
     });
 });
 
-// Usage statistics endpoint
-app.get("/api/usage-stats", authenticateToken, (req, res) => {
-    const userId = req.user.email;
-    const userPlan = getUserPlan(userId);
-    
-    // Get usage for different time periods
-    const today = new Date().toDateString();
-    const usage = userUsage.get(userId) || {};
-    
-    const stats = {
-        today: usage[today] || 0,
-        dailyLimit: userPlan.limits.daily_messages,
-        plan: userPlan.name,
-        models: userPlan.limits.models,
-        scriptsLimit: userPlan.limits.scripts_storage,
-        projectsLimit: userPlan.limits.projects
-    };
-    
-    res.json(stats);
-});
-
-// Cleanup expired data periodically
+// Clean up expired data periodically
 setInterval(() => {
     const now = Date.now();
     
-    // Clean expired verifications
+    // Clean up expired verifications
+    const expiredVerifications = [];
     for (const [email, verification] of pendingVerifications.entries()) {
         if (now > verification.expires) {
-            pendingVerifications.delete(email);
+            expiredVerifications.push(email);
         }
     }
     
-    // Clean old usage data (keep only last 7 days)
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    expiredVerifications.forEach(email => {
+        pendingVerifications.delete(email);
+    });
     
-    for (const [userId, usage] of userUsage.entries()) {
-        const dates = Object.keys(usage);
-        dates.forEach(date => {
-            if (new Date(date) < sevenDaysAgo) {
-                delete usage[date];
-            }
-        });
+    // Clean up old guest usage data
+    const oneDay = 24 * 60 * 60 * 1000;
+    for (const [userIdentifier, usage] of guestUsage.entries()) {
+        usage.hourlyUsage = usage.hourlyUsage.filter(timestamp => now - timestamp < 60 * 60 * 1000);
+        usage.dailyUsage = usage.dailyUsage.filter(timestamp => now - timestamp < oneDay);
         
-        if (Object.keys(usage).length === 0) {
-            userUsage.delete(userId);
+        if (usage.hourlyUsage.length === 0 && usage.dailyUsage.length === 0) {
+            guestUsage.delete(userIdentifier);
         } else {
-            userUsage.set(userId, usage);
+            guestUsage.set(userIdentifier, usage);
         }
     }
-}, 60 * 60 * 1000); // Run every hour
+}, 60 * 60 * 1000); // Clean up every hour
 
 app.get("/", (req, res) => {
     res.redirect('/index.html');
@@ -985,12 +1104,15 @@ app.get("/health", (req, res) => {
     res.status(200).json({ 
         status: "healthy", 
         timestamp: new Date().toISOString(),
-        baseUrl: getBaseUrl()
+        baseUrl: getBaseUrl(),
+        subscriptionPlans: Object.keys(SUBSCRIPTION_PLANS),
+        activeUsers: users.size,
+        activeGuests: guestUsage.size
     });
 });
 
 async function startServer() {
-    console.log('\n[INIT] Starting Roblox Luau AI Server with Subscription System...');
+    console.log('\n[INIT] Starting Roblox Luau AI Server...');
     
     await initializeEmailTransporter();
     
@@ -1004,12 +1126,24 @@ async function startServer() {
         console.log(`[BASE_URL] ${baseUrl}`);
         console.log(`[HEALTH] ${baseUrl}/health`);
         console.log(`[EMAIL] ${emailTransporter ? "ENABLED" : "DISABLED"}`);
-        console.log(`[STRIPE] ${process.env.STRIPE_SECRET_KEY ? "CONFIGURED" : "NOT CONFIGURED"}`);
+        
+        if (process.env.RAILWAY_STATIC_URL) {
+            console.log(`[RAILWAY] https://${process.env.RAILWAY_STATIC_URL}`);
+        }
         
         console.log("\n[SUBSCRIPTION PLANS]:");
         Object.entries(SUBSCRIPTION_PLANS).forEach(([plan, config]) => {
-            console.log(`   ${plan}: ${config.limits.daily_messages === -1 ? 'Unlimited' : config.limits.daily_messages} messages/day`);
+            const limit = config.limits.daily_messages === -1 ? 'Unlimited' : config.limits.daily_messages;
+            console.log(`   ${plan.toUpperCase()}: ${limit} messages/day, ${config.limits.models.length} models`);
         });
+        
+        console.log("\n[USAGE LIMITS] (Guests Only):");
+        Object.entries(USAGE_LIMITS).forEach(([model, limits]) => {
+            console.log(`   ${model}: ${limits.dailyLimit}/day, ${limits.hourlyLimit}/hour`);
+        });
+        
+        console.log("\n[GOOGLE OAUTH]");
+        console.log(`   Redirect URI: ${baseUrl}/auth/google/callback`);
         
         console.log("=".repeat(60) + "\n");
     });
