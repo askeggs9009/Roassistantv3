@@ -1,7 +1,7 @@
 {
   "name": "my-ai-assistant",
-  "version": "1.0.0",
-  "description": "Roblox Luau AI Assistant with Authentication and Usage Limits",
+  "version": "2.0.0",
+  "description": "Roblox Luau AI Assistant with Subscription Management",
   "main": "auth-server.js",
   "type": "module",
   "scripts": {
@@ -15,7 +15,8 @@
     "luau",
     "ai",
     "assistant",
-    "usage-limits",
+    "subscription",
+    "stripe",
     "authentication"
   ],
   "author": "",
@@ -28,7 +29,8 @@
     "googleapis": "^144.0.0",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^6.9.8",
-    "openai": "^4.38.0"
+    "openai": "^4.38.0",
+    "stripe": "^14.15.0"
   },
   "engines": {
     "node": ">=18.0.0"
