@@ -207,6 +207,10 @@
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 2rem;
             margin-bottom: 4rem;
+            justify-content: center;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .pricing-card {
@@ -918,16 +922,16 @@
             
             switch(planType) {
                 case 'free':
-                    alert('Redirecting to free signup...');
-                    // window.location.href = '/signup.html?plan=free';
+                    // Redirect to free signup
+                    window.location.href = '/signup.html?plan=free';
                     break;
                 case 'pro':
-                    alert(`Redirecting to Pro plan checkout (${billingCycle})...`);
-                    // window.location.href = `/checkout.html?plan=pro&billing=${billingCycle}`;
+                    // Redirect to Pro plan checkout
+                    window.location.href = `/checkout.html?plan=pro&billing=${billingCycle}`;
                     break;
                 case 'enterprise':
-                    alert('Redirecting to contact sales...');
-                    // window.location.href = '/contact-sales.html';
+                    // Redirect to contact sales
+                    window.location.href = '/contact-sales.html';
                     break;
             }
         }
