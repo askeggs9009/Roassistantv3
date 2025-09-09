@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful - Roblox Luau AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #21262d 100%);
+            color: #f0f6fc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .success-container {
+            background: rgba(33, 38, 45, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid #30363d;
+            border-radius: 20px;
+            padding: 3rem;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 2rem;
+            background: linear-gradient(45deg, #2ea043, #238636);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+            animation: successPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes successPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .success-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #2ea043, #238636);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .success-subtitle {
+            font-size: 1.2rem;
+            color: #8b949e;
+            margin-bottom: 2rem;
+        }
+
+        .plan-details {
+            background: rgba(13, 17, 23, 0.6);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .plan-detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .plan-detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .plan-detail-label {
+            color: #8b949e;
+            font-weight: 500;
+        }
+
+        .plan-detail-value {
+            color: #f0f6fc;
+            font-weight: 600;
+        }
+
+        .next-steps {
+            background: rgba(88, 166, 255, 0.1);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .next-steps h3 {
+            color: #58a6ff;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .next-steps ol {
+            color: #8b949e;
+            padding-left: 1.5rem;
+        }
+
+        .next-steps li {
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .action-button {
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            border: none;
+            min-width: 150px;
+        }
+
+        .primary-button {
+            background: linear-gradient(45deg, #58a6ff, #1f6feb);
+            color: white;
+        }
+
+        .secondary-button {
+            background: transparent;
+            border: 2px solid #30363d;
+            color: #8b949e;
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .primary-button:hover {
+            box-shadow: 0 8px 20px rgba(88, 166, 255, 0.4);
+        }
+
+        .support-info {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #30363d;
+            color: #8b949e;
+            font-size: 0.9rem;
+        }
+
+        .support-info a {
+            color: #58a6ff;
+            text-decoration: none;
+        }
+
+        .support-info a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .success-container {
+                padding: 2rem 1.5rem;
+                margin: 1rem;
+            }
+
+            .success-title {
+                font-size: 2rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .action-button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container">
+        <div class="success-icon">✓</div>
+        
+        <h1 class="success-title">Payment Successful!</h1>
+        <p class="success-subtitle">Welcome to Roblox Luau AI Assistant</p>
+
+        <div class="plan-details" id="planDetails">
+            <!-- Plan details will be populated by JavaScript -->
+        </div>
+
+        <div class="next-steps">
+            <h3>What happens next?</h3>
+            <ol>
+                <li>Check your email for a confirmation receipt</li>
+                <li>Your account has been automatically upgraded</li>
+                <li>Start using your new AI features immediately</li>
+                <li>Access your subscription settings anytime</li>
+            </ol>
+        </div>
+
+        <div class="action-buttons">
+            <a href="/dashboard.html" class="action-button primary-button">
+                Go to Dashboard
+            </a>
+            <a href="/index.html" class="action-button secondary-button">
+                Back to Home
+            </a>
+        </div>
+
+        <div class="support-info">
+            Need help? Contact our support team at 
+            <a href="mailto:support@robloxluauai.com">support@robloxluauai.com</a>
+            <br>
+            Manage your subscription in your 
+            <a href="/account.html">account settings</a>
+        </div>
+    </div>
+
+    <script>
+        // Plan configurations for display
+        const planConfigs = {
+            pro: {
+                monthly: {
+                    name: 'Pro Plan',
+                    price: '$19/month',
+                    billing: 'Monthly billing'
+                },
+                annual: {
+                    name: 'Pro Plan',
+                    price: '$15/month',
+                    billing: 'Annual billing ($180/year)'
+                }
+            },
+            enterprise: {
+                monthly: {
+                    name: 'Enterprise Plan',
+                    price: '$99/month',
+                    billing: 'Monthly billing'
+                },
+                annual: {
+                    name: 'Enterprise Plan',
+                    price: '$79/month',
+                    billing: 'Annual billing ($948/year)'
+                }
+            }
+        };
+
+        // Get URL parameters
+        function getUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return {
+                sessionId: urlParams.get('session_id'),
+                plan: urlParams.get('plan') || 'pro',
+                billing: urlParams.get('billing') || 'monthly'
+            };
+        }
+
+        // Initialize page with plan details
+        function initializePage() {
+            const { sessionId, plan, billing } = getUrlParams();
+            const config = planConfigs[plan]?.[billing];
+
+            if (!config) {
+                console.error('Invalid plan configuration');
+                return;
+            }
+
+            // Create plan details HTML
+            const planDetailsHTML = `
+                <div class="plan-detail-row">
+                    <span class="plan-detail-label">Plan</span>
+                    <span class="plan-detail-value">${config.name}</span>
+                </div>
+                <div class="plan-detail-row">
+                    <span class="plan-detail-label">Price</span>
+                    <span class="plan-detail-value">${config.price}</span>
+                </div>
+                <div class="plan-detail-row">
+                    <span class="plan-detail-label">Billing</span>
+                    <span class="plan-detail-value">${config.billing}</span>
+                </div>
+                ${sessionId ? `
+                <div class="plan-detail-row">
+                    <span class="plan-detail-label">Transaction ID</span>
+                    <span class="plan-detail-value">${sessionId.substring(0, 20)}...</span>
+                </div>
+                ` : ''}
+            `;
+
+            document.getElementById('planDetails').innerHTML = planDetailsHTML;
+
+            // Optional: Verify payment with backend
+            if (sessionId) {
+                verifyPayment(sessionId);
+            }
+        }
+
+        // Verify payment status with backend (optional)
+        async function verifyPayment(sessionId) {
+            try {
+                const response = await fetch(`/api/verify-payment?session_id=${sessionId}`);
+                const data = await response.json();
+                
+                if (data.status === 'complete') {
+                    console.log('Payment verified successfully');
+                } else {
+                    console.warn('Payment verification failed');
+                }
+            } catch (error) {
+                console.error('Error verifying payment:', error);
+            }
+        }
+
+        // Initialize page when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initializePage);
+    </script>
+</body>
+</html>

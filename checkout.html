@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - Roblox Luau AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #21262d 100%);
+            color: #f0f6fc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .checkout-container {
+            background: rgba(33, 38, 45, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid #30363d;
+            border-radius: 20px;
+            padding: 3rem;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+        }
+
+        .back-button {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: transparent;
+            border: 1px solid #30363d;
+            color: #8b949e;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .back-button:hover {
+            border-color: #58a6ff;
+            color: #58a6ff;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, #00d4ff, #9d4edd);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .checkout-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, #00d4ff, #9d4edd);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .checkout-subtitle {
+            color: #8b949e;
+            margin-bottom: 2rem;
+        }
+
+        .plan-summary {
+            background: rgba(13, 17, 23, 0.6);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .plan-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #58a6ff;
+            margin-bottom: 0.5rem;
+        }
+
+        .plan-price {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #f0f6fc;
+            margin-bottom: 1rem;
+        }
+
+        .plan-features {
+            list-style: none;
+        }
+
+        .plan-features li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            color: #8b949e;
+            font-size: 0.9rem;
+        }
+
+        .plan-features li::before {
+            content: "✓";
+            color: #2ea043;
+            font-weight: bold;
+        }
+
+        .billing-info {
+            background: rgba(88, 166, 255, 0.1);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+            color: #8b949e;
+        }
+
+        .checkout-button {
+            width: 100%;
+            background: linear-gradient(45deg, #58a6ff, #1f6feb);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 1rem;
+        }
+
+        .checkout-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(88, 166, 255, 0.4);
+        }
+
+        .checkout-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #30363d;
+            border-top: 2px solid #58a6ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .security-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: #8b949e;
+            font-size: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .security-icon {
+            width: 16px;
+            height: 16px;
+            fill: #2ea043;
+        }
+
+        .error-message {
+            background: rgba(248, 81, 73, 0.1);
+            border: 1px solid rgba(248, 81, 73, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #f85149;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .checkout-container {
+                padding: 2rem 1.5rem;
+                margin: 1rem;
+            }
+
+            .back-button {
+                position: relative;
+                top: 0;
+                left: 0;
+                margin-bottom: 1rem;
+                width: fit-content;
+            }
+
+            .checkout-title {
+                font-size: 1.5rem;
+            }
+
+            .plan-price {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="checkout-container">
+        <a href="/pricing.html" class="back-button">← Back</a>
+        
+        <div class="logo">
+            <div class="logo-icon">RL</div>
+            <span class="logo-text">Roblox Luau AI</span>
+        </div>
+
+        <h1 class="checkout-title">Complete Your Purchase</h1>
+        <p class="checkout-subtitle">Secure payment powered by Stripe</p>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="plan-summary">
+            <div class="plan-name" id="planName">Loading...</div>
+            <div class="plan-price" id="planPrice">$0/month</div>
+            <ul class="plan-features" id="planFeatures">
+                <!-- Features will be populated by JavaScript -->
+            </ul>
+        </div>
+
+        <div class="billing-info" id="billingInfo">
+            <!-- Billing information will be populated by JavaScript -->
+        </div>
+
+        <button class="checkout-button" id="checkoutButton" onclick="redirectToCheckout()">
+            <span id="buttonText">Proceed to Payment</span>
+            <div class="loading" id="loadingSpinner">
+                <div class="spinner"></div>
+                <span>Processing...</span>
+            </div>
+        </button>
+
+        <div class="security-info">
+            <svg class="security-icon" viewBox="0 0 24 24">
+                <path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,7C13.4,7 14.8,8.6 14.8,10V11C15.4,11 16,11.4 16,12V16C16,16.6 15.6,17 15,17H9C8.4,17 8,16.6 8,16V12C8,11.4 8.4,11 9,11V10C9,8.6 10.6,7 12,7M12,8.2C11.2,8.2 10.2,9.2 10.2,10V11H13.8V10C13.8,9.2 12.8,8.2 12,8.2Z"/>
+            </svg>
+            Secured by 256-bit SSL encryption
+        </div>
+    </div>
+
+    <script>
+        // Plan configurations matching your backend
+        const planConfigs = {
+            pro: {
+                monthly: {
+                    name: 'Pro Plan',
+                    price: '$19/month',
+                    features: [
+                        '500 AI requests per month',
+                        'Advanced code generation',
+                        'Code optimization',
+                        'Advanced debugging',
+                        'Priority support',
+                        'Email support'
+                    ],
+                    billingInfo: 'Billed monthly. Cancel anytime.'
+                },
+                annual: {
+                    name: 'Pro Plan',
+                    price: '$15/month',
+                    features: [
+                        '500 AI requests per month',
+                        'Advanced code generation',
+                        'Code optimization',
+                        'Advanced debugging',
+                        'Priority support',
+                        'Email support'
+                    ],
+                    billingInfo: 'Billed annually ($180/year). Save 20%!'
+                }
+            },
+            enterprise: {
+                monthly: {
+                    name: 'Enterprise Plan',
+                    price: '$99/month',
+                    features: [
+                        'Unlimited AI requests',
+                        'Custom AI models',
+                        'Team collaboration',
+                        'Advanced analytics',
+                        '24/7 dedicated support',
+                        'Custom integrations'
+                    ],
+                    billingInfo: 'Billed monthly. Cancel anytime.'
+                },
+                annual: {
+                    name: 'Enterprise Plan',
+                    price: '$79/month',
+                    features: [
+                        'Unlimited AI requests',
+                        'Custom AI models',
+                        'Team collaboration',
+                        'Advanced analytics',
+                        '24/7 dedicated support',
+                        'Custom integrations'
+                    ],
+                    billingInfo: 'Billed annually ($948/year). Save 20%!'
+                }
+            }
+        };
+
+        // Get URL parameters
+        function getUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return {
+                plan: urlParams.get('plan') || 'pro',
+                billing: urlParams.get('billing') || 'monthly'
+            };
+        }
+
+        // Initialize page with plan details
+        function initializePage() {
+            // Check if user is logged in
+            const authToken = localStorage.getItem('authToken');
+            if (!authToken) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const { plan, billing } = getUrlParams();
+            const config = planConfigs[plan]?.[billing];
+
+            if (!config) {
+                showError('Invalid plan configuration. Please go back and select a valid plan.');
+                return;
+            }
+
+            // Update plan details
+            document.getElementById('planName').textContent = config.name;
+            document.getElementById('planPrice').textContent = config.price;
+            document.getElementById('billingInfo').textContent = config.billingInfo;
+
+            // Update features
+            const featuresContainer = document.getElementById('planFeatures');
+            featuresContainer.innerHTML = '';
+            config.features.forEach(feature => {
+                const li = document.createElement('li');
+                li.textContent = feature;
+                featuresContainer.appendChild(li);
+            });
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+
+        // Hide error message
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        // Show loading state
+        function showLoading() {
+            const button = document.getElementById('checkoutButton');
+            const buttonText = document.getElementById('buttonText');
+            const spinner = document.getElementById('loadingSpinner');
+            
+            button.disabled = true;
+            buttonText.style.display = 'none';
+            spinner.style.display = 'flex';
+        }
+
+        // Hide loading state
+        function hideLoading() {
+            const button = document.getElementById('checkoutButton');
+            const buttonText = document.getElementById('buttonText');
+            const spinner = document.getElementById('loadingSpinner');
+            
+            button.disabled = false;
+            buttonText.style.display = 'block';
+            spinner.style.display = 'none';
+        }
+
+        // Redirect to Stripe Checkout using your existing API
+        async function redirectToCheckout() {
+            hideError();
+            showLoading();
+
+            const { plan, billing } = getUrlParams();
+            const authToken = localStorage.getItem('authToken');
+
+            if (!authToken) {
+                showError('Please log in to continue.');
+                hideLoading();
+                return;
+            }
+
+            try {
+                // Use your existing API endpoint
+                const response = await fetch('/api/create-checkout-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        plan: plan,
+                        billing: billing
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to create checkout session');
+                }
+
+                // Redirect to Stripe checkout
+                window.location.href = `https://checkout.stripe.com/pay/${data.sessionId}`;
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError(error.message || 'Something went wrong. Please try again or contact support.');
+                hideLoading();
+            }
+        }
+
+        // Initialize page when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initializePage);
+    </script>
+</body>
+</html>
