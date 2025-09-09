@@ -884,8 +884,8 @@ app.get("/api/user-subscription", authenticateToken, async (req, res) => {
     }
 });
 
-// Temporary manual upgrade endpoint
-app.post("/api/manual-upgrade", async (req, res) => {
+// Temporary manual upgrade endpoint - CHANGED TO GET
+app.get("/api/manual-upgrade", async (req, res) => {
     try {
         const email = "askeggs9009@gmail.com";
         const user = users.get(email);
@@ -903,11 +903,16 @@ app.post("/api/manual-upgrade", async (req, res) => {
             users.set(email, user);
             console.log(`[MANUAL] User ${email} manually upgraded to pro`);
             
-            res.json({ success: true, message: 'Account upgraded successfully' });
+            res.json({ 
+                success: true, 
+                message: 'Account upgraded successfully',
+                subscription: user.subscription 
+            });
         } else {
             res.status(404).json({ error: 'User not found' });
         }
     } catch (error) {
+        console.error('[ERROR] Manual upgrade failed:', error);
         res.status(500).json({ error: error.message });
     }
 });
