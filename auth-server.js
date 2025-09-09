@@ -471,7 +471,7 @@ async function initializeEmailTransporter() {
     try {
         console.log('[EMAIL] Creating Gmail SMTP transporter...');
         
-        emailTransporter = nodemailer.createTransport({
+        emailTransporter = nodemailer.createTransporter({
             service: 'gmail',
             auth: {
                 user: process.env.EMAIL_USER,
@@ -881,6 +881,34 @@ app.get("/api/user-subscription", authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('[ERROR] Failed to get subscription:', error);
         res.status(500).json({ error: 'Failed to get subscription status' });
+    }
+});
+
+// Temporary manual upgrade endpoint
+app.post("/api/manual-upgrade", async (req, res) => {
+    try {
+        const email = "askeggs9009@gmail.com";
+        const user = users.get(email);
+        
+        if (user) {
+            user.subscription = {
+                plan: 'pro',
+                stripeCustomerId: 'cus_T1dVj5PQvUNMVh',
+                stripeSubscriptionId: 'sub_1S5aFY30DH9fxKOMBY5CtdOY',
+                status: 'active',
+                currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                cancelAtPeriodEnd: false
+            };
+            
+            users.set(email, user);
+            console.log(`[MANUAL] User ${email} manually upgraded to pro`);
+            
+            res.json({ success: true, message: 'Account upgraded successfully' });
+        } else {
+            res.status(404).json({ error: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
