@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout - Roblox Luau AI Assistant</title>
+    <script async src="https://js.stripe.com/v3/buy-button.js"></script>
     <style>
         * {
             margin: 0;
@@ -28,7 +29,7 @@
             border: 1px solid #30363d;
             border-radius: 20px;
             padding: 3rem;
-            max-width: 500px;
+            max-width: 600px;
             width: 100%;
             text-align: center;
             position: relative;
@@ -95,30 +96,64 @@
             margin-bottom: 2rem;
         }
 
-        .plan-summary {
+        .plan-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .plan-option {
             background: rgba(13, 17, 23, 0.6);
+            border: 2px solid #30363d;
             border-radius: 12px;
             padding: 1.5rem;
-            margin-bottom: 2rem;
-            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .plan-option:hover {
+            border-color: #58a6ff;
+            transform: translateY(-2px);
+        }
+
+        .plan-option.selected {
+            border-color: #58a6ff;
+            background: rgba(88, 166, 255, 0.1);
+        }
+
+        .plan-option.popular::before {
+            content: "Most Popular";
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(45deg, #58a6ff, #1f6feb);
+            color: white;
+            padding: 0.25rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
         }
 
         .plan-name {
             font-size: 1.3rem;
             font-weight: 600;
-            color: #58a6ff;
+            color: #f0f6fc;
             margin-bottom: 0.5rem;
         }
 
         .plan-price {
             font-size: 2rem;
             font-weight: 700;
-            color: #f0f6fc;
+            color: #58a6ff;
             margin-bottom: 1rem;
         }
 
         .plan-features {
             list-style: none;
+            text-align: left;
         }
 
         .plan-features li {
@@ -136,59 +171,55 @@
             font-weight: bold;
         }
 
-        .billing-info {
-            background: rgba(88, 166, 255, 0.1);
-            border: 1px solid rgba(88, 166, 255, 0.3);
-            border-radius: 8px;
-            padding: 1rem;
+        .billing-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
             margin-bottom: 2rem;
-            font-size: 0.9rem;
+            background: rgba(13, 17, 23, 0.6);
+            padding: 1rem;
+            border-radius: 12px;
+        }
+
+        .billing-option {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .billing-option.active {
+            background: linear-gradient(45deg, #58a6ff, #1f6feb);
+            color: white;
+        }
+
+        .billing-option:not(.active) {
             color: #8b949e;
         }
 
-        .checkout-button {
-            width: 100%;
-            background: linear-gradient(45deg, #58a6ff, #1f6feb);
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 12px;
+        .billing-option:not(.active):hover {
+            color: #f0f6fc;
+        }
+
+        .discount-badge {
+            background: linear-gradient(45deg, #2ea043, #238636);
             color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
             font-weight: 600;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            margin-bottom: 1rem;
+            margin-left: 0.5rem;
         }
 
-        .checkout-button:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(88, 166, 255, 0.4);
+        .checkout-buttons {
+            margin-top: 2rem;
         }
 
-        .checkout-button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .loading {
-            display: none;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid #30363d;
-            border-top: 2px solid #58a6ff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .stripe-buy-button {
+            margin: 1rem auto;
+            display: block;
         }
 
         .security-info {
@@ -198,24 +229,13 @@
             gap: 0.5rem;
             color: #8b949e;
             font-size: 0.8rem;
-            margin-top: 1rem;
+            margin-top: 2rem;
         }
 
         .security-icon {
             width: 16px;
             height: 16px;
             fill: #2ea043;
-        }
-
-        .error-message {
-            background: rgba(248, 81, 73, 0.1);
-            border: 1px solid rgba(248, 81, 73, 0.3);
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            color: #f85149;
-            font-size: 0.9rem;
-            display: none;
         }
 
         @media (max-width: 768px) {
@@ -236,8 +256,13 @@
                 font-size: 1.5rem;
             }
 
-            .plan-price {
-                font-size: 1.5rem;
+            .plan-selector {
+                grid-template-columns: 1fr;
+            }
+
+            .billing-toggle {
+                flex-direction: column;
+                gap: 0.5rem;
             }
         }
     </style>
@@ -251,30 +276,83 @@
             <span class="logo-text">Roblox Luau AI</span>
         </div>
 
-        <h1 class="checkout-title">Complete Your Purchase</h1>
+        <h1 class="checkout-title">Choose Your Plan</h1>
         <p class="checkout-subtitle">Secure payment powered by Stripe</p>
 
-        <div class="error-message" id="errorMessage"></div>
-
-        <div class="plan-summary">
-            <div class="plan-name" id="planName">Loading...</div>
-            <div class="plan-price" id="planPrice">$0/month</div>
-            <ul class="plan-features" id="planFeatures">
-                <!-- Features will be populated by JavaScript -->
-            </ul>
-        </div>
-
-        <div class="billing-info" id="billingInfo">
-            <!-- Billing information will be populated by JavaScript -->
-        </div>
-
-        <button class="checkout-button" id="checkoutButton" onclick="redirectToCheckout()">
-            <span id="buttonText">Proceed to Payment</span>
-            <div class="loading" id="loadingSpinner">
-                <div class="spinner"></div>
-                <span>Processing...</span>
+        <!-- Billing Toggle -->
+        <div class="billing-toggle">
+            <div class="billing-option active" id="monthlyOption" onclick="switchBilling('monthly')">
+                Monthly
             </div>
-        </button>
+            <div class="billing-option" id="annualOption" onclick="switchBilling('annual')">
+                Annual
+                <span class="discount-badge">Save 20%</span>
+            </div>
+        </div>
+
+        <!-- Plan Options -->
+        <div class="plan-selector">
+            <!-- Pro Plan -->
+            <div class="plan-option popular" id="proPlan" onclick="selectPlan('pro')">
+                <div class="plan-name">Pro Plan</div>
+                <div class="plan-price" id="proPrice">$19/month</div>
+                <ul class="plan-features">
+                    <li>500 AI requests per month</li>
+                    <li>Advanced code generation</li>
+                    <li>Code optimization</li>
+                    <li>Advanced debugging</li>
+                    <li>Priority support</li>
+                </ul>
+            </div>
+
+            <!-- Enterprise Plan -->
+            <div class="plan-option" id="enterprisePlan" onclick="selectPlan('enterprise')">
+                <div class="plan-name">Enterprise Plan</div>
+                <div class="plan-price" id="enterprisePrice">$99/month</div>
+                <ul class="plan-features">
+                    <li>Unlimited AI requests</li>
+                    <li>Custom AI models</li>
+                    <li>Team collaboration</li>
+                    <li>Advanced analytics</li>
+                    <li>24/7 dedicated support</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Checkout Buttons -->
+        <div class="checkout-buttons">
+            <!-- Pro Monthly -->
+            <div id="proMonthlyButton" class="stripe-buy-button">
+                <stripe-buy-button
+                    buy-button-id="buy_btn_1S5ZtZ30DH9fxKOM7Cvp1sYO"
+                    publishable-key="pk_live_51S4oMx30DH9fxKOMp6qEusjbOMvwo1rjkyu39hepGxPmbNqSyYuoyLnOiGGHOYXDODI0fFXOEFJSDWFcWhtWTxLs00m6IG6E5t">
+                </stripe-buy-button>
+            </div>
+
+            <!-- Pro Annual -->
+            <div id="proAnnualButton" class="stripe-buy-button" style="display: none;">
+                <stripe-buy-button
+                    buy-button-id="buy_btn_1S5ZsM30DH9fxKOMIC52MSFG"
+                    publishable-key="pk_live_51S4oMx30DH9fxKOMp6qEusjbOMvwo1rjkyu39hepGxPmbNqSyYuoyLnOiGGHOYXDODI0fFXOEFJSDWFcWhtWTxLs00m6IG6E5t">
+                </stripe-buy-button>
+            </div>
+
+            <!-- Enterprise Monthly -->
+            <div id="enterpriseMonthlyButton" class="stripe-buy-button" style="display: none;">
+                <stripe-buy-button
+                    buy-button-id="buy_btn_1S5Zow30DH9fxKOMsUJduTpv"
+                    publishable-key="pk_live_51S4oMx30DH9fxKOMp6qEusjbOMvwo1rjkyu39hepGxPmbNqSyYuoyLnOiGGHOYXDODI0fFXOEFJSDWFcWhtWTxLs00m6IG6E5t">
+                </stripe-buy-button>
+            </div>
+
+            <!-- Enterprise Annual -->
+            <div id="enterpriseAnnualButton" class="stripe-buy-button" style="display: none;">
+                <stripe-buy-button
+                    buy-button-id="buy_btn_1S5Zow30DH9fxKOMsUJduTpv"
+                    publishable-key="pk_live_51S4oMx30DH9fxKOMp6qEusjbOMvwo1rjkyu39hepGxPmbNqSyYuoyLnOiGGHOYXDODI0fFXOEFJSDWFcWhtWTxLs00m6IG6E5t">
+                </stripe-buy-button>
+            </div>
+        </div>
 
         <div class="security-info">
             <svg class="security-icon" viewBox="0 0 24 24">
@@ -285,187 +363,57 @@
     </div>
 
     <script>
-        // Plan configurations matching your backend
-        const planConfigs = {
-            pro: {
-                monthly: {
-                    name: 'Pro Plan',
-                    price: '$19/month',
-                    features: [
-                        '500 AI requests per month',
-                        'Advanced code generation',
-                        'Code optimization',
-                        'Advanced debugging',
-                        'Priority support',
-                        'Email support'
-                    ],
-                    billingInfo: 'Billed monthly. Cancel anytime.'
-                },
-                annual: {
-                    name: 'Pro Plan',
-                    price: '$15/month',
-                    features: [
-                        '500 AI requests per month',
-                        'Advanced code generation',
-                        'Code optimization',
-                        'Advanced debugging',
-                        'Priority support',
-                        'Email support'
-                    ],
-                    billingInfo: 'Billed annually ($180/year). Save 20%!'
-                }
-            },
-            enterprise: {
-                monthly: {
-                    name: 'Enterprise Plan',
-                    price: '$99/month',
-                    features: [
-                        'Unlimited AI requests',
-                        'Custom AI models',
-                        'Team collaboration',
-                        'Advanced analytics',
-                        '24/7 dedicated support',
-                        'Custom integrations'
-                    ],
-                    billingInfo: 'Billed monthly. Cancel anytime.'
-                },
-                annual: {
-                    name: 'Enterprise Plan',
-                    price: '$79/month',
-                    features: [
-                        'Unlimited AI requests',
-                        'Custom AI models',
-                        'Team collaboration',
-                        'Advanced analytics',
-                        '24/7 dedicated support',
-                        'Custom integrations'
-                    ],
-                    billingInfo: 'Billed annually ($948/year). Save 20%!'
-                }
-            }
-        };
+        let currentPlan = 'pro';
+        let currentBilling = 'monthly';
 
-        // Get URL parameters
-        function getUrlParams() {
-            const urlParams = new URLSearchParams(window.location.search);
-            return {
-                plan: urlParams.get('plan') || 'pro',
-                billing: urlParams.get('billing') || 'monthly'
-            };
-        }
-
-        // Initialize page with plan details
-        function initializePage() {
-            // Check if user is logged in
-            const authToken = localStorage.getItem('authToken');
-            if (!authToken) {
-                window.location.href = '/login.html';
-                return;
-            }
-
-            const { plan, billing } = getUrlParams();
-            const config = planConfigs[plan]?.[billing];
-
-            if (!config) {
-                showError('Invalid plan configuration. Please go back and select a valid plan.');
-                return;
-            }
-
-            // Update plan details
-            document.getElementById('planName').textContent = config.name;
-            document.getElementById('planPrice').textContent = config.price;
-            document.getElementById('billingInfo').textContent = config.billingInfo;
-
-            // Update features
-            const featuresContainer = document.getElementById('planFeatures');
-            featuresContainer.innerHTML = '';
-            config.features.forEach(feature => {
-                const li = document.createElement('li');
-                li.textContent = feature;
-                featuresContainer.appendChild(li);
-            });
-        }
-
-        // Show error message
-        function showError(message) {
-            const errorElement = document.getElementById('errorMessage');
-            errorElement.textContent = message;
-            errorElement.style.display = 'block';
-        }
-
-        // Hide error message
-        function hideError() {
-            document.getElementById('errorMessage').style.display = 'none';
-        }
-
-        // Show loading state
-        function showLoading() {
-            const button = document.getElementById('checkoutButton');
-            const buttonText = document.getElementById('buttonText');
-            const spinner = document.getElementById('loadingSpinner');
+        function switchBilling(billing) {
+            currentBilling = billing;
             
-            button.disabled = true;
-            buttonText.style.display = 'none';
-            spinner.style.display = 'flex';
-        }
-
-        // Hide loading state
-        function hideLoading() {
-            const button = document.getElementById('checkoutButton');
-            const buttonText = document.getElementById('buttonText');
-            const spinner = document.getElementById('loadingSpinner');
+            // Update UI
+            document.getElementById('monthlyOption').classList.toggle('active', billing === 'monthly');
+            document.getElementById('annualOption').classList.toggle('active', billing === 'annual');
             
-            button.disabled = false;
-            buttonText.style.display = 'block';
-            spinner.style.display = 'none';
+            // Update prices
+            if (billing === 'annual') {
+                document.getElementById('proPrice').textContent = '$15/month';
+                document.getElementById('enterprisePrice').textContent = '$79/month';
+            } else {
+                document.getElementById('proPrice').textContent = '$19/month';
+                document.getElementById('enterprisePrice').textContent = '$99/month';
+            }
+            
+            // Show correct button
+            showCorrectButton();
         }
 
-        // Redirect to Stripe Checkout using your existing API
-        async function redirectToCheckout() {
-            hideError();
-            showLoading();
-
-            const { plan, billing } = getUrlParams();
-            const authToken = localStorage.getItem('authToken');
-
-            if (!authToken) {
-                showError('Please log in to continue.');
-                hideLoading();
-                return;
-            }
-
-            try {
-                // Use your existing API endpoint
-                const response = await fetch('/api/create-checkout-session', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
-                    body: JSON.stringify({
-                        plan: plan,
-                        billing: billing
-                    })
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || 'Failed to create checkout session');
-                }
-
-                // Redirect to Stripe checkout
-                window.location.href = `https://checkout.stripe.com/pay/${data.sessionId}`;
-
-            } catch (error) {
-                console.error('Error:', error);
-                showError(error.message || 'Something went wrong. Please try again or contact support.');
-                hideLoading();
-            }
+        function selectPlan(plan) {
+            currentPlan = plan;
+            
+            // Update UI
+            document.getElementById('proPlan').classList.toggle('selected', plan === 'pro');
+            document.getElementById('enterprisePlan').classList.toggle('selected', plan === 'enterprise');
+            
+            // Show correct button
+            showCorrectButton();
         }
 
-        // Initialize page when DOM is loaded
-        document.addEventListener('DOMContentLoaded', initializePage);
+        function showCorrectButton() {
+            // Hide all buttons
+            document.getElementById('proMonthlyButton').style.display = 'none';
+            document.getElementById('proAnnualButton').style.display = 'none';
+            document.getElementById('enterpriseMonthlyButton').style.display = 'none';
+            document.getElementById('enterpriseAnnualButton').style.display = 'none';
+            
+            // Show correct button
+            const buttonId = `${currentPlan}${currentBilling.charAt(0).toUpperCase() + currentBilling.slice(1)}Button`;
+            document.getElementById(buttonId).style.display = 'block';
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            selectPlan('pro');
+            switchBilling('monthly');
+        });
     </script>
 </body>
 </html>
