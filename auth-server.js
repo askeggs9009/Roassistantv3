@@ -9,27 +9,17 @@ import path from "path";
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import Stripe from 'stripe';
+import { createRequire } from 'module';
 
-// Fixed nodemailer import - try both methods
-let nodemailer;
+// Fixed nodemailer import
+const require = createRequire(import.meta.url);
+let nodemailer = null;
+
 try {
-    // Method 1: Direct import
-    nodemailer = await import('nodemailer');
-    if (nodemailer.default) {
-        nodemailer = nodemailer.default;
-    }
-    console.log('[SUCCESS] Nodemailer imported via ES6 import');
-} catch (importError) {
-    try {
-        // Method 2: Using createRequire as fallback
-        import { createRequire } from 'module';
-        const require = createRequire(import.meta.url);
-        nodemailer = require('nodemailer');
-        console.log('[SUCCESS] Nodemailer imported via require');
-    } catch (requireError) {
-        console.log('[ERROR] Failed to import nodemailer:', requireError.message);
-        nodemailer = null;
-    }
+    nodemailer = require('nodemailer');
+    console.log('[SUCCESS] Nodemailer imported successfully');
+} catch (error) {
+    console.log('[ERROR] Failed to import nodemailer:', error.message);
 }
 
 const __filename = fileURLToPath(import.meta.url);
