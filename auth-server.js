@@ -7,19 +7,9 @@ import jwt from "jsonwebtoken";
 import { google } from "googleapis";
 import path from "path";
 import { fileURLToPath } from 'url';
-import { createRequire } from 'module';
 import crypto from 'crypto';
 import Stripe from 'stripe';
-
-const require = createRequire(import.meta.url);
-
-let nodemailer = null;
-try {
-    nodemailer = require('nodemailer');
-    console.log('[SUCCESS] Nodemailer imported successfully');
-} catch (error) {
-    console.log('[ERROR] Failed to import nodemailer:', error.message);
-}
+import nodemailer from 'nodemailer'; // Fixed import
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,7 +18,7 @@ dotenv.config();
 
 const app = express();
 
-// Enhanced CORS configuration to fix OAuth issues
+// Enhanced CORS configuration
 app.use(cors({
     origin: [
         'https://musical-youtiao-b05928.netlify.app',
@@ -44,18 +34,16 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.static(__dirname));
-
-// Trust proxy for accurate IP detection
 app.set('trust proxy', 1);
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
+
+// Storage
 const users = new Map();
 const pendingVerifications = new Map();
 const sessions = new Map();
@@ -64,14 +52,14 @@ const dailyUsage = new Map();
 const userUsage = new Map();
 const guestUsage = new Map();
 
-// Subscription Plans Configuration
+// Subscription Plans
 const SUBSCRIPTION_PLANS = {
     free: {
         name: 'Free',
         limits: {
             daily_messages: 10,
             models: ['gpt-4o-mini'],
-            max_file_size: 1048576, // 1MB
+            max_file_size: 1048576,
             scripts_storage: 5,
             projects: 0,
             support: 'community'
@@ -83,8 +71,8 @@ const SUBSCRIPTION_PLANS = {
         limits: {
             daily_messages: 500,
             models: ['gpt-4o-mini', 'gpt-4.1'],
-            max_file_size: 10485760, // 10MB
-            scripts_storage: -1, // unlimited
+            max_file_size: 10485760,
+            scripts_storage: -1,
             projects: 5,
             support: 'email'
         },
@@ -97,11 +85,11 @@ const SUBSCRIPTION_PLANS = {
     enterprise: {
         name: 'Enterprise',
         limits: {
-            daily_messages: -1, // unlimited
+            daily_messages: -1,
             models: ['gpt-4o-mini', 'gpt-4.1', 'gpt-5'],
-            max_file_size: 52428800, // 50MB
-            scripts_storage: -1, // unlimited
-            projects: -1, // unlimited
+            max_file_size: 52428800,
+            scripts_storage: -1,
+            projects: -1,
             support: 'priority'
         },
         stripe_price_ids: {
@@ -112,7 +100,6 @@ const SUBSCRIPTION_PLANS = {
     }
 };
 
-// Guest usage limits
 const USAGE_LIMITS = {
     "gpt-4o-mini": {
         dailyLimit: 10,
@@ -134,25 +121,31 @@ const USAGE_LIMITS = {
     }
 };
 
-// Email setup
+// Fixed Email Setup
 let emailTransporter = null;
 
 async function initializeEmailTransporter() {
     console.log('\n[EMAIL INIT] Initializing Email System...');
     
+    // Check if nodemailer is available
     if (!nodemailer) {
-        console.log('[WARNING] Nodemailer not available!');
+        console.log('[ERROR] Nodemailer not available!');
         return false;
     }
     
+    // Check for required email configuration
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-        console.log('[WARNING] Email configuration missing - email verification disabled');
+        console.log('[WARNING] Email configuration missing:');
+        console.log(`  EMAIL_USER: ${process.env.EMAIL_USER ? 'SET' : 'MISSING'}`);
+        console.log(`  EMAIL_PASSWORD: ${process.env.EMAIL_PASSWORD ? 'SET' : 'MISSING'}`);
         return false;
     }
 
     try {
         console.log('[EMAIL] Creating Gmail SMTP transporter...');
+        console.log(`[EMAIL] Using email: ${process.env.EMAIL_USER}`);
         
+        // Fixed transporter creation
         emailTransporter = nodemailer.createTransporter({
             service: 'gmail',
             auth: {
@@ -161,25 +154,12 @@ async function initializeEmailTransporter() {
             },
             tls: {
                 rejectUnauthorized: false
-            },
-            secure: false,
-            requireTLS: true
+            }
         });
 
-        await new Promise((resolve, reject) => {
-            const timeout = setTimeout(() => {
-                reject(new Error('Connection test timeout'));
-            }, 10000);
-
-            emailTransporter.verify((error, success) => {
-                clearTimeout(timeout);
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(success);
-                }
-            });
-        });
+        // Test the connection
+        console.log('[EMAIL] Testing connection...');
+        await emailTransporter.verify();
         
         console.log('[SUCCESS] Email system verified and ready!');
         return true;
@@ -197,7 +177,7 @@ function generateVerificationCode() {
 
 async function sendVerificationEmail(email, code, name = null) {
     if (!emailTransporter) {
-        throw new Error('Email system not configured.');
+        throw new Error('Email system not configured. Please contact support.');
     }
 
     const mailOptions = {
@@ -228,21 +208,34 @@ async function sendVerificationEmail(email, code, name = null) {
                     </p>
                     
                     <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #6c757d; font-size: 14px;">
-                        <p>Need help? Contact us at <a href="mailto:${process.env.EMAIL_FROM}" style="color: #007bff;">${process.env.EMAIL_FROM}</a></p>
+                        <p>Need help? Contact us at <a href="mailto:${process.env.EMAIL_FROM || process.env.EMAIL_USER}" style="color: #007bff;">${process.env.EMAIL_FROM || process.env.EMAIL_USER}</a></p>
                     </div>
                 </div>
             </div>
+        `,
+        text: `
+Welcome to Roblox Luau AI!
+
+Hi ${name || 'there'}!
+
+Thank you for signing up! To complete your registration, please use this verification code: ${code}
+
+This code will expire in 15 minutes.
+
+If you didn't create an account, you can safely ignore this email.
+
+Need help? Contact us at ${process.env.EMAIL_FROM || process.env.EMAIL_USER}
         `
     };
 
     try {
         console.log(`[EMAIL] Sending verification to ${email}...`);
-        await emailTransporter.sendMail(mailOptions);
-        console.log('[SUCCESS] Verification email sent!');
+        const info = await emailTransporter.sendMail(mailOptions);
+        console.log('[SUCCESS] Verification email sent!', info.messageId);
         return true;
     } catch (error) {
         console.error('[ERROR] Failed to send verification email:', error);
-        throw new Error('Failed to send verification email. Please try again.');
+        throw new Error(`Failed to send verification email: ${error.message}`);
     }
 }
 
@@ -549,7 +542,7 @@ app.get("/health", (req, res) => {
         version: "1.0.0",
         email: emailTransporter ? "enabled" : "disabled",
         oauth: {
-            google: !(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+            google: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
             redirectUri: `${getBaseUrl()}/auth/google/callback`
         },
         subscriptionPlans: Object.keys(SUBSCRIPTION_PLANS),
@@ -558,10 +551,48 @@ app.get("/health", (req, res) => {
     });
 });
 
-// User signup - ALWAYS require email verification
+// Test email endpoint
+app.post("/test-email", async (req, res) => {
+    try {
+        if (!emailTransporter) {
+            await initializeEmailTransporter();
+            if (!emailTransporter) {
+                return res.status(503).json({ 
+                    error: 'Email system not configured',
+                    details: {
+                        EMAIL_USER: process.env.EMAIL_USER ? 'SET' : 'MISSING',
+                        EMAIL_PASSWORD: process.env.EMAIL_PASSWORD ? 'SET' : 'MISSING'
+                    }
+                });
+            }
+        }
+
+        const testCode = generateVerificationCode();
+        await sendVerificationEmail(
+            process.env.EMAIL_USER,
+            testCode,
+            'Test User'
+        );
+
+        res.json({ 
+            success: true, 
+            message: 'Test email sent successfully',
+            code: testCode 
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            error: 'Failed to send test email',
+            details: error.message 
+        });
+    }
+});
+
+// Enhanced signup
 app.post("/auth/signup", async (req, res) => {
     try {
         const { email, password, name } = req.body;
+
+        console.log(`[SIGNUP] Attempt for: ${email}`);
 
         if (!email || !password || !name) {
             return res.status(400).json({ error: 'Email, password, and name are required' });
@@ -580,14 +611,21 @@ app.post("/auth/signup", async (req, res) => {
             return res.status(400).json({ error: 'An account with this email already exists' });
         }
 
-        // ALWAYS require email verification - no bypass
+        // Check if email system is working
         if (!emailTransporter) {
-            return res.status(503).json({ 
-                error: 'Email verification system is currently unavailable. Please try again later or contact support.',
-                requiresVerification: true
-            });
+            console.log('[SIGNUP] Email system not available, initializing...');
+            const emailInitialized = await initializeEmailTransporter();
+            
+            if (!emailInitialized) {
+                return res.status(503).json({ 
+                    error: 'Email verification system is currently unavailable. Please try again later or contact support.',
+                    requiresVerification: true,
+                    details: 'Email service configuration failed'
+                });
+            }
         }
 
+        // Check for existing pending verification
         if (pendingVerifications.has(email)) {
             const existing = pendingVerifications.get(email);
             const timeSinceLastRequest = Date.now() - existing.timestamp;
@@ -604,6 +642,7 @@ app.post("/auth/signup", async (req, res) => {
         const verificationCode = generateVerificationCode();
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Store pending verification
         pendingVerifications.set(email, {
             email,
             password: hashedPassword,
@@ -614,14 +653,29 @@ app.post("/auth/signup", async (req, res) => {
             attempts: 0
         });
 
-        await sendVerificationEmail(email, verificationCode, name);
-        
-        res.json({
-            message: 'Verification code sent to your email. Please check your inbox and spam folder.',
-            email: email,
-            requiresVerification: true,
-            expiresIn: '15 minutes'
-        });
+        // Try to send verification email
+        try {
+            await sendVerificationEmail(email, verificationCode, name);
+            
+            console.log(`[SIGNUP] Verification email sent to ${email}`);
+            
+            res.json({
+                message: 'Verification code sent to your email. Please check your inbox and spam folder.',
+                email: email,
+                requiresVerification: true,
+                expiresIn: '15 minutes'
+            });
+        } catch (emailError) {
+            console.error('[SIGNUP] Failed to send verification email:', emailError);
+            
+            // Remove pending verification if email failed
+            pendingVerifications.delete(email);
+            
+            res.status(500).json({ 
+                error: 'Failed to send verification email. Please check your email address and try again.',
+                details: emailError.message
+            });
+        }
 
     } catch (error) {
         console.error("[ERROR] Signup error:", error);
@@ -748,9 +802,12 @@ app.post("/auth/resend-verification", async (req, res) => {
         }
 
         if (!emailTransporter) {
-            return res.status(503).json({ 
-                error: 'Email system is not available. Please try again later.'
-            });
+            await initializeEmailTransporter();
+            if (!emailTransporter) {
+                return res.status(503).json({ 
+                    error: 'Email system is not available. Please try again later.'
+                });
+            }
         }
 
         const newVerificationCode = generateVerificationCode();
@@ -992,38 +1049,6 @@ app.get("/api/user", authenticateToken, async (req, res) => {
     }
 });
 
-app.get("/api/user-subscription", authenticateToken, async (req, res) => {
-    try {
-        const user = users.get(req.user.email);
-        
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-        
-        const subscription = user.subscription || { plan: 'free', status: 'active' };
-        const plan = SUBSCRIPTION_PLANS[subscription.plan] || SUBSCRIPTION_PLANS.free;
-        
-        const today = new Date().toISOString().split('T')[0];
-        const usageKey = `${user.id}_${today}`;
-        const usage = dailyUsage.get(usageKey) || 0;
-        
-        res.json({
-            plan: subscription.plan,
-            status: subscription.status,
-            limits: plan.limits,
-            usage: {
-                daily_messages: usage,
-                daily_limit: plan.limits.daily_messages
-            },
-            currentPeriodEnd: subscription.currentPeriodEnd,
-            cancelAtPeriodEnd: subscription.cancelAtPeriodEnd
-        });
-    } catch (error) {
-        console.error('[ERROR] Failed to get subscription:', error);
-        res.status(500).json({ error: 'Failed to get subscription status' });
-    }
-});
-
 app.post("/api/upgrade-subscription", authenticateToken, async (req, res) => {
     try {
         const { plan, paymentMethod } = req.body;
@@ -1071,117 +1096,41 @@ app.post("/api/upgrade-subscription", authenticateToken, async (req, res) => {
     }
 });
 
-app.post("/api/manual-upgrade", async (req, res) => {
-    try {
-        const email = "askeggs9009@gmail.com";
-        const user = users.get(email);
-        
-        if (user) {
-            user.subscription = {
-                plan: 'pro',
-                stripeCustomerId: 'cus_T1dVj5PQvUNMVh',
-                stripeSubscriptionId: 'sub_1S5aFY30DH9fxKOMBY5CtdOY',
-                status: 'active',
-                currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-                cancelAtPeriodEnd: false
-            };
-            
-            users.set(email, user);
-            console.log(`[MANUAL] User ${email} manually upgraded to pro`);
-            
-            res.json({
-                message: 'Manual upgrade successful',
-                user: {
-                    email: user.email,
-                    subscription: user.subscription
-                }
-            });
-        } else {
-            res.status(404).json({ error: 'User not found' });
-        }
-    } catch (error) {
-        console.error('[ERROR] Manual upgrade failed:', error);
-        res.status(500).json({ error: 'Manual upgrade failed' });
-    }
-});
-
+// Fixed usage limits endpoint
 app.get("/usage-limits", optionalAuthenticateToken, (req, res) => {
-    const userIdentifier = getUserIdentifier(req);
-    const isAuthenticated = req.user !== null;
-    
-    const limits = {};
-    
-    Object.entries(USAGE_LIMITS).forEach(([model, config]) => {
-        const limitCheck = checkUsageLimit(userIdentifier, model);
-        limits[model] = {
-            dailyLimit: config.dailyLimit,
-            hourlyLimit: config.hourlyLimit,
-            dailyUsed: limitCheck.limitsInfo ? limitCheck.limitsInfo.dailyUsed : 0,
-            hourlyUsed: limitCheck.limitsInfo ? limitCheck.limitsInfo.hourlyUsed : 0,
-            dailyRemaining: config.dailyLimit - (limitCheck.limitsInfo ? limitCheck.limitsInfo.dailyUsed : 0),
-            hourlyRemaining: config.hourlyLimit - (limitCheck.limitsInfo ? limitCheck.limitsInfo.hourlyUsed : 0),
-            cost: config.cost,
-            description: config.description
-        };
-    });
-
-    res.json({
-        isAuthenticated,
-        userIdentifier: isAuthenticated ? req.user.email : userIdentifier,
-        limits,
-        subscriptionPlans: SUBSCRIPTION_PLANS
-    });
-});
-
-app.get("/api/chats", authenticateToken, async (req, res) => {
     try {
-        const userId = req.user.id;
-        const chats = userChats.get(userId) || [];
+        const userIdentifier = getUserIdentifier(req);
+        const isAuthenticated = req.user !== null;
         
-        res.json({
-            chats: chats.map(chat => ({
-                id: chat.id,
-                title: chat.title,
-                createdAt: chat.createdAt,
-                updatedAt: chat.updatedAt,
-                messageCount: chat.messages ? chat.messages.length : 0
-            }))
+        const limits = {};
+        
+        Object.entries(USAGE_LIMITS).forEach(([model, config]) => {
+            const limitCheck = checkUsageLimit(userIdentifier, model);
+            limits[model] = {
+                dailyLimit: config.dailyLimit,
+                hourlyLimit: config.hourlyLimit,
+                dailyUsed: limitCheck.limitsInfo ? limitCheck.limitsInfo.dailyUsed : 0,
+                hourlyUsed: limitCheck.limitsInfo ? limitCheck.limitsInfo.hourlyUsed : 0,
+                dailyRemaining: config.dailyLimit - (limitCheck.limitsInfo ? limitCheck.limitsInfo.dailyUsed : 0),
+                hourlyRemaining: config.hourlyLimit - (limitCheck.limitsInfo ? limitCheck.limitsInfo.hourlyUsed : 0),
+                cost: config.cost,
+                description: config.description
+            };
         });
 
+        res.json({
+            isAuthenticated,
+            userIdentifier: isAuthenticated && req.user ? req.user.email : userIdentifier,
+            limits,
+            subscriptionPlans: SUBSCRIPTION_PLANS
+        });
     } catch (error) {
-        console.error("[ERROR] Get chats error:", error);
-        res.status(500).json({ error: 'Failed to get chats' });
+        console.error("[ERROR] Usage limits error:", error);
+        res.status(500).json({ error: 'Failed to get usage limits' });
     }
 });
 
-app.post("/api/chats", authenticateToken, async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const { title } = req.body;
-        
-        const newChat = {
-            id: Date.now().toString(),
-            title: title || 'New Chat',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            messages: []
-        };
-
-        const userChatsList = userChats.get(userId) || [];
-        userChatsList.unshift(newChat);
-        userChats.set(userId, userChatsList);
-
-        res.json({
-            message: 'Chat created successfully',
-            chat: newChat
-        });
-
-    } catch (error) {
-        console.error("[ERROR] Create chat error:", error);
-        res.status(500).json({ error: 'Failed to create chat' });
-    }
-});
-
+// Message endpoint
 app.post("/api/message", checkUsageLimits, optionalAuthenticateToken, async (req, res) => {
     try {
         const { message, model, chatId } = req.body;
@@ -1190,23 +1139,6 @@ app.post("/api/message", checkUsageLimits, optionalAuthenticateToken, async (req
         if (req.user) {
             const user = req.userData;
             recordUsage(user.id, model);
-
-            if (chatId) {
-                const userChatsList = userChats.get(user.id) || [];
-                const chatIndex = userChatsList.findIndex(chat => chat.id === chatId);
-                
-                if (chatIndex !== -1) {
-                    userChatsList[chatIndex].messages = userChatsList[chatIndex].messages || [];
-                    userChatsList[chatIndex].messages.push({
-                        id: Date.now().toString(),
-                        content: message,
-                        role: 'user',
-                        timestamp: new Date()
-                    });
-                    userChatsList[chatIndex].updatedAt = new Date();
-                    userChats.set(user.id, userChatsList);
-                }
-            }
 
             const today = new Date().toISOString().split('T')[0];
             const usageKey = `${user.id}_${today}`;
@@ -1255,90 +1187,6 @@ app.post("/api/message", checkUsageLimits, optionalAuthenticateToken, async (req
     }
 });
 
-app.post("/api/switch-account", async (req, res) => {
-    try {
-        const { token } = req.body;
-
-        if (!token) {
-            return res.status(400).json({ error: 'Token required for account switching' });
-        }
-
-        jwt.verify(token, JWT_SECRET, (err, decoded) => {
-            if (err) {
-                return res.status(403).json({ error: 'Invalid token for account switching' });
-            }
-
-            const user = users.get(decoded.email);
-            if (!user) {
-                return res.status(404).json({ error: 'User not found' });
-            }
-
-            const sessionId = createSession(user.id, token);
-
-            res.json({
-                message: 'Account switched successfully',
-                sessionId,
-                user: {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    subscription: user.subscription
-                },
-                clearPreviousData: true
-            });
-        });
-
-    } catch (error) {
-        console.error("[ERROR] Account switch error:", error);
-        res.status(500).json({ error: 'Failed to switch accounts' });
-    }
-});
-
-app.get("/api/admin/users", (req, res) => {
-    const userList = Array.from(users.values()).map(user => ({
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        provider: user.provider,
-        subscription: user.subscription,
-        createdAt: user.createdAt,
-        lastLogin: user.lastLogin
-    }));
-    
-    res.json({
-        total: userList.length,
-        users: userList
-    });
-});
-
-app.get("/api/admin/stats", (req, res) => {
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
-    
-    let totalDailyUsage = 0;
-    let activeUsersToday = 0;
-    
-    for (const [key, usage] of dailyUsage.entries()) {
-        if (key.includes(today)) {
-            totalDailyUsage += usage;
-            activeUsersToday++;
-        }
-    }
-    
-    res.json({
-        totalUsers: users.size,
-        activeUsersToday,
-        totalDailyUsage,
-        pendingVerifications: pendingVerifications.size,
-        activeSessions: sessions.size,
-        subscriptionBreakdown: {
-            free: Array.from(users.values()).filter(u => (u.subscription?.plan || 'free') === 'free').length,
-            pro: Array.from(users.values()).filter(u => u.subscription?.plan === 'pro').length,
-            enterprise: Array.from(users.values()).filter(u => u.subscription?.plan === 'enterprise').length
-        }
-    });
-});
-
 // Static file serving
 app.use(express.static(__dirname));
 
@@ -1351,6 +1199,7 @@ async function startServer() {
     console.log('🚀 Starting Roblox Luau AI Server...');
     console.log("=".repeat(60));
     
+    // Initialize email system
     await initializeEmailTransporter();
     
     const baseUrl = getBaseUrl();
@@ -1360,6 +1209,15 @@ async function startServer() {
         console.log(`\n✅ Server running on port ${PORT}`);
         console.log(`🌐 Base URL: ${baseUrl}`);
         console.log(`📧 Email verification: ${emailTransporter ? "ENABLED" : "DISABLED"}`);
+        
+        if (emailTransporter) {
+            console.log(`📮 Email service: Using ${process.env.EMAIL_USER}`);
+        } else {
+            console.log(`❌ Email setup failed - check configuration:`);
+            console.log(`   EMAIL_USER: ${process.env.EMAIL_USER ? 'SET' : 'MISSING'}`);
+            console.log(`   EMAIL_PASSWORD: ${process.env.EMAIL_PASSWORD ? 'SET' : 'MISSING'}`);
+        }
+        
         console.log(`🔒 JWT Secret: ${JWT_SECRET ? "CONFIGURED" : "USING DEFAULT"}`);
         console.log(`💳 Stripe: ${process.env.STRIPE_SECRET_KEY ? "CONFIGURED" : "NOT CONFIGURED"}`);
         
@@ -1382,6 +1240,10 @@ async function startServer() {
         console.log(`   Client ID: ${process.env.GOOGLE_CLIENT_ID ? 'CONFIGURED' : 'MISSING'}`);
         console.log(`   Client Secret: ${process.env.GOOGLE_CLIENT_SECRET ? 'CONFIGURED' : 'MISSING'}`);
         console.log(`   Redirect URI: ${baseUrl}/auth/google/callback`);
+        
+        console.log("\n[EMAIL DEBUGGING]");
+        console.log(`   Test endpoint: ${baseUrl}/test-email`);
+        console.log(`   POST to test email functionality`);
         
         console.log("=".repeat(60) + "\n");
     });
