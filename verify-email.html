@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify Your Email - Roblox Luau AI Assistant</title>
+    <title>Verify Your Email - Roblox Luau AI</title>
     <style>
         * {
             margin: 0;
@@ -12,123 +12,115 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #21262d 100%);
-            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
             color: #f0f6fc;
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 2rem;
+            padding: 1rem;
         }
 
         .verification-container {
-            background: rgba(33, 38, 45, 0.8);
-            backdrop-filter: blur(20px);
+            background: #21262d;
             border: 1px solid #30363d;
-            border-radius: 20px;
+            border-radius: 12px;
             padding: 3rem;
+            max-width: 480px;
             width: 100%;
-            max-width: 450px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             text-align: center;
         }
 
         .verification-icon {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(45deg, #00d4ff, #9d4edd);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-            font-size: 24px;
-            margin: 0 auto 1.5rem;
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
         .verification-title {
-            font-size: 1.8rem;
+            font-size: 2rem;
             font-weight: 600;
             margin-bottom: 0.5rem;
-            background: linear-gradient(45deg, #00d4ff, #9d4edd);
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #f0f6fc;
         }
 
         .verification-subtitle {
             color: #8b949e;
-            font-size: 0.9rem;
             margin-bottom: 2rem;
             line-height: 1.5;
         }
 
         .email-display {
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid rgba(0, 212, 255, 0.3);
+            background: #0d1117;
+            border: 1px solid #30363d;
             border-radius: 8px;
-            padding: 0.75rem;
+            padding: 1rem;
             margin-bottom: 2rem;
+            font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', Consolas, 'Courier New', monospace;
+            color: #58a6ff;
             font-weight: 500;
-            color: #00d4ff;
         }
 
         .verification-form {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .code-input-container {
-            position: relative;
+            margin-bottom: 2rem;
         }
 
         .code-input {
             width: 100%;
             padding: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid #30363d;
-            border-radius: 12px;
-            color: #f0f6fc;
-            font-size: 1.2rem;
+            font-size: 1.5rem;
             font-weight: 600;
             text-align: center;
-            letter-spacing: 3px;
-            font-family: monospace;
-            transition: all 0.3s ease;
-            outline: none;
+            letter-spacing: 0.5rem;
+            background: #0d1117;
+            border: 2px solid #30363d;
+            border-radius: 8px;
+            color: #f0f6fc;
+            transition: all 0.2s ease;
+            font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', Consolas, 'Courier New', monospace;
         }
 
         .code-input:focus {
+            outline: none;
             border-color: #58a6ff;
             box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
-            background: rgba(255, 255, 255, 0.08);
         }
 
         .code-input::placeholder {
-            color: #8b949e;
-            letter-spacing: 2px;
+            color: #6e7681;
         }
 
         .verify-button {
-            background: linear-gradient(45deg, #58a6ff, #1f6feb);
-            border: none;
-            padding: 1rem 1.5rem;
-            border-radius: 12px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            width: 100%;
+            padding: 1rem 2rem;
             font-size: 1rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #238636 0%, #2ea043 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             position: relative;
-            overflow: hidden;
         }
 
         .verify-button:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(88, 166, 255, 0.4);
+            background: linear-gradient(135deg, #2ea043 0%, #238636 100%);
+            transform: translateY(-1px);
         }
 
         .verify-button:disabled {
@@ -138,22 +130,23 @@
         }
 
         .resend-section {
+            margin-bottom: 2rem;
             padding-top: 1.5rem;
             border-top: 1px solid #30363d;
         }
 
         .resend-text {
             color: #8b949e;
-            font-size: 0.85rem;
             margin-bottom: 1rem;
+            font-size: 0.9rem;
         }
 
         .resend-button {
-            background: transparent;
-            border: 1px solid #58a6ff;
-            color: #58a6ff;
+            background: none;
+            border: 1px solid #f85149;
+            color: #f85149;
             padding: 0.75rem 1.5rem;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s ease;
             font-size: 0.9rem;
@@ -161,8 +154,7 @@
         }
 
         .resend-button:hover:not(:disabled) {
-            background: rgba(88, 166, 255, 0.1);
-            transform: translateY(-1px);
+            background: rgba(248, 81, 73, 0.1);
         }
 
         .resend-button:disabled {
@@ -172,7 +164,7 @@
 
         .countdown {
             color: #8b949e;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             margin-top: 0.5rem;
         }
 
@@ -236,6 +228,12 @@
             color: #58a6ff;
         }
 
+        .attempts-remaining {
+            color: #f79000;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
         @media (max-width: 480px) {
             .verification-container {
                 padding: 2rem;
@@ -250,7 +248,7 @@
 </head>
 <body>
     <div class="verification-container">
-        <div class="verification-icon">Ã°Å¸â€œÂ§</div>
+        <div class="verification-icon">📧</div>
         <h1 class="verification-title">Check Your Email</h1>
         <p class="verification-subtitle">
             We've sent a 6-digit verification code to your email address. 
@@ -274,6 +272,7 @@
                     maxlength="6"
                     required
                     autocomplete="one-time-code"
+                    pattern="[0-9]{6}"
                 >
             </div>
 
@@ -284,6 +283,8 @@
                     <span>Verifying...</span>
                 </div>
             </button>
+
+            <div id="attemptsRemaining" class="attempts-remaining" style="display: none;"></div>
         </form>
 
         <div class="resend-section">
@@ -295,13 +296,14 @@
         </div>
 
         <div class="back-link">
-            <a href="/login.html">Ã¢â€ Â Back to Sign In</a>
+            <a href="/login.html">← Back to Sign In</a>
         </div>
     </div>
 
     <script>
         let userEmail = '';
         let resendCountdownInterval = null;
+        let verificationAttempts = 0;
 
         // Initialize the page
         function initVerificationPage() {
@@ -311,7 +313,10 @@
             
             if (!userEmail) {
                 // Redirect to signup if no email
-                window.location.href = '/login.html';
+                showError('No email found for verification. Please sign up again.');
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 3000);
                 return;
             }
 
@@ -323,6 +328,47 @@
             
             // Start resend countdown
             startResendCountdown();
+
+            // Auto-format code input
+            setupCodeInput();
+        }
+
+        // Setup code input formatting
+        function setupCodeInput() {
+            const codeInput = document.getElementById('verificationCode');
+            
+            codeInput.addEventListener('input', function(e) {
+                // Only allow numbers
+                let value = e.target.value.replace(/[^0-9]/g, '');
+                
+                // Limit to 6 digits
+                if (value.length > 6) {
+                    value = value.slice(0, 6);
+                }
+                
+                e.target.value = value;
+                
+                // Auto-submit when 6 digits entered
+                if (value.length === 6) {
+                    setTimeout(() => {
+                        document.getElementById('verificationForm').dispatchEvent(new Event('submit'));
+                    }, 100);
+                }
+            });
+
+            // Handle paste events
+            codeInput.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const paste = (e.clipboardData || window.clipboardData).getData('text');
+                const numbers = paste.replace(/[^0-9]/g, '').slice(0, 6);
+                e.target.value = numbers;
+                
+                if (numbers.length === 6) {
+                    setTimeout(() => {
+                        document.getElementById('verificationForm').dispatchEvent(new Event('submit'));
+                    }, 100);
+                }
+            });
         }
 
         // Handle form submission
@@ -331,8 +377,18 @@
             
             const verificationCode = document.getElementById('verificationCode').value.trim();
             
-            if (!verificationCode || verificationCode.length !== 6) {
-                showError('Please enter a valid 6-digit code');
+            if (!verificationCode) {
+                showError('Please enter the verification code');
+                return;
+            }
+
+            if (verificationCode.length !== 6) {
+                showError('Verification code must be 6 digits');
+                return;
+            }
+
+            if (!/^\d{6}$/.test(verificationCode)) {
+                showError('Verification code must contain only numbers');
                 return;
             }
 
@@ -341,14 +397,21 @@
 
         // Verify email with code
         async function verifyEmail(code) {
-            setLoading(true);
-            clearMessages();
-
+            const verifyButton = document.getElementById('verifyButton');
+            const verifyText = document.getElementById('verifyText');
+            const verifyLoading = document.getElementById('verifyLoading');
+            
             try {
-                const response = await fetch('http://localhost:3000/auth/verify-email', {
+                // Show loading state
+                verifyButton.disabled = true;
+                verifyText.style.display = 'none';
+                verifyLoading.style.display = 'flex';
+                hideMessages();
+
+                const response = await fetch('/auth/verify-email', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         email: userEmail,
@@ -359,39 +422,76 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Store auth token and user data
-                    localStorage.setItem('authToken', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    
-                    // Remove pending verification email
-                    localStorage.removeItem('pendingVerificationEmail');
-                    
+                    // Success
                     showSuccess(data.message || 'Email verified successfully!');
                     
-                    // Redirect to main app after a short delay
+                    // Store auth data
+                    if (data.token) {
+                        localStorage.setItem('authToken', data.token);
+                        localStorage.setItem('sessionId', data.sessionId || '');
+                    }
+                    
+                    // Clear pending verification
+                    localStorage.removeItem('pendingVerificationEmail');
+                    
+                    // Redirect to main app
                     setTimeout(() => {
-                        window.location.href = '/index.html';
-                    }, 1500);
+                        window.location.href = '/';
+                    }, 2000);
+
                 } else {
-                    showError(data.error || 'Verification failed. Please try again.');
+                    // Error
+                    verificationAttempts++;
+                    
+                    if (data.attemptsRemaining !== undefined) {
+                        showError(data.error);
+                        showAttemptsRemaining(data.attemptsRemaining);
+                        
+                        if (data.attemptsRemaining === 0) {
+                            setTimeout(() => {
+                                window.location.href = '/login.html';
+                            }, 3000);
+                        }
+                    } else if (data.action === 'signup_required') {
+                        showError(data.error);
+                        setTimeout(() => {
+                            window.location.href = '/login.html';
+                        }, 3000);
+                    } else {
+                        showError(data.error || 'Verification failed. Please try again.');
+                    }
+                    
+                    // Clear the input for retry
+                    document.getElementById('verificationCode').value = '';
+                    document.getElementById('verificationCode').focus();
                 }
+
             } catch (error) {
-                showError('Connection error. Please check your internet connection.');
+                console.error('Verification error:', error);
+                showError('Network error. Please check your connection and try again.');
+                
             } finally {
-                setLoading(false);
+                // Reset button state
+                verifyButton.disabled = false;
+                verifyText.style.display = 'inline';
+                verifyLoading.style.display = 'none';
             }
         }
 
         // Resend verification code
         async function resendVerificationCode() {
-            setResendLoading(true);
-            clearMessages();
-
+            const resendButton = document.getElementById('resendButton');
+            const resendText = document.getElementById('resendText');
+            
             try {
-                const response = await fetch('http://localhost:3000/auth/resend-verification', {
+                resendButton.disabled = true;
+                resendText.textContent = 'Sending...';
+                hideMessages();
+
+                const response = await fetch('/auth/resend-verification', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         email: userEmail
@@ -401,32 +501,62 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    showSuccess(data.message || 'New verification code sent!');
+                    showSuccess(data.message || 'Verification code sent successfully!');
                     startResendCountdown();
+                    
+                    // Reset attempts counter
+                    verificationAttempts = 0;
+                    hideAttemptsRemaining();
+                    
+                    // Clear and focus input
+                    document.getElementById('verificationCode').value = '';
+                    document.getElementById('verificationCode').focus();
+
                 } else {
-                    showError(data.error || 'Failed to resend code. Please try again.');
+                    if (data.action === 'signup_required') {
+                        showError(data.error);
+                        setTimeout(() => {
+                            window.location.href = '/login.html';
+                        }, 3000);
+                    } else if (data.retryAfter) {
+                        showError(data.error);
+                        startResendCountdown(data.retryAfter);
+                    } else {
+                        showError(data.error || 'Failed to resend verification code.');
+                    }
                 }
+
             } catch (error) {
-                showError('Connection error. Please check your internet connection.');
+                console.error('Resend error:', error);
+                showError('Network error. Please check your connection and try again.');
+                
             } finally {
-                setResendLoading(false);
+                resendText.textContent = 'Resend Code';
+                if (!resendButton.disabled) {
+                    resendButton.disabled = false;
+                }
             }
         }
 
-        // Start countdown for resend button
-        function startResendCountdown() {
-            let countdown = 60;
+        // Start resend countdown
+        function startResendCountdown(seconds = 60) {
             const resendButton = document.getElementById('resendButton');
             const resendCountdown = document.getElementById('resendCountdown');
             
+            let timeLeft = seconds;
             resendButton.disabled = true;
             resendCountdown.style.display = 'block';
             
+            // Clear any existing interval
+            if (resendCountdownInterval) {
+                clearInterval(resendCountdownInterval);
+            }
+            
             resendCountdownInterval = setInterval(() => {
-                countdown--;
-                resendCountdown.textContent = `Resend available in ${countdown}s`;
+                resendCountdown.textContent = `Resend available in ${timeLeft} seconds`;
+                timeLeft--;
                 
-                if (countdown <= 0) {
+                if (timeLeft < 0) {
                     clearInterval(resendCountdownInterval);
                     resendButton.disabled = false;
                     resendCountdown.style.display = 'none';
@@ -434,88 +564,72 @@
             }, 1000);
         }
 
-        // Auto-format verification code input
-        document.getElementById('verificationCode').addEventListener('input', function(e) {
-            // Only allow numbers
-            e.target.value = e.target.value.replace(/[^0-9]/g, '');
-            
-            // Auto-submit when 6 digits are entered
-            if (e.target.value.length === 6) {
-                setTimeout(() => {
-                    document.getElementById('verificationForm').dispatchEvent(new Event('submit'));
-                }, 100);
-            }
-        });
-
-        // Paste handling for verification code
-        document.getElementById('verificationCode').addEventListener('paste', function(e) {
-            e.preventDefault();
-            const paste = (e.clipboardData || window.clipboardData).getData('text');
-            const numbersOnly = paste.replace(/[^0-9]/g, '').slice(0, 6);
-            e.target.value = numbersOnly;
-            
-            if (numbersOnly.length === 6) {
-                setTimeout(() => {
-                    document.getElementById('verificationForm').dispatchEvent(new Event('submit'));
-                }, 100);
-            }
-        });
-
-        // UI Helper Functions
+        // Show error message
         function showError(message) {
             const errorDiv = document.getElementById('errorMessage');
             errorDiv.textContent = message;
             errorDiv.style.display = 'block';
+            
+            // Hide success message
             document.getElementById('successMessage').style.display = 'none';
         }
 
+        // Show success message
         function showSuccess(message) {
             const successDiv = document.getElementById('successMessage');
             successDiv.textContent = message;
             successDiv.style.display = 'block';
+            
+            // Hide error message
             document.getElementById('errorMessage').style.display = 'none';
         }
 
-        function clearMessages() {
+        // Hide all messages
+        function hideMessages() {
             document.getElementById('errorMessage').style.display = 'none';
             document.getElementById('successMessage').style.display = 'none';
         }
 
-        function setLoading(loading) {
-            const verifyButton = document.getElementById('verifyButton');
-            const verifyText = document.getElementById('verifyText');
-            const verifyLoading = document.getElementById('verifyLoading');
-            const codeInput = document.getElementById('verificationCode');
-
-            verifyButton.disabled = loading;
-            codeInput.disabled = loading;
-            verifyText.style.display = loading ? 'none' : 'inline';
-            verifyLoading.style.display = loading ? 'flex' : 'none';
-        }
-
-        function setResendLoading(loading) {
-            const resendButton = document.getElementById('resendButton');
-            const resendText = document.getElementById('resendText');
-
-            if (loading) {
-                resendButton.disabled = true;
-                resendText.textContent = 'Sending...';
+        // Show attempts remaining
+        function showAttemptsRemaining(attempts) {
+            const attemptsDiv = document.getElementById('attemptsRemaining');
+            if (attempts > 0) {
+                attemptsDiv.textContent = `${attempts} attempts remaining`;
+                attemptsDiv.style.display = 'block';
             } else {
-                resendText.textContent = 'Resend Code';
-                // Keep disabled if countdown is active
-                if (!document.getElementById('resendCountdown').style.display === 'block') {
-                    resendButton.disabled = false;
-                }
+                attemptsDiv.textContent = 'No attempts remaining. Redirecting to sign up...';
+                attemptsDiv.style.display = 'block';
             }
         }
 
-        // Initialize when page loads
-        window.addEventListener('load', initVerificationPage);
+        // Hide attempts remaining
+        function hideAttemptsRemaining() {
+            document.getElementById('attemptsRemaining').style.display = 'none';
+        }
 
-        // Clean up intervals when leaving page
-        window.addEventListener('beforeunload', function() {
+        // Handle browser back/forward buttons
+        window.addEventListener('popstate', function(e) {
+            // Clear any ongoing processes
             if (resendCountdownInterval) {
                 clearInterval(resendCountdownInterval);
+            }
+        });
+
+        // Handle page unload
+        window.addEventListener('beforeunload', function(e) {
+            if (resendCountdownInterval) {
+                clearInterval(resendCountdownInterval);
+            }
+        });
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initVerificationPage);
+
+        // Handle keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Escape key - go back
+            if (e.key === 'Escape') {
+                window.location.href = '/login.html';
             }
         });
     </script>
