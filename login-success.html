@@ -92,17 +92,6 @@
             animation: fadeIn 0.5s ease 0.5s both;
         }
 
-        .loading-dots {
-            display: inline-block;
-            animation: loadingDots 1.5s infinite;
-        }
-
-        @keyframes loadingDots {
-            0%, 20% { content: '.'; }
-            40% { content: '..'; }
-            60%, 100% { content: '...'; }
-        }
-
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -225,65 +214,99 @@
             }
         }
 
-        // Function to process authentication
-        function processAuthentication() {
+        // Function to handle session-based authentication
+        async function handleSessionAuth(sessionKey) {
+            console.log('Processing session-based authentication...');
+            
             try {
-                // Extract token and user data from URL parameters
-                const urlParams = new URLSearchParams(window.location.search);
-                const token = urlParams.get('token');
-                const userParam = urlParams.get('user');
+                const response = await fetch(`https://roassistantv3-production.up.railway.app/auth/oauth-session/${sessionKey}`);
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Session retrieval failed');
+                }
+                
+                const data = await response.json();
+                console.log('Session data retrieved successfully');
+                
+                return {
+                    token: data.token,
+                    user: data.user
+                };
+            } catch (error) {
+                console.error('Failed to retrieve session:', error);
+                throw error;
+            }
+        }
 
-                console.log('Token present:', !!token);
-                console.log('User param present:', !!userParam);
+        // Function to process authentication
+        async function processAuthentication() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                let token = urlParams.get('token');
+                let userParam = urlParams.get('user');
+                const sessionKey = urlParams.get('session');
+
+                console.log('Auth params:', {
+                    hasToken: !!token,
+                    hasUser: !!userParam,
+                    hasSession: !!sessionKey
+                });
+
+                // Handle session-based auth (for long URLs)
+                if (sessionKey && !token) {
+                    console.log('Using session-based authentication');
+                    try {
+                        const sessionData = await handleSessionAuth(sessionKey);
+                        token = sessionData.token;
+                        userParam = JSON.stringify(sessionData.user);
+                        console.log('Session authentication successful');
+                    } catch (error) {
+                        showError('Session authentication failed', error.message);
+                        return;
+                    }
+                }
 
                 if (!token) {
-                    console.error('No token in URL parameters');
-                    showError('Missing authentication token', 'No token parameter found in URL');
+                    console.error('No token found');
+                    showError('Missing authentication token', 'No token parameter found');
                     return;
                 }
 
-                if (!userParam) {
-                    console.error('No user data in URL parameters');
-                    showError('Missing user information', 'No user parameter found in URL');
-                    return;
-                }
-
-                // Try to parse user data
                 let user;
-                try {
-                    const decodedUser = decodeURIComponent(userParam);
-                    console.log('Decoded user string:', decodedUser.substring(0, 100) + '...');
-                    
-                    user = JSON.parse(decodedUser);
-                    console.log('Parsed user object:', user);
-                } catch (parseError) {
-                    console.error('Failed to parse user data:', parseError);
-                    showError('Invalid user data format', parseError.message);
-                    return;
+                if (userParam) {
+                    try {
+                        // Handle both encoded and plain JSON
+                        if (userParam.startsWith('{')) {
+                            user = JSON.parse(userParam);
+                        } else {
+                            const decodedUser = decodeURIComponent(userParam);
+                            user = JSON.parse(decodedUser);
+                        }
+                        console.log('Parsed user object:', user);
+                    } catch (parseError) {
+                        console.error('Failed to parse user data:', parseError);
+                        // Continue without user data - token is what matters
+                        user = { email: 'User' };
+                    }
+                } else {
+                    // No user data, but we have a token - that's enough
+                    user = { email: 'User' };
                 }
 
-                // Validate user object
-                if (!user || typeof user !== 'object') {
-                    console.error('Invalid user object:', user);
-                    showError('Invalid user data', 'User data is not a valid object');
-                    return;
+                // Display user info if we have it
+                if (user && user.email) {
+                    console.log('Authentication successful for:', user.email);
+                    document.getElementById('userInfo').style.display = 'block';
+                    document.getElementById('userEmail').textContent = user.email;
                 }
-
-                if (!user.email) {
-                    console.error('User object missing email:', user);
-                    showError('Incomplete user data', 'User email is missing');
-                    return;
-                }
-
-                // Display user info
-                console.log('Authentication successful for:', user.email);
-                document.getElementById('userInfo').style.display = 'block';
-                document.getElementById('userEmail').textContent = user.email;
 
                 // Store authentication data in localStorage
                 try {
                     localStorage.setItem('authToken', token);
-                    localStorage.setItem('user', JSON.stringify(user));
+                    if (user && Object.keys(user).length > 1) {
+                        localStorage.setItem('user', JSON.stringify(user));
+                    }
                     console.log('Auth data stored in localStorage');
                 } catch (storageError) {
                     console.error('Failed to store auth data:', storageError);
@@ -305,19 +328,24 @@
             }
         }
 
-        // Function to check for hash-based parameters (alternative format)
+        // Check for hash-based parameters (alternative format)
         function checkHashParams() {
             if (window.location.hash && window.location.hash.length > 1) {
                 console.log('Hash parameters detected:', window.location.hash);
                 
-                // Convert hash to search params
                 const hashParams = new URLSearchParams(window.location.hash.substring(1));
                 const token = hashParams.get('token');
                 const user = hashParams.get('user');
+                const session = hashParams.get('session');
                 
-                if (token && user) {
+                if (token || session) {
                     console.log('Converting hash params to search params');
-                    window.location.href = `/login-success.html?token=${token}&user=${user}`;
+                    let redirectUrl = '/login-success.html?';
+                    if (token) redirectUrl += `token=${token}`;
+                    if (user) redirectUrl += `&user=${user}`;
+                    if (session) redirectUrl += `session=${session}`;
+                    
+                    window.location.href = redirectUrl;
                     return true;
                 }
             }
@@ -328,12 +356,12 @@
         window.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, starting authentication process');
             
-            // Check for hash parameters first (some OAuth providers use this)
+            // Check for hash parameters first
             if (checkHashParams()) {
                 return;
             }
             
-            // Process standard query parameters
+            // Process authentication
             processAuthentication();
         });
 
