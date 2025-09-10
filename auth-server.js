@@ -9,7 +9,28 @@ import path from "path";
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import Stripe from 'stripe';
-import nodemailer from 'nodemailer'; // Fixed import
+
+// Fixed nodemailer import - try both methods
+let nodemailer;
+try {
+    // Method 1: Direct import
+    nodemailer = await import('nodemailer');
+    if (nodemailer.default) {
+        nodemailer = nodemailer.default;
+    }
+    console.log('[SUCCESS] Nodemailer imported via ES6 import');
+} catch (importError) {
+    try {
+        // Method 2: Using createRequire as fallback
+        import { createRequire } from 'module';
+        const require = createRequire(import.meta.url);
+        nodemailer = require('nodemailer');
+        console.log('[SUCCESS] Nodemailer imported via require');
+    } catch (requireError) {
+        console.log('[ERROR] Failed to import nodemailer:', requireError.message);
+        nodemailer = null;
+    }
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -121,7 +142,7 @@ const USAGE_LIMITS = {
     }
 };
 
-// Fixed Email Setup
+// Fixed Email Setup with better debugging
 let emailTransporter = null;
 
 async function initializeEmailTransporter() {
@@ -132,6 +153,10 @@ async function initializeEmailTransporter() {
         console.log('[ERROR] Nodemailer not available!');
         return false;
     }
+
+    // Debug nodemailer object
+    console.log('[DEBUG] Nodemailer object type:', typeof nodemailer);
+    console.log('[DEBUG] Nodemailer has createTransporter:', typeof nodemailer.createTransporter);
     
     // Check for required email configuration
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
@@ -145,7 +170,14 @@ async function initializeEmailTransporter() {
         console.log('[EMAIL] Creating Gmail SMTP transporter...');
         console.log(`[EMAIL] Using email: ${process.env.EMAIL_USER}`);
         
-        // Fixed transporter creation
+        // Check if createTransporter exists
+        if (typeof nodemailer.createTransporter !== 'function') {
+            console.log('[ERROR] nodemailer.createTransporter is not a function');
+            console.log('[DEBUG] Available methods:', Object.keys(nodemailer));
+            return false;
+        }
+        
+        // Create transporter
         emailTransporter = nodemailer.createTransporter({
             service: 'gmail',
             auth: {
@@ -551,17 +583,28 @@ app.get("/health", (req, res) => {
     });
 });
 
-// Test email endpoint
+// Test email endpoint with better debugging
 app.post("/test-email", async (req, res) => {
     try {
+        console.log('[TEST] Testing email system...');
+        
+        if (!nodemailer) {
+            return res.status(503).json({ 
+                error: 'Nodemailer not imported',
+                debug: 'Nodemailer module not available'
+            });
+        }
+
         if (!emailTransporter) {
-            await initializeEmailTransporter();
-            if (!emailTransporter) {
+            console.log('[TEST] Email transporter not available, initializing...');
+            const initialized = await initializeEmailTransporter();
+            if (!initialized) {
                 return res.status(503).json({ 
                     error: 'Email system not configured',
                     details: {
                         EMAIL_USER: process.env.EMAIL_USER ? 'SET' : 'MISSING',
-                        EMAIL_PASSWORD: process.env.EMAIL_PASSWORD ? 'SET' : 'MISSING'
+                        EMAIL_PASSWORD: process.env.EMAIL_PASSWORD ? 'SET' : 'MISSING',
+                        nodemailer: nodemailer ? 'AVAILABLE' : 'NOT_AVAILABLE'
                     }
                 });
             }
@@ -580,6 +623,7 @@ app.post("/test-email", async (req, res) => {
             code: testCode 
         });
     } catch (error) {
+        console.error('[TEST] Email test failed:', error);
         res.status(500).json({ 
             error: 'Failed to send test email',
             details: error.message 
@@ -838,418 +882,3 @@ app.post("/auth/login", async (req, res) => {
         if (!email || !password) {
             return res.status(400).json({ error: 'Email and password are required' });
         }
-
-        const user = users.get(email);
-        if (!user) {
-            return res.status(401).json({ error: 'Invalid email or password' });
-        }
-
-        const isValidPassword = await bcrypt.compare(password, user.password);
-        if (!isValidPassword) {
-            return res.status(401).json({ error: 'Invalid email or password' });
-        }
-
-        if (!user.emailVerified) {
-            return res.status(403).json({ 
-                error: 'Email not verified. Please check your email for verification instructions.',
-                requiresVerification: true,
-                email: email
-            });
-        }
-
-        user.lastLogin = new Date();
-        users.set(email, user);
-
-        invalidateUserSessions(user.id);
-
-        const token = jwt.sign(
-            { id: user.id, email: user.email },
-            JWT_SECRET,
-            { expiresIn: '7d' }
-        );
-
-        const sessionId = createSession(user.id, token);
-
-        res.json({
-            token,
-            sessionId,
-            user: {
-                id: user.id,
-                email: user.email,
-                name: user.name,
-                createdAt: user.createdAt,
-                lastLogin: user.lastLogin,
-                emailVerified: user.emailVerified,
-                subscription: user.subscription || { plan: 'free', status: 'active' }
-            },
-            message: 'Login successful!'
-        });
-
-    } catch (error) {
-        console.error("[ERROR] Login error:", error);
-        res.status(500).json({ error: 'Login failed. Please try again.' });
-    }
-});
-
-// Google OAuth routes
-app.get("/auth/google", (req, res) => {
-    try {
-        const googleClient = getGoogleClient();
-        const scopes = ['email', 'profile'];
-        
-        const authUrl = googleClient.generateAuthUrl({
-            access_type: 'offline',
-            scope: scopes,
-            prompt: 'consent',
-            include_granted_scopes: true
-        });
-        
-        console.log('[OAUTH] Redirecting to Google auth URL');
-        res.redirect(authUrl);
-    } catch (error) {
-        console.error('[ERROR] Google auth initiation failed:', error);
-        const frontendUrl = process.env.FRONTEND_URL || 'https://musical-youtiao-b05928.netlify.app';
-        res.redirect(`${frontendUrl}/login.html?error=oauth_setup_failed`);
-    }
-});
-
-app.get("/auth/google/callback", async (req, res) => {
-    const frontendUrl = process.env.FRONTEND_URL || 'https://musical-youtiao-b05928.netlify.app';
-    
-    try {
-        const { code, error: oauthError } = req.query;
-        
-        if (oauthError) {
-            console.error('[ERROR] OAuth error from Google:', oauthError);
-            return res.redirect(`${frontendUrl}/login.html?error=oauth_denied`);
-        }
-        
-        if (!code) {
-            console.error('[ERROR] No authorization code received');
-            return res.redirect(`${frontendUrl}/login.html?error=no_code`);
-        }
-        
-        console.log('[OAUTH] Processing callback with code:', code.substring(0, 20) + '...');
-        
-        const googleClient = getGoogleClient();
-        
-        const { tokens } = await googleClient.getToken(code);
-        googleClient.setCredentials(tokens);
-        
-        const oauth2 = google.oauth2({ version: 'v2', auth: googleClient });
-        const { data } = await oauth2.userinfo.get();
-        
-        console.log('[OAUTH] User data received:', data.email);
-        
-        let user = users.get(data.email);
-        
-        if (!user) {
-            user = {
-                id: Date.now().toString(),
-                email: data.email,
-                name: data.name,
-                picture: data.picture,
-                provider: 'google',
-                emailVerified: true,
-                createdAt: new Date(),
-                lastLogin: new Date(),
-                subscription: { plan: 'free', status: 'active' }
-            };
-            
-            users.set(data.email, user);
-            console.log('[OAUTH] New user created:', data.email);
-        } else {
-            user.lastLogin = new Date();
-            if (data.picture) user.picture = data.picture;
-            users.set(data.email, user);
-            console.log('[OAUTH] Existing user logged in:', data.email);
-        }
-        
-        const token = jwt.sign(
-            { id: user.id, email: user.email },
-            JWT_SECRET,
-            { expiresIn: '7d' }
-        );
-        
-        const sessionId = createSession(user.id, token);
-        
-        res.redirect(`${frontendUrl}/?token=${token}&sessionId=${sessionId}`);
-        
-    } catch (error) {
-        console.error('[ERROR] Google OAuth callback failed:', error);
-        res.redirect(`${frontendUrl}/login.html?error=oauth_failed`);
-    }
-});
-
-app.get("/auth/verify", authenticateToken, (req, res) => {
-    const user = users.get(req.user.email);
-    res.json({ 
-        valid: true, 
-        user: {
-            ...req.user,
-            subscription: user?.subscription || { plan: 'free', status: 'active' }
-        }
-    });
-});
-
-app.post("/auth/logout", authenticateToken, async (req, res) => {
-    try {
-        const { sessionId } = req.body;
-        
-        if (sessionId) {
-            sessions.delete(sessionId);
-        } else {
-            invalidateUserSessions(req.user.id);
-        }
-
-        res.json({ 
-            message: 'Logged out successfully',
-            clearStorage: true
-        });
-
-    } catch (error) {
-        console.error("[ERROR] Logout error:", error);
-        res.status(500).json({ error: 'Logout failed' });
-    }
-});
-
-app.get("/api/user", authenticateToken, async (req, res) => {
-    try {
-        const user = req.userData;
-        const subscription = user.subscription || { plan: 'free', status: 'active' };
-        const plan = SUBSCRIPTION_PLANS[subscription.plan] || SUBSCRIPTION_PLANS.free;
-        
-        const today = new Date().toISOString().split('T')[0];
-        const usageKey = `${user.id}_${today}`;
-        const usage = dailyUsage.get(usageKey) || 0;
-        
-        res.json({
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            picture: user.picture,
-            createdAt: user.createdAt,
-            lastLogin: user.lastLogin,
-            emailVerified: user.emailVerified,
-            provider: user.provider || 'email',
-            subscription: {
-                plan: subscription.plan,
-                status: subscription.status,
-                limits: plan.limits,
-                usage: {
-                    daily_messages: usage,
-                    daily_limit: plan.limits.daily_messages
-                }
-            }
-        });
-
-    } catch (error) {
-        console.error("[ERROR] Get user error:", error);
-        res.status(500).json({ error: 'Failed to get user information' });
-    }
-});
-
-app.post("/api/upgrade-subscription", authenticateToken, async (req, res) => {
-    try {
-        const { plan, paymentMethod } = req.body;
-        const user = req.userData;
-
-        if (!SUBSCRIPTION_PLANS[plan]) {
-            return res.status(400).json({ error: 'Invalid subscription plan' });
-        }
-
-        if (plan === 'free') {
-            return res.status(400).json({ error: 'Cannot upgrade to free plan' });
-        }
-
-        const updatedSubscription = {
-            plan: plan,
-            status: 'active',
-            currentPeriodStart: new Date(),
-            currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-            cancelAtPeriodEnd: false,
-            paymentMethod: paymentMethod || 'card'
-        };
-
-        user.subscription = updatedSubscription;
-        users.set(user.email, user);
-
-        const today = new Date().toISOString().split('T')[0];
-        const usageKey = `${user.id}_${today}`;
-        dailyUsage.delete(usageKey);
-
-        console.log(`[UPGRADE] User ${user.email} upgraded to ${plan} plan`);
-
-        res.json({
-            message: `Successfully upgraded to ${SUBSCRIPTION_PLANS[plan].name} plan!`,
-            subscription: {
-                plan: plan,
-                status: 'active',
-                limits: SUBSCRIPTION_PLANS[plan].limits,
-                currentPeriodEnd: updatedSubscription.currentPeriodEnd
-            }
-        });
-
-    } catch (error) {
-        console.error("[ERROR] Subscription upgrade error:", error);
-        res.status(500).json({ error: 'Failed to upgrade subscription' });
-    }
-});
-
-// Fixed usage limits endpoint
-app.get("/usage-limits", optionalAuthenticateToken, (req, res) => {
-    try {
-        const userIdentifier = getUserIdentifier(req);
-        const isAuthenticated = req.user !== null;
-        
-        const limits = {};
-        
-        Object.entries(USAGE_LIMITS).forEach(([model, config]) => {
-            const limitCheck = checkUsageLimit(userIdentifier, model);
-            limits[model] = {
-                dailyLimit: config.dailyLimit,
-                hourlyLimit: config.hourlyLimit,
-                dailyUsed: limitCheck.limitsInfo ? limitCheck.limitsInfo.dailyUsed : 0,
-                hourlyUsed: limitCheck.limitsInfo ? limitCheck.limitsInfo.hourlyUsed : 0,
-                dailyRemaining: config.dailyLimit - (limitCheck.limitsInfo ? limitCheck.limitsInfo.dailyUsed : 0),
-                hourlyRemaining: config.hourlyLimit - (limitCheck.limitsInfo ? limitCheck.limitsInfo.hourlyUsed : 0),
-                cost: config.cost,
-                description: config.description
-            };
-        });
-
-        res.json({
-            isAuthenticated,
-            userIdentifier: isAuthenticated && req.user ? req.user.email : userIdentifier,
-            limits,
-            subscriptionPlans: SUBSCRIPTION_PLANS
-        });
-    } catch (error) {
-        console.error("[ERROR] Usage limits error:", error);
-        res.status(500).json({ error: 'Failed to get usage limits' });
-    }
-});
-
-// Message endpoint
-app.post("/api/message", checkUsageLimits, optionalAuthenticateToken, async (req, res) => {
-    try {
-        const { message, model, chatId } = req.body;
-        const userIdentifier = getUserIdentifier(req);
-
-        if (req.user) {
-            const user = req.userData;
-            recordUsage(user.id, model);
-
-            const today = new Date().toISOString().split('T')[0];
-            const usageKey = `${user.id}_${today}`;
-            const currentUsage = dailyUsage.get(usageKey) || 0;
-            const userPlan = SUBSCRIPTION_PLANS[user.subscription?.plan || 'free'];
-
-            const aiResponse = `Echo: ${message} (Model: ${model}, User: ${user.name})`;
-            
-            res.json({
-                response: aiResponse,
-                model: model,
-                usage: {
-                    daily_used: currentUsage,
-                    daily_limit: userPlan.limits.daily_messages
-                }
-            });
-        } else {
-            const today = new Date().toISOString().split('T')[0];
-            const hour = new Date().getHours();
-            const dailyKey = `${userIdentifier}_${today}`;
-            const hourlyKey = `${userIdentifier}_${today}_${hour}`;
-            
-            const dailyUsed = (guestUsage.get(dailyKey) || 0) + 1;
-            const hourlyUsed = (guestUsage.get(hourlyKey) || 0) + 1;
-            
-            guestUsage.set(dailyKey, dailyUsed);
-            guestUsage.set(hourlyKey, hourlyUsed);
-
-            const aiResponse = `Echo: ${message} (Model: ${model}, Guest User)`;
-            
-            res.json({
-                response: aiResponse,
-                model: model,
-                usage: {
-                    daily_used: dailyUsed,
-                    daily_limit: USAGE_LIMITS[model].dailyLimit,
-                    hourly_used: hourlyUsed,
-                    hourly_limit: USAGE_LIMITS[model].hourlyLimit
-                }
-            });
-        }
-
-    } catch (error) {
-        console.error("[ERROR] Message error:", error);
-        res.status(500).json({ error: 'Failed to process message' });
-    }
-});
-
-// Static file serving
-app.use(express.static(__dirname));
-
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-async function startServer() {
-    console.log("=".repeat(60));
-    console.log('🚀 Starting Roblox Luau AI Server...');
-    console.log("=".repeat(60));
-    
-    // Initialize email system
-    await initializeEmailTransporter();
-    
-    const baseUrl = getBaseUrl();
-    const PORT = process.env.PORT || 3000;
-    
-    app.listen(PORT, () => {
-        console.log(`\n✅ Server running on port ${PORT}`);
-        console.log(`🌐 Base URL: ${baseUrl}`);
-        console.log(`📧 Email verification: ${emailTransporter ? "ENABLED" : "DISABLED"}`);
-        
-        if (emailTransporter) {
-            console.log(`📮 Email service: Using ${process.env.EMAIL_USER}`);
-        } else {
-            console.log(`❌ Email setup failed - check configuration:`);
-            console.log(`   EMAIL_USER: ${process.env.EMAIL_USER ? 'SET' : 'MISSING'}`);
-            console.log(`   EMAIL_PASSWORD: ${process.env.EMAIL_PASSWORD ? 'SET' : 'MISSING'}`);
-        }
-        
-        console.log(`🔒 JWT Secret: ${JWT_SECRET ? "CONFIGURED" : "USING DEFAULT"}`);
-        console.log(`💳 Stripe: ${process.env.STRIPE_SECRET_KEY ? "CONFIGURED" : "NOT CONFIGURED"}`);
-        
-        if (process.env.RAILWAY_STATIC_URL) {
-            console.log(`🚂 Railway: https://${process.env.RAILWAY_STATIC_URL}`);
-        }
-        
-        console.log("\n[SUBSCRIPTION PLANS]:");
-        Object.entries(SUBSCRIPTION_PLANS).forEach(([plan, config]) => {
-            const limit = config.limits.daily_messages === -1 ? 'Unlimited' : config.limits.daily_messages;
-            console.log(`   ${plan.toUpperCase()}: ${limit} messages/day, ${config.limits.models.length} models`);
-        });
-        
-        console.log("\n[USAGE LIMITS] (Guests Only):");
-        Object.entries(USAGE_LIMITS).forEach(([model, limits]) => {
-            console.log(`   ${model}: ${limits.dailyLimit}/day, ${limits.hourlyLimit}/hour`);
-        });
-        
-        console.log("\n[GOOGLE OAUTH]");
-        console.log(`   Client ID: ${process.env.GOOGLE_CLIENT_ID ? 'CONFIGURED' : 'MISSING'}`);
-        console.log(`   Client Secret: ${process.env.GOOGLE_CLIENT_SECRET ? 'CONFIGURED' : 'MISSING'}`);
-        console.log(`   Redirect URI: ${baseUrl}/auth/google/callback`);
-        
-        console.log("\n[EMAIL DEBUGGING]");
-        console.log(`   Test endpoint: ${baseUrl}/test-email`);
-        console.log(`   POST to test email functionality`);
-        
-        console.log("=".repeat(60) + "\n");
-    });
-}
-
-startServer().catch(error => {
-    console.error('[FATAL] Server startup failed:', error);
-    process.exit(1);
-});
