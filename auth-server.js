@@ -1,50 +1,114 @@
-const express = require('express');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const rateLimit = require('express-rate-limit');
-const nodemailer = require('nodemailer');
-const path = require('path');
-const crypto = require('crypto');
-const { google } = require('googleapis');
+import express from "express";
+import OpenAI from "openai";
+import cors from "cors";
+import dotenv from "dotenv";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { google } from "googleapis";
+import path from "path";
+import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
+import crypto from 'crypto';
+import Stripe from 'stripe';
+
+const require = createRequire(import.meta.url);
+
+let nodemailer = null;
+try {
+    nodemailer = require('nodemailer');
+    console.log('[SUCCESS] Nodemailer imported successfully');
+} catch (error) {
+    console.log('[ERROR] Failed to import nodemailer:', error.message);
+}
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-here';
 
-// In-memory storage (replace with database in production)
+// Enhanced CORS configuration to fix OAuth issues
+app.use(cors({
+    origin: [
+        'https://musical-youtiao-b05928.netlify.app',
+        'http://localhost:3000',
+        'http://localhost:5000',
+        'http://127.0.0.1:5500',
+        process.env.FRONTEND_URL
+    ].filter(Boolean),
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
+app.use(express.json());
+app.use(express.static(__dirname));
+
+// Trust proxy for accurate IP detection
+app.set('trust proxy', 1);
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// Initialize Stripe
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
 const users = new Map();
 const pendingVerifications = new Map();
-const sessions = new Map(); // Track active sessions
-const userChats = new Map(); // Store user chats
+const sessions = new Map();
+const userChats = new Map();
 const dailyUsage = new Map();
 const userUsage = new Map();
 const guestUsage = new Map();
 
-// Subscription plans
+// Subscription Plans Configuration
 const SUBSCRIPTION_PLANS = {
     free: {
         name: 'Free',
         limits: {
             daily_messages: 10,
-            hourly_messages: 5,
-            models: ['gpt-4o-mini']
-        }
+            models: ['gpt-4o-mini'],
+            max_file_size: 1048576, // 1MB
+            scripts_storage: 5,
+            projects: 0,
+            support: 'community'
+        },
+        features: ['Basic AI assistant', 'Limited daily messages', 'Community support']
     },
     pro: {
         name: 'Pro',
         limits: {
-            daily_messages: 1000,
-            hourly_messages: 100,
-            models: ['gpt-4o-mini', 'gpt-4.1']
-        }
+            daily_messages: 500,
+            models: ['gpt-4o-mini', 'gpt-4.1'],
+            max_file_size: 10485760, // 10MB
+            scripts_storage: -1, // unlimited
+            projects: 5,
+            support: 'email'
+        },
+        stripe_price_ids: {
+            monthly: process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
+            annual: process.env.STRIPE_PRO_ANNUAL_PRICE_ID
+        },
+        features: ['Advanced AI models', '500 messages/day', 'Priority support', 'No ads']
     },
-    premium: {
-        name: 'Premium',
+    enterprise: {
+        name: 'Enterprise',
         limits: {
             daily_messages: -1, // unlimited
-            hourly_messages: -1, // unlimited
-            models: ['gpt-4o-mini', 'gpt-4.1', 'gpt-5']
-        }
+            models: ['gpt-4o-mini', 'gpt-4.1', 'gpt-5'],
+            max_file_size: 52428800, // 50MB
+            scripts_storage: -1, // unlimited
+            projects: -1, // unlimited
+            support: 'priority'
+        },
+        stripe_price_ids: {
+            monthly: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID,
+            annual: process.env.STRIPE_ENTERPRISE_ANNUAL_PRICE_ID
+        },
+        features: ['All AI models', 'Unlimited messages', 'Premium support', 'Custom integrations']
     }
 };
 
@@ -70,14 +134,19 @@ const USAGE_LIMITS = {
     }
 };
 
-// Enhanced email transporter with better error handling
+// Email setup
 let emailTransporter = null;
 
 async function initializeEmailTransporter() {
     console.log('\n[EMAIL INIT] Initializing Email System...');
     
+    if (!nodemailer) {
+        console.log('[WARNING] Nodemailer not available!');
+        return false;
+    }
+    
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-        console.log('[WARNING] Email configuration missing - verification will be required but may fail');
+        console.log('[WARNING] Email configuration missing - email verification disabled');
         return false;
     }
 
@@ -97,8 +166,21 @@ async function initializeEmailTransporter() {
             requireTLS: true
         });
 
-        // Test email connection
-        await emailTransporter.verify();
+        await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error('Connection test timeout'));
+            }, 10000);
+
+            emailTransporter.verify((error, success) => {
+                clearTimeout(timeout);
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(success);
+                }
+            });
+        });
+        
         console.log('[SUCCESS] Email system verified and ready!');
         return true;
 
@@ -115,7 +197,7 @@ function generateVerificationCode() {
 
 async function sendVerificationEmail(email, code, name = null) {
     if (!emailTransporter) {
-        throw new Error('Email system not configured. Please contact support.');
+        throw new Error('Email system not configured.');
     }
 
     const mailOptions = {
@@ -188,7 +270,6 @@ function getUserIdentifier(req) {
     return `guest_${hash}`;
 }
 
-// Get user's current subscription
 function getUserSubscription(user) {
     if (!user) {
         return {
@@ -206,10 +287,9 @@ function getUserSubscription(user) {
     
     if (!planConfig) {
         console.error(`[SUBSCRIPTION] Invalid plan: ${plan}`);
-        return getUserSubscription(null); // Return free plan as fallback
+        return getUserSubscription(null);
     }
 
-    // Get today's usage
     const today = new Date().toISOString().split('T')[0];
     const usageKey = `${user.id}_${today}`;
     const todayUsage = dailyUsage.get(usageKey) || 0;
@@ -224,16 +304,13 @@ function getUserSubscription(user) {
     };
 }
 
-// Check if user can send message
 function canUserSendMessage(user) {
     const subscription = getUserSubscription(user);
     
-    // Unlimited plan
     if (subscription.limits.daily_messages === -1) {
         return { allowed: true };
     }
     
-    // Check daily limit
     if (subscription.usage.daily_messages >= subscription.limits.daily_messages) {
         return {
             allowed: false,
@@ -245,7 +322,6 @@ function canUserSendMessage(user) {
     return { allowed: true };
 }
 
-// Base URL detection for OAuth
 const getBaseUrl = () => {
     if (process.env.BASE_URL) {
         return process.env.BASE_URL.replace(/\/$/, '');
@@ -259,7 +335,6 @@ const getBaseUrl = () => {
     return `http://localhost:${port}`;
 };
 
-// Google OAuth client
 const getGoogleClient = () => {
     const baseUrl = getBaseUrl();
     const redirectUri = `${baseUrl}/auth/google/callback`;
@@ -287,7 +362,6 @@ const getGoogleClient = () => {
     }
 };
 
-// Usage tracking functions
 function recordUsage(userId, model = 'default') {
     const today = new Date().toISOString().split('T')[0];
     const usageKey = `${userId}_${today}`;
@@ -347,14 +421,12 @@ function checkUsageLimit(userIdentifier, model) {
     };
 }
 
-// Reset daily usage at midnight
 function resetDailyUsage() {
     dailyUsage.clear();
     guestUsage.clear();
     console.log('[USAGE] Daily usage reset');
 }
 
-// Schedule daily reset
 setInterval(() => {
     const now = new Date();
     if (now.getHours() === 0 && now.getMinutes() === 0) {
@@ -362,7 +434,6 @@ setInterval(() => {
     }
 }, 60000);
 
-// Session management functions
 function createSession(userId, token) {
     const sessionId = Date.now().toString() + Math.random().toString(36);
     sessions.set(sessionId, {
@@ -383,17 +454,6 @@ function invalidateUserSessions(userId) {
 }
 
 // Middleware
-app.use(express.json());
-app.use(express.static('public'));
-
-// Rate limiting
-const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 10,
-    message: { error: 'Too many authentication attempts, please try again later.' }
-});
-
-// Enhanced authentication middleware
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -407,7 +467,6 @@ function authenticateToken(req, res, next) {
             return res.status(403).json({ error: 'Invalid or expired token.' });
         }
 
-        // Check if user still exists
         const userData = users.get(user.email);
         if (!userData) {
             return res.status(404).json({ error: 'User not found.' });
@@ -419,7 +478,6 @@ function authenticateToken(req, res, next) {
     });
 }
 
-// Optional authentication middleware for guests
 function optionalAuthenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -439,13 +497,11 @@ function optionalAuthenticateToken(req, res, next) {
     next();
 }
 
-// Usage limit middleware
 function checkUsageLimits(req, res, next) {
     const { model } = req.body;
     const userIdentifier = getUserIdentifier(req);
     
     if (!req.user) {
-        // Guest user - check usage limits
         const limitCheck = checkUsageLimit(userIdentifier, model);
         
         if (!limitCheck.allowed) {
@@ -469,7 +525,6 @@ function checkUsageLimits(req, res, next) {
             'X-User-Type': 'guest'
         });
     } else {
-        // Check subscription limits for authenticated users
         const user = users.get(req.user.email);
         const canSend = canUserSendMessage(user);
         
@@ -487,8 +542,6 @@ function checkUsageLimits(req, res, next) {
 }
 
 // Routes
-
-// Health check
 app.get("/health", (req, res) => {
     res.json({
         status: "healthy",
@@ -505,8 +558,8 @@ app.get("/health", (req, res) => {
     });
 });
 
-// User signup with mandatory email verification
-app.post("/auth/signup", authLimiter, async (req, res) => {
+// User signup - ALWAYS require email verification
+app.post("/auth/signup", async (req, res) => {
     try {
         const { email, password, name } = req.body;
 
@@ -527,7 +580,7 @@ app.post("/auth/signup", authLimiter, async (req, res) => {
             return res.status(400).json({ error: 'An account with this email already exists' });
         }
 
-        // Always require email verification - no bypass
+        // ALWAYS require email verification - no bypass
         if (!emailTransporter) {
             return res.status(503).json({ 
                 error: 'Email verification system is currently unavailable. Please try again later or contact support.',
@@ -535,7 +588,6 @@ app.post("/auth/signup", authLimiter, async (req, res) => {
             });
         }
 
-        // Check for existing pending verification
         if (pendingVerifications.has(email)) {
             const existing = pendingVerifications.get(email);
             const timeSinceLastRequest = Date.now() - existing.timestamp;
@@ -552,18 +604,16 @@ app.post("/auth/signup", authLimiter, async (req, res) => {
         const verificationCode = generateVerificationCode();
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Store pending verification
         pendingVerifications.set(email, {
             email,
             password: hashedPassword,
             name,
             verificationCode,
             timestamp: Date.now(),
-            expires: Date.now() + (15 * 60 * 1000), // 15 minutes
+            expires: Date.now() + (15 * 60 * 1000),
             attempts: 0
         });
 
-        // Send verification email
         await sendVerificationEmail(email, verificationCode, name);
         
         res.json({
@@ -582,8 +632,7 @@ app.post("/auth/signup", authLimiter, async (req, res) => {
     }
 });
 
-// Email verification
-app.post("/auth/verify-email", authLimiter, async (req, res) => {
+app.post("/auth/verify-email", async (req, res) => {
     try {
         const { email, verificationCode } = req.body;
 
@@ -629,7 +678,6 @@ app.post("/auth/verify-email", authLimiter, async (req, res) => {
             });
         }
 
-        // Create verified user
         const user = {
             id: Date.now().toString(),
             email: pendingVerification.email,
@@ -645,7 +693,6 @@ app.post("/auth/verify-email", authLimiter, async (req, res) => {
         users.set(email, user);
         pendingVerifications.delete(email);
 
-        // Generate token and create session
         const token = jwt.sign(
             { id: user.id, email: user.email },
             JWT_SECRET,
@@ -674,8 +721,7 @@ app.post("/auth/verify-email", authLimiter, async (req, res) => {
     }
 });
 
-// Resend verification code
-app.post("/auth/resend-verification", authLimiter, async (req, res) => {
+app.post("/auth/resend-verification", async (req, res) => {
     try {
         const { email } = req.body;
 
@@ -707,12 +753,11 @@ app.post("/auth/resend-verification", authLimiter, async (req, res) => {
             });
         }
 
-        // Generate new code and update timestamp
         const newVerificationCode = generateVerificationCode();
         pendingVerification.verificationCode = newVerificationCode;
         pendingVerification.timestamp = Date.now();
         pendingVerification.expires = Date.now() + (15 * 60 * 1000);
-        pendingVerification.attempts = 0; // Reset attempts
+        pendingVerification.attempts = 0;
 
         await sendVerificationEmail(email, newVerificationCode, pendingVerification.name);
         
@@ -729,8 +774,7 @@ app.post("/auth/resend-verification", authLimiter, async (req, res) => {
     }
 });
 
-// User login
-app.post("/auth/login", authLimiter, async (req, res) => {
+app.post("/auth/login", async (req, res) => {
     try {
         const { email, password } = req.body;
 
@@ -756,11 +800,9 @@ app.post("/auth/login", authLimiter, async (req, res) => {
             });
         }
 
-        // Update last login
         user.lastLogin = new Date();
         users.set(email, user);
 
-        // Invalidate old sessions and create new one
         invalidateUserSessions(user.id);
 
         const token = jwt.sign(
@@ -834,21 +876,17 @@ app.get("/auth/google/callback", async (req, res) => {
         
         const googleClient = getGoogleClient();
         
-        // Exchange code for tokens
         const { tokens } = await googleClient.getToken(code);
         googleClient.setCredentials(tokens);
         
-        // Get user info from Google
         const oauth2 = google.oauth2({ version: 'v2', auth: googleClient });
         const { data } = await oauth2.userinfo.get();
         
         console.log('[OAUTH] User data received:', data.email);
         
-        // Check if user exists
         let user = users.get(data.email);
         
         if (!user) {
-            // Create new user
             user = {
                 id: Date.now().toString(),
                 email: data.email,
@@ -864,14 +902,12 @@ app.get("/auth/google/callback", async (req, res) => {
             users.set(data.email, user);
             console.log('[OAUTH] New user created:', data.email);
         } else {
-            // Update existing user
             user.lastLogin = new Date();
             if (data.picture) user.picture = data.picture;
             users.set(data.email, user);
             console.log('[OAUTH] Existing user logged in:', data.email);
         }
         
-        // Generate JWT token
         const token = jwt.sign(
             { id: user.id, email: user.email },
             JWT_SECRET,
@@ -880,7 +916,6 @@ app.get("/auth/google/callback", async (req, res) => {
         
         const sessionId = createSession(user.id, token);
         
-        // Redirect to frontend with token
         res.redirect(`${frontendUrl}/?token=${token}&sessionId=${sessionId}`);
         
     } catch (error) {
@@ -889,7 +924,6 @@ app.get("/auth/google/callback", async (req, res) => {
     }
 });
 
-// Token verification
 app.get("/auth/verify", authenticateToken, (req, res) => {
     const user = users.get(req.user.email);
     res.json({ 
@@ -901,12 +935,10 @@ app.get("/auth/verify", authenticateToken, (req, res) => {
     });
 });
 
-// Enhanced logout with session cleanup
 app.post("/auth/logout", authenticateToken, async (req, res) => {
     try {
         const { sessionId } = req.body;
         
-        // Invalidate specific session or all user sessions
         if (sessionId) {
             sessions.delete(sessionId);
         } else {
@@ -915,7 +947,7 @@ app.post("/auth/logout", authenticateToken, async (req, res) => {
 
         res.json({ 
             message: 'Logged out successfully',
-            clearStorage: true // Signal frontend to clear data
+            clearStorage: true
         });
 
     } catch (error) {
@@ -924,14 +956,12 @@ app.post("/auth/logout", authenticateToken, async (req, res) => {
     }
 });
 
-// Get user profile with subscription info
 app.get("/api/user", authenticateToken, async (req, res) => {
     try {
         const user = req.userData;
         const subscription = user.subscription || { plan: 'free', status: 'active' };
         const plan = SUBSCRIPTION_PLANS[subscription.plan] || SUBSCRIPTION_PLANS.free;
         
-        // Get current usage
         const today = new Date().toISOString().split('T')[0];
         const usageKey = `${user.id}_${today}`;
         const usage = dailyUsage.get(usageKey) || 0;
@@ -962,7 +992,6 @@ app.get("/api/user", authenticateToken, async (req, res) => {
     }
 });
 
-// Get user subscription status
 app.get("/api/user-subscription", authenticateToken, async (req, res) => {
     try {
         const user = users.get(req.user.email);
@@ -974,7 +1003,6 @@ app.get("/api/user-subscription", authenticateToken, async (req, res) => {
         const subscription = user.subscription || { plan: 'free', status: 'active' };
         const plan = SUBSCRIPTION_PLANS[subscription.plan] || SUBSCRIPTION_PLANS.free;
         
-        // Get current usage
         const today = new Date().toISOString().split('T')[0];
         const usageKey = `${user.id}_${today}`;
         const usage = dailyUsage.get(usageKey) || 0;
@@ -996,7 +1024,6 @@ app.get("/api/user-subscription", authenticateToken, async (req, res) => {
     }
 });
 
-// Enhanced subscription upgrade endpoint
 app.post("/api/upgrade-subscription", authenticateToken, async (req, res) => {
     try {
         const { plan, paymentMethod } = req.body;
@@ -1010,17 +1037,11 @@ app.post("/api/upgrade-subscription", authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Cannot upgrade to free plan' });
         }
 
-        // In a real implementation, you would:
-        // 1. Process payment through Stripe/PayPal
-        // 2. Verify payment success
-        // 3. Update subscription in database
-
-        // For now, simulate successful upgrade
         const updatedSubscription = {
             plan: plan,
             status: 'active',
             currentPeriodStart: new Date(),
-            currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+            currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
             cancelAtPeriodEnd: false,
             paymentMethod: paymentMethod || 'card'
         };
@@ -1028,7 +1049,6 @@ app.post("/api/upgrade-subscription", authenticateToken, async (req, res) => {
         user.subscription = updatedSubscription;
         users.set(user.email, user);
 
-        // Clear usage for immediate effect
         const today = new Date().toISOString().split('T')[0];
         const usageKey = `${user.id}_${today}`;
         dailyUsage.delete(usageKey);
@@ -1051,7 +1071,6 @@ app.post("/api/upgrade-subscription", authenticateToken, async (req, res) => {
     }
 });
 
-// Manual upgrade endpoint (for testing)
 app.post("/api/manual-upgrade", async (req, res) => {
     try {
         const email = "askeggs9009@gmail.com";
@@ -1086,7 +1105,6 @@ app.post("/api/manual-upgrade", async (req, res) => {
     }
 });
 
-// Usage limits endpoint for guests
 app.get("/usage-limits", optionalAuthenticateToken, (req, res) => {
     const userIdentifier = getUserIdentifier(req);
     const isAuthenticated = req.user !== null;
@@ -1115,7 +1133,6 @@ app.get("/usage-limits", optionalAuthenticateToken, (req, res) => {
     });
 });
 
-// Chat management endpoints
 app.get("/api/chats", authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
@@ -1151,7 +1168,7 @@ app.post("/api/chats", authenticateToken, async (req, res) => {
         };
 
         const userChatsList = userChats.get(userId) || [];
-        userChatsList.unshift(newChat); // Add to beginning
+        userChatsList.unshift(newChat);
         userChats.set(userId, userChatsList);
 
         res.json({
@@ -1165,18 +1182,15 @@ app.post("/api/chats", authenticateToken, async (req, res) => {
     }
 });
 
-// Enhanced message handling with proper session management
 app.post("/api/message", checkUsageLimits, optionalAuthenticateToken, async (req, res) => {
     try {
         const { message, model, chatId } = req.body;
         const userIdentifier = getUserIdentifier(req);
 
         if (req.user) {
-            // Authenticated user
             const user = req.userData;
             recordUsage(user.id, model);
 
-            // Handle chat storage
             if (chatId) {
                 const userChatsList = userChats.get(user.id) || [];
                 const chatIndex = userChatsList.findIndex(chat => chat.id === chatId);
@@ -1194,13 +1208,11 @@ app.post("/api/message", checkUsageLimits, optionalAuthenticateToken, async (req
                 }
             }
 
-            // Get updated usage for response
             const today = new Date().toISOString().split('T')[0];
             const usageKey = `${user.id}_${today}`;
             const currentUsage = dailyUsage.get(usageKey) || 0;
             const userPlan = SUBSCRIPTION_PLANS[user.subscription?.plan || 'free'];
 
-            // Simulate AI response (replace with actual AI integration)
             const aiResponse = `Echo: ${message} (Model: ${model}, User: ${user.name})`;
             
             res.json({
@@ -1212,20 +1224,17 @@ app.post("/api/message", checkUsageLimits, optionalAuthenticateToken, async (req
                 }
             });
         } else {
-            // Guest user - usage already checked in middleware
             const today = new Date().toISOString().split('T')[0];
             const hour = new Date().getHours();
             const dailyKey = `${userIdentifier}_${today}`;
             const hourlyKey = `${userIdentifier}_${today}_${hour}`;
             
-            // Record guest usage
             const dailyUsed = (guestUsage.get(dailyKey) || 0) + 1;
             const hourlyUsed = (guestUsage.get(hourlyKey) || 0) + 1;
             
             guestUsage.set(dailyKey, dailyUsed);
             guestUsage.set(hourlyKey, hourlyUsed);
 
-            // Simulate AI response
             const aiResponse = `Echo: ${message} (Model: ${model}, Guest User)`;
             
             res.json({
@@ -1246,7 +1255,6 @@ app.post("/api/message", checkUsageLimits, optionalAuthenticateToken, async (req
     }
 });
 
-// Account switching endpoint
 app.post("/api/switch-account", async (req, res) => {
     try {
         const { token } = req.body;
@@ -1255,7 +1263,6 @@ app.post("/api/switch-account", async (req, res) => {
             return res.status(400).json({ error: 'Token required for account switching' });
         }
 
-        // Verify the new token
         jwt.verify(token, JWT_SECRET, (err, decoded) => {
             if (err) {
                 return res.status(403).json({ error: 'Invalid token for account switching' });
@@ -1266,7 +1273,6 @@ app.post("/api/switch-account", async (req, res) => {
                 return res.status(404).json({ error: 'User not found' });
             }
 
-            // Create new session for switched account
             const sessionId = createSession(user.id, token);
 
             res.json({
@@ -1278,7 +1284,7 @@ app.post("/api/switch-account", async (req, res) => {
                     name: user.name,
                     subscription: user.subscription
                 },
-                clearPreviousData: true // Signal frontend to clear previous account data
+                clearPreviousData: true
             });
         });
 
@@ -1288,9 +1294,7 @@ app.post("/api/switch-account", async (req, res) => {
     }
 });
 
-// Admin endpoints
 app.get("/api/admin/users", (req, res) => {
-    // Basic admin functionality - should have proper auth in production
     const userList = Array.from(users.values()).map(user => ({
         id: user.id,
         email: user.email,
@@ -1311,7 +1315,6 @@ app.get("/api/admin/stats", (req, res) => {
     const now = new Date();
     const today = now.toISOString().split('T')[0];
     
-    // Calculate usage stats
     let totalDailyUsage = 0;
     let activeUsersToday = 0;
     
@@ -1331,37 +1334,34 @@ app.get("/api/admin/stats", (req, res) => {
         subscriptionBreakdown: {
             free: Array.from(users.values()).filter(u => (u.subscription?.plan || 'free') === 'free').length,
             pro: Array.from(users.values()).filter(u => u.subscription?.plan === 'pro').length,
-            premium: Array.from(users.values()).filter(u => u.subscription?.plan === 'premium').length
+            enterprise: Array.from(users.values()).filter(u => u.subscription?.plan === 'enterprise').length
         }
     });
 });
 
 // Static file serving
-app.use(express.static('public'));
+app.use(express.static(__dirname));
 
-// Fallback route for SPA
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Initialize server
 async function startServer() {
     console.log("=".repeat(60));
     console.log('🚀 Starting Roblox Luau AI Server...');
     console.log("=".repeat(60));
     
-    // Initialize email system
     await initializeEmailTransporter();
     
     const baseUrl = getBaseUrl();
+    const PORT = process.env.PORT || 3000;
     
-    // Start server
     app.listen(PORT, () => {
         console.log(`\n✅ Server running on port ${PORT}`);
         console.log(`🌐 Base URL: ${baseUrl}`);
         console.log(`📧 Email verification: ${emailTransporter ? "ENABLED" : "DISABLED"}`);
         console.log(`🔒 JWT Secret: ${JWT_SECRET ? "CONFIGURED" : "USING DEFAULT"}`);
-        console.log(`🔓 Stripe: ${process.env.STRIPE_SECRET_KEY ? "CONFIGURED" : "NOT CONFIGURED"}`);
+        console.log(`💳 Stripe: ${process.env.STRIPE_SECRET_KEY ? "CONFIGURED" : "NOT CONFIGURED"}`);
         
         if (process.env.RAILWAY_STATIC_URL) {
             console.log(`🚂 Railway: https://${process.env.RAILWAY_STATIC_URL}`);
@@ -1387,10 +1387,7 @@ async function startServer() {
     });
 }
 
-// Start the server
 startServer().catch(error => {
     console.error('[FATAL] Server startup failed:', error);
     process.exit(1);
 });
-
-module.exports = app;
