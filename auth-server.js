@@ -511,15 +511,19 @@ async function initializeEmailTransporter() {
             
             emailTransporter = nodemailer.createTransport({
                 host: 'smtp.gmail.com',
-                port: 465,
-                secure: true,
+                port: 587,
+                secure: false,
+                requireTLS: true,
                 auth: {
                     user: process.env.EMAIL_USER,
                     pass: process.env.EMAIL_PASSWORD
                 },
-                connectionTimeout: 10000,
-                greetingTimeout: 5000,
-                socketTimeout: 10000
+                connectionTimeout: 30000,
+                greetingTimeout: 10000,
+                socketTimeout: 30000,
+                pool: true,
+                maxConnections: 1,
+                maxMessages: 3
             });
 
             // Skip connection test - we'll test when actually sending
@@ -597,7 +601,7 @@ async function sendVerificationEmail(email, code, name = null) {
             await Promise.race([
                 emailTransporter.sendMail(mailOptions),
                 new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Gmail send timeout - check App Password')), 15000)
+                    setTimeout(() => reject(new Error('Gmail send timeout after 45 seconds - check network connectivity')), 45000)
                 )
             ]);
             
