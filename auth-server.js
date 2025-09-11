@@ -10,75 +10,52 @@ import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import crypto from 'crypto';
 import Stripe from 'stripe';
-// Import nodemailer using CommonJS compatibility  
-const require = createRequire(import.meta.url);
-const nodemailer = require('nodemailer');
 
-// Email transporter variable
-let emailTransporter = null;
+// Load environment variables FIRST
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config();
 
-// Initialize email transporter - Simple approach that works
-function initializeEmailTransporter() {
+// Import Resend for email functionality
+import { sendVerificationEmailWithResend, testResendConnection } from './resend-email.js';
+
+// Email service status
+let emailServiceAvailable = false;
+
+// Initialize Resend email service
+async function initializeEmailService() {
     try {
-        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-            console.log('❌ Email configuration missing: EMAIL_USER and EMAIL_PASSWORD required in .env file');
+        if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 'YOUR_API_KEY_HERE') {
+            console.log('❌ Resend API key missing or invalid in .env file');
+            console.log('💡 Sign up at https://resend.com and add your API key to RESEND_API_KEY');
             return false;
         }
 
-        emailTransporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASSWORD
-            }
-        });
+        // Test Resend connection
+        console.log('🔍 Testing Resend API connection...');
+        await testResendConnection();
 
-        // Test the connection with timeout
-        const testConnection = new Promise((resolve, reject) => {
-            const timeout = setTimeout(() => {
-                console.log('⚠️ Email connection test timed out - will disable email verification');
-                emailTransporter = null;
-                resolve(false);
-            }, 5000); // 5 second timeout
-
-            emailTransporter.verify((error, success) => {
-                clearTimeout(timeout);
-                if (error) {
-                    console.log('❌ Email configuration error:', error.message);
-                    console.log('⚠️ Disabling email verification due to connection issues');
-                    emailTransporter = null;
-                    resolve(false);
-                } else {
-                    console.log('✅ Email server is ready');
-                    resolve(true);
-                }
-            });
-        });
-
-        testConnection;
-
+        emailServiceAvailable = true;
+        console.log('✅ Resend email service is ready!');
         return true;
     } catch (error) {
-        console.log('❌ Failed to create email transporter:', error.message);
-        emailTransporter = null;
+        console.log('❌ Failed to initialize Resend:', error.message);
+        console.log('⚠️ Disabling email verification due to Resend connection issues');
+        emailServiceAvailable = false;
         return false;
     }
 }
 
-// Initialize email when server starts - Force Railway deployment
-initializeEmailTransporter();
+// Initialize email service when server starts
+initializeEmailService().catch(err => {
+    console.error('Failed to initialize email service:', err.message);
+});
 
-// Debug email configuration like in localhost version
+// Debug email configuration
 console.log('🔍 Debug Email Config:');
-console.log('EMAIL_USER:', process.env.EMAIL_USER ? 'Set' : 'Missing');
-console.log('EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD ? 'Set (length: ' + (process.env.EMAIL_PASSWORD ? process.env.EMAIL_PASSWORD.length : 0) + ')' : 'Missing');
-console.log('EMAIL_SERVICE:', process.env.EMAIL_SERVICE || 'Not set');
-console.log('EMAIL_FROM:', process.env.EMAIL_FROM ? 'Set' : 'Missing');
+console.log('RESEND_API_KEY:', process.env.RESEND_API_KEY ? 'Set (length: ' + process.env.RESEND_API_KEY.length + ')' : 'Missing');
+console.log('EMAIL_FROM:', process.env.EMAIL_FROM ? 'Set' : 'Missing (will use onboarding@resend.dev)');
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-dotenv.config();
 
 const app = express();
 
@@ -510,70 +487,24 @@ function generateVerificationCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Send verification email - Simple working version
+// Send verification email using Resend
 async function sendVerificationEmail(email, code, name = null) {
-    if (!emailTransporter) {
-        console.error('Email transporter not configured');
+    if (!emailServiceAvailable) {
+        console.error('Resend email service not available');
         return false;
     }
 
-    const mailOptions = {
-        from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
-        to: email,
-        subject: 'Verify Your Roblox Luau AI Assistant Account',
-        html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
-                <div style="background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #21262d 100%); color: white; padding: 30px; border-radius: 10px; text-align: center;">
-                    <div style="width: 60px; height: 60px; background: linear-gradient(45deg, #00d4ff, #9d4edd); border-radius: 15px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 24px; margin-bottom: 20px;">
-                        RL
-                    </div>
-                    <h1 style="margin: 0; font-size: 24px;">Welcome to Roblox Luau AI!</h1>
-                    <p style="margin: 10px 0 0 0; color: #8b949e;">Your intelligent assistant for Roblox game development</p>
-                </div>
-                
-                <div style="background: white; padding: 30px; border-radius: 10px; margin-top: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                    <h2 style="color: #0d1117; margin-top: 0;">Verify Your Email Address</h2>
-                    <p style="color: #586069; line-height: 1.6;">
-                        ${name ? `Hi ${name}, thanks` : 'Thanks'} for signing up! To complete your account setup, please use the verification code below:
-                    </p>
-                    
-                    <div style="background: #f6f8fa; border: 2px solid #e1e4e8; border-radius: 8px; padding: 20px; text-align: center; margin: 25px 0;">
-                        <div style="font-size: 32px; font-weight: bold; color: #0d1117; letter-spacing: 3px; font-family: monospace;">
-                            ${code}
-                        </div>
-                        <p style="margin: 10px 0 0 0; color: #586069; font-size: 14px;">This code expires in 15 minutes</p>
-                    </div>
-                    
-                    <p style="color: #586069; font-size: 14px; line-height: 1.6;">
-                        If you didn't request this verification, you can safely ignore this email.
-                    </p>
-                </div>
-                
-                <div style="text-align: center; padding: 20px; color: #586069; font-size: 12px;">
-                    <p>This email was sent by Roblox Luau AI Assistant</p>
-                </div>
-            </div>
-        `
-    };
-
     try {
-        // Add timeout to prevent hanging
-        await Promise.race([
-            emailTransporter.sendMail(mailOptions),
-            new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Email send timeout after 10 seconds')), 10000)
-            )
-        ]);
-        
-        console.log('✅ Verification email sent successfully!');
+        await sendVerificationEmailWithResend(email, code, name || '');
+        console.log('✅ Verification email sent successfully via Resend!');
         return true;
     } catch (error) {
-        console.error('Email sending error:', error.message);
+        console.error('Resend email sending error:', error.message);
         
-        // If timeout or connection error, disable email transporter for future requests
-        if (error.message.includes('timeout') || error.code === 'ETIMEDOUT') {
-            console.log('⚠️ Email timeout detected - disabling email verification');
-            emailTransporter = null;
+        // If Resend fails, disable email service for future requests
+        if (error.message.includes('timeout') || error.message.includes('API') || error.message.includes('domain')) {
+            console.log('⚠️ Resend error detected - temporarily disabling email verification');
+            emailServiceAvailable = false;
         }
         
         return false;
@@ -820,8 +751,9 @@ app.get("/health", (req, res) => {
             redirectUri: `${getBaseUrl()}/auth/google/callback`
         },
         email: {
-            configured: !!(process.env.EMAIL_USER && process.env.EMAIL_PASSWORD),
-            transporter: !!emailTransporter
+            service: 'resend',
+            configured: !!(process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'YOUR_API_KEY_HERE'),
+            available: emailServiceAvailable
         },
         stripe: {
             configured: !!process.env.STRIPE_SECRET_KEY,
@@ -1086,8 +1018,8 @@ app.post("/auth/signup", async (req, res) => {
         }
 
         // FIXED: Always require email verification if email is configured
-        console.log('[DEBUG] emailTransporter status:', !!emailTransporter);
-        if (!emailTransporter) {
+        console.log('[DEBUG] emailServiceAvailable status:', emailServiceAvailable);
+        if (!emailServiceAvailable) {
             console.log('[SIGNUP] Email not configured, creating account directly');
             // If email not configured, create account directly
             const hashedPassword = await bcrypt.hash(password, 10);
@@ -1302,7 +1234,7 @@ app.post("/auth/resend-verification", async (req, res) => {
             });
         }
 
-        if (!emailTransporter) {
+        if (!emailServiceAvailable) {
             return res.status(503).json({ 
                 error: 'Email system is not available. Please try again later.' 
             });
@@ -1706,18 +1638,19 @@ function startServer() {
         console.log(`[PORT] ${port}`);
         console.log(`[BASE_URL] ${baseUrl}`);
         console.log(`[HEALTH] ${baseUrl}/health`);
-        console.log(`[EMAIL] ${emailTransporter ? "ENABLED" : "DISABLED"}`);
+        console.log(`[EMAIL] ${emailServiceAvailable ? "ENABLED (Resend)" : "DISABLED"}`);
         console.log(`[STRIPE] ${process.env.STRIPE_SECRET_KEY ? "CONFIGURED" : "NOT CONFIGURED"}`);
         
-        if (emailTransporter) {
-            console.log('[EMAIL] Email verification is working!');
+        if (emailServiceAvailable) {
+            console.log('[EMAIL] ✅ Resend email service is working!');
+            console.log('[EMAIL] From address:', process.env.EMAIL_FROM || 'onboarding@resend.dev');
         } else {
-            console.log('[EMAIL] To enable email verification:');
-            console.log('   1. Go to https://myaccount.google.com/security');
-            console.log('   2. Enable 2-Step Verification');
-            console.log('   3. Go to App Passwords');
-            console.log('   4. Generate password for "Mail"');
-            console.log('   5. Set EMAIL_PASSWORD to the 16-character code');
+            console.log('[EMAIL] ❌ To enable email verification with Resend:');
+            console.log('   1. Sign up at https://resend.com (free tier: 3,000 emails/month)');
+            console.log('   2. Get your API key from the dashboard');
+            console.log('   3. Add it to your .env file as RESEND_API_KEY=re_...');
+            console.log('   4. (Optional) Add and verify your domain at https://resend.com/domains');
+            console.log('   5. Set EMAIL_FROM to your verified domain email or use onboarding@resend.dev');
         }
         
         if (process.env.RAILWAY_STATIC_URL) {
