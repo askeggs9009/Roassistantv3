@@ -1081,6 +1081,7 @@ app.post("/auth/signup", async (req, res) => {
         }
 
         if (users.has(email)) {
+            console.log(`[SIGNUP] Account already exists for: ${email}`);
             return res.status(400).json({ error: 'An account with this email already exists' });
         }
 
@@ -1105,6 +1106,7 @@ app.post("/auth/signup", async (req, res) => {
             };
             
             users.set(email, user);
+            console.log(`[SIGNUP] Account created successfully for: ${email}`);
             
             const token = jwt.sign(
                 { id: user.id, email: user.email },
@@ -1112,6 +1114,7 @@ app.post("/auth/signup", async (req, res) => {
                 { expiresIn: '7d' }
             );
             
+            console.log(`[SIGNUP] JWT token generated for: ${email}`);
             return res.json({
                 token,
                 user: {
