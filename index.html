@@ -300,7 +300,15 @@
 
         <div class="sidebar-footer">
             <div class="user-profile" id="userProfile">
-                <!-- User profile will be populated by JavaScript -->
+                <!-- Default Sign In button - will be replaced by JavaScript -->
+                <div class="user-avatar">👤</div>
+                <div class="user-info">
+                    <div class="user-name">Guest User</div>
+                    <div class="user-plan">Free Plan - <span style="color: #58a6ff; cursor: pointer;" onclick="window.location.href='/login.html'">Sign In for More</span></div>
+                </div>
+                <button onclick="window.location.href='/login.html'" style="background: #238636; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
+                    Sign In
+                </button>
             </div>
         </div>
     </div>
