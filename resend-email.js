@@ -23,14 +23,11 @@ export async function sendVerificationEmailWithResend(email, verificationCode, n
     try {
         console.log(`[RESEND] Sending verification email to ${email}...`);
         
-        // For testing purposes, use a known working address if user email is problematic
-        const toEmail = email.includes('@gmail.com') ? 'delivered@resend.dev' : email;
-        
-        console.log(`[RESEND] Original email: ${email}, Sending to: ${toEmail}`);
+        console.log(`[RESEND] Sending to: ${email}`);
         
         const { data, error } = await resend.emails.send({
             from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
-            to: [toEmail],
+            to: [email],
             subject: '🚀 Verify Your Roblox Luau AI Account',
             html: `
                 <!DOCTYPE html>
