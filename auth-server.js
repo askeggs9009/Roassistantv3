@@ -478,22 +478,8 @@ let emailTransporter = null;
 async function initializeEmailTransporter() {
     console.log('\n[EMAIL INIT] Initializing Email System...');
     
-    // Try Resend first (preferred)
-    if (resend) {
-        try {
-            console.log('[EMAIL] Testing Resend API...');
-            await testResendConnection();
-            emailTransporter = 'resend';
-            console.log('[SUCCESS] ✅ Resend email system ready! (3000 emails/month free)');
-            return true;
-        } catch (error) {
-            console.error('[RESEND ERROR]:', error.message);
-            console.log('[INFO] To fix Resend: Set RESEND_API_KEY in .env (get from https://resend.com)');
-            console.log('[FALLBACK] Trying Gmail...');
-        }
-    } else {
-        console.log('[INFO] Resend not configured (RESEND_API_KEY missing), trying Gmail...');
-    }
+    // Use Gmail only
+    console.log('[EMAIL] Setting up Gmail SMTP...');
     
     // Fallback to Gmail
     if (nodemailer && process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
@@ -558,21 +544,7 @@ async function sendVerificationEmail(email, code, name = null) {
         throw new Error('Email system not configured.');
     }
 
-    // Use Resend only (simplified)
-    if (emailTransporter === 'resend') {
-        try {
-            return await sendVerificationEmailWithResend(email, code, name);
-        } catch (error) {
-            // Handle domain validation gracefully for testing
-            if (error.message && error.message.includes('domain is not verified')) {
-                console.log('[EMAIL] Domain validation failed - allowing signup to continue for testing');
-                return true; // Simulate success for testing
-            }
-            throw error; // Re-throw other errors
-        }
-    }
-
-    // Use nodemailer transporter if available
+    // Use Gmail only
     if (emailTransporter && typeof emailTransporter === 'object') {
         const mailOptions = {
             from: `"Roblox Luau AI" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
