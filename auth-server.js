@@ -537,7 +537,7 @@ async function sendVerificationEmail(email, code, name = null) {
     // Use Gmail only
     if (emailTransporter && typeof emailTransporter === 'object') {
         const mailOptions = {
-            from: `"Roblox Luau AI" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+            from: `"Roblox Luau AI" <${process.env.EMAIL_USER}>`,
             to: email,
             subject: '🔐 Your Verification Code - Roblox Luau AI',
             html: `
@@ -573,7 +573,15 @@ async function sendVerificationEmail(email, code, name = null) {
 
         try {
             console.log(`[EMAIL] Sending verification via Gmail to ${email}...`);
-            await emailTransporter.sendMail(mailOptions);
+            
+            // Add timeout to prevent hanging
+            await Promise.race([
+                emailTransporter.sendMail(mailOptions),
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Gmail send timeout - check App Password')), 15000)
+                )
+            ]);
+            
             console.log('[SUCCESS] Verification email sent via Gmail!');
             return true;
         } catch (error) {
