@@ -10,53 +10,46 @@ import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import crypto from 'crypto';
 import Stripe from 'stripe';
-import { sendVerificationEmailWithResend, testResendConnection } from './resend-email.js';
-
+// Import nodemailer using CommonJS compatibility  
 const require = createRequire(import.meta.url);
+const nodemailer = require('nodemailer');
 
-let nodemailer = null;
-let resend = null;
-
-// Initialize email services - prioritize Resend over Gmail SMTP
-async function initializeEmailServices() {
-    console.log('[EMAIL] Initializing email services...');
-    console.log('[DEBUG] RESEND_API_KEY present:', !!(process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'YOUR_API_KEY_HERE'));
-    
-    // Always try Resend first - it's much more reliable than SMTP
+// Initialize email transporter - Simple approach that works
+function initializeEmailTransporter() {
     try {
-        const { Resend } = await import('resend');
-        
-        // Use the API key from .env file or Railway environment
-        const apiKey = process.env.RESEND_API_KEY || 're_f2VTM3X7_6kswDDpNvpnKmQFEJKTzm85x';
-        
-        if (apiKey && apiKey !== 'YOUR_API_KEY_HERE') {
-            resend = new Resend(apiKey);
-            console.log('[SUCCESS] Resend configured with API key:', apiKey.substring(0, 8) + '...');
-            
-            // Test the connection by checking if we can access the API
-            console.log('[EMAIL] Resend is ready for sending emails');
-            return;
-        } else {
-            console.log('[INFO] RESEND_API_KEY not configured properly');
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+            console.log('❌ Email configuration missing: EMAIL_USER and EMAIL_PASSWORD required in .env file');
+            return false;
         }
+
+        emailTransporter = nodemailer.createTransporter({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASSWORD
+            }
+        });
+
+        // Test the connection
+        emailTransporter.verify((error, success) => {
+            if (error) {
+                console.log('❌ Email configuration error:', error.message);
+                emailTransporter = null;
+            } else {
+                console.log('✅ Email server is ready');
+            }
+        });
+
+        return true;
     } catch (error) {
-        console.log('[ERROR] Failed to import/configure Resend:', error.message);
-    }
-    
-    // Only fallback to nodemailer if Resend completely fails
-    console.log('[FALLBACK] Trying nodemailer as backup...');
-    try {
-        const nodemailerModule = await import('nodemailer');
-        nodemailer = nodemailerModule.default;
-        console.log('[SUCCESS] Nodemailer imported as backup');
-    } catch (error) {
-        console.log('[ERROR] Failed to import nodemailer:', error.message);
-        console.log('[WARNING] All email services failed - email verification disabled');
+        console.log('❌ Failed to create email transporter:', error.message);
+        emailTransporter = null;
+        return false;
     }
 }
 
-// Call the initialization at startup
-await initializeEmailServices();
+// Initialize email when server starts
+initializeEmailTransporter();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -491,195 +484,64 @@ function checkUsageLimits(req, res, next) {
 
 let emailTransporter = null;
 
-// Email system status check
-async function initializeEmailTransporter() {
-    console.log('\n[EMAIL INIT] Checking Email System Status...');
-    
-    console.log('[DEBUG] resend available:', !!resend);
-    console.log('[DEBUG] nodemailer available:', !!nodemailer);
-    
-    // Prefer Resend - it's HTTP-based and much more reliable
-    if (resend) {
-        console.log('[SUCCESS] ✅ Resend email system active and ready!');
-        console.log('[INFO] Email verification enabled via Resend API');
-        return true;
-    }
-    
-    // Setup Gmail with nodemailer
-    if (nodemailer && process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
-        try {
-            console.log('[EMAIL] Creating Gmail SMTP transporter (fallback)...');
-            
-            emailTransporter = nodemailer.createTransport({
-                host: 'smtp.gmail.com',
-                port: 587,
-                secure: false,
-                requireTLS: true,
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASSWORD
-                },
-                connectionTimeout: 30000,
-                greetingTimeout: 10000,
-                socketTimeout: 30000,
-                pool: true,
-                maxConnections: 1,
-                maxMessages: 3
-            });
-
-            // Skip connection test - we'll test when actually sending
-            console.log('[SUCCESS] ✅ Gmail email system configured!');
-            console.log('[INFO] Email verification enabled - will test connection on first send');
-            return true;
-
-        } catch (error) {
-            console.error('[GMAIL ERROR]:', error.message);
-            console.log('[HINT] Make sure you are using a Gmail App Password');
-            console.log('[HINT] Get one at: https://myaccount.google.com/apppasswords');
-            emailTransporter = null;
-        }
-    }
-    
-    // No email system available
-    console.log('[WARNING] ❌ No email system configured - email verification disabled');
-    console.log('[INFO] To enable email verification:');
-    console.log('   1. RECOMMENDED: Get Resend API key from https://resend.com');
-    console.log('   2. Alternative: Configure Gmail App Password');
-    emailTransporter = null;
-    return false;
-}
 
 function generateVerificationCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+// Send verification email - Simple working version
 async function sendVerificationEmail(email, code, name = null) {
-    console.log(`[EMAIL] Attempting to send verification email to ${email}...`);
-    
-    // Try Resend first - much more reliable than SMTP
-    if (resend) {
-        try {
-            console.log('[EMAIL] Using Resend to send verification email...');
-            
-            const { data, error } = await resend.emails.send({
-                from: 'Roblox Luau AI <onboarding@resend.dev>',
-                to: [email],
-                subject: '🔐 Your Verification Code - Roblox Luau AI',
-                html: `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <meta charset="utf-8">
-                        <title>Verify Your Account</title>
-                    </head>
-                    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-                        <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 20px; border-radius: 10px; margin-bottom: 30px;">
-                            <h1 style="margin: 0; font-size: 28px;">🚀 Welcome to Roblox Luau AI!</h1>
-                        </div>
-                        
-                        <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; margin-bottom: 30px;">
-                            <p style="font-size: 18px; margin: 0 0 20px 0;">
-                                Hi ${name || 'there'}! 👋<br><br>
-                                Thank you for signing up! To complete your registration, please use the verification code below:
-                            </p>
-                            
-                            <div style="text-align: center; margin: 30px 0;">
-                                <div style="background: white; border: 2px dashed #667eea; border-radius: 10px; padding: 20px; display: inline-block;">
-                                    <div style="font-size: 32px; font-weight: bold; color: #667eea; letter-spacing: 8px; font-family: 'Courier New', monospace;">
-                                        ${code}
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <p style="font-size: 14px; color: #666; margin: 20px 0 0 0; text-align: center;">
-                                This code will expire in <strong>15 minutes</strong>
-                            </p>
-                        </div>
-                        
-                        <div style="text-align: center; margin-top: 30px; padding: 20px; border-top: 1px solid #e9ecef; color: #666; font-size: 12px;">
-                            <p style="margin: 0;">
-                                If you didn't create an account, please ignore this email.<br>
-                                This verification code was sent from Roblox Luau AI Assistant.
-                            </p>
-                        </div>
-                    </body>
-                    </html>
-                `
-            });
-
-            if (error) {
-                console.error('[RESEND ERROR]:', error);
-                throw new Error(`Resend error: ${error.message}`);
-            }
-
-            console.log('[SUCCESS] ✅ Verification email sent via Resend!');
-            console.log('[RESEND] Message ID:', data?.id);
-            return true;
-            
-        } catch (error) {
-            console.error('[RESEND] Failed to send email:', error.message);
-            // Don't fallback to Gmail SMTP - it's not working on Railway
-            throw error;
-        }
+    if (!emailTransporter) {
+        console.error('Email transporter not configured');
+        return false;
     }
-    
-    // Fallback to Gmail SMTP (but it's not working on Railway)
-    if (emailTransporter && typeof emailTransporter === 'object') {
-        const mailOptions = {
-            from: `"Roblox Luau AI" <${process.env.EMAIL_USER}>`,
-            to: email,
-            subject: '🔐 Your Verification Code - Roblox Luau AI',
-            html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa; padding: 20px; border-radius: 10px;">
-                    <div style="text-align: center; margin-bottom: 30px;">
-                        <h1 style="color: #343a40; margin: 0;">Welcome to Roblox Luau AI! 🎮</h1>
+
+    const mailOptions = {
+        from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+        to: email,
+        subject: 'Verify Your Roblox Luau AI Assistant Account',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+                <div style="background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #21262d 100%); color: white; padding: 30px; border-radius: 10px; text-align: center;">
+                    <div style="width: 60px; height: 60px; background: linear-gradient(45deg, #00d4ff, #9d4edd); border-radius: 15px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 24px; margin-bottom: 20px;">
+                        RL
+                    </div>
+                    <h1 style="margin: 0; font-size: 24px;">Welcome to Roblox Luau AI!</h1>
+                    <p style="margin: 10px 0 0 0; color: #8b949e;">Your intelligent assistant for Roblox game development</p>
+                </div>
+                
+                <div style="background: white; padding: 30px; border-radius: 10px; margin-top: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h2 style="color: #0d1117; margin-top: 0;">Verify Your Email Address</h2>
+                    <p style="color: #586069; line-height: 1.6;">
+                        ${name ? `Hi ${name}, thanks` : 'Thanks'} for signing up! To complete your account setup, please use the verification code below:
+                    </p>
+                    
+                    <div style="background: #f6f8fa; border: 2px solid #e1e4e8; border-radius: 8px; padding: 20px; text-align: center; margin: 25px 0;">
+                        <div style="font-size: 32px; font-weight: bold; color: #0d1117; letter-spacing: 3px; font-family: monospace;">
+                            ${code}
+                        </div>
+                        <p style="margin: 10px 0 0 0; color: #586069; font-size: 14px;">This code expires in 15 minutes</p>
                     </div>
                     
-                    <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                        <h2 style="color: #495057; margin-top: 0;">Verify Your Email Address</h2>
-                        <p style="color: #6c757d; line-height: 1.5;">
-                            Hi ${name || 'there'}! 👋<br><br>
-                            Thank you for signing up! To complete your registration, please use the verification code below:
-                        </p>
-                        
-                        <div style="text-align: center; margin: 30px 0;">
-                            <div style="display: inline-block; background: #007bff; color: white; font-size: 24px; font-weight: bold; padding: 15px 30px; border-radius: 8px; letter-spacing: 3px;">
-                                ${code}
-                            </div>
-                        </div>
-                        
-                        <p style="color: #6c757d; line-height: 1.5;">
-                            This code will expire in <strong>15 minutes</strong>. If you didn't create an account, you can safely ignore this email.
-                        </p>
-                        
-                        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #6c757d; font-size: 14px;">
-                            <p>Need help? Contact us at <a href="mailto:${process.env.EMAIL_FROM}" style="color: #007bff;">${process.env.EMAIL_FROM}</a></p>
-                        </div>
-                    </div>
+                    <p style="color: #586069; font-size: 14px; line-height: 1.6;">
+                        If you didn't request this verification, you can safely ignore this email.
+                    </p>
                 </div>
-            `
-        };
+                
+                <div style="text-align: center; padding: 20px; color: #586069; font-size: 12px;">
+                    <p>This email was sent by Roblox Luau AI Assistant</p>
+                </div>
+            </div>
+        `
+    };
 
-        try {
-            console.log(`[EMAIL] Sending verification via Gmail to ${email}...`);
-            
-            // Add timeout to prevent hanging
-            await Promise.race([
-                emailTransporter.sendMail(mailOptions),
-                new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Gmail send timeout after 45 seconds - check network connectivity')), 45000)
-                )
-            ]);
-            
-            console.log('[SUCCESS] Verification email sent via Gmail!');
-            return true;
-        } catch (error) {
-            console.error('[ERROR] Failed to send verification email:', error.message);
-            throw error;
-        }
+    try {
+        await emailTransporter.sendMail(mailOptions);
+        return true;
+    } catch (error) {
+        console.error('Email sending error:', error);
+        return false;
     }
-
-    throw new Error('No email service available');
 }
 
 function optionalAuthenticateToken(req, res, next) {
@@ -1793,10 +1655,8 @@ app.get("/", (req, res) => {
     res.redirect('/index.html');
 });
 
-async function startServer() {
+function startServer() {
     console.log('\n[INIT] Starting Roblox Luau AI Server with Subscription System...');
-    
-    await initializeEmailTransporter();
     
     const port = process.env.PORT || 3000;
     const baseUrl = getBaseUrl();
