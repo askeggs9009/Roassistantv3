@@ -558,61 +558,12 @@ async function sendVerificationEmail(email, code, name = null) {
         throw new Error('Email system not configured.');
     }
 
-    // Use Resend if available (preferred)
+    // Use Resend only (simplified)
     if (emailTransporter === 'resend') {
-        try {
-            return await sendVerificationEmailWithResend(email, code, name);
-        } catch (error) {
-            console.error('[RESEND] Failed, trying Gmail fallback...');
-            
-            // If it's a domain verification error, check if Gmail is available
-            if (error.message.includes('domain is not verified') || error.message.includes('validation_error')) {
-                console.log('[INFO] Resend requires domain verification for this email. Attempting Gmail fallback...');
-                
-                // Try to reinitialize Gmail if available
-                if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
-                    try {
-                        emailTransporter = nodemailer.createTransport({
-                            service: 'gmail',
-                            host: 'smtp.gmail.com',
-                            port: 587,
-                            secure: false,
-                            auth: {
-                                user: process.env.EMAIL_USER,
-                                pass: process.env.EMAIL_PASSWORD
-                            },
-                            tls: { rejectUnauthorized: false }
-                        });
-                        console.log('[GMAIL] Temporary Gmail transport created for fallback');
-                        
-                        // Test the Gmail connection immediately
-                        try {
-                            await new Promise((resolve, reject) => {
-                                emailTransporter.verify((error, success) => {
-                                    if (error) reject(error);
-                                    else resolve(success);
-                                });
-                            });
-                            console.log('[GMAIL] Fallback connection verified successfully');
-                        } catch (gmailTestError) {
-                            console.error('[GMAIL] Fallback connection test failed:', gmailTestError.message);
-                            emailTransporter = null;
-                        }
-                    } catch (gmailError) {
-                        console.error('[GMAIL] Failed to create Gmail transport:', gmailError.message);
-                    }
-                }
-            }
-            // Don't throw here, let it fall through to Gmail if available
-        }
+        return await sendVerificationEmailWithResend(email, code, name);
     }
 
-    // Check if we have a valid email transporter after fallback attempts
-    if (!emailTransporter) {
-        throw new Error('No email service available - both Resend and Gmail failed');
-    }
-
-    // Use Gmail/nodemailer transporter
+    // Use nodemailer transporter if available
     if (emailTransporter && typeof emailTransporter === 'object') {
         const mailOptions = {
             from: `"Roblox Luau AI" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
