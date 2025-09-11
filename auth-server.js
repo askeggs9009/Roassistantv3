@@ -477,7 +477,7 @@ async function initializeEmailTransporter() {
         console.log('[EMAIL] Creating Gmail SMTP transporter...');
         
         // FIXED: Updated to use proper Gmail configuration
-        emailTransporter = nodemailer.createTransporter({
+        emailTransporter = nodemailer.createTransport({
             service: 'gmail',
             host: 'smtp.gmail.com',
             port: 587,
