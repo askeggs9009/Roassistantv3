@@ -1712,7 +1712,4 @@ function startServer() {
     });
 }
 
-startServer().catch(error => {
-    console.error('[FATAL] Server startup failed:', error);
-    process.exit(1);
-});
+startServer();
