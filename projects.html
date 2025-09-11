@@ -11,10 +11,13 @@
     
     <style>
         .projects-container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 3rem 2rem;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .projects-header {
@@ -74,21 +77,39 @@
         }
 
         .project-card {
-            background: rgba(33, 38, 45, 0.8);
+            background: linear-gradient(135deg, rgba(33, 38, 45, 0.9), rgba(21, 26, 33, 0.9));
             border: 1px solid #30363d;
-            border-radius: 12px;
-            padding: 2rem;
+            border-radius: 16px;
+            padding: 2.5rem;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
 
         .project-card:hover {
             border-color: #58a6ff;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(88, 166, 255, 0.15);
-            background: rgba(33, 38, 45, 0.9);
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(88, 166, 255, 0.2);
+            background: linear-gradient(135deg, rgba(33, 38, 45, 1), rgba(21, 26, 33, 1));
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #58a6ff, #a5b4fc, #c084fc);
+            border-radius: 16px 16px 0 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .project-card:hover::before {
+            opacity: 1;
         }
 
         .project-header {
@@ -99,14 +120,15 @@
         }
 
         .project-icon {
-            width: 3.5rem;
-            height: 3.5rem;
-            border-radius: 10px;
+            width: 4rem;
+            height: 4rem;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #58a6ff, #1f6feb);
+            background: linear-gradient(135deg, #58a6ff, #a5b4fc, #c084fc);
             flex-shrink: 0;
+            box-shadow: 0 4px 15px rgba(88, 166, 255, 0.3);
         }
 
         .project-icon svg {
@@ -539,9 +561,9 @@
                 this.saveProjects();
             }
 
-            // Open project (redirect to chat with project context)
+            // Open project (redirect to dedicated project chat)
             openProject(projectId) {
-                window.location.href = `/index.html?project=${projectId}`;
+                window.location.href = `/project-chat.html?project=${projectId}`;
             }
         }
 
