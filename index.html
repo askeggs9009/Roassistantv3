@@ -3,251 +3,648 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roblox Luau AI Assistant - Dashboard</title>
-    <link rel="stylesheet" href="styles/main.css">
-    <link rel="stylesheet" href="styles/sidebar.css">
-    <link rel="stylesheet" href="styles/chat.css">
-    <link rel="stylesheet" href="styles/responsive.css">
-    
-    <!-- AdSense Integration -->
-    <link rel="stylesheet" href="styles/ads.css">
-    <script src="js/adsense.js"></script>
-
-    <!-- Google AdSense Verification Code -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7434697703458325"
-            crossorigin="anonymous"></script>
-
+    <title>Roblox Luau AI Assistant</title>
     <style>
-        /* Subscription Status Styles */
-        .subscription-status {
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #0d1117;
+            color: #f0f6fc;
+            height: 100vh;
             display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 0.5rem 1rem;
-            background: rgba(33, 38, 45, 0.6);
-            border: 1px solid #30363d;
-            border-radius: 8px;
-            margin-right: 1rem;
-        }
-
-        .plan-badge {
-            background: linear-gradient(45deg, #58a6ff, #1f6feb);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .plan-badge.free {
-            background: linear-gradient(45deg, #8b949e, #6e7681);
-        }
-
-        .plan-badge.pro {
-            background: linear-gradient(45deg, #58a6ff, #1f6feb);
-        }
-
-        .plan-badge.enterprise {
-            background: linear-gradient(45deg, #9d4edd, #7c3aed);
-        }
-
-        .usage-counter {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #8b949e;
-            font-size: 0.85rem;
-        }
-
-        .usage-bar {
-            width: 100px;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
             overflow: hidden;
-            position: relative;
         }
 
-        .usage-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #58a6ff, #1f6feb);
-            transition: width 0.3s ease;
-            border-radius: 3px;
-        }
-
-        .usage-fill.warning {
-            background: linear-gradient(90deg, #d4ac0d, #f39c12);
-        }
-
-        .usage-fill.danger {
-            background: linear-gradient(90deg, #f85149, #da3633);
-        }
-
-        .upgrade-prompt {
-            display: none;
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            background: linear-gradient(135deg, #161b22, #21262d);
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            padding: 1.5rem;
-            max-width: 350px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            animation: slideInUp 0.3s ease;
-        }
-
-        @keyframes slideInUp {
-            from {
-                transform: translateY(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .upgrade-prompt-header {
+        /* Sidebar Styles */
+        .sidebar {
+            width: 260px;
+            background: #161b22;
+            border-right: 1px solid #21262d;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
+            flex-direction: column;
+            overflow: hidden;
+            transition: transform 0.3s ease;
         }
 
-        .upgrade-prompt-title {
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid #21262d;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .sidebar-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(45deg, #00d4ff, #9d4edd);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 14px;
+        }
+
+        .sidebar-title {
+            font-size: 1.1rem;
             font-weight: 600;
             color: #f0f6fc;
         }
 
-        .upgrade-prompt-close {
+        .new-chat-btn {
+            background: #238636;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            padding: 0.75rem 1rem;
+            margin: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .new-chat-btn:hover {
+            background: #2ea043;
+            transform: translateY(-1px);
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 1rem;
+        }
+
+        .nav-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-title {
+            color: #8b949e;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.75rem;
+            padding-left: 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            color: #e6edf3;
+            margin-bottom: 0.25rem;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-item.active {
+            background: rgba(88, 166, 255, 0.15);
+            color: #58a6ff;
+        }
+
+        .nav-icon {
+            width: 16px;
+            height: 16px;
+            opacity: 0.8;
+        }
+
+        .sidebar-footer {
+            padding: 1rem;
+            border-top: 1px solid #21262d;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .user-profile:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #58a6ff, #1f6feb);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #f0f6fc;
+        }
+
+        .user-plan {
+            font-size: 0.75rem;
+            color: #8b949e;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            width: 100%;
+            min-width: 0;
+        }
+
+        .main-header {
+            background: rgba(13, 17, 23, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid #21262d;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-shrink: 0;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: #f0f6fc;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 6px;
+        }
+
+        .mobile-menu-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .header-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #f0f6fc;
+            flex: 1;
+        }
+
+        .model-selector {
+            background: rgba(33, 38, 45, 0.8);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            color: #f0f6fc;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            outline: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%238b949e' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+
+        .model-selector:hover {
+            border-color: #58a6ff;
+        }
+
+        /* Chat Area */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            min-height: 0;
+        }
+
+        /* Welcome Screen */
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .welcome-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, #00d4ff, #9d4edd);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin-bottom: 1.5rem;
+        }
+
+        .welcome-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, #00d4ff, #9d4edd);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .welcome-subtitle {
+            color: #8b949e;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .quick-action {
+            background: rgba(33, 38, 45, 0.8);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .quick-action:hover {
+            border-color: #58a6ff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .action-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        .action-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #f0f6fc;
+        }
+
+        .action-desc {
+            font-size: 0.85rem;
+            color: #8b949e;
+            line-height: 1.4;
+        }
+
+        /* Messages */
+        .message {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            max-width: 100%;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .user .message-avatar {
+            background: linear-gradient(45deg, #58a6ff, #1f6feb);
+            color: white;
+        }
+
+        .assistant .message-avatar {
+            background: linear-gradient(45deg, #00d4ff, #9d4edd);
+            color: white;
+        }
+
+        .message-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .message-text {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 1rem;
+            line-height: 1.6;
+            word-wrap: break-word;
+        }
+
+        .user .message-text {
+            background: #0969da;
+            border-color: #1f6feb;
+            color: white;
+        }
+
+        /* Input Area */
+        .input-container {
+            background: #0d1117;
+            border-top: 1px solid #21262d;
+            padding: 1.5rem;
+            width: 100%;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .input-wrapper {
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1rem;
+            transition: border-color 0.2s ease;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+        }
+
+        .input-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            width: 100%;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .input-area {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #f0f6fc;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: none;
+            outline: none;
+            min-height: 24px;
+            max-height: 120px;
+            line-height: 1.5;
+        }
+
+        .input-area::placeholder {
+            color: #8b949e;
+        }
+
+        .attach-button {
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            min-width: 36px;
+            height: 36px;
+            flex-shrink: 0;
+        }
+
+        .attach-button:hover {
+            background: rgba(139, 148, 158, 0.2);
+            color: #f0f6fc;
+        }
+
+        .send-button {
+            background: linear-gradient(45deg, #58a6ff, #1f6feb);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            min-height: 36px;
+            flex-shrink: 0;
+        }
+
+        .send-button:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(88, 166, 255, 0.4);
+        }
+
+        .send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Sidebar Overlay for Mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                z-index: 1000;
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .main-content {
+                width: 100%;
+            }
+
+            .main-header {
+                padding: 1rem;
+            }
+
+            .messages-container {
+                padding: 1rem;
+            }
+
+            .input-container {
+                padding: 1rem;
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar-overlay.open {
+                display: block;
+            }
+        }
+
+        /* Chat History Styles */
+        .chat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+            color: #e6edf3;
+            margin-bottom: 0.25rem;
+            position: relative;
+        }
+
+        .chat-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .chat-item.active {
+            background: rgba(88, 166, 255, 0.15);
+            color: #58a6ff;
+        }
+
+        .chat-title {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-time {
+            font-size: 0.75rem;
+            color: #8b949e;
+        }
+
+        .chat-menu {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .chat-item:hover .chat-menu {
+            opacity: 1;
+        }
+
+        .menu-btn {
             background: none;
             border: none;
             color: #8b949e;
             cursor: pointer;
-            font-size: 1.5rem;
-            line-height: 1;
+            padding: 0.25rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
         }
 
-        .upgrade-prompt-message {
-            color: #8b949e;
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-            line-height: 1.4;
+        .menu-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #f0f6fc;
         }
 
-        .upgrade-prompt-buttons {
-            display: flex;
-            gap: 0.5rem;
+        /* Scrollbar Styles */
+        .sidebar-nav::-webkit-scrollbar,
+        .messages-container::-webkit-scrollbar {
+            width: 6px;
         }
 
-        .upgrade-btn {
-            flex: 1;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            border: none;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 0.85rem;
-        }
-
-        .upgrade-btn.primary {
-            background: linear-gradient(45deg, #238636, #2ea043);
-            color: white;
-        }
-
-        .upgrade-btn.primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(46, 160, 67, 0.4);
-        }
-
-        .upgrade-btn.secondary {
+        .sidebar-nav::-webkit-scrollbar-track,
+        .messages-container::-webkit-scrollbar-track {
             background: transparent;
-            border: 1px solid #30363d;
-            color: #8b949e;
         }
 
-        .upgrade-btn.secondary:hover {
-            border-color: #58a6ff;
-            color: #58a6ff;
+        .sidebar-nav::-webkit-scrollbar-thumb,
+        .messages-container::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 3px;
         }
 
-        .model-locked {
-            position: relative;
-        }
-
-        .model-locked::after {
-            content: '🔒';
-            position: absolute;
-            right: 35px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 0.8rem;
-        }
-
-        .usage-warning {
-            background: rgba(212, 172, 13, 0.1);
-            border: 1px solid rgba(212, 172, 13, 0.3);
-            border-radius: 8px;
-            padding: 0.75rem;
-            margin: 1rem;
-            color: #d4ac0d;
-            font-size: 0.85rem;
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .usage-limit-reached {
-            background: rgba(248, 81, 73, 0.1);
-            border: 1px solid rgba(248, 81, 73, 0.3);
-            border-radius: 8px;
-            padding: 1rem;
-            margin: 1rem;
-            color: #f85149;
-            text-align: center;
-            display: none;
-        }
-
-        /* FIXED: Account switch notification */
-        .account-switch-notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(45deg, #58a6ff, #1f6feb);
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(88, 166, 255, 0.4);
-            z-index: 1000;
-            opacity: 0;
-            transform: translateX(100%);
-            transition: all 0.3s ease;
-        }
-
-        .account-switch-notification.show {
-            opacity: 1;
-            transform: translateX(0);
+        .sidebar-nav::-webkit-scrollbar-thumb:hover,
+        .messages-container::-webkit-scrollbar-thumb:hover {
+            background: #484f58;
         }
     </style>
 </head>
 
 <body>
-    <!-- FIXED: Account Switch Notification -->
-    <div class="account-switch-notification" id="accountSwitchNotification">
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span>🔄</span>
-            <span>Account switched! Loading your data...</span>
-        </div>
-    </div>
-
     <!-- Sidebar Overlay for Mobile -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
@@ -262,11 +659,6 @@
             <span>➕</span>
             New chat
         </button>
-
-        <!-- Sidebar Ad Container -->
-        <div id="sidebarAd" class="ad-container sidebar-ad" data-ad-lazy data-ad-type="sidebar">
-            <div class="ad-label">Advertisement</div>
-        </div>
 
         <div class="sidebar-nav">
             <!-- Main Navigation -->
@@ -293,14 +685,24 @@
             <div class="nav-section">
                 <div class="nav-title">Recents</div>
                 <div id="chatHistory">
-                    <!-- Chat history will be populated by JavaScript -->
+                    <div style="padding: 1rem; text-align: center; color: #8b949e; font-size: 0.85rem;">
+                        No chats yet<br>
+                        <small>Start a new conversation!</small>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="sidebar-footer">
             <div class="user-profile" id="userProfile">
-                <!-- User profile will be populated by JavaScript -->
+                <div class="user-avatar">👤</div>
+                <div class="user-info">
+                    <div class="user-name">Guest User</div>
+                    <div class="user-plan">Free Plan - <span style="color: #58a6ff; cursor: pointer;" onclick="window.location.href='/login.html'">Sign In for More</span></div>
+                </div>
+                <button onclick="window.location.href='/login.html'" style="background: #238636; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
+                    Sign In
+                </button>
             </div>
         </div>
     </div>
@@ -314,37 +716,11 @@
             </button>
             <div class="header-title" id="chatTitle">New Chat</div>
             
-            <!-- Subscription Status -->
-            <div class="subscription-status" id="subscriptionStatus" style="display: none;">
-                <div class="plan-badge" id="planBadge">Free</div>
-                <div class="usage-counter">
-                    <span id="usageText">0/10</span>
-                    <div class="usage-bar">
-                        <div class="usage-fill" id="usageFill" style="width: 0%;"></div>
-                    </div>
-                </div>
-            </div>
-            
             <select class="model-selector" id="modelSelector">
                 <option value="gpt-4o-mini">GPT-4o Mini</option>
-                <option value="gpt-4.1">GPT-4.1</option>
-                <option value="gpt-5">GPT-5</option>
+                <option value="gpt-4.1" disabled>GPT-4.1 - Sign in required</option>
+                <option value="gpt-5" disabled>GPT-5 - Sign in required</option>
             </select>
-        </div>
-
-        <!-- Usage Warning -->
-        <div id="usageWarning" class="usage-warning">
-            ⚠️ You're approaching your daily message limit. Consider upgrading for unlimited access!
-        </div>
-
-        <!-- Usage Limit Reached -->
-        <div id="usageLimitReached" class="usage-limit-reached">
-            🚫 Daily message limit reached. <a href="/pricing.html" style="color: #58a6ff;">Upgrade now</a> for unlimited messages!
-        </div>
-
-        <!-- Header Banner Ad -->
-        <div id="headerBannerAd" class="ad-container banner-ad">
-            <div class="ad-label">Advertisement</div>
         </div>
 
         <!-- Chat Area -->
@@ -388,9 +764,6 @@
             <div class="input-container">
                 <div class="input-wrapper" id="inputWrapper">
                     <div class="input-content">
-                        <!-- File attachments area -->
-                        <div class="file-attachments" id="fileAttachments" style="display: none;"></div>
-                        
                         <!-- Input row -->
                         <div class="input-row">
                             <button class="attach-button" id="attachButton" onclick="openFileDialog()" title="Add file or image">
@@ -409,59 +782,23 @@
                     </div>
                 </div>
                 <input type="file" id="fileInput" accept="image/*,.txt,.lua,.luau,.js,.json,.md" style="display: none;" onchange="handleFileSelect(event)" multiple>
-                
-                <!-- Drag & Drop Overlay -->
-                <div class="drag-overlay" id="dragOverlay" style="display: none;">
-                    <div class="drag-content">
-                        <div class="drag-icon">📁</div>
-                        <div class="drag-text">Drop files here to upload</div>
-                        <div class="drag-subtext">Images, code files, and documents</div>
-                    </div>
-                </div>
             </div>
-        </div>
-
-        <!-- Footer Ad -->
-        <div id="footerAd" class="ad-container footer-ad">
-            <div class="ad-label">Advertisement</div>
-        </div>
-    </div>
-
-    <!-- Upgrade Prompt -->
-    <div class="upgrade-prompt" id="upgradePrompt">
-        <div class="upgrade-prompt-header">
-            <div class="upgrade-prompt-title">🚀 Unlock More Power</div>
-            <button class="upgrade-prompt-close" onclick="closeUpgradePrompt()">×</button>
-        </div>
-        <div class="upgrade-prompt-message" id="upgradePromptMessage">
-            You've used 8 of your 10 daily messages. Upgrade to Pro for 500 messages per day!
-        </div>
-        <div class="upgrade-prompt-buttons">
-            <button class="upgrade-btn primary" onclick="window.location.href='/pricing.html'">
-                View Plans
-            </button>
-            <button class="upgrade-btn secondary" onclick="closeUpgradePrompt()">
-                Maybe Later
-            </button>
         </div>
     </div>
 
     <script>
-        // DYNAMIC API CONFIGURATION - Updated for production deployment
+        // API Configuration
         const getApiBaseUrl = () => {
-            // Check if we're running on localhost (development)
             if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                 return 'http://localhost:3000';
             }
-            
-            // For production, point to Railway backend
             return 'https://roassistantv3-production.up.railway.app';
         };
 
         const API_BASE_URL = getApiBaseUrl();
         console.log(`[CONFIG] Using API Base URL: ${API_BASE_URL}`);
 
-        // FIXED: Global variables with proper user isolation
+        // Global variables
         let currentChatId = null;
         let isLoggedIn = false;
         let authToken = null;
@@ -469,1222 +806,13 @@
         let selectedModel = 'gpt-4o-mini';
         let currentView = 'chats';
         let attachedFiles = [];
-
-        // FIXED: User-specific data storage
         let userChats = [];
-        let userScripts = [];
-
-        // Subscription management
-        let userSubscription = {
-            plan: 'free',
-            limits: {
-                daily_messages: 10,
-                models: ['gpt-4o-mini']
-            },
-            usage: {
-                daily_messages: 0,
-                daily_limit: 10
-            }
-        };
-
-        // Message counter for ad insertion
         let messageCount = 0;
-        const AD_FREQUENCY = 5; // Show ad every 5 messages
 
-        // FIXED: Account switching functionality
-        class AccountManager {
-            constructor() {
-                this.lastKnownUser = null;
-                this.initializeWatcher();
-            }
-
-            initializeWatcher() {
-                // Watch for auth token changes
-                const originalSetItem = localStorage.setItem;
-                const originalRemoveItem = localStorage.removeItem;
-                
-                localStorage.setItem = (key, value) => {
-                    if (key === 'authToken' || key === 'user') {
-                        setTimeout(() => this.checkForAccountSwitch(), 100);
-                    }
-                    return originalSetItem.call(localStorage, key, value);
-                };
-                
-                localStorage.removeItem = (key) => {
-                    if (key === 'authToken' || key === 'user') {
-                        setTimeout(() => this.checkForAccountSwitch(), 100);
-                    }
-                    return originalRemoveItem.call(localStorage, key);
-                };
-            }
-
-            checkForAccountSwitch() {
-                const currentToken = localStorage.getItem('authToken');
-                const currentUserData = localStorage.getItem('user');
-                
-                let currentUserId = null;
-                if (currentUserData) {
-                    try {
-                        const user = JSON.parse(currentUserData);
-                        currentUserId = user.id || user.email;
-                    } catch (error) {
-                        console.error('Error parsing user data:', error);
-                    }
-                }
-
-                // Check if user has switched
-                if (this.lastKnownUser !== currentUserId) {
-                    console.log('Script detected:', scriptContent.substring(0, 100) + '...');
-                }
-            }
-        }
-
-        // Check premium status
-        function checkPremiumStatus() {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            if (user.premium || user.plan === 'premium') {
-                document.body.classList.add('premium-user');
-                console.log('[AdSense] Premium user detected - ads hidden');
-            }
-        }
-
-        // Initialize app when DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing app...');
-            initApp();
-            
-            // Check subscription status and refresh periodically
-            checkSubscriptionStatus();
-            setInterval(checkSubscriptionStatus, 60000); // Refresh every minute
-            
-            // Check premium status on load
-            checkPremiumStatus();
-        });
-
-        // Check for project parameter in URL
-        function checkProjectParameter() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const projectId = urlParams.get('project');
-            
-            if (projectId) {
-                // Load project context if needed
-                console.log('Loading project context:', projectId);
-                // You can implement project-specific logic here
-            }
-        }
-
-        // Check premium status on auth changes
-        document.addEventListener('authStatusChanged', checkPremiumStatus);
-    </script>
-
-    <!-- Content Ad Template for Chat -->
-    <template id="chatContentAdTemplate">
-        <div class="ad-container content-ad chat-content-ad" style="margin: 2rem auto;">
-            <div class="ad-label">Advertisement</div>
-        </div>
-    </template>
-
-</body>
-</html>('[ACCOUNT] User switch detected:', this.lastKnownUser, '->', currentUserId);
-                    this.handleAccountSwitch(currentUserId);
-                    this.lastKnownUser = currentUserId;
-                }
-            }
-
-            async handleAccountSwitch(newUserId) {
-                // Show notification
-                this.showAccountSwitchNotification();
-                
-                // Clear current session data
-                this.clearSessionData();
-                
-                // Reload user data
-                await this.loadUserData();
-                
-                // Refresh UI
-                this.refreshUserInterface();
-            }
-
-            showAccountSwitchNotification() {
-                const notification = document.getElementById('accountSwitchNotification');
-                notification.classList.add('show');
-                
-                setTimeout(() => {
-                    notification.classList.remove('show');
-                }, 3000);
-            }
-
-            clearSessionData() {
-                // Clear chat-related data
-                currentChatId = null;
-                userChats = [];
-                userScripts = [];
-                messageCount = 0;
-                
-                // Clear UI
-                const messagesContainer = document.getElementById('messagesContainer');
-                if (messagesContainer) {
-                    messagesContainer.innerHTML = '';
-                }
-                
-                // Reset title
-                const chatTitle = document.getElementById('chatTitle');
-                if (chatTitle) {
-                    chatTitle.textContent = 'New Chat';
-                }
-            }
-
-            async loadUserData() {
-                const token = localStorage.getItem('authToken');
-                if (token) {
-                    try {
-                        // Load user chats
-                        const chatsResponse = await fetch(`${API_BASE_URL}/api/user-chats`, {
-                            headers: { 'Authorization': `Bearer ${token}` }
-                        });
-                        
-                        if (chatsResponse.ok) {
-                            const chatsData = await chatsResponse.json();
-                            userChats = chatsData.chats || [];
-                        }
-                    } catch (error) {
-                        console.error('Error loading user data:', error);
-                    }
-                }
-            }
-
-            refreshUserInterface() {
-                // Re-initialize authentication
-                checkAuth();
-                
-                // Reload chat history
-                loadChatHistory();
-                
-                // Show welcome screen
-                showWelcomeScreen();
-                
-                // Update subscription status
-                checkSubscriptionStatus();
-                
-                // Update usage limits
-                if (window.usageLimitsManager) {
-                    window.usageLimitsManager.init();
-                }
-            }
-        }
-
-        // Initialize account manager
-        const accountManager = new AccountManager();
-
-        // Usage limits management
-        class UsageLimitsManager {
-            constructor() {
-                this.limits = {};
-                this.isAuthenticated = false;
-                this.currentUsage = {};
-            }
-
-            // Initialize usage limits
-            async init() {
-                await this.fetchUsageLimits();
-                this.updateModelSelector();
-                this.showUsageBanner();
-            }
-
-            // Fetch current usage limits from server
-            async fetchUsageLimits() {
-                try {
-                    const headers = {};
-                    if (authToken) {
-                        headers['Authorization'] = `Bearer ${authToken}`;
-                    }
-
-                    const response = await fetch(`${API_BASE_URL}/usage-limits`, {
-                        headers: headers
-                    });
-
-                    const data = await response.json();
-                    this.isAuthenticated = data.type === 'authenticated';
-                    this.limits = data.limits;
-
-                    console.log('Usage limits loaded:', data);
-                } catch (error) {
-                    console.error('Failed to fetch usage limits:', error);
-                }
-            }
-
-            // Update model selector with usage info
-            updateModelSelector() {
-                const modelSelector = document.getElementById('modelSelector');
-                if (!modelSelector) return;
-
-                if (this.isAuthenticated) {
-                    // Clear any usage indicators for authenticated users
-                    Array.from(modelSelector.options).forEach(option => {
-                        option.textContent = option.textContent.replace(/ \(\d+\/\d+ left.*?\)/, '');
-                        option.disabled = false;
-                        option.style.color = '';
-                    });
-                    return;
-                }
-
-                // Update options with usage info for guests
-                Array.from(modelSelector.options).forEach(option => {
-                    const modelName = option.value;
-                    const modelLimits = this.limits[modelName];
-
-                    if (modelLimits) {
-                        const remaining = modelLimits.dailyRemaining;
-                        const dailyLimit = modelLimits.dailyLimit;
-                        
-                        // Clean existing usage text
-                        option.textContent = option.textContent.replace(/ \(\d+\/\d+ left.*?\)/, '');
-                        
-                        if (remaining <= 0) {
-                            option.textContent += ` (0/${dailyLimit} left - limit reached)`;
-                            option.disabled = true;
-                            option.style.color = '#f85149';
-                        } else if (remaining <= 2) {
-                            option.textContent += ` (${remaining}/${dailyLimit} left - almost out!)`;
-                            option.style.color = '#d4ac0d';
-                        } else {
-                            option.textContent += ` (${remaining}/${dailyLimit} left)`;
-                            option.style.color = '';
-                        }
-                    }
-                });
-            }
-
-            // Show usage banner for guests
-            showUsageBanner() {
-                if (this.isAuthenticated) {
-                    this.hideUsageBanner();
-                    return;
-                }
-
-                const existingBanner = document.getElementById('usageBanner');
-                if (existingBanner) {
-                    existingBanner.remove();
-                }
-
-                const banner = document.createElement('div');
-                banner.id = 'usageBanner';
-                banner.style.cssText = `
-                    background: linear-gradient(90deg, rgba(88, 166, 255, 0.1), rgba(157, 78, 221, 0.1));
-                    border: 1px solid rgba(88, 166, 255, 0.3);
-                    border-radius: 8px;
-                    padding: 0.75rem 1rem;
-                    margin: 0 1rem 1rem 1rem;
-                    font-size: 0.85rem;
-                    color: #e6edf3;
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    flex-wrap: wrap;
-                    gap: 0.5rem;
-                `;
-
-                const usageInfo = document.createElement('div');
-                usageInfo.style.cssText = 'display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;';
-
-                let hasLimits = false;
-                Object.entries(this.limits).forEach(([model, limits]) => {
-                    if (limits.dailyRemaining !== undefined) {
-                        hasLimits = true;
-                        const modelDiv = document.createElement('div');
-                        const remaining = limits.dailyRemaining;
-                        const total = limits.dailyLimit;
-                        
-                        let color = '#2ea043';
-                        if (remaining <= 0) color = '#f85149';
-                        else if (remaining <= 2) color = '#d4ac0d';
-                        
-                        modelDiv.innerHTML = `
-                            <span style="font-weight: 500;">${model}:</span> 
-                            <span style="color: ${color};">${remaining}/${total}</span>
-                        `;
-                        usageInfo.appendChild(modelDiv);
-                    }
-                });
-
-                if (hasLimits) {
-                    const upgradeBtn = document.createElement('button');
-                    upgradeBtn.textContent = '✨ Sign Up for Unlimited';
-                    upgradeBtn.style.cssText = `
-                        background: linear-gradient(45deg, #238636, #2ea043);
-                        border: none;
-                        border-radius: 6px;
-                        color: white;
-                        padding: 0.4rem 0.8rem;
-                        font-size: 0.8rem;
-                        font-weight: 500;
-                        cursor: pointer;
-                        transition: all 0.2s ease;
-                    `;
-                    upgradeBtn.onmouseover = () => upgradeBtn.style.transform = 'translateY(-1px)';
-                    upgradeBtn.onmouseout = () => upgradeBtn.style.transform = 'none';
-                    upgradeBtn.onclick = () => window.location.href = '/login.html';
-
-                    banner.appendChild(usageInfo);
-                    banner.appendChild(upgradeBtn);
-
-                    const mainContent = document.querySelector('.main-content');
-                    const headerBannerAd = document.getElementById('headerBannerAd');
-                    if (mainContent && headerBannerAd) {
-                        mainContent.insertBefore(banner, headerBannerAd.nextSibling);
-                    }
-                }
-            }
-
-            // Hide usage banner
-            hideUsageBanner() {
-                const banner = document.getElementById('usageBanner');
-                if (banner) {
-                    banner.remove();
-                }
-            }
-
-            // Handle usage limit errors
-            handleUsageLimitError(error, model) {
-                if (error.resetTime) {
-                    const resetTime = new Date(error.resetTime);
-                    const timeUntilReset = this.getTimeUntilReset(resetTime);
-                    
-                    this.showLimitReachedModal(error.error, timeUntilReset, model);
-                } else {
-                    addMessage(`🚫 ${error.error}`, false, true);
-                }
-            }
-
-            // Get human-readable time until reset
-            getTimeUntilReset(resetTime) {
-                const now = new Date();
-                const diffMs = resetTime - now;
-                
-                if (diffMs <= 0) return 'now';
-                
-                const hours = Math.floor(diffMs / (1000 * 60 * 60));
-                const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                
-                if (hours > 0) {
-                    return `${hours}h ${minutes}m`;
-                } else {
-                    return `${minutes}m`;
-                }
-            }
-
-            // Show limit reached modal
-            showLimitReachedModal(message, timeUntilReset, model) {
-                const modal = document.createElement('div');
-                modal.style.cssText = `
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0, 0, 0, 0.7);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 1000;
-                    padding: 2rem;
-                `;
-
-                const modalContent = document.createElement('div');
-                modalContent.style.cssText = `
-                    background: #161b22;
-                    border: 1px solid #f85149;
-                    border-radius: 12px;
-                    padding: 2rem;
-                    max-width: 500px;
-                    width: 100%;
-                    text-align: center;
-                `;
-
-                modalContent.innerHTML = `
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">⏰</div>
-                    <h2 style="color: #f85149; margin-bottom: 1rem; font-size: 1.3rem;">Usage Limit Reached</h2>
-                    <p style="color: #e6edf3; margin-bottom: 1.5rem; line-height: 1.5;">${message}</p>
-                    <p style="color: #8b949e; margin-bottom: 2rem; font-size: 0.9rem;">
-                        Reset in: <strong style="color: #58a6ff;">${timeUntilReset}</strong>
-                    </p>
-                    
-                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                        <button onclick="this.closest('.modal-overlay').remove()" style="
-                            background: transparent;
-                            border: 1px solid #30363d;
-                            border-radius: 8px;
-                            color: #e6edf3;
-                            padding: 0.75rem 1.5rem;
-                            cursor: pointer;
-                            transition: all 0.2s ease;
-                        " onmouseover="this.style.borderColor='#58a6ff'" onmouseout="this.style.borderColor='#30363d'">
-                            Close
-                        </button>
-                        <button onclick="window.location.href='/login.html'" style="
-                            background: linear-gradient(45deg, #238636, #2ea043);
-                            border: none;
-                            border-radius: 8px;
-                            color: white;
-                            padding: 0.75rem 1.5rem;
-                            cursor: pointer;
-                            font-weight: 600;
-                            transition: all 0.2s ease;
-                        " onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
-                            ✨ Sign Up for Unlimited
-                        </button>
-                    </div>
-                `;
-
-                modal.className = 'modal-overlay';
-                modal.appendChild(modalContent);
-                document.body.appendChild(modal);
-
-                // Auto-close after 10 seconds
-                setTimeout(() => {
-                    if (modal.parentNode) {
-                        modal.remove();
-                    }
-                }, 10000);
-            }
-
-            // Update usage after successful request
-            async updateUsageAfterRequest(model, usageInfo) {
-                if (usageInfo && !this.isAuthenticated) {
-                    // Update local usage tracking
-                    if (!this.limits[model]) {
-                        this.limits[model] = {};
-                    }
-                    
-                    this.limits[model].dailyUsed = usageInfo.dailyUsed;
-                    this.limits[model].dailyRemaining = usageInfo.dailyLimit - usageInfo.dailyUsed;
-                    this.limits[model].hourlyUsed = usageInfo.hourlyUsed;
-                    this.limits[model].hourlyRemaining = usageInfo.hourlyLimit - usageInfo.hourlyUsed;
-
-                    // Update UI
-                    this.updateModelSelector();
-                    this.showUsageBanner();
-
-                    // Show warning if almost out of uses
-                    if (usageInfo.upgradeMessage) {
-                        this.showUpgradePrompt(usageInfo.upgradeMessage);
-                    }
-                }
-            }
-
-            // Show upgrade prompt
-            showUpgradePrompt(message) {
-                const existingPrompt = document.getElementById('upgradePrompt');
-                if (existingPrompt) {
-                    existingPrompt.remove();
-                }
-
-                const prompt = document.createElement('div');
-                prompt.id = 'upgradePrompt';
-                prompt.style.cssText = `
-                    position: fixed;
-                    bottom: 2rem;
-                    right: 2rem;
-                    background: linear-gradient(45deg, #238636, #2ea043);
-                    border: 1px solid #2ea043;
-                    border-radius: 12px;
-                    padding: 1rem;
-                    color: white;
-                    font-size: 0.9rem;
-                    max-width: 300px;
-                    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-                    z-index: 999;
-                    animation: slideInRight 0.3s ease;
-                `;
-
-                prompt.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
-                        <div style="font-size: 1.5rem;">⚡</div>
-                        <div style="font-weight: 600; flex: 1;">Almost Out!</div>
-                        <button onclick="this.closest('#upgradePrompt').remove()" style="
-                            background: none;
-                            border: none;
-                            color: rgba(255, 255, 255, 0.7);
-                            cursor: pointer;
-                            padding: 0.25rem;
-                            border-radius: 4px;
-                        " onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='none'">
-                            ×
-                        </button>
-                    </div>
-                    <p style="margin: 0 0 1rem 0; line-height: 1.4;">${message}</p>
-                    <button onclick="window.location.href='/login.html'" style="
-                        background: rgba(255, 255, 255, 0.2);
-                        border: 1px solid rgba(255, 255, 255, 0.3);
-                        border-radius: 6px;
-                        color: white;
-                        padding: 0.5rem 1rem;
-                        cursor: pointer;
-                        font-weight: 500;
-                        width: 100%;
-                        transition: all 0.2s ease;
-                    " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
-                        Sign Up Now
-                    </button>
-                `;
-
-                // Add animation keyframes
-                if (!document.getElementById('upgradePromptStyles')) {
-                    const style = document.createElement('style');
-                    style.id = 'upgradePromptStyles';
-                    style.textContent = `
-                        @keyframes slideInRight {
-                            from {
-                                transform: translateX(100%);
-                                opacity: 0;
-                            }
-                            to {
-                                transform: translateX(0);
-                                opacity: 1;
-                            }
-                        }
-                    `;
-                    document.head.appendChild(style);
-                }
-
-                document.body.appendChild(prompt);
-
-                // Auto-hide after 8 seconds
-                setTimeout(() => {
-                    if (prompt.parentNode) {
-                        prompt.style.animation = 'slideInRight 0.3s ease reverse';
-                        setTimeout(() => prompt.remove(), 300);
-                    }
-                }, 8000);
-            }
-        }
-
-        // Create global instance
-        const usageLimitsManager = new UsageLimitsManager();
-        window.usageLimitsManager = usageLimitsManager;
-
-        // FIXED: Enhanced subscription status checking
-        async function checkSubscriptionStatus() {
-            const authToken = localStorage.getItem('authToken');
-            if (!authToken) {
-                // Show free plan status
-                updateSubscriptionUI({
-                    plan: 'free',
-                    limits: { daily_messages: 10, models: ['gpt-4o-mini'] },
-                    usage: { daily_messages: 0, daily_limit: 10 }
-                });
-                return;
-            }
-            
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/user-subscription`, {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    userSubscription = data;
-                    updateSubscriptionUI(data);
-                } else {
-                    console.error('Failed to fetch subscription status:', response.status);
-                }
-            } catch (error) {
-                console.error('Error checking subscription:', error);
-            }
-        }
-
-        // Update UI with subscription information
-        function updateSubscriptionUI(subscription) {
-            const statusDiv = document.getElementById('subscriptionStatus');
-            const planBadge = document.getElementById('planBadge');
-            const usageText = document.getElementById('usageText');
-            const usageFill = document.getElementById('usageFill');
-            const modelSelector = document.getElementById('modelSelector');
-            
-            // Show subscription status
-            statusDiv.style.display = 'flex';
-            
-            // Update plan badge
-            planBadge.textContent = subscription.plan.toUpperCase();
-            planBadge.className = `plan-badge ${subscription.plan}`;
-            
-            // Update usage counter
-            const used = subscription.usage?.daily_messages || 0;
-            const limit = subscription.limits?.daily_messages || 10;
-            
-            if (limit === -1) {
-                usageText.textContent = '∞';
-                usageFill.style.width = '0%';
-            } else {
-                usageText.textContent = `${used}/${limit}`;
-                const percentage = (used / limit) * 100;
-                usageFill.style.width = `${Math.min(percentage, 100)}%`;
-                
-                // Update fill color based on usage
-                if (percentage >= 90) {
-                    usageFill.className = 'usage-fill danger';
-                    showUsageWarning('limit');
-                } else if (percentage >= 70) {
-                    usageFill.className = 'usage-fill warning';
-                    showUsageWarning('approaching');
-                } else {
-                    usageFill.className = 'usage-fill';
-                }
-            }
-            
-            // Update model selector based on available models
-            const availableModels = subscription.limits?.models || ['gpt-4o-mini'];
-            Array.from(modelSelector.options).forEach(option => {
-                if (!availableModels.includes(option.value)) {
-                    option.disabled = true;
-                    option.classList.add('model-locked');
-                    if (!option.text.includes('(Upgrade Required)')) {
-                        option.text += ' (Upgrade Required)';
-                    }
-                } else {
-                    option.disabled = false;
-                    option.classList.remove('model-locked');
-                    option.text = option.text.replace(' (Upgrade Required)', '');
-                }
-            });
-            
-            // Hide ads for paid users
-            if (subscription.plan !== 'free') {
-                document.body.classList.add('premium-user');
-            }
-        }
-
-        // Show usage warnings
-        function showUsageWarning(type) {
-            const warningDiv = document.getElementById('usageWarning');
-            const limitDiv = document.getElementById('usageLimitReached');
-            
-            if (type === 'approaching') {
-                warningDiv.style.display = 'block';
-                limitDiv.style.display = 'none';
-            } else if (type === 'limit') {
-                warningDiv.style.display = 'none';
-                limitDiv.style.display = 'block';
-            }
-        }
-
-        // Show upgrade prompt
-        function showUpgradePrompt(message) {
-            const prompt = document.getElementById('upgradePrompt');
-            const promptMessage = document.getElementById('upgradePromptMessage');
-            
-            promptMessage.textContent = message || 'Unlock more features with a Pro or Enterprise plan!';
-            prompt.style.display = 'block';
-            
-            // Auto-hide after 10 seconds
-            setTimeout(() => {
-                closeUpgradePrompt();
-            }, 10000);
-        }
-
-        function closeUpgradePrompt() {
-            document.getElementById('upgradePrompt').style.display = 'none';
-        }
-
-        // FIXED: Enhanced initialization with account management
+        // Initialize app
         function initApp() {
             console.log('Initializing app...');
             checkAuth();
-            loadChatHistory();
-            setupEventListeners();
-            
-            // Initialize usage limits
-            setTimeout(() => {
-                usageLimitsManager.init();
-            }, 500);
-            
-            // Initialize account manager
-            accountManager.checkForAccountSwitch();
-        }
-
-        // Function to insert content ads during chat
-        function insertContentAd() {
-            if (document.body.classList.contains('premium-user')) {
-                return; // No ads for premium users
-            }
-
-            const messagesContainer = document.getElementById('messagesContainer');
-            const template = document.getElementById('chatContentAdTemplate');
-            if (!template) return;
-            
-            const adElement = template.content.cloneNode(true);
-            
-            // Create unique ID for this ad
-            const adId = 'chatAd' + Date.now();
-            adElement.querySelector('.ad-container').id = adId;
-            
-            messagesContainer.appendChild(adElement);
-            
-            // Initialize the ad with AdSense
-            if (window.adSenseManager) {
-                setTimeout(() => {
-                    window.adSenseManager.createResponsiveAd(adId, 'banner');
-                }, 1000);
-            }
-        }
-
-        // Setup event listeners
-        function setupEventListeners() {
-            const messageInput = document.getElementById('messageInput');
-            const modelSelector = document.getElementById('modelSelector');
-
-            if (messageInput) {
-                messageInput.addEventListener('input', function() {
-                    this.style.height = 'auto';
-                    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-                });
-
-                messageInput.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        sendMessage();
-                    }
-                });
-
-                messageInput.addEventListener('paste', handlePaste);
-            }
-
-            if (modelSelector) {
-                modelSelector.addEventListener('change', function() {
-                    const selectedModelValue = this.value;
-                    
-                    // Check if guest is trying to use a model they've reached the limit for
-                    if (!usageLimitsManager.isAuthenticated && usageLimitsManager.limits[selectedModelValue]) {
-                        const limits = usageLimitsManager.limits[selectedModelValue];
-                        
-                        if (limits.dailyRemaining <= 0) {
-                            // Reset to previous valid selection
-                            this.value = 'gpt-4o-mini';
-                            
-                            usageLimitsManager.showLimitReachedModal(
-                                `You've reached your daily limit for ${selectedModelValue}. Try a different model or sign up for unlimited access.`,
-                                'tomorrow',
-                                selectedModelValue
-                            );
-                            return;
-                        }
-                        
-                        if (limits.hourlyRemaining <= 0) {
-                            // Reset to previous valid selection
-                            this.value = 'gpt-4o-mini';
-                            
-                            usageLimitsManager.showLimitReachedModal(
-                                `You've reached your hourly limit for ${selectedModelValue}. Try again in an hour or sign up for unlimited access.`,
-                                usageLimitsManager.getTimeUntilReset(new Date(Date.now() + 60 * 60 * 1000)),
-                                selectedModelValue
-                            );
-                            return;
-                        }
-                    }
-                    
-                    selectedModel = this.value;
-                });
-            }
-
-            setupDragAndDrop();
-        }
-
-        // Setup drag and drop functionality
-        function setupDragAndDrop() {
-            const inputContainer = document.getElementById('inputWrapper');
-            const dragOverlay = document.getElementById('dragOverlay');
-            let dragCounter = 0;
-
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                document.addEventListener(eventName, preventDefaults, false);
-            });
-
-            function preventDefaults(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-
-            ['dragenter', 'dragover'].forEach(eventName => {
-                document.addEventListener(eventName, handleDragEnter, false);
-            });
-
-            ['dragleave', 'drop'].forEach(eventName => {
-                document.addEventListener(eventName, handleDragLeave, false);
-            });
-
-            function handleDragEnter(e) {
-                dragCounter++;
-                if (dragOverlay && inputContainer) {
-                    dragOverlay.style.display = 'flex';
-                    inputContainer.classList.add('drag-active');
-                }
-            }
-
-            function handleDragLeave(e) {
-                dragCounter--;
-                if (dragCounter === 0) {
-                    if (dragOverlay && inputContainer) {
-                        dragOverlay.style.display = 'none';
-                        inputContainer.classList.remove('drag-active');
-                    }
-                }
-            }
-
-            document.addEventListener('drop', handleDrop, false);
-
-            function handleDrop(e) {
-                dragCounter = 0;
-                if (dragOverlay && inputContainer) {
-                    dragOverlay.style.display = 'none';
-                    inputContainer.classList.remove('drag-active');
-                }
-
-                const dt = e.dataTransfer;
-                const files = dt.files;
-
-                if (files.length > 0) {
-                    handleMultipleFiles(files);
-                }
-            }
-        }
-
-        // Handle paste events
-        function handlePaste(e) {
-            const items = e.clipboardData.items;
-            
-            for (let i = 0; i < items.length; i++) {
-                const item = items[i];
-                
-                if (item.type.indexOf('image') !== -1) {
-                    e.preventDefault();
-                    const blob = item.getAsFile();
-                    const fileName = `pasted-image-${Date.now()}.png`;
-                    
-                    addFileToAttachments({
-                        file: blob,
-                        name: fileName,
-                        type: 'image',
-                        size: blob.size
-                    });
-                    return;
-                }
-                
-                if (item.type === 'text/plain') {
-                    item.getAsString(function(text) {
-                        if (isLikelyCode(text)) {
-                            const fileName = `pasted-code-${Date.now()}.txt`;
-                            addFileToAttachments({
-                                content: text,
-                                name: fileName,
-                                type: 'text',
-                                size: text.length
-                            });
-                        } else {
-                            const messageInput = document.getElementById('messageInput');
-                            if (messageInput) {
-                                const start = messageInput.selectionStart;
-                                const end = messageInput.selectionEnd;
-                                const currentValue = messageInput.value;
-                                messageInput.value = currentValue.substring(0, start) + text + currentValue.substring(end);
-                                messageInput.setSelectionRange(start + text.length, start + text.length);
-                            }
-                        }
-                    });
-                }
-            }
-        }
-
-        // Check if text looks like code
-        function isLikelyCode(text) {
-            const codeIndicators = [
-                'function', 'local', 'end', 'if', 'then', 'else',
-                'for', 'while', 'do', 'return', 'require',
-                '{', '}', '[', ']', '(', ')',
-                '==', '~=', '<=', '>=', 
-                'script', 'game', 'workspace'
-            ];
-            
-            const lines = text.split('\n');
-            if (lines.length < 3) return false;
-            
-            let codeScore = 0;
-            lines.forEach(line => {
-                codeIndicators.forEach(indicator => {
-                    if (line.includes(indicator)) codeScore++;
-                });
-                if (line.match(/^\s{2,}/)) codeScore++;
-            });
-            
-            return codeScore > lines.length * 0.3;
-        }
-
-        // Handle multiple files
-        function handleMultipleFiles(files) {
-            Array.from(files).forEach((file, index) => {
-                setTimeout(() => {
-                    processFile(file);
-                }, index * 100);
-            });
-        }
-
-        // Process a single file
-        function processFile(file) {
-            const maxSize = 10 * 1024 * 1024;
-            if (file.size > maxSize) {
-                alert(`File "${file.name}" is too large. Please select files smaller than 10MB.`);
-                return;
-            }
-
-            if (file.type.startsWith('image/')) {
-                addFileToAttachments({
-                    file: file,
-                    name: file.name,
-                    type: 'image',
-                    size: file.size
-                });
-            } else {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    addFileToAttachments({
-                        content: e.target.result,
-                        name: file.name,
-                        type: 'text',
-                        size: file.size,
-                        mimeType: file.type
-                    });
-                };
-                reader.readAsText(file);
-            }
-        }
-
-        // Add file to attachments area
-        function addFileToAttachments(fileData) {
-            const fileAttachments = document.getElementById('fileAttachments');
-            const fileId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
-            
-            attachedFiles.push({
-                id: fileId,
-                ...fileData
-            });
-
-            fileAttachments.style.display = 'flex';
-
-            const attachment = document.createElement('div');
-            attachment.className = `file-attachment ${fileData.type}`;
-            attachment.dataset.fileId = fileId;
-
-            if (fileData.type === 'image') {
-                if (fileData.file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        attachment.innerHTML = `
-                            <img src="${e.target.result}" alt="${fileData.name}" class="file-preview">
-                            <div class="file-info">
-                                <div class="file-name">${fileData.name}</div>
-                                <div class="file-size">${formatFileSize(fileData.size)}</div>
-                            </div>
-                            <button class="file-remove" onclick="removeAttachment('${fileId}')" title="Remove">×</button>
-                        `;
-                    };
-                    reader.readAsDataURL(fileData.file);
-                } else {
-                    attachment.innerHTML = `
-                        <div class="file-icon">🖼️</div>
-                        <div class="file-info">
-                            <div class="file-name">${fileData.name}</div>
-                            <div class="file-size">${formatFileSize(fileData.size)}</div>
-                        </div>
-                        <button class="file-remove" onclick="removeAttachment('${fileId}')" title="Remove">×</button>
-                    `;
-                }
-            } else {
-                const icon = getFileIcon(fileData.name, fileData.mimeType);
-                attachment.innerHTML = `
-                    <div class="file-icon">${icon}</div>
-                    <div class="file-info">
-                        <div class="file-name">${fileData.name}</div>
-                        <div class="file-size">${formatFileSize(fileData.size)}</div>
-                    </div>
-                    <button class="file-remove" onclick="removeAttachment('${fileId}')" title="Remove">×</button>
-                `;
-            }
-
-            fileAttachments.appendChild(attachment);
-
-            const fileInput = document.getElementById('fileInput');
-            if (fileInput) {
-                fileInput.value = '';
-            }
-        }
-
-        // Remove attachment
-        function removeAttachment(fileId) {
-            attachedFiles = attachedFiles.filter(file => file.id !== fileId);
-            
-            const attachment = document.querySelector(`[data-file-id="${fileId}"]`);
-            if (attachment) {
-                attachment.remove();
-            }
-
-            const fileAttachments = document.getElementById('fileAttachments');
-            if (attachedFiles.length === 0) {
-                fileAttachments.style.display = 'none';
-            }
-        }
-
-        // Get file icon
-        function getFileIcon(fileName, mimeType) {
-            const extension = fileName.split('.').pop().toLowerCase();
-            
-            if (mimeType && mimeType.includes('lua')) return '🎮';
-            if (['lua', 'luau'].includes(extension)) return '🎮';
-            if (['js', 'json'].includes(extension)) return '⚡';
-            if (['txt', 'md'].includes(extension)) return '📄';
-            if (mimeType && mimeType.includes('image')) return '🖼️';
-            
-            return '📄';
-        }
-
-        // Format file size
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        // FIXED: Enhanced authentication check with account isolation
-        function checkAuth() {
-            console.log('Checking auth...');
-            authToken = localStorage.getItem('authToken');
-            const user = localStorage.getItem('user');
-
-            if (authToken && user) {
-                try {
-                    const userData = JSON.parse(user);
-                    currentUser = userData;
-                    showLoggedInUser(userData);
-                    isLoggedIn = true;
-                    
-                    // FIXED: Load user-specific data
-                    loadUserSpecificData();
-                } catch (error) {
-                    console.error('Error parsing user data:', error);
-                    showGuestUser();
-                    isLoggedIn = false;
-                    currentUser = null;
-                }
-            } else {
-                showGuestUser();
-                isLoggedIn = false;
-                currentUser = null;
-            }
-            updateModelSelector();
-        }
-
-        // FIXED: Load user-specific data from server
-        async function loadUserSpecificData() {
-            if (!authToken) return;
-            
-            try {
-                // Load user chats
-                const chatsResponse = await fetch(`${API_BASE_URL}/api/user-chats`, {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
-                
-                if (chatsResponse.ok) {
-                    const chatsData = await chatsResponse.json();
-                    userChats = chatsData.chats || [];
-                    console.log(`[DATA] Loaded ${userChats.length} chats for user`);
-                } else {
-                    console.error('Failed to load user chats:', chatsResponse.status);
-                    userChats = [];
-                }
-            } catch (error) {
-                console.error('Error loading user data:', error);
-                userChats = [];
-            }
-        }
-
-        // Show logged in user profile
-        function showLoggedInUser(userData) {
-            const userProfile = document.getElementById('userProfile');
-            if (userProfile) {
-                const planText = userData.subscription?.plan || 'free';
-                const planDisplay = planText.charAt(0).toUpperCase() + planText.slice(1);
-                
-                userProfile.innerHTML = `
-                    <div class="user-avatar">${(userData.name || userData.email || 'U').charAt(0).toUpperCase()}</div>
-                    <div class="user-info">
-                        <div class="user-name">${userData.name || userData.email || 'User'}</div>
-                        <div class="user-plan">${planDisplay} Plan</div>
-                    </div>
-                    <button onclick="logout()" style="background: #f85149; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
-                        Logout
-                    </button>
-                `;
-                updateNavItems();
-                
-                // Update usage limits
-                usageLimitsManager.isAuthenticated = true;
-                usageLimitsManager.hideUsageBanner();
-                usageLimitsManager.updateModelSelector();
-            }
-        }
-
-        // Show guest user profile
-        function showGuestUser() {
-            const userProfile = document.getElementById('userProfile');
-            if (userProfile) {
-                userProfile.innerHTML = `
-                    <div class="user-avatar">👤</div>
-                    <div class="user-info">
-                        <div class="user-name">Guest User</div>
-                        <div class="user-plan">Free Plan - <span style="color: #58a6ff; cursor: pointer;" onclick="window.location.href='/login.html'">Sign In for More</span></div>
-                    </div>
-                    <button onclick="window.location.href='/login.html'" style="background: #238636; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
-                        Sign In
-                    </button>
-                `;
-                updateNavItems();
-                
-                // Update usage limits
-                usageLimitsManager.isAuthenticated = false;
-                usageLimitsManager.init();
-            }
-        }
-
-        // FIXED: Enhanced logout with proper cleanup
-        function logout() {
-            // Clear authentication
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('user');
-            
-            // Clear current session
-            isLoggedIn = false;
-            authToken = null;
-            currentUser = null;
-            
-            // Clear user-specific data
-            userChats = [];
-            userScripts = [];
-            currentChatId = null;
-            messageCount = 0;
-            
-            // Update UI
-            showGuestUser();
-            updateModelSelector();
-            showWelcomeScreen();
-            
-            // Reset model selector if needed
-            if (selectedModel !== 'gpt-4o-mini') {
-                selectedModel = 'gpt-4o-mini';
-                document.getElementById('modelSelector').value = selectedModel;
-                addMessage('🔄 Switched to GPT-4o Mini (Guest access)', false, true);
-            }
-            
-            // Reload chat history (will show empty for guest)
             loadChatHistory();
         }
 
@@ -1783,10 +911,9 @@
         // Start new chat
         function startNewChat() {
             currentChatId = null;
-            messageCount = 0; // Reset message counter for ads
+            messageCount = 0;
             document.getElementById('chatTitle').textContent = 'New Chat';
             showWelcomeScreen();
-            clearAttachments();
             
             const firstNavItem = document.querySelector('.nav-item');
             if (firstNavItem) {
@@ -1833,96 +960,6 @@
                     </div>
                 `;
             }
-            
-            // Show usage info for guests
-            setTimeout(updateWelcomeScreenWithUsage, 100);
-        }
-
-        // Show usage limits in welcome screen for guests
-        function updateWelcomeScreenWithUsage() {
-            if (usageLimitsManager.isAuthenticated) return;
-            
-            const welcomeScreen = document.getElementById('welcomeScreen');
-            if (!welcomeScreen) return;
-            
-            const existingUsageInfo = welcomeScreen.querySelector('.usage-limits-info');
-            if (existingUsageInfo) {
-                existingUsageInfo.remove();
-            }
-            
-            const quickActions = welcomeScreen.querySelector('.quick-actions');
-            if (quickActions && Object.keys(usageLimitsManager.limits).length > 0) {
-                const usageInfo = document.createElement('div');
-                usageInfo.className = 'usage-limits-info';
-                usageInfo.style.cssText = `
-                    background: rgba(33, 38, 45, 0.6);
-                    border: 1px solid #30363d;
-                    border-radius: 12px;
-                    padding: 1.5rem;
-                    margin-top: 2rem;
-                    text-align: center;
-                `;
-                
-                let hasLimits = false;
-                let usageHTML = '<h3 style="color: #58a6ff; margin-bottom: 1rem; font-size: 1.1rem;">📊 Your Usage Today</h3>';
-                usageHTML += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">';
-                
-                Object.entries(usageLimitsManager.limits).forEach(([model, limits]) => {
-                    if (limits.dailyRemaining !== undefined) {
-                        hasLimits = true;
-                        const used = limits.dailyUsed || 0;
-                        const total = limits.dailyLimit;
-                        const percentage = Math.round((used / total) * 100);
-                        
-                        let statusColor = '#2ea043';
-                        let statusText = 'Available';
-                        if (used >= total) {
-                            statusColor = '#f85149';
-                            statusText = 'Limit Reached';
-                        } else if (used >= total - 2) {
-                            statusColor = '#d4ac0d';
-                            statusText = 'Almost Full';
-                        }
-                        
-                        usageHTML += `
-                            <div style="background: rgba(255, 255, 255, 0.02); border-radius: 8px; padding: 1rem;">
-                                <div style="font-weight: 600; margin-bottom: 0.5rem; color: #f0f6fc;">${model}</div>
-                                <div style="color: ${statusColor}; font-size: 1.2rem; font-weight: bold; margin-bottom: 0.25rem;">${used}/${total}</div>
-                                <div style="color: #8b949e; font-size: 0.8rem;">${statusText}</div>
-                                <div style="background: #21262d; height: 4px; border-radius: 2px; margin-top: 0.5rem; overflow: hidden;">
-                                    <div style="background: ${statusColor}; height: 100%; width: ${percentage}%; transition: width 0.3s ease;"></div>
-                                </div>
-                            </div>
-                        `;
-                    }
-                });
-                
-                usageHTML += '</div>';
-                
-                if (hasLimits) {
-                    usageHTML += `
-                        <p style="color: #8b949e; margin-bottom: 1rem; font-size: 0.9rem;">
-                            Sign up for <strong style="color: #58a6ff;">unlimited access</strong> to all models!
-                        </p>
-                        <button onclick="window.location.href='/login.html'" style="
-                            background: linear-gradient(45deg, #238636, #2ea043);
-                            border: none;
-                            border-radius: 8px;
-                            color: white;
-                            padding: 0.75rem 2rem;
-                            font-weight: 600;
-                            cursor: pointer;
-                            transition: all 0.2s ease;
-                            font-size: 0.95rem;
-                        " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
-                            ✨ Get Unlimited Access
-                        </button>
-                    `;
-                    
-                    usageInfo.innerHTML = usageHTML;
-                    quickActions.parentNode.insertBefore(usageInfo, quickActions.nextSibling);
-                }
-            }
         }
 
         // Use quick action
@@ -1945,87 +982,12 @@
         function handleFileSelect(event) {
             const files = event.target.files;
             if (files.length > 0) {
-                handleMultipleFiles(files);
+                console.log('Files selected:', files.length);
+                // Handle file processing here
             }
         }
 
-        // Clear all attachments
-        function clearAttachments() {
-            attachedFiles = [];
-            const fileAttachments = document.getElementById('fileAttachments');
-            if (fileAttachments) {
-                fileAttachments.innerHTML = '';
-                fileAttachments.style.display = 'none';
-            }
-        }
-
-        // Add file to chat display
-        async function addFileToChat(fileData) {
-            const welcomeScreen = document.getElementById('welcomeScreen');
-            if (welcomeScreen) {
-                welcomeScreen.remove();
-            }
-
-            const messagesContainer = document.getElementById('messagesContainer');
-            if (!messagesContainer) return;
-
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message user';
-            
-            const avatar = document.createElement('div');
-            avatar.className = 'message-avatar';
-            avatar.textContent = 'U';
-            
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'message-content';
-            
-            const messageText = document.createElement('div');
-            messageText.className = 'message-text';
-            
-            if (fileData.type === 'image') {
-                let imageSrc = '';
-                if (fileData.file) {
-                    const reader = new FileReader();
-                    imageSrc = await new Promise((resolve) => {
-                        reader.onload = (e) => resolve(e.target.result);
-                        reader.readAsDataURL(fileData.file);
-                    });
-                }
-                
-                messageText.innerHTML = `
-                    <div style="margin-bottom: 0.5rem;">
-                        <strong>📷 ${fileData.name}</strong>
-                    </div>
-                    ${imageSrc ? `<img src="${imageSrc}" alt="${fileData.name}" style="max-width: 100%; max-height: 300px; border-radius: 8px; display: block;">` : ''}
-                `;
-            } else {
-                const preview = fileData.content.length > 500 ? fileData.content.substring(0, 500) + '...' : fileData.content;
-                const icon = getFileIcon(fileData.name, fileData.mimeType);
-                messageText.innerHTML = `
-                    <div style="margin-bottom: 0.5rem;">
-                        <strong>${icon} ${fileData.name}</strong>
-                    </div>
-                    <div style="background: #0d1117; border: 1px solid #21262d; border-radius: 6px; padding: 1rem; margin: 0.5rem 0; overflow-x: auto;">
-                        <pre style="margin: 0; font-family: monospace; font-size: 0.85rem; color: #e6edf3; white-space: pre-wrap;">${escapeHtml(preview)}</pre>
-                    </div>
-                `;
-            }
-            
-            contentDiv.appendChild(messageText);
-            messageDiv.appendChild(avatar);
-            messageDiv.appendChild(contentDiv);
-            
-            messagesContainer.appendChild(messageDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-            const fileMessage = fileData.type === 'image' ? 
-                `[Image: ${fileData.name}]` : 
-                `[File: ${fileData.name}]\n\n${fileData.content}`;
-            
-            await saveMessageToChat(fileMessage, true);
-        }
-
-        // Add message to chat with ad insertion
+        // Add message to chat
         function addMessage(content, isUser = false, isSystem = false) {
             const welcomeScreen = document.getElementById('welcomeScreen');
             if (welcomeScreen) {
@@ -2034,14 +996,6 @@
 
             const messagesContainer = document.getElementById('messagesContainer');
             if (!messagesContainer) return;
-
-            // Insert content ad every AD_FREQUENCY messages (only for non-premium users)
-            if (!isSystem && !isUser && !document.body.classList.contains('premium-user')) {
-                messageCount++;
-                if (messageCount % AD_FREQUENCY === 0) {
-                    insertContentAd();
-                }
-            }
 
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
@@ -2071,16 +1025,12 @@
 
             if (!isSystem) {
                 saveMessageToChat(content, isUser);
-                
-                if (!isUser) {
-                    const chatTitle = document.getElementById('chatTitle').textContent;
-                    extractAndSaveScripts(content, chatTitle);
-                }
             }
         }
 
         // Format message content
         function formatMessageContent(content) {
+            // Handle code blocks
             content = content.replace(/```(?:lua|luau)?\n?([\s\S]*?)```/g, (match, code) => {
                 return `
                     <div style="background: #0d1117; border: 1px solid #21262d; border-radius: 6px; padding: 1rem; margin: 0.5rem 0; overflow-x: auto;">
@@ -2090,6 +1040,7 @@
                 `;
             });
             
+            // Handle markdown
             content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             content = content.replace(/\*([^*]+)\*/g, '<em>$1</em>');
             content = content.replace(/`([^`]+)`/g, '<code style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; font-family: monospace;">$1</code>');
@@ -2105,7 +1056,7 @@
             return div.innerHTML;
         }
 
-        // FIXED: Enhanced send message function with proper user chat handling
+        // Send message
         async function sendMessage() {
             const messageInput = document.getElementById('messageInput');
             const sendButton = document.getElementById('sendButton');
@@ -2113,49 +1064,14 @@
             if (!messageInput || !sendButton) return;
             
             const message = messageInput.value.trim();
-            
-            if (!message && attachedFiles.length === 0) return;
-
-            // CHECK SUBSCRIPTION LIMITS
-            if (userSubscription.limits.daily_messages !== -1 && 
-                userSubscription.usage.daily_messages >= userSubscription.limits.daily_messages) {
-                showUsageWarning('limit');
-                showUpgradePrompt('You\'ve reached your daily message limit. Upgrade now for more messages!');
-                return;
-            }
+            if (!message) return;
 
             sendButton.disabled = true;
             sendButton.textContent = 'Sending...';
             
-            if (attachedFiles.length > 0) {
-                for (const fileData of attachedFiles) {
-                    await addFileToChat(fileData);
-                }
-            }
-
-            if (message) {
-                addMessage(message, true);
-            }
-            
-            let combinedPrompt = '';
-            
-            if (attachedFiles.length > 0) {
-                combinedPrompt += 'I have attached the following files:\n\n';
-                attachedFiles.forEach((file, index) => {
-                    combinedPrompt += `${index + 1}. ${file.name} (${file.type})\n`;
-                    if (file.content) {
-                        combinedPrompt += `Content:\n${file.content}\n\n`;
-                    }
-                });
-            }
-            
-            if (message) {
-                combinedPrompt += message;
-            }
-            
+            addMessage(message, true);
             messageInput.value = '';
             messageInput.style.height = 'auto';
-            clearAttachments();
 
             try {
                 const headers = { "Content-Type": "application/json" };
@@ -2168,7 +1084,7 @@
                     method: "POST",
                     headers: headers,
                     body: JSON.stringify({ 
-                        prompt: combinedPrompt,
+                        prompt: message,
                         model: selectedModel 
                     })
                 });
@@ -2178,23 +1094,9 @@
                 if (response.ok) {
                     if (data.reply) {
                         addMessage(data.reply, false);
-                        
-                        // Update usage info for guests
-                        if (data.usageInfo) {
-                            await usageLimitsManager.updateUsageAfterRequest(selectedModel, data.usageInfo);
-                        }
-
-                        // Update subscription usage
-                        if (userSubscription.limits.daily_messages !== -1) {
-                            userSubscription.usage.daily_messages++;
-                            updateSubscriptionUI(userSubscription);
-                        }
                     } else {
                         addMessage('⚠️ Error: ' + (data.error || 'Unknown error occurred'), false);
                     }
-                } else if (response.status === 429) {
-                    // Handle usage limit errors
-                    usageLimitsManager.handleUsageLimitError(data, selectedModel);
                 } else {
                     if (response.status === 403 && data.requiresAuth) {
                         addMessage(`🔒 ${data.error}`, false, true);
@@ -2218,7 +1120,7 @@
             }
         }
 
-        // FIXED: Enhanced save message to chat with user-specific storage
+        // Save message to chat
         async function saveMessageToChat(content, isUser) {
             if (!currentChatId) {
                 currentChatId = Date.now().toString();
@@ -2232,10 +1134,8 @@
                     updatedAt: new Date().toISOString()
                 };
                 
-                // Add to user-specific chats
                 userChats.push(newChat);
                 
-                // Save to server if logged in
                 if (isLoggedIn && authToken) {
                     try {
                         await fetch(`${API_BASE_URL}/api/user-chats`, {
@@ -2250,7 +1150,6 @@
                         console.error('Error saving chat to server:', error);
                     }
                 } else {
-                    // Save to localStorage for guests (with session isolation)
                     const guestChats = JSON.parse(localStorage.getItem('guest_chats') || '[]');
                     guestChats.push(newChat);
                     localStorage.setItem('guest_chats', JSON.stringify(guestChats));
@@ -2271,7 +1170,6 @@
                 });
                 chat.updatedAt = new Date().toISOString();
                 
-                // Update on server if logged in
                 if (isLoggedIn && authToken) {
                     try {
                         await fetch(`${API_BASE_URL}/api/user-chats/${currentChatId}`, {
@@ -2286,7 +1184,6 @@
                         console.error('Error updating chat on server:', error);
                     }
                 } else {
-                    // Update localStorage for guests
                     const guestChats = JSON.parse(localStorage.getItem('guest_chats') || '[]');
                     const chatIndex = guestChats.findIndex(c => c.id === currentChatId);
                     if (chatIndex !== -1) {
@@ -2299,7 +1196,7 @@
             }
         }
 
-        // FIXED: Enhanced load chat history with user-specific data
+        // Load chat history
         function loadChatHistory() {
             const chatHistory = document.getElementById('chatHistory');
             if (!chatHistory) return;
@@ -2307,10 +1204,8 @@
             let chatsToDisplay = [];
             
             if (isLoggedIn) {
-                // Use user-specific chats from server
                 chatsToDisplay = userChats;
             } else {
-                // Use guest chats from localStorage
                 chatsToDisplay = JSON.parse(localStorage.getItem('guest_chats') || '[]');
             }
             
@@ -2344,7 +1239,7 @@
             }).join('');
         }
 
-        // FIXED: Enhanced load chat with user-specific data
+        // Load chat
         function loadChat(chatId) {
             let chatsToSearch = [];
             
@@ -2358,7 +1253,7 @@
             if (!chat) return;
 
             currentChatId = chatId;
-            messageCount = chat.messages.length; // Set message count for ad insertion
+            messageCount = chat.messages.length;
             
             const chatTitle = document.getElementById('chatTitle');
             if (chatTitle) {
@@ -2386,13 +1281,12 @@
             closeSidebar();
         }
 
-        // FIXED: Enhanced delete chat with user-specific storage
+        // Delete chat
         async function deleteChat(chatId, event) {
             event.stopPropagation();
             
             if (confirm('Are you sure you want to delete this chat?')) {
                 if (isLoggedIn && authToken) {
-                    // Delete from server
                     try {
                         await fetch(`${API_BASE_URL}/api/user-chats/${chatId}`, {
                             method: 'DELETE',
@@ -2401,13 +1295,11 @@
                             }
                         });
                         
-                        // Remove from local array
                         userChats = userChats.filter(c => c.id !== chatId);
                     } catch (error) {
                         console.error('Error deleting chat from server:', error);
                     }
                 } else {
-                    // Delete from localStorage for guests
                     const guestChats = JSON.parse(localStorage.getItem('guest_chats') || '[]');
                     const filteredChats = guestChats.filter(c => c.id !== chatId);
                     localStorage.setItem('guest_chats', JSON.stringify(filteredChats));
@@ -2449,12 +1341,157 @@
             }
         }
 
-        // Extract and save scripts
-        function extractAndSaveScripts(content, chatTitle) {
-            const codeBlockRegex = /```(?:lua|luau)?\n?([\s\S]*?)```/g;
-            let match;
+        // Setup event listeners
+        function setupEventListeners() {
+            const messageInput = document.getElementById('messageInput');
+            const modelSelector = document.getElementById('modelSelector');
+
+            if (messageInput) {
+                messageInput.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+                });
+
+                messageInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                    }
+                });
+            }
+
+            if (modelSelector) {
+                modelSelector.addEventListener('change', function() {
+                    if (this.value !== 'gpt-4o-mini' && !isLoggedIn) {
+                        this.value = selectedModel;
+                        alert('Please sign in to access premium models');
+                        return;
+                    }
+                    selectedModel = this.value;
+                });
+            }
+        }
+
+        // Initialize app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing app...');
+            initApp();
+        });
+    </script>
+</body>
+</html>hatHistory();
+            setupEventListeners();
+        }
+
+        // Check authentication
+        function checkAuth() {
+            authToken = localStorage.getItem('authToken');
+            const user = localStorage.getItem('user');
+
+            if (authToken && user) {
+                try {
+                    const userData = JSON.parse(user);
+                    currentUser = userData;
+                    showLoggedInUser(userData);
+                    isLoggedIn = true;
+                    loadUserSpecificData();
+                } catch (error) {
+                    console.error('Error parsing user data:', error);
+                    showGuestUser();
+                    isLoggedIn = false;
+                    currentUser = null;
+                }
+            } else {
+                showGuestUser();
+                isLoggedIn = false;
+                currentUser = null;
+            }
+            updateModelSelector();
+        }
+
+        // Load user-specific data
+        async function loadUserSpecificData() {
+            if (!authToken) return;
             
-            while ((match = codeBlockRegex.exec(content)) !== null) {
-                const scriptContent = match[1].trim();
-                if (scriptContent.length > 50) {
-                    console.log
+            try {
+                const chatsResponse = await fetch(`${API_BASE_URL}/api/user-chats`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (chatsResponse.ok) {
+                    const chatsData = await chatsResponse.json();
+                    userChats = chatsData.chats || [];
+                    console.log(`[DATA] Loaded ${userChats.length} chats for user`);
+                    loadChatHistory();
+                } else {
+                    console.error('Failed to load user chats:', chatsResponse.status);
+                    userChats = [];
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                userChats = [];
+            }
+        }
+
+        // Show logged in user profile
+        function showLoggedInUser(userData) {
+            const userProfile = document.getElementById('userProfile');
+            if (userProfile) {
+                const planText = userData.subscription?.plan || 'free';
+                const planDisplay = planText.charAt(0).toUpperCase() + planText.slice(1);
+                
+                userProfile.innerHTML = `
+                    <div class="user-avatar">${(userData.name || userData.email || 'U').charAt(0).toUpperCase()}</div>
+                    <div class="user-info">
+                        <div class="user-name">${userData.name || userData.email || 'User'}</div>
+                        <div class="user-plan">${planDisplay} Plan</div>
+                    </div>
+                    <button onclick="logout()" style="background: #f85149; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
+                        Logout
+                    </button>
+                `;
+                updateNavItems();
+            }
+        }
+
+        // Show guest user profile
+        function showGuestUser() {
+            const userProfile = document.getElementById('userProfile');
+            if (userProfile) {
+                userProfile.innerHTML = `
+                    <div class="user-avatar">👤</div>
+                    <div class="user-info">
+                        <div class="user-name">Guest User</div>
+                        <div class="user-plan">Free Plan - <span style="color: #58a6ff; cursor: pointer;" onclick="window.location.href='/login.html'">Sign In for More</span></div>
+                    </div>
+                    <button onclick="window.location.href='/login.html'" style="background: #238636; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
+                        Sign In
+                    </button>
+                `;
+                updateNavItems();
+            }
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
+            
+            isLoggedIn = false;
+            authToken = null;
+            currentUser = null;
+            userChats = [];
+            currentChatId = null;
+            messageCount = 0;
+            
+            showGuestUser();
+            updateModelSelector();
+            showWelcomeScreen();
+            
+            if (selectedModel !== 'gpt-4o-mini') {
+                selectedModel = 'gpt-4o-mini';
+                document.getElementById('modelSelector').value = selectedModel;
+                addMessage('🔄 Switched to GPT-4o Mini (Guest access)', false, true);
+            }
+            
+            loadC
