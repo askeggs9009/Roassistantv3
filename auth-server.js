@@ -480,8 +480,11 @@ async function initializeEmailTransporter() {
     
     // Use Gmail only
     console.log('[EMAIL] Setting up Gmail SMTP...');
+    console.log('[DEBUG] EMAIL_USER:', process.env.EMAIL_USER ? 'SET' : 'MISSING');
+    console.log('[DEBUG] EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD ? 'SET' : 'MISSING');
+    console.log('[DEBUG] nodemailer available:', !!nodemailer);
     
-    // Fallback to Gmail
+    // Setup Gmail
     if (nodemailer && process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
         try {
             console.log('[EMAIL] Creating Gmail SMTP transporter (fallback)...');
