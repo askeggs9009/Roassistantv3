@@ -1093,6 +1093,9 @@ app.get("/api/subscription-plans", (req, res) => {
 
 // FIXED: Enhanced signup with proper email verification
 app.post("/auth/signup", async (req, res) => {
+    console.log('[SIGNUP] Endpoint hit, processing request...');
+    console.log('[SIGNUP] Request body:', JSON.stringify(req.body));
+    
     try {
         const { email, password, name } = req.body;
 
@@ -1205,7 +1208,12 @@ app.post("/auth/signup", async (req, res) => {
 
     } catch (error) {
         console.error("[ERROR] Signup error:", error);
-        res.status(500).json({ error: 'Internal server error occurred during signup' });
+        console.error("[ERROR] Stack trace:", error.stack);
+        res.status(500).json({ 
+            error: 'Internal server error occurred during signup',
+            details: error.message,
+            stack: error.stack
+        });
     }
 });
 
