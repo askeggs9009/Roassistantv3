@@ -503,29 +503,16 @@ async function initializeEmailTransporter() {
                 }
             });
 
-            // Test Gmail connection
-            await new Promise((resolve, reject) => {
-                const timeout = setTimeout(() => {
-                    reject(new Error('Connection test timeout'));
-                }, 10000);
-
-                emailTransporter.verify((error, success) => {
-                    clearTimeout(timeout);
-                    if (error) {
-                        reject(error);
-                    } else {
-                        resolve(success);
-                    }
-                });
-            });
-            
-            console.log('[SUCCESS] ✅ Gmail email system ready! (fallback)');
+            // Skip connection test - we'll test when actually sending
+            console.log('[SUCCESS] ✅ Gmail email system configured!');
+            console.log('[INFO] Email verification enabled - will test connection on first send');
             return true;
 
         } catch (error) {
             console.error('[GMAIL ERROR]:', error.message);
             console.log('[HINT] Make sure you are using a Gmail App Password');
             console.log('[HINT] Get one at: https://myaccount.google.com/apppasswords');
+            emailTransporter = null;
         }
     }
     
