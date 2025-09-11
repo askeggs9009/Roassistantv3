@@ -15,7 +15,8 @@
       "Bash(findstr:*)",
       "Bash(PORT=3001 npm start)",
       "Bash(PORT=3002 npm start)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

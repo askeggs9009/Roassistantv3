@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects - Roblox Luau AI Assistant</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/sidebar.css">
+    <link rel="stylesheet" href="styles/chat.css">
+    <link rel="stylesheet" href="styles/responsive.css">
+    
+    <style>
+        /* Projects Page Styles */
+        .projects-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .projects-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #21262d;
+        }
+
+        .projects-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #f0f6fc;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .projects-title .icon {
+            width: 2rem;
+            height: 2rem;
+            background: linear-gradient(45deg, #58a6ff, #1f6feb);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .new-project-btn {
+            background: linear-gradient(45deg, #238636, #2ea043);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .new-project-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(46, 160, 67, 0.3);
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .project-card {
+            background: rgba(33, 38, 45, 0.6);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-card:hover {
+            border-color: #58a6ff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(88, 166, 255, 0.1);
+        }
+
+        .project-card.template {
+            border: 1px dashed #6e7681;
+            background: rgba(110, 118, 129, 0.1);
+        }
+
+        .project-card.template:hover {
+            border-color: #58a6ff;
+            background: rgba(88, 166, 255, 0.05);
+        }
+
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .project-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .project-menu {
+            position: relative;
+        }
+
+        .project-menu-btn {
+            background: none;
+            border: none;
+            color: #8b949e;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            opacity: 0;
+            transition: all 0.2s ease;
+        }
+
+        .project-card:hover .project-menu-btn {
+            opacity: 1;
+        }
+
+        .project-menu-btn:hover {
+            background: rgba(110, 118, 129, 0.3);
+            color: #f0f6fc;
+        }
+
+        .project-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #f0f6fc;
+            margin-bottom: 0.5rem;
+        }
+
+        .project-description {
+            color: #8b949e;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .project-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #6e7681;
+        }
+
+        .project-files {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .project-updated {
+            font-size: 0.8rem;
+        }
+
+        .template-badge {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: rgba(88, 166, 255, 0.2);
+            color: #58a6ff;
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #8b949e;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #f0f6fc;
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
+        }
+
+        /* Project Templates Section */
+        .templates-section {
+            margin-top: 3rem;
+        }
+
+        .templates-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #21262d;
+        }
+
+        .templates-header h2 {
+            font-size: 1.5rem;
+            color: #f0f6fc;
+            margin: 0;
+        }
+
+        .template-icon {
+            background: linear-gradient(45deg, #a5a5ff, #7c3aed) !important;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: #f0f6fc;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #8b949e;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+        }
+
+        .modal-close:hover {
+            background: rgba(110, 118, 129, 0.3);
+            color: #f0f6fc;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            color: #f0f6fc;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 0.75rem;
+            color: #f0f6fc;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #238636, #2ea043);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(46, 160, 67, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #8b949e;
+            border: 1px solid #30363d;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(110, 118, 129, 0.1);
+            color: #f0f6fc;
+        }
+
+        @media (max-width: 768px) {
+            .projects-container {
+                padding: 1rem;
+            }
+
+            .projects-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        <!-- Navigation Header -->
+        <header class="header">
+            <button class="mobile-menu-btn" onclick="history.back()">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 7v4H5.83l3.58-3.59L8 6l-6 6 6 6 1.41-1.41L5.83 13H19V7z"/>
+                </svg>
+            </button>
+            <div class="header-title">
+                <h1>Projects</h1>
+            </div>
+            <div class="header-actions">
+                <button class="new-project-btn" onclick="openNewProjectModal()">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                    </svg>
+                    New Project
+                </button>
+            </div>
+        </header>
+
+        <main class="projects-container">
+            <!-- My Projects Section -->
+            <section class="my-projects">
+                <div class="projects-grid" id="projectsGrid">
+                    <!-- Projects will be populated by JavaScript -->
+                </div>
+                
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <h3>=€ Start Your First Project</h3>
+                    <p>Create organized workspaces for your Roblox games. Each project keeps your scripts, ideas, and conversations in one place.</p>
+                    <button class="new-project-btn" onclick="openNewProjectModal()">Create Your First Project</button>
+                </div>
+            </section>
+
+            <!-- Templates Section -->
+            <section class="templates-section">
+                <div class="templates-header">
+                    <h2>=Ë Project Templates</h2>
+                </div>
+                <div class="projects-grid" id="templatesGrid">
+                    <!-- Templates will be populated by JavaScript -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- New Project Modal -->
+    <div class="modal" id="newProjectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Create New Project</h2>
+                <button class="modal-close" onclick="closeNewProjectModal()">×</button>
+            </div>
+            <form onsubmit="createProject(event)">
+                <div class="form-group">
+                    <label class="form-label" for="projectName">Project Name</label>
+                    <input type="text" id="projectName" class="form-input" placeholder="My Awesome Roblox Game" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="projectDescription">Description</label>
+                    <textarea id="projectDescription" class="form-input form-textarea" placeholder="Brief description of your project..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="projectType">Project Type</label>
+                    <select id="projectType" class="form-input">
+                        <option value="blank">Blank Project</option>
+                        <option value="obby">Obby/Platformer</option>
+                        <option value="simulator">Simulator Game</option>
+                        <option value="tycoon">Tycoon</option>
+                        <option value="fps">FPS Game</option>
+                        <option value="rpg">RPG Adventure</option>
+                        <option value="racing">Racing Game</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeNewProjectModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Project</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Load JavaScript -->
+    <script src="js/auth.js"></script>
+    <script>
+        // Project Management System
+        class ProjectManager {
+            constructor() {
+                this.projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
+                this.templates = this.getProjectTemplates();
+            }
+
+            // Get predefined project templates
+            getProjectTemplates() {
+                return [
+                    {
+                        id: 'obby-template',
+                        name: 'Obby Template',
+                        description: 'Complete parkour/obby setup with checkpoints, stages, and leaderboards',
+                        type: 'obby',
+                        icon: '<Ã',
+                        files: ['Checkpoint System', 'Stage Manager', 'Leaderboard GUI'],
+                        context: 'This is an obby (obstacle course) game with checkpoints and stage progression.'
+                    },
+                    {
+                        id: 'simulator-template',
+                        name: 'Simulator Template', 
+                        description: 'Click-to-earn simulator with upgrades, pets, and rebirth system',
+                        type: 'simulator',
+                        icon: '¡',
+                        files: ['Click System', 'Upgrade Shop', 'Pet System', 'Rebirth Logic'],
+                        context: 'This is a simulator game where players click to earn currency and buy upgrades.'
+                    },
+                    {
+                        id: 'tycoon-template',
+                        name: 'Tycoon Template',
+                        description: 'Build and manage your empire with droppers, conveyors, and upgraders',
+                        type: 'tycoon',
+                        icon: '<í',
+                        files: ['Dropper System', 'Conveyor Logic', 'Upgrader Mechanics', 'Purchase System'],
+                        context: 'This is a tycoon game where players build and expand their business empire.'
+                    },
+                    {
+                        id: 'fps-template',
+                        name: 'FPS Template',
+                        description: 'First-person shooter with weapon system, team battles, and maps',
+                        type: 'fps',
+                        icon: '<¯',
+                        files: ['Weapon System', 'Team Manager', 'Kill Counter', 'Map Rotation'],
+                        context: 'This is a first-person shooter game with weapons and competitive gameplay.'
+                    },
+                    {
+                        id: 'rpg-template',
+                        name: 'RPG Adventure',
+                        description: 'Quest system, inventory, skills, NPCs, and dungeon exploration',
+                        type: 'rpg',
+                        icon: '”',
+                        files: ['Quest System', 'Inventory GUI', 'Skill Tree', 'NPC Dialogue', 'Combat System'],
+                        context: 'This is an RPG with quests, character progression, and adventure elements.'
+                    },
+                    {
+                        id: 'racing-template',
+                        name: 'Racing Game',
+                        description: 'Vehicle physics, race tracks, lap timing, and multiplayer racing',
+                        type: 'racing',
+                        icon: '<Î',
+                        files: ['Vehicle Controller', 'Lap System', 'Race Manager', 'Multiplayer Sync'],
+                        context: 'This is a racing game with vehicles, tracks, and competitive racing mechanics.'
+                    }
+                ];
+            }
+
+            // Create new project
+            createProject(name, description, type, fromTemplate = null) {
+                const project = {
+                    id: 'project_' + Date.now(),
+                    name,
+                    description,
+                    type,
+                    icon: this.getProjectIcon(type),
+                    created: Date.now(),
+                    updated: Date.now(),
+                    files: fromTemplate ? fromTemplate.files : [],
+                    context: fromTemplate ? fromTemplate.context : '',
+                    chats: []
+                };
+
+                this.projects.push(project);
+                this.saveProjects();
+                return project;
+            }
+
+            // Get project icon based on type
+            getProjectIcon(type) {
+                const icons = {
+                    'obby': '<Ã',
+                    'simulator': '¡',
+                    'tycoon': '<í',
+                    'fps': '<¯',
+                    'rpg': '”',
+                    'racing': '<Î',
+                    'blank': '=Á',
+                    'other': '<®'
+                };
+                return icons[type] || '=Á';
+            }
+
+            // Save projects to localStorage
+            saveProjects() {
+                localStorage.setItem('roblox_projects', JSON.stringify(this.projects));
+            }
+
+            // Delete project
+            deleteProject(projectId) {
+                this.projects = this.projects.filter(p => p.id !== projectId);
+                this.saveProjects();
+            }
+
+            // Open project (redirect to chat with project context)
+            openProject(projectId) {
+                window.location.href = `/index.html?project=${projectId}`;
+            }
+
+            // Create project from template
+            createFromTemplate(templateId) {
+                const template = this.templates.find(t => t.id === templateId);
+                if (!template) return;
+
+                // Open modal with template data pre-filled
+                document.getElementById('projectName').value = template.name.replace(' Template', '');
+                document.getElementById('projectDescription').value = template.description;
+                document.getElementById('projectType').value = template.type;
+                
+                openNewProjectModal();
+            }
+        }
+
+        // Global project manager
+        const projectManager = new ProjectManager();
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            renderProjects();
+            renderTemplates();
+        });
+
+        // Render user projects
+        function renderProjects() {
+            const grid = document.getElementById('projectsGrid');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (projectManager.projects.length === 0) {
+                grid.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            grid.innerHTML = projectManager.projects.map(project => `
+                <div class="project-card" onclick="projectManager.openProject('${project.id}')">
+                    <div class="project-header">
+                        <div class="project-icon" style="background: linear-gradient(45deg, #58a6ff, #1f6feb);">
+                            ${project.icon}
+                        </div>
+                        <div class="project-menu">
+                            <button class="project-menu-btn" onclick="event.stopPropagation(); deleteProject('${project.id}')" title="Delete Project">
+                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <h3 class="project-title">${project.name}</h3>
+                    <p class="project-description">${project.description || 'No description provided'}</p>
+                    <div class="project-meta">
+                        <div class="project-files">
+                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                            </svg>
+                            ${project.files.length} files
+                        </div>
+                        <div class="project-updated">
+                            ${formatDate(project.updated)}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Render project templates
+        function renderTemplates() {
+            const grid = document.getElementById('templatesGrid');
+            
+            grid.innerHTML = projectManager.templates.map(template => `
+                <div class="project-card template" onclick="projectManager.createFromTemplate('${template.id}')">
+                    <div class="template-badge">Template</div>
+                    <div class="project-icon template-icon">
+                        ${template.icon}
+                    </div>
+                    <h3 class="project-title">${template.name}</h3>
+                    <p class="project-description">${template.description}</p>
+                    <div class="project-meta">
+                        <div class="project-files">
+                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                            </svg>
+                            ${template.files.length} files
+                        </div>
+                        <div class="project-type" style="text-transform: capitalize;">
+                            ${template.type}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Modal functions
+        function openNewProjectModal() {
+            document.getElementById('newProjectModal').style.display = 'block';
+            document.getElementById('projectName').focus();
+        }
+
+        function closeNewProjectModal() {
+            document.getElementById('newProjectModal').style.display = 'none';
+            document.getElementById('projectName').value = '';
+            document.getElementById('projectDescription').value = '';
+            document.getElementById('projectType').value = 'blank';
+        }
+
+        // Create project from form
+        function createProject(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('projectName').value.trim();
+            const description = document.getElementById('projectDescription').value.trim();
+            const type = document.getElementById('projectType').value;
+            
+            if (!name) return;
+            
+            const template = type !== 'blank' ? projectManager.templates.find(t => t.type === type) : null;
+            const project = projectManager.createProject(name, description, type, template);
+            
+            closeNewProjectModal();
+            renderProjects();
+            
+            // Automatically open the new project
+            setTimeout(() => {
+                projectManager.openProject(project.id);
+            }, 300);
+        }
+
+        // Delete project with confirmation
+        function deleteProject(projectId) {
+            const project = projectManager.projects.find(p => p.id === projectId);
+            if (!project) return;
+            
+            if (confirm(`Are you sure you want to delete "${project.name}"? This action cannot be undone.`)) {
+                projectManager.deleteProject(projectId);
+                renderProjects();
+            }
+        }
+
+        // Format date helper
+        function formatDate(timestamp) {
+            const now = Date.now();
+            const diff = now - timestamp;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            
+            if (days === 0) return 'Today';
+            if (days === 1) return 'Yesterday';
+            if (days < 7) return `${days} days ago`;
+            if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+            return new Date(timestamp).toLocaleDateString();
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('newProjectModal');
+            if (event.target === modal) {
+                closeNewProjectModal();
+            }
+        });
+
+        // ESC key to close modal
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeNewProjectModal();
+            }
+        });
+    </script>
+</body>
+</html>
