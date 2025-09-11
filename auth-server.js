@@ -17,37 +17,37 @@ const require = createRequire(import.meta.url);
 let nodemailer = null;
 let resend = null;
 
-// Try Resend first (preferred), fallback to nodemailer
-try {
-    const { Resend } = require('resend');
+// Initialize email services with proper ES module imports
+async function initializeEmailServices() {
+    console.log('[EMAIL] Initializing email services...');
+    
+    // Try Resend first if configured
     if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'YOUR_API_KEY_HERE') {
-        resend = new Resend(process.env.RESEND_API_KEY);
-        console.log('[SUCCESS] Resend imported and configured successfully');
-    } else {
-        console.log('[INFO] RESEND_API_KEY not configured, trying nodemailer fallback...');
-    }
-} catch (error) {
-    console.error('[ERROR] Failed to import Resend:', error.message);
-    console.log('[FALLBACK] Trying nodemailer...');
-}
-
-// Initialize nodemailer with proper ES module import
-async function initializeNodemailer() {
-    if (!resend) {
         try {
-            console.log('[INFO] RESEND_API_KEY not configured, trying nodemailer fallback...');
-            const nodemailerModule = await import('nodemailer');
-            nodemailer = nodemailerModule.default;
-            console.log('[SUCCESS] Nodemailer imported successfully (fallback)');
+            const { Resend } = await import('resend');
+            resend = new Resend(process.env.RESEND_API_KEY);
+            console.log('[SUCCESS] Resend imported and configured successfully');
+            return;
         } catch (error) {
-            console.log('[ERROR] Failed to import nodemailer:', error.message);
-            console.log('[INFO] Email functionality will be disabled');
+            console.log('[ERROR] Failed to import Resend:', error.message);
         }
+    } else {
+        console.log('[INFO] RESEND_API_KEY not configured, using nodemailer...');
+    }
+    
+    // Fallback to nodemailer
+    try {
+        const nodemailerModule = await import('nodemailer');
+        nodemailer = nodemailerModule.default;
+        console.log('[SUCCESS] Nodemailer imported successfully');
+    } catch (error) {
+        console.log('[ERROR] Failed to import nodemailer:', error.message);
+        console.log('[INFO] Email functionality will be disabled');
     }
 }
 
 // Call the initialization at startup
-await initializeNodemailer();
+await initializeEmailServices();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -484,27 +484,21 @@ let emailTransporter = null;
 
 // ENHANCED: Email system with Resend (preferred) and Gmail fallback
 async function initializeEmailTransporter() {
-    console.log('\n[EMAIL INIT] Initializing Email System...');
+    console.log('\n[EMAIL INIT] Initializing Email Transporter...');
     
-    // Use Gmail only
-    console.log('[EMAIL] Setting up Gmail SMTP...');
+    console.log('[DEBUG] resend available:', !!resend);
+    console.log('[DEBUG] nodemailer available:', !!nodemailer);
     console.log('[DEBUG] EMAIL_USER:', process.env.EMAIL_USER ? 'SET' : 'MISSING');
     console.log('[DEBUG] EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD ? 'SET' : 'MISSING');
-    console.log('[DEBUG] nodemailer available:', !!nodemailer);
     
-    // Try importing nodemailer if not already available
-    if (!nodemailer && !resend) {
-        try {
-            console.log('[EMAIL] Attempting to import nodemailer...');
-            const nodemailerModule = await import('nodemailer');
-            nodemailer = nodemailerModule.default;
-            console.log('[SUCCESS] Nodemailer imported for email system');
-        } catch (error) {
-            console.log('[ERROR] Failed to import nodemailer for email system:', error.message);
-        }
+    // Try Resend first if available
+    if (resend) {
+        console.log('[EMAIL] Using Resend as primary email service');
+        console.log('[SUCCESS] ✅ Resend email system ready!');
+        return true;
     }
     
-    // Setup Gmail
+    // Setup Gmail with nodemailer
     if (nodemailer && process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
         try {
             console.log('[EMAIL] Creating Gmail SMTP transporter (fallback)...');
