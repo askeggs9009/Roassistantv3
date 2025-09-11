@@ -48,8 +48,15 @@ function initializeEmailTransporter() {
     }
 }
 
-// Initialize email when server starts
+// Initialize email when server starts - Force Railway deployment
 initializeEmailTransporter();
+
+// Debug email configuration like in localhost version
+console.log('🔍 Debug Email Config:');
+console.log('EMAIL_USER:', process.env.EMAIL_USER ? 'Set' : 'Missing');
+console.log('EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD ? 'Set (length: ' + (process.env.EMAIL_PASSWORD ? process.env.EMAIL_PASSWORD.length : 0) + ')' : 'Missing');
+console.log('EMAIL_SERVICE:', process.env.EMAIL_SERVICE || 'Not set');
+console.log('EMAIL_FROM:', process.env.EMAIL_FROM ? 'Set' : 'Missing');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
