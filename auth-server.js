@@ -1664,4 +1664,71 @@ setInterval(() => {
         usage.hourlyUsage = usage.hourlyUsage.filter(timestamp => now - timestamp < 60 * 60 * 1000);
         usage.dailyUsage = usage.dailyUsage.filter(timestamp => now - timestamp < oneDay);
         
-        if (usage
+        if (usage.hourlyUsage.length === 0 && usage.dailyUsage.length === 0) {
+            guestUsage.delete(userIdentifier);
+        } else {
+            guestUsage.set(userIdentifier, usage);
+        }
+    }
+}, 60 * 60 * 1000); // Clean up every hour
+
+app.get("/", (req, res) => {
+    res.redirect('/index.html');
+});
+
+async function startServer() {
+    console.log('\n[INIT] Starting Roblox Luau AI Server with Subscription System...');
+    
+    await initializeEmailTransporter();
+    
+    const port = process.env.PORT || 3000;
+    const baseUrl = getBaseUrl();
+    
+    app.listen(port, '0.0.0.0', () => {
+        console.log("\n" + "=".repeat(60));
+        console.log("[SUCCESS] Roblox Luau AI Server Running");
+        console.log(`[PORT] ${port}`);
+        console.log(`[BASE_URL] ${baseUrl}`);
+        console.log(`[HEALTH] ${baseUrl}/health`);
+        console.log(`[EMAIL] ${emailTransporter ? "ENABLED" : "DISABLED"}`);
+        console.log(`[STRIPE] ${process.env.STRIPE_SECRET_KEY ? "CONFIGURED" : "NOT CONFIGURED"}`);
+        
+        if (emailTransporter) {
+            console.log('[EMAIL] Email verification is working!');
+        } else {
+            console.log('[EMAIL] To enable email verification:');
+            console.log('   1. Go to https://myaccount.google.com/security');
+            console.log('   2. Enable 2-Step Verification');
+            console.log('   3. Go to App Passwords');
+            console.log('   4. Generate password for "Mail"');
+            console.log('   5. Set EMAIL_PASSWORD to the 16-character code');
+        }
+        
+        if (process.env.RAILWAY_STATIC_URL) {
+            console.log(`[RAILWAY] https://${process.env.RAILWAY_STATIC_URL}`);
+        }
+        
+        console.log("\n[SUBSCRIPTION PLANS]:");
+        Object.entries(SUBSCRIPTION_PLANS).forEach(([plan, config]) => {
+            const limit = config.limits.daily_messages === -1 ? 'Unlimited' : config.limits.daily_messages;
+            console.log(`   ${plan.toUpperCase()}: ${limit} messages/day, ${config.limits.models.length} models`);
+        });
+        
+        console.log("\n[USAGE LIMITS] (Guests Only):");
+        Object.entries(USAGE_LIMITS).forEach(([model, limits]) => {
+            console.log(`   ${model}: ${limits.dailyLimit}/day, ${limits.hourlyLimit}/hour`);
+        });
+        
+        console.log("\n[GOOGLE OAUTH]");
+        console.log(`   Client ID: ${process.env.GOOGLE_CLIENT_ID ? 'CONFIGURED' : 'MISSING'}`);
+        console.log(`   Client Secret: ${process.env.GOOGLE_CLIENT_SECRET ? 'CONFIGURED' : 'MISSING'}`);
+        console.log(`   Redirect URI: ${baseUrl}/auth/google/callback`);
+        
+        console.log("=".repeat(60) + "\n");
+    });
+}
+
+startServer().catch(error => {
+    console.error('[FATAL] Server startup failed:', error);
+    process.exit(1);
+});
