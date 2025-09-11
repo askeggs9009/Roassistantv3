@@ -10,48 +10,47 @@
     <link rel="stylesheet" href="styles/responsive.css">
     
     <style>
-        /* Projects Page Styles */
         .projects-container {
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 3rem 2rem;
+            min-height: 100vh;
         }
 
         .projects-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #21262d;
+            align-items: flex-start;
+            margin-bottom: 3rem;
         }
 
         .projects-title {
-            font-size: 2rem;
-            font-weight: 600;
-            color: #f0f6fc;
             display: flex;
-            align-items: center;
-            gap: 0.75rem;
+            flex-direction: column;
+            gap: 0.5rem;
         }
 
-        .projects-title .icon {
-            width: 2rem;
-            height: 2rem;
-            background: linear-gradient(45deg, #58a6ff, #1f6feb);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
+        .projects-title h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #f0f6fc;
+            margin: 0;
+            letter-spacing: -0.025em;
+        }
+
+        .projects-subtitle {
+            font-size: 1.125rem;
+            color: #8b949e;
+            margin: 0;
+            font-weight: 400;
         }
 
         .new-project-btn {
-            background: linear-gradient(45deg, #238636, #2ea043);
+            background: linear-gradient(135deg, #238636, #2ea043);
             color: white;
             border: none;
             border-radius: 8px;
-            padding: 0.75rem 1.5rem;
+            padding: 0.875rem 1.75rem;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
@@ -59,79 +58,75 @@
             align-items: center;
             gap: 0.5rem;
             transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
         }
 
         .new-project-btn:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(46, 160, 67, 0.3);
+            box-shadow: 0 4px 12px rgba(46, 160, 67, 0.25);
         }
 
         .projects-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
 
         .project-card {
-            background: rgba(33, 38, 45, 0.6);
+            background: rgba(33, 38, 45, 0.8);
             border: 1px solid #30363d;
             border-radius: 12px;
-            padding: 1.5rem;
+            padding: 2rem;
             cursor: pointer;
             transition: all 0.2s ease;
             position: relative;
-            overflow: hidden;
+            backdrop-filter: blur(10px);
         }
 
         .project-card:hover {
             border-color: #58a6ff;
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(88, 166, 255, 0.1);
-        }
-
-        .project-card.template {
-            border: 1px dashed #6e7681;
-            background: rgba(110, 118, 129, 0.1);
-        }
-
-        .project-card.template:hover {
-            border-color: #58a6ff;
-            background: rgba(88, 166, 255, 0.05);
+            box-shadow: 0 8px 25px rgba(88, 166, 255, 0.15);
+            background: rgba(33, 38, 45, 0.9);
         }
 
         .project-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .project-icon {
-            width: 3rem;
-            height: 3rem;
-            border-radius: 8px;
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #58a6ff, #1f6feb);
+            flex-shrink: 0;
         }
 
-        .project-menu {
-            position: relative;
+        .project-icon svg {
+            width: 2rem;
+            height: 2rem;
+            color: white;
         }
 
         .project-menu-btn {
             background: none;
             border: none;
-            color: #8b949e;
-            font-size: 1.2rem;
+            color: #6e7681;
             cursor: pointer;
-            padding: 0.25rem;
-            border-radius: 4px;
+            padding: 0.5rem;
+            border-radius: 6px;
             opacity: 0;
             transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .project-card:hover .project-menu-btn {
@@ -139,52 +134,55 @@
         }
 
         .project-menu-btn:hover {
-            background: rgba(110, 118, 129, 0.3);
+            background: rgba(110, 118, 129, 0.2);
             color: #f0f6fc;
         }
 
+        .project-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
         .project-title {
-            font-size: 1.25rem;
+            font-size: 1.375rem;
             font-weight: 600;
             color: #f0f6fc;
-            margin-bottom: 0.5rem;
+            margin: 0;
+            line-height: 1.3;
         }
 
         .project-description {
             color: #8b949e;
-            font-size: 0.9rem;
+            font-size: 1rem;
             line-height: 1.5;
-            margin-bottom: 1rem;
+            margin: 0;
         }
 
         .project-meta {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.8rem;
-            color: #6e7681;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #21262d;
         }
 
-        .project-files {
-            display: flex;
+        .project-type {
+            display: inline-flex;
             align-items: center;
-            gap: 0.25rem;
+            gap: 0.5rem;
+            background: rgba(88, 166, 255, 0.15);
+            color: #58a6ff;
+            font-size: 0.875rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            font-weight: 500;
         }
 
         .project-updated {
-            font-size: 0.8rem;
-        }
-
-        .template-badge {
-            position: absolute;
-            top: 0.75rem;
-            right: 0.75rem;
-            background: rgba(88, 166, 255, 0.2);
-            color: #58a6ff;
-            font-size: 0.7rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-weight: 600;
+            font-size: 0.875rem;
+            color: #6e7681;
         }
 
         .empty-state {
@@ -193,38 +191,24 @@
             color: #8b949e;
         }
 
+        .empty-state-icon {
+            width: 4rem;
+            height: 4rem;
+            margin: 0 auto 1.5rem;
+            color: #6e7681;
+        }
+
         .empty-state h3 {
             font-size: 1.5rem;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
             color: #f0f6fc;
+            font-weight: 600;
         }
 
         .empty-state p {
-            margin-bottom: 1.5rem;
-        }
-
-        /* Project Templates Section */
-        .templates-section {
-            margin-top: 3rem;
-        }
-
-        .templates-header {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #21262d;
-        }
-
-        .templates-header h2 {
-            font-size: 1.5rem;
-            color: #f0f6fc;
-            margin: 0;
-        }
-
-        .template-icon {
-            background: linear-gradient(45deg, #a5a5ff, #7c3aed) !important;
+            margin-bottom: 2rem;
+            font-size: 1.125rem;
+            line-height: 1.6;
         }
 
         /* Modal Styles */
@@ -248,36 +232,41 @@
             background: #161b22;
             border: 1px solid #30363d;
             border-radius: 12px;
-            padding: 2rem;
+            padding: 2.5rem;
             width: 90%;
-            max-width: 500px;
+            max-width: 520px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
         }
 
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .modal-title {
             font-size: 1.5rem;
             color: #f0f6fc;
             margin: 0;
+            font-weight: 600;
         }
 
         .modal-close {
             background: none;
             border: none;
-            color: #8b949e;
+            color: #6e7681;
             font-size: 1.5rem;
             cursor: pointer;
-            padding: 0.25rem;
-            border-radius: 4px;
+            padding: 0.5rem;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .modal-close:hover {
-            background: rgba(110, 118, 129, 0.3);
+            background: rgba(110, 118, 129, 0.2);
             color: #f0f6fc;
         }
 
@@ -290,17 +279,21 @@
             color: #f0f6fc;
             font-weight: 600;
             margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .form-input {
             width: 100%;
             background: #0d1117;
             border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 0.75rem;
+            border-radius: 8px;
+            padding: 0.875rem 1rem;
             color: #f0f6fc;
             font-size: 1rem;
             box-sizing: border-box;
+            transition: border-color 0.2s ease;
         }
 
         .form-input:focus {
@@ -312,18 +305,20 @@
         .form-textarea {
             min-height: 100px;
             resize: vertical;
+            font-family: inherit;
         }
 
         .modal-actions {
             display: flex;
             gap: 1rem;
             justify-content: flex-end;
+            margin-top: 2rem;
         }
 
         .btn {
-            padding: 0.75rem 1.5rem;
+            padding: 0.875rem 1.75rem;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 1rem;
             cursor: pointer;
             font-weight: 600;
@@ -331,13 +326,13 @@
         }
 
         .btn-primary {
-            background: linear-gradient(45deg, #238636, #2ea043);
+            background: linear-gradient(135deg, #238636, #2ea043);
             color: white;
         }
 
         .btn-primary:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(46, 160, 67, 0.3);
+            box-shadow: 0 4px 12px rgba(46, 160, 67, 0.25);
         }
 
         .btn-secondary {
@@ -351,15 +346,40 @@
             color: #f0f6fc;
         }
 
+        /* Back button */
+        .back-btn {
+            background: none;
+            border: none;
+            color: #8b949e;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            margin-bottom: 2rem;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            color: #f0f6fc;
+            background: rgba(110, 118, 129, 0.1);
+        }
+
         @media (max-width: 768px) {
             .projects-container {
-                padding: 1rem;
+                padding: 2rem 1rem;
             }
 
             .projects-header {
                 flex-direction: column;
-                gap: 1rem;
+                gap: 1.5rem;
                 align-items: flex-start;
+            }
+
+            .projects-title h1 {
+                font-size: 2rem;
             }
 
             .projects-grid {
@@ -368,24 +388,28 @@
 
             .modal-content {
                 width: 95%;
-                padding: 1.5rem;
+                padding: 2rem;
             }
         }
     </style>
 </head>
 <body class="dark-theme">
     <div class="app-container">
-        <!-- Navigation Header -->
-        <header class="header">
-            <button class="mobile-menu-btn" onclick="history.back()">
+        <main class="projects-container">
+            <!-- Back Button -->
+            <button class="back-btn" onclick="history.back()">
                 <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M19 7v4H5.83l3.58-3.59L8 6l-6 6 6 6 1.41-1.41L5.83 13H19V7z"/>
                 </svg>
+                Back to Chat
             </button>
-            <div class="header-title">
-                <h1>Projects</h1>
-            </div>
-            <div class="header-actions">
+
+            <!-- Header -->
+            <div class="projects-header">
+                <div class="projects-title">
+                    <h1>Projects</h1>
+                    <p class="projects-subtitle">Organize your Roblox development work</p>
+                </div>
                 <button class="new-project-btn" onclick="openNewProjectModal()">
                     <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
@@ -393,31 +417,26 @@
                     New Project
                 </button>
             </div>
-        </header>
 
-        <main class="projects-container">
-            <!-- My Projects Section -->
-            <section class="my-projects">
-                <div class="projects-grid" id="projectsGrid">
-                    <!-- Projects will be populated by JavaScript -->
-                </div>
-                
-                <div class="empty-state" id="emptyState" style="display: none;">
-                    <h3>=€ Start Your First Project</h3>
-                    <p>Create organized workspaces for your Roblox games. Each project keeps your scripts, ideas, and conversations in one place.</p>
-                    <button class="new-project-btn" onclick="openNewProjectModal()">Create Your First Project</button>
-                </div>
-            </section>
-
-            <!-- Templates Section -->
-            <section class="templates-section">
-                <div class="templates-header">
-                    <h2>=Ë Project Templates</h2>
-                </div>
-                <div class="projects-grid" id="templatesGrid">
-                    <!-- Templates will be populated by JavaScript -->
-                </div>
-            </section>
+            <!-- Projects Grid -->
+            <div class="projects-grid" id="projectsGrid">
+                <!-- Projects will be populated by JavaScript -->
+            </div>
+            
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <svg class="empty-state-icon" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                </svg>
+                <h3>Create Your First Project</h3>
+                <p>Start organizing your Roblox development with focused project workspaces.</p>
+                <button class="new-project-btn" onclick="openNewProjectModal()">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                    </svg>
+                    Create Project
+                </button>
+            </div>
         </main>
     </div>
 
@@ -426,27 +445,28 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">Create New Project</h2>
-                <button class="modal-close" onclick="closeNewProjectModal()">×</button>
+                <button class="modal-close" onclick="closeNewProjectModal()">
+                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
             </div>
             <form onsubmit="createProject(event)">
                 <div class="form-group">
                     <label class="form-label" for="projectName">Project Name</label>
-                    <input type="text" id="projectName" class="form-input" placeholder="My Awesome Roblox Game" required>
+                    <input type="text" id="projectName" class="form-input" placeholder="My Awesome Game" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="projectDescription">Description</label>
-                    <textarea id="projectDescription" class="form-input form-textarea" placeholder="Brief description of your project..."></textarea>
+                    <textarea id="projectDescription" class="form-input form-textarea" placeholder="What's your project about?"></textarea>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="projectType">Project Type</label>
                     <select id="projectType" class="form-input">
-                        <option value="blank">Blank Project</option>
-                        <option value="obby">Obby/Platformer</option>
-                        <option value="simulator">Simulator Game</option>
-                        <option value="tycoon">Tycoon</option>
-                        <option value="fps">FPS Game</option>
-                        <option value="rpg">RPG Adventure</option>
-                        <option value="racing">Racing Game</option>
+                        <option value="game">Game</option>
+                        <option value="script">Script Collection</option>
+                        <option value="gui">GUI Design</option>
+                        <option value="system">Game System</option>
                         <option value="other">Other</option>
                     </select>
                 </div>
@@ -458,88 +478,24 @@
         </div>
     </div>
 
-    <!-- Load JavaScript -->
-    <script src="js/auth.js"></script>
     <script>
         // Project Management System
         class ProjectManager {
             constructor() {
                 this.projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
-                this.templates = this.getProjectTemplates();
-            }
-
-            // Get predefined project templates
-            getProjectTemplates() {
-                return [
-                    {
-                        id: 'obby-template',
-                        name: 'Obby Template',
-                        description: 'Complete parkour/obby setup with checkpoints, stages, and leaderboards',
-                        type: 'obby',
-                        icon: '<Ã',
-                        files: ['Checkpoint System', 'Stage Manager', 'Leaderboard GUI'],
-                        context: 'This is an obby (obstacle course) game with checkpoints and stage progression.'
-                    },
-                    {
-                        id: 'simulator-template',
-                        name: 'Simulator Template', 
-                        description: 'Click-to-earn simulator with upgrades, pets, and rebirth system',
-                        type: 'simulator',
-                        icon: '¡',
-                        files: ['Click System', 'Upgrade Shop', 'Pet System', 'Rebirth Logic'],
-                        context: 'This is a simulator game where players click to earn currency and buy upgrades.'
-                    },
-                    {
-                        id: 'tycoon-template',
-                        name: 'Tycoon Template',
-                        description: 'Build and manage your empire with droppers, conveyors, and upgraders',
-                        type: 'tycoon',
-                        icon: '<í',
-                        files: ['Dropper System', 'Conveyor Logic', 'Upgrader Mechanics', 'Purchase System'],
-                        context: 'This is a tycoon game where players build and expand their business empire.'
-                    },
-                    {
-                        id: 'fps-template',
-                        name: 'FPS Template',
-                        description: 'First-person shooter with weapon system, team battles, and maps',
-                        type: 'fps',
-                        icon: '<¯',
-                        files: ['Weapon System', 'Team Manager', 'Kill Counter', 'Map Rotation'],
-                        context: 'This is a first-person shooter game with weapons and competitive gameplay.'
-                    },
-                    {
-                        id: 'rpg-template',
-                        name: 'RPG Adventure',
-                        description: 'Quest system, inventory, skills, NPCs, and dungeon exploration',
-                        type: 'rpg',
-                        icon: '”',
-                        files: ['Quest System', 'Inventory GUI', 'Skill Tree', 'NPC Dialogue', 'Combat System'],
-                        context: 'This is an RPG with quests, character progression, and adventure elements.'
-                    },
-                    {
-                        id: 'racing-template',
-                        name: 'Racing Game',
-                        description: 'Vehicle physics, race tracks, lap timing, and multiplayer racing',
-                        type: 'racing',
-                        icon: '<Î',
-                        files: ['Vehicle Controller', 'Lap System', 'Race Manager', 'Multiplayer Sync'],
-                        context: 'This is a racing game with vehicles, tracks, and competitive racing mechanics.'
-                    }
-                ];
             }
 
             // Create new project
-            createProject(name, description, type, fromTemplate = null) {
+            createProject(name, description, type) {
                 const project = {
                     id: 'project_' + Date.now(),
                     name,
                     description,
                     type,
-                    icon: this.getProjectIcon(type),
                     created: Date.now(),
                     updated: Date.now(),
-                    files: fromTemplate ? fromTemplate.files : [],
-                    context: fromTemplate ? fromTemplate.context : '',
+                    files: [],
+                    context: this.getProjectContext(type),
                     chats: []
                 };
 
@@ -548,19 +504,28 @@
                 return project;
             }
 
-            // Get project icon based on type
+            // Get project context based on type
+            getProjectContext(type) {
+                const contexts = {
+                    'game': 'This is a complete Roblox game project.',
+                    'script': 'This is a collection of Luau scripts.',
+                    'gui': 'This project focuses on user interface design.',
+                    'system': 'This project involves game systems and mechanics.',
+                    'other': 'This is a general Roblox development project.'
+                };
+                return contexts[type] || contexts['other'];
+            }
+
+            // Get project icon
             getProjectIcon(type) {
                 const icons = {
-                    'obby': '<Ã',
-                    'simulator': '¡',
-                    'tycoon': '<í',
-                    'fps': '<¯',
-                    'rpg': '”',
-                    'racing': '<Î',
-                    'blank': '=Á',
-                    'other': '<®'
+                    'game': `<svg fill="currentColor" viewBox="0 0 24 24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>`,
+                    'script': `<svg fill="currentColor" viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0L19.2 12l-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>`,
+                    'gui': `<svg fill="currentColor" viewBox="0 0 24 24"><path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7l-2 3v1h8v-1l-2-3h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 12H3V4h18v10z"/></svg>`,
+                    'system': `<svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`,
+                    'other': `<svg fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`
                 };
-                return icons[type] || '=Á';
+                return icons[type] || icons['other'];
             }
 
             // Save projects to localStorage
@@ -578,19 +543,6 @@
             openProject(projectId) {
                 window.location.href = `/index.html?project=${projectId}`;
             }
-
-            // Create project from template
-            createFromTemplate(templateId) {
-                const template = this.templates.find(t => t.id === templateId);
-                if (!template) return;
-
-                // Open modal with template data pre-filled
-                document.getElementById('projectName').value = template.name.replace(' Template', '');
-                document.getElementById('projectDescription').value = template.description;
-                document.getElementById('projectType').value = template.type;
-                
-                openNewProjectModal();
-            }
         }
 
         // Global project manager
@@ -599,7 +551,6 @@
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
             renderProjects();
-            renderTemplates();
         });
 
         // Render user projects
@@ -618,55 +569,21 @@
             grid.innerHTML = projectManager.projects.map(project => `
                 <div class="project-card" onclick="projectManager.openProject('${project.id}')">
                     <div class="project-header">
-                        <div class="project-icon" style="background: linear-gradient(45deg, #58a6ff, #1f6feb);">
-                            ${project.icon}
+                        <div class="project-icon">
+                            ${projectManager.getProjectIcon(project.type)}
                         </div>
-                        <div class="project-menu">
-                            <button class="project-menu-btn" onclick="event.stopPropagation(); deleteProject('${project.id}')" title="Delete Project">
-                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <h3 class="project-title">${project.name}</h3>
-                    <p class="project-description">${project.description || 'No description provided'}</p>
-                    <div class="project-meta">
-                        <div class="project-files">
-                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                        <button class="project-menu-btn" onclick="event.stopPropagation(); deleteProject('${project.id}')" title="Delete Project">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                             </svg>
-                            ${project.files.length} files
-                        </div>
-                        <div class="project-updated">
-                            ${formatDate(project.updated)}
-                        </div>
+                        </button>
                     </div>
-                </div>
-            `).join('');
-        }
-
-        // Render project templates
-        function renderTemplates() {
-            const grid = document.getElementById('templatesGrid');
-            
-            grid.innerHTML = projectManager.templates.map(template => `
-                <div class="project-card template" onclick="projectManager.createFromTemplate('${template.id}')">
-                    <div class="template-badge">Template</div>
-                    <div class="project-icon template-icon">
-                        ${template.icon}
-                    </div>
-                    <h3 class="project-title">${template.name}</h3>
-                    <p class="project-description">${template.description}</p>
-                    <div class="project-meta">
-                        <div class="project-files">
-                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                            </svg>
-                            ${template.files.length} files
-                        </div>
-                        <div class="project-type" style="text-transform: capitalize;">
-                            ${template.type}
+                    <div class="project-content">
+                        <h3 class="project-title">${project.name}</h3>
+                        <p class="project-description">${project.description || 'No description'}</p>
+                        <div class="project-meta">
+                            <div class="project-type">${project.type}</div>
+                            <div class="project-updated">${formatDate(project.updated)}</div>
                         </div>
                     </div>
                 </div>
@@ -683,7 +600,7 @@
             document.getElementById('newProjectModal').style.display = 'none';
             document.getElementById('projectName').value = '';
             document.getElementById('projectDescription').value = '';
-            document.getElementById('projectType').value = 'blank';
+            document.getElementById('projectType').value = 'game';
         }
 
         // Create project from form
@@ -696,8 +613,7 @@
             
             if (!name) return;
             
-            const template = type !== 'blank' ? projectManager.templates.find(t => t.type === type) : null;
-            const project = projectManager.createProject(name, description, type, template);
+            const project = projectManager.createProject(name, description, type);
             
             closeNewProjectModal();
             renderProjects();
@@ -713,7 +629,7 @@
             const project = projectManager.projects.find(p => p.id === projectId);
             if (!project) return;
             
-            if (confirm(`Are you sure you want to delete "${project.name}"? This action cannot be undone.`)) {
+            if (confirm(`Are you sure you want to delete "${project.name}"?\n\nThis action cannot be undone.`)) {
                 projectManager.deleteProject(projectId);
                 renderProjects();
             }

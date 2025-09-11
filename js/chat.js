@@ -273,9 +273,10 @@ class ChatManager {
         welcomeDiv.className = 'welcome-message';
         
         if (this.currentProject) {
+            const iconSvg = this.getProjectIcon(this.currentProject.type);
             welcomeDiv.innerHTML = `
                 <div class="welcome-content">
-                    <h2>${this.currentProject.icon} Welcome to ${this.currentProject.name}!</h2>
+                    <h2><span style="display: inline-block; width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;">${iconSvg}</span>Welcome to ${this.currentProject.name}!</h2>
                     <p>${this.currentProject.description}</p>
                     <p>This is your <strong>${this.currentProject.type}</strong> project workspace. I have context about your project and can help you with:</p>
                     <ul>
@@ -312,14 +313,13 @@ class ChatManager {
     // Get project-specific features for welcome message
     getProjectFeatures() {
         const features = {
-            'obby': 'checkpoints, stage progression, and leaderboards',
-            'simulator': 'click mechanics, upgrade systems, and pet collection',
-            'tycoon': 'droppers, conveyors, and building systems',
-            'fps': 'weapon systems, team mechanics, and combat',
-            'rpg': 'quest systems, inventory management, and character progression',
-            'racing': 'vehicle controls, lap timing, and multiplayer racing'
+            'game': 'game mechanics, player systems, and interactive features',
+            'script': 'automation, tools, and utility functions',
+            'gui': 'user interfaces, menus, and interactive elements',
+            'system': 'backend systems, data management, and core functionality',
+            'other': 'custom features and specialized functionality'
         };
-        return features[this.currentProject?.type] || 'game mechanics';
+        return features[this.currentProject?.type] || 'custom functionality';
     }
 
     // Load project context from URL parameter
@@ -351,9 +351,11 @@ class ChatManager {
     addProjectIndicator() {
         const header = document.querySelector('.header-title h1');
         if (header && this.currentProject) {
+            // Get SVG icon based on project type
+            const iconSvg = this.getProjectIcon(this.currentProject.type);
             header.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span>${this.currentProject.icon}</span>
+                    <span style="width: 24px; height: 24px;">${iconSvg}</span>
                     <span>${this.currentProject.name}</span>
                     <span style="font-size: 0.8rem; color: #8b949e; font-weight: normal;">
                         (${this.currentProject.type})
@@ -361,6 +363,18 @@ class ChatManager {
                 </div>
             `;
         }
+    }
+
+    // Get SVG icon for project type
+    getProjectIcon(type) {
+        const icons = {
+            'game': `<svg fill="currentColor" viewBox="0 0 24 24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM11 13H9v2H8v-2H6v-1h2V9h1v3h2v1zm4-1c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm2 3c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/></svg>`,
+            'script': `<svg fill="currentColor" viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0L19.2 12l-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>`,
+            'gui': `<svg fill="currentColor" viewBox="0 0 24 24"><path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7l-2 3v1h8v-1l-2-3h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 12H3V4h18v10z"/></svg>`,
+            'system': `<svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>`,
+            'other': `<svg fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>`
+        };
+        return icons[type] || icons['other'];
     }
 }
 
