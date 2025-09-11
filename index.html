@@ -634,6 +634,7 @@
 
         // Show guest user profile
         function showGuestUser() {
+            console.log('[AUTH] Showing guest user profile...');
             const userProfile = document.getElementById('userProfile');
             if (userProfile) {
                 userProfile.innerHTML = `
@@ -646,6 +647,9 @@
                         Sign In
                     </button>
                 `;
+                console.log('[AUTH] Guest user profile updated successfully');
+            } else {
+                console.error('[AUTH] Could not find userProfile element!');
             }
         }
 
