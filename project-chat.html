@@ -18,7 +18,9 @@
 
         /* Project Sidebar */
         .project-sidebar {
-            width: 260px;
+            width: 320px;
+            min-width: 320px;
+            max-width: 400px;
             background: #161b22;
             border-right: 1px solid #30363d;
             display: flex;
@@ -215,15 +217,21 @@
         .chat-messages {
             flex: 1;
             overflow-y: auto;
-            padding: 2rem;
+            padding: 3rem;
             display: flex;
             flex-direction: column;
+            max-width: 1000px;
+            margin: 0 auto;
         }
 
         .chat-input-container {
-            padding: 1.5rem;
+            padding: 1.5rem 3rem;
             background: #161b22;
             border-top: 1px solid #21262d;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .project-context-indicator {
@@ -287,8 +295,8 @@
 
         /* Welcome Message for Project Chat */
         .project-welcome {
-            max-width: 600px;
-            margin: 2rem auto;
+            max-width: 700px;
+            margin: 3rem auto;
             text-align: center;
         }
 
