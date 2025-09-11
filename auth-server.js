@@ -14,6 +14,9 @@ import Stripe from 'stripe';
 const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 
+// Email transporter variable
+let emailTransporter = null;
+
 // Initialize email transporter - Simple approach that works
 function initializeEmailTransporter() {
     try {
@@ -22,7 +25,7 @@ function initializeEmailTransporter() {
             return false;
         }
 
-        emailTransporter = nodemailer.createTransporter({
+        emailTransporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
                 user: process.env.EMAIL_USER,
@@ -488,9 +491,6 @@ function checkUsageLimits(req, res, next) {
     
     next();
 }
-
-let emailTransporter = null;
-
 
 function generateVerificationCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
