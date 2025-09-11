@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Chat - Roblox Luau AI Assistant</title>
+    <title>Roblox Luau AI Assistant - Dashboard</title>
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/sidebar.css">
     <link rel="stylesheet" href="styles/chat.css">
@@ -52,59 +52,6 @@
             background: linear-gradient(45deg, #9d4edd, #7c3aed);
         }
 
-        /* Project Chat Context Styles */
-        .project-context-header {
-            background: rgba(88, 166, 255, 0.1);
-            border: 1px solid rgba(88, 166, 255, 0.2);
-            border-radius: 8px;
-            padding: 1rem;
-            margin: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .project-context-icon {
-            font-size: 2rem;
-            width: 3rem;
-            height: 3rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #58a6ff, #a5b4fc);
-            border-radius: 8px;
-        }
-        
-        .project-context-details h3 {
-            color: #f0f6fc;
-            margin: 0 0 0.25rem 0;
-            font-size: 1.125rem;
-        }
-        
-        .project-context-details p {
-            color: #8b949e;
-            margin: 0;
-            font-size: 0.875rem;
-        }
-        
-        .back-to-projects {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #8b949e;
-            text-decoration: none;
-            font-size: 0.875rem;
-            margin: 1rem;
-            padding: 0.5rem;
-            border-radius: 6px;
-            transition: all 0.2s ease;
-        }
-        
-        .back-to-projects:hover {
-            color: #f0f6fc;
-            background: rgba(110, 118, 129, 0.1);
-        }
-        
         /* Project Context Styles */
         .project-files-info {
             background: rgba(88, 166, 255, 0.1);
@@ -343,11 +290,11 @@
         <div class="sidebar-nav">
             <!-- Main Navigation -->
             <div class="nav-section">
-                <div class="nav-item" onclick="setActiveNav(this, 'chats')">
+                <div class="nav-item active" onclick="setActiveNav(this, 'chats')">
                     <span class="nav-icon">💬</span>
                     Chats
                 </div>
-                <div class="nav-item active" onclick="setActiveNav(this, 'projects')">
+                <div class="nav-item" onclick="setActiveNav(this, 'projects')">
                     <span class="nav-icon">📂</span>
                     Projects
                 </div>
@@ -392,7 +339,7 @@
             <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleSidebar()">
                 ☰
             </button>
-            <div class="header-title" id="chatTitle">Project Chat</div>
+            <div class="header-title" id="chatTitle">New Chat</div>
             
             <!-- Subscription Status -->
             <div class="subscription-status" id="subscriptionStatus" style="display: none;">
@@ -422,16 +369,6 @@
             🚫 Daily message limit reached. <a href="/pricing.html" style="color: #58a6ff;">Upgrade now</a> for unlimited messages!
         </div>
 
-        <!-- Project Context Header -->
-        <div class="project-context-header" id="projectContextHeader">
-            <div class="project-icon" id="projectIcon">📂</div>
-            <div class="project-context-info">
-                <h3 id="projectName">Loading project...</h3>
-                <p id="projectDescription">Please wait while we load your project details.</p>
-            </div>
-            <a href="projects.html" class="back-to-projects">← Back to Projects</a>
-        </div>
-
         <!-- Header Banner Ad -->
         <div id="headerBannerAd" class="ad-container banner-ad">
             <div class="ad-label">Advertisement</div>
@@ -443,37 +380,32 @@
                 <!-- Welcome Screen -->
                 <div class="welcome-screen" id="welcomeScreen">
                     <div class="welcome-icon">🚀</div>
-                    <h1 class="welcome-title">Project Chat</h1>
-                    <p class="welcome-subtitle">Discuss your project with context-aware AI assistance</p>
-                    
-                    <div class="project-files-info" id="projectFilesInfo">
-                        <strong>📁 Project Context Loaded</strong><br>
-                        Your AI assistant has access to this project's files and can help you with specific questions about your code, debugging, and improvements.
-                    </div>
+                    <h1 class="welcome-title">Welcome to Roblox Luau AI</h1>
+                    <p class="welcome-subtitle">Your intelligent assistant for Roblox game development</p>
                     
                     <div class="quick-actions">
-                        <div class="quick-action" onclick="useQuickAction('Analyze my project structure and suggest improvements')">
-                            <span class="action-icon">🔍</span>
-                            <div class="action-title">Analyze Project</div>
-                            <div class="action-desc">Review your project structure and code</div>
-                        </div>
-                        
-                        <div class="quick-action" onclick="useQuickAction('Help me debug issues in this project')">
-                            <span class="action-icon">🐛</span>
-                            <div class="action-title">Debug Issues</div>
-                            <div class="action-desc">Find and fix problems in your code</div>
-                        </div>
-                        
-                        <div class="quick-action" onclick="useQuickAction('Suggest new features for this project')">
+                        <div class="quick-action" onclick="useQuickAction('Create a simple script that makes a part glow when touched')">
                             <span class="action-icon">✨</span>
-                            <div class="action-title">Add Features</div>
-                            <div class="action-desc">Get ideas for project enhancements</div>
+                            <div class="action-title">Create Script</div>
+                            <div class="action-desc">Generate Luau scripts for your Roblox game</div>
                         </div>
                         
-                        <div class="quick-action" onclick="useQuickAction('Help me optimize the performance of this project')">
-                            <span class="action-icon">⚡</span>
-                            <div class="action-title">Optimize Code</div>
-                            <div class="action-desc">Improve speed and efficiency</div>
+                        <div class="quick-action" onclick="useQuickAction('Debug this error: attempt to index nil with HeadQuest')">
+                            <span class="action-icon">🐛</span>
+                            <div class="action-title">Debug Code</div>
+                            <div class="action-desc">Fix errors and optimize your scripts</div>
+                        </div>
+                        
+                        <div class="quick-action" onclick="useQuickAction('Explain how RemoteEvents work in Roblox')">
+                            <span class="action-icon">📚</span>
+                            <div class="action-title">Learn Concepts</div>
+                            <div class="action-desc">Understand Roblox development concepts</div>
+                        </div>
+                        
+                        <div class="quick-action" onclick="useQuickAction('Create a shop GUI with purchase functionality')">
+                            <span class="action-icon">🎮</span>
+                            <div class="action-title">Build Systems</div>
+                            <div class="action-desc">Design game mechanics and systems</div>
                         </div>
                     </div>
                 </div>
@@ -494,7 +426,7 @@
                             <textarea 
                                 class="input-area" 
                                 id="messageInput" 
-                                placeholder="Ask questions about your project, request code reviews, or get help with specific features..."
+                                placeholder="Ask me about Roblox scripting, debugging, or game development..."
                                 rows="1"
                             ></textarea>
                             <button class="send-button" id="sendButton" onclick="sendMessage()">
@@ -562,10 +494,8 @@
         let authToken = null;
         let currentUser = null;
         let selectedModel = 'gpt-4o-mini';
-        let currentView = 'projects';
+        let currentView = 'chats';
         let attachedFiles = [];
-        let currentProjectId = null;
-        let currentProject = null;
 
         // FIXED: User-specific data storage
         let userChats = [];
@@ -587,46 +517,6 @@
         // Message counter for ad insertion
         let messageCount = 0;
         const AD_FREQUENCY = 5; // Show ad every 5 messages
-
-        // Project chat specific functions
-        function loadProjectFromUrl() {
-            const urlParams = new URLSearchParams(window.location.search);
-            currentProjectId = urlParams.get('id');
-            
-            if (currentProjectId) {
-                const projects = JSON.parse(localStorage.getItem('projects') || '[]');
-                currentProject = projects.find(p => p.id === currentProjectId);
-                
-                if (currentProject) {
-                    updateProjectHeader();
-                } else {
-                    // Project not found, redirect to projects page
-                    window.location.href = 'projects.html';
-                }
-            } else {
-                // No project ID, redirect to projects page
-                window.location.href = 'projects.html';
-            }
-        }
-
-        function updateProjectHeader() {
-            if (!currentProject) return;
-            
-            document.getElementById('chatTitle').textContent = currentProject.name;
-            document.getElementById('projectName').textContent = currentProject.name;
-            document.getElementById('projectDescription').textContent = currentProject.description || 'No description provided';
-            
-            // Update project icon based on type
-            const iconElement = document.getElementById('projectIcon');
-            const iconMap = {
-                'game': '🎮',
-                'script': '📝',
-                'tool': '🔧',
-                'library': '📚',
-                'template': '📋'
-            };
-            iconElement.textContent = iconMap[currentProject.type] || '📂';
-        }
 
         // FIXED: Account switching functionality
         class AccountManager {
@@ -689,8 +579,7 @@
 
         // Initialize app when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing project chat...');
-            loadProjectFromUrl();
+            console.log('DOM loaded, initializing app...');
             initApp();
             
             // Check subscription status and refresh periodically
@@ -823,7 +712,7 @@
 
         // Initialize app
         function initApp() {
-            console.log('Initializing project chat app...');
+            console.log('Initializing app...');
             checkAuth();
         }
 
@@ -831,31 +720,6 @@
         function checkSubscriptionStatus() {
             // This function would normally check subscription status from server
             console.log('Checking subscription status...');
-        }
-
-        // Navigation function to update active nav
-        function setActiveNav(element, view) {
-            // Remove active class from all nav items
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // Add active class to clicked nav item
-            element.classList.add('active');
-            
-            // Navigate based on view
-            if (view === 'chats') {
-                window.location.href = 'index.html';
-            } else if (view === 'projects') {
-                window.location.href = 'projects.html';
-            } else if (view === 'scripts') {
-                window.location.href = 'scripts.html';
-            }
-        }
-
-        // Start new chat function
-        function startNewChat() {
-            window.location.href = 'index.html';
         }
     </script>
 

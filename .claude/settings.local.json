@@ -16,7 +16,9 @@
       "Bash(PORT=3001 npm start)",
       "Bash(PORT=3002 npm start)",
       "WebSearch",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(start http://localhost:3002)",
+      "Read(//z/solo lebvel/stuff/**)"
     ],
     "deny": [],
     "ask": []
