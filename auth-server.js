@@ -564,6 +564,31 @@ async function sendVerificationEmail(email, code, name = null) {
             return await sendVerificationEmailWithResend(email, code, name);
         } catch (error) {
             console.error('[RESEND] Failed, trying Gmail fallback...');
+            
+            // If it's a domain verification error, check if Gmail is available
+            if (error.message.includes('domain is not verified') || error.message.includes('validation_error')) {
+                console.log('[INFO] Resend requires domain verification for this email. Attempting Gmail fallback...');
+                
+                // Try to reinitialize Gmail if available
+                if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+                    try {
+                        emailTransporter = nodemailer.createTransport({
+                            service: 'gmail',
+                            host: 'smtp.gmail.com',
+                            port: 587,
+                            secure: false,
+                            auth: {
+                                user: process.env.EMAIL_USER,
+                                pass: process.env.EMAIL_PASSWORD
+                            },
+                            tls: { rejectUnauthorized: false }
+                        });
+                        console.log('[GMAIL] Temporary Gmail transport created for fallback');
+                    } catch (gmailError) {
+                        console.error('[GMAIL] Failed to create Gmail transport:', gmailError.message);
+                    }
+                }
+            }
             // Don't throw here, let it fall through to Gmail if available
         }
     }
