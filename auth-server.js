@@ -584,6 +584,20 @@ async function sendVerificationEmail(email, code, name = null) {
                             tls: { rejectUnauthorized: false }
                         });
                         console.log('[GMAIL] Temporary Gmail transport created for fallback');
+                        
+                        // Test the Gmail connection immediately
+                        try {
+                            await new Promise((resolve, reject) => {
+                                emailTransporter.verify((error, success) => {
+                                    if (error) reject(error);
+                                    else resolve(success);
+                                });
+                            });
+                            console.log('[GMAIL] Fallback connection verified successfully');
+                        } catch (gmailTestError) {
+                            console.error('[GMAIL] Fallback connection test failed:', gmailTestError.message);
+                            emailTransporter = null;
+                        }
                     } catch (gmailError) {
                         console.error('[GMAIL] Failed to create Gmail transport:', gmailError.message);
                     }
@@ -593,7 +607,12 @@ async function sendVerificationEmail(email, code, name = null) {
         }
     }
 
-    // Fallback to Gmail/nodemailer
+    // Check if we have a valid email transporter after fallback attempts
+    if (!emailTransporter) {
+        throw new Error('No email service available - both Resend and Gmail failed');
+    }
+
+    // Use Gmail/nodemailer transporter
     if (emailTransporter && typeof emailTransporter === 'object') {
         const mailOptions = {
             from: `"Roblox Luau AI" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
