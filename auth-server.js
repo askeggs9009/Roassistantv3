@@ -33,15 +33,29 @@ function initializeEmailTransporter() {
             }
         });
 
-        // Test the connection
-        emailTransporter.verify((error, success) => {
-            if (error) {
-                console.log('❌ Email configuration error:', error.message);
+        // Test the connection with timeout
+        const testConnection = new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                console.log('⚠️ Email connection test timed out - will disable email verification');
                 emailTransporter = null;
-            } else {
-                console.log('✅ Email server is ready');
-            }
+                resolve(false);
+            }, 5000); // 5 second timeout
+
+            emailTransporter.verify((error, success) => {
+                clearTimeout(timeout);
+                if (error) {
+                    console.log('❌ Email configuration error:', error.message);
+                    console.log('⚠️ Disabling email verification due to connection issues');
+                    emailTransporter = null;
+                    resolve(false);
+                } else {
+                    console.log('✅ Email server is ready');
+                    resolve(true);
+                }
+            });
         });
+
+        testConnection;
 
         return true;
     } catch (error) {
@@ -543,10 +557,25 @@ async function sendVerificationEmail(email, code, name = null) {
     };
 
     try {
-        await emailTransporter.sendMail(mailOptions);
+        // Add timeout to prevent hanging
+        await Promise.race([
+            emailTransporter.sendMail(mailOptions),
+            new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Email send timeout after 10 seconds')), 10000)
+            )
+        ]);
+        
+        console.log('✅ Verification email sent successfully!');
         return true;
     } catch (error) {
-        console.error('Email sending error:', error);
+        console.error('Email sending error:', error.message);
+        
+        // If timeout or connection error, disable email transporter for future requests
+        if (error.message.includes('timeout') || error.code === 'ETIMEDOUT') {
+            console.log('⚠️ Email timeout detected - disabling email verification');
+            emailTransporter = null;
+        }
+        
         return false;
     }
 }
