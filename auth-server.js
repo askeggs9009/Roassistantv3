@@ -474,69 +474,79 @@ function checkUsageLimits(req, res, next) {
 
 let emailTransporter = null;
 
-// FIXED: Enhanced email transporter initialization with proper Gmail App Password support
+// ENHANCED: Email system with Resend (preferred) and Gmail fallback
 async function initializeEmailTransporter() {
     console.log('\n[EMAIL INIT] Initializing Email System...');
     
-    if (!nodemailer) {
-        console.log('[WARNING] Nodemailer not available!');
-        return false;
+    // Try Resend first (preferred)
+    if (resend) {
+        try {
+            console.log('[EMAIL] Testing Resend API...');
+            await testResendConnection();
+            emailTransporter = 'resend';
+            console.log('[SUCCESS] ✅ Resend email system ready! (3000 emails/month free)');
+            return true;
+        } catch (error) {
+            console.error('[RESEND ERROR]:', error.message);
+            console.log('[INFO] To fix Resend: Set RESEND_API_KEY in .env (get from https://resend.com)');
+            console.log('[FALLBACK] Trying Gmail...');
+        }
+    } else {
+        console.log('[INFO] Resend not configured (RESEND_API_KEY missing), trying Gmail...');
     }
     
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-        console.log('[WARNING] Email configuration missing - email verification disabled');
-        console.log('[INFO] To enable email verification:');
-        console.log('  1. Go to https://myaccount.google.com/security');
-        console.log('  2. Enable 2-Step Verification');
-        console.log('  3. Generate App Password for Mail');
-        console.log('  4. Set EMAIL_USER and EMAIL_PASSWORD in .env');
-        return false;
-    }
-
-    try {
-        console.log('[EMAIL] Creating Gmail SMTP transporter...');
-        
-        // FIXED: Updated to use proper Gmail configuration
-        emailTransporter = nodemailer.createTransport({
-            service: 'gmail',
-            host: 'smtp.gmail.com',
-            port: 587,
-            secure: false, // Use TLS
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASSWORD // Should be App Password, not regular password
-            },
-            tls: {
-                rejectUnauthorized: false
-            }
-        });
-
-        // Test the connection
-        await new Promise((resolve, reject) => {
-            const timeout = setTimeout(() => {
-                reject(new Error('Connection test timeout'));
-            }, 10000);
-
-            emailTransporter.verify((error, success) => {
-                clearTimeout(timeout);
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(success);
+    // Fallback to Gmail
+    if (nodemailer && process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+        try {
+            console.log('[EMAIL] Creating Gmail SMTP transporter (fallback)...');
+            
+            emailTransporter = nodemailer.createTransport({
+                service: 'gmail',
+                host: 'smtp.gmail.com',
+                port: 587,
+                secure: false,
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASSWORD
+                },
+                tls: {
+                    rejectUnauthorized: false
                 }
             });
-        });
-        
-        console.log('[SUCCESS] Email system verified and ready!');
-        return true;
 
-    } catch (error) {
-        console.log('[ERROR] Email system failed:', error.message);
-        console.log('[HINT] Make sure you are using a Gmail App Password, not your regular password');
-        console.log('[HINT] Generate one at: https://myaccount.google.com/apppasswords');
-        emailTransporter = null;
-        return false;
+            // Test Gmail connection
+            await new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject(new Error('Connection test timeout'));
+                }, 10000);
+
+                emailTransporter.verify((error, success) => {
+                    clearTimeout(timeout);
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(success);
+                    }
+                });
+            });
+            
+            console.log('[SUCCESS] ✅ Gmail email system ready! (fallback)');
+            return true;
+
+        } catch (error) {
+            console.error('[GMAIL ERROR]:', error.message);
+            console.log('[HINT] Make sure you are using a Gmail App Password');
+            console.log('[HINT] Get one at: https://myaccount.google.com/apppasswords');
+        }
     }
+    
+    // No email system available
+    console.log('[WARNING] ❌ No email system configured - email verification disabled');
+    console.log('[INFO] To enable email verification:');
+    console.log('   1. RECOMMENDED: Get Resend API key from https://resend.com');
+    console.log('   2. Alternative: Configure Gmail App Password');
+    emailTransporter = null;
+    return false;
 }
 
 function generateVerificationCode() {

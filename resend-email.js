@@ -1,10 +1,19 @@
 // Resend Email Service for Roblox Luau AI Assistant
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resend = null;
+
+// Initialize Resend only if API key is available
+if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'YOUR_API_KEY_HERE') {
+    resend = new Resend(process.env.RESEND_API_KEY);
+}
 
 // Send verification email using Resend
 export async function sendVerificationEmailWithResend(email, verificationCode, name = '') {
+    if (!resend) {
+        throw new Error('Resend not initialized - API key missing or invalid');
+    }
+    
     try {
         console.log(`[RESEND] Sending verification email to ${email}...`);
         
@@ -82,8 +91,8 @@ export async function sendVerificationEmailWithResend(email, verificationCode, n
 // Test Resend connection
 export async function testResendConnection() {
     try {
-        if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 'YOUR_API_KEY_HERE') {
-            throw new Error('RESEND_API_KEY not configured');
+        if (!resend) {
+            throw new Error('RESEND_API_KEY not configured or invalid');
         }
         
         // Test by getting API key info (this will succeed if key is valid)
