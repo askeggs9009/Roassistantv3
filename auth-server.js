@@ -31,15 +31,23 @@ try {
     console.log('[FALLBACK] Trying nodemailer...');
 }
 
-if (!resend) {
-    try {
-        nodemailer = require('nodemailer');
-        console.log('[SUCCESS] Nodemailer imported successfully (fallback)');
-    } catch (error) {
-        console.log('[ERROR] Failed to import nodemailer:', error.message);
-        console.log('[INFO] Email functionality will be disabled');
+// Initialize nodemailer with proper ES module import
+async function initializeNodemailer() {
+    if (!resend) {
+        try {
+            console.log('[INFO] RESEND_API_KEY not configured, trying nodemailer fallback...');
+            const nodemailerModule = await import('nodemailer');
+            nodemailer = nodemailerModule.default;
+            console.log('[SUCCESS] Nodemailer imported successfully (fallback)');
+        } catch (error) {
+            console.log('[ERROR] Failed to import nodemailer:', error.message);
+            console.log('[INFO] Email functionality will be disabled');
+        }
     }
 }
+
+// Call the initialization at startup
+await initializeNodemailer();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -483,6 +491,18 @@ async function initializeEmailTransporter() {
     console.log('[DEBUG] EMAIL_USER:', process.env.EMAIL_USER ? 'SET' : 'MISSING');
     console.log('[DEBUG] EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD ? 'SET' : 'MISSING');
     console.log('[DEBUG] nodemailer available:', !!nodemailer);
+    
+    // Try importing nodemailer if not already available
+    if (!nodemailer && !resend) {
+        try {
+            console.log('[EMAIL] Attempting to import nodemailer...');
+            const nodemailerModule = await import('nodemailer');
+            nodemailer = nodemailerModule.default;
+            console.log('[SUCCESS] Nodemailer imported for email system');
+        } catch (error) {
+            console.log('[ERROR] Failed to import nodemailer for email system:', error.message);
+        }
+    }
     
     // Setup Gmail
     if (nodemailer && process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
