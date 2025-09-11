@@ -490,17 +490,16 @@ async function initializeEmailTransporter() {
             console.log('[EMAIL] Creating Gmail SMTP transporter (fallback)...');
             
             emailTransporter = nodemailer.createTransport({
-                service: 'gmail',
                 host: 'smtp.gmail.com',
-                port: 587,
-                secure: false,
+                port: 465,
+                secure: true,
                 auth: {
                     user: process.env.EMAIL_USER,
                     pass: process.env.EMAIL_PASSWORD
                 },
-                tls: {
-                    rejectUnauthorized: false
-                }
+                connectionTimeout: 10000,
+                greetingTimeout: 5000,
+                socketTimeout: 10000
             });
 
             // Skip connection test - we'll test when actually sending
