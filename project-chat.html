@@ -591,7 +591,7 @@
         // Project chat specific functions
         function loadProjectFromUrl() {
             const urlParams = new URLSearchParams(window.location.search);
-            currentProjectId = urlParams.get('id');
+            currentProjectId = urlParams.get('project');
             
             if (currentProjectId) {
                 const projects = JSON.parse(localStorage.getItem('projects') || '[]');
