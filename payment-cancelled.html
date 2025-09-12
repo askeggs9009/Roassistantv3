@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Cancelled - Roblox Luau AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #21262d 100%);
+            color: #f0f6fc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .cancelled-container {
+            background: rgba(33, 38, 45, 0.8);
+            backdrop-filter: blur(20px);
+            border: 2px solid #f85149;
+            border-radius: 20px;
+            padding: 3rem;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .cancelled-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, #f85149, #da3633);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            font-size: 2.5rem;
+            animation: fadeIn 0.6s ease;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #f0f6fc;
+        }
+        
+        .message {
+            color: #8b949e;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .reasons {
+            background: rgba(13, 17, 23, 0.5);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            text-align: left;
+        }
+        
+        .reasons h3 {
+            color: #f0f6fc;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .reasons ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .reasons li {
+            color: #8b949e;
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        
+        .reasons li:before {
+            content: "•";
+            color: #58a6ff;
+            position: absolute;
+            left: 0;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #238636, #2ea043);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(35, 134, 54, 0.4);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid #30363d;
+            color: #8b949e;
+        }
+        
+        .btn-secondary:hover {
+            border-color: #58a6ff;
+            color: #58a6ff;
+        }
+        
+        .help-section {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #30363d;
+        }
+        
+        .help-section h3 {
+            color: #f0f6fc;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .help-section p {
+            color: #8b949e;
+            margin-bottom: 1rem;
+        }
+        
+        .contact-link {
+            color: #58a6ff;
+            text-decoration: none;
+        }
+        
+        .contact-link:hover {
+            text-decoration: underline;
+        }
+        
+        .test-mode-notice {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            color: white;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="cancelled-container">
+        <div class="cancelled-icon">✕</div>
+        <h1>Payment Cancelled</h1>
+        <p class="message">
+            Your payment was cancelled and no charges were made. You can return to pricing to review our plans or continue using the free tier.
+        </p>
+        
+        <div class="reasons">
+            <h3>Common reasons for cancellation:</h3>
+            <ul>
+                <li>Need more time to review the plans</li>
+                <li>Want to try the free tier first</li>
+                <li>Payment method issues</li>
+                <li>Changed your mind about upgrading</li>
+            </ul>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="/pricing.html" class="btn btn-primary">View Plans Again</a>
+            <a href="/index.html" class="btn btn-secondary">Continue with Free</a>
+        </div>
+        
+        <div class="help-section">
+            <h3>Need Help?</h3>
+            <p>
+                If you experienced any issues during checkout or have questions about our plans, 
+                please don't hesitate to <a href="mailto:support@robloxluauai.com" class="contact-link">contact our support team</a>.
+            </p>
+            <p>
+                You can also check our <a href="/faq.html" class="contact-link">FAQ page</a> for common questions.
+            </p>
+        </div>
+        
+        <div class="test-mode-notice">
+            🧪 This was a test transaction. No real payment was attempted.
+        </div>
+    </div>
+    
+    <script>
+        // Track cancellation for analytics (if needed)
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+        
+        if (sessionId) {
+            console.log('Payment cancelled for session:', sessionId);
+            // In production, you might want to track this event
+        }
+    </script>
+</body>
+</html>

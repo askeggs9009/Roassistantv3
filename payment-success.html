@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful - Roblox Luau AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #21262d 100%);
+            color: #f0f6fc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .success-container {
+            background: rgba(33, 38, 45, 0.8);
+            backdrop-filter: blur(20px);
+            border: 2px solid #238636;
+            border-radius: 20px;
+            padding: 3rem;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, #238636, #2ea043);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            font-size: 2.5rem;
+            animation: checkmark 0.6s ease;
+        }
+        
+        @keyframes checkmark {
+            0% {
+                transform: scale(0);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #f0f6fc;
+        }
+        
+        .message {
+            color: #8b949e;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .details {
+            background: rgba(13, 17, 23, 0.5);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            text-align: left;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+        
+        .detail-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .detail-label {
+            color: #8b949e;
+        }
+        
+        .detail-value {
+            color: #f0f6fc;
+            font-weight: 600;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #58a6ff, #1f6feb);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(88, 166, 255, 0.4);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid #30363d;
+            color: #8b949e;
+        }
+        
+        .btn-secondary:hover {
+            border-color: #58a6ff;
+            color: #58a6ff;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(88, 166, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #58a6ff;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .test-mode-notice {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            color: white;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container">
+        <div class="success-icon">✓</div>
+        <h1>Payment Successful!</h1>
+        <p class="message">
+            Thank you for your purchase! Your subscription has been activated and you now have access to all premium features.
+        </p>
+        
+        <div class="details">
+            <div class="detail-row">
+                <span class="detail-label">Plan:</span>
+                <span class="detail-value" id="planName">Pro Plan</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Billing Cycle:</span>
+                <span class="detail-value" id="billingCycle">Monthly</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Status:</span>
+                <span class="detail-value" style="color: #2ea043;">Active</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Next Billing Date:</span>
+                <span class="detail-value" id="nextBilling">--</span>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="/index.html" class="btn btn-primary">Go to Dashboard</a>
+            <a href="/account.html" class="btn btn-secondary">Manage Subscription</a>
+        </div>
+        
+        <div class="test-mode-notice">
+            🧪 This was a test transaction. No real payment was processed.
+        </div>
+    </div>
+    
+    <script>
+        // Parse URL parameters to get plan details
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+        
+        // Update plan details based on URL parameters or session
+        function updatePlanDetails() {
+            // In production, you would fetch these details from your backend using the session_id
+            const plan = urlParams.get('plan') || 'Pro';
+            const billing = urlParams.get('billing') || 'monthly';
+            
+            document.getElementById('planName').textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
+            document.getElementById('billingCycle').textContent = billing.charAt(0).toUpperCase() + billing.slice(1);
+            
+            // Calculate next billing date
+            const nextDate = new Date();
+            if (billing === 'monthly') {
+                nextDate.setMonth(nextDate.getMonth() + 1);
+            } else {
+                nextDate.setFullYear(nextDate.getFullYear() + 1);
+            }
+            document.getElementById('nextBilling').textContent = nextDate.toLocaleDateString();
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', updatePlanDetails);
+    </script>
+</body>
+</html>

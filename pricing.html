@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pricing - Roblox Luau AI Assistant</title>
+    
+    <!-- Stripe.js -->
+    <script src="https://js.stripe.com/v3/"></script>
+    
     <style>
         /* Reset and Base Styles */
         * {
@@ -525,6 +529,53 @@
             color: #8b949e;
             font-size: 0.9rem;
         }
+        
+        /* Test Mode Banner */
+        .test-mode-banner {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            color: white;
+            text-align: center;
+            padding: 0.75rem;
+            font-weight: 600;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .test-mode-banner code {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            margin: 0 0.25rem;
+            font-family: monospace;
+        }
+        
+        .pricing-header {
+            margin-top: 50px; /* Account for test banner */
+        }
+        
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .plan-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
 
         /* Mobile Responsive */
         @media (max-width: 768px) {
@@ -596,6 +647,11 @@
     </style>
 </head>
 <body>
+    <!-- Test Mode Banner -->
+    <div class="test-mode-banner">
+        🧪 TEST MODE - Use card <code>4242 4242 4242 4242</code> with any future date and CVC for testing
+    </div>
+    
     <div class="pricing-page">
         <!-- Header -->
         <header class="pricing-header">
@@ -877,6 +933,22 @@
     </div>
 
     <script>
+        // Initialize Stripe (Test Mode)
+        // Replace with your actual Stripe publishable key
+        const stripe = Stripe('pk_test_YOUR_PUBLISHABLE_KEY_HERE');
+        
+        // Stripe Test Product/Price IDs (you'll need to create these in your Stripe dashboard)
+        const STRIPE_PRICE_IDS = {
+            pro: {
+                monthly: 'price_test_pro_monthly', // Replace with actual price ID
+                annual: 'price_test_pro_annual'    // Replace with actual price ID
+            },
+            enterprise: {
+                monthly: 'price_test_enterprise_monthly', // Replace with actual price ID
+                annual: 'price_test_enterprise_annual'    // Replace with actual price ID
+            }
+        };
+        
         // Billing toggle functionality
         function toggleBilling() {
             const toggle = document.getElementById('billingToggle');
@@ -915,25 +987,108 @@
             }
         }
 
-        // Plan selection functionality
-        function selectPlan(planType) {
+        // Plan selection functionality with Stripe Checkout
+        async function selectPlan(planType) {
             const isAnnual = document.getElementById('billingToggle').checked;
             const billingCycle = isAnnual ? 'annual' : 'monthly';
+            
+            // Get the button that was clicked
+            const buttons = document.querySelectorAll('.plan-button');
+            let clickedButton = null;
+            buttons.forEach(btn => {
+                if (btn.textContent.includes('Free') && planType === 'free') clickedButton = btn;
+                if (btn.textContent.includes('Pro') && planType === 'pro') clickedButton = btn;
+                if (btn.textContent.includes('Sales') && planType === 'enterprise') clickedButton = btn;
+            });
             
             switch(planType) {
                 case 'free':
                     // Redirect to free signup
                     window.location.href = '/signup.html?plan=free';
                     break;
+                    
                 case 'pro':
-                    // Redirect to Pro plan checkout
-                    window.location.href = `/checkout.html?plan=pro&billing=${billingCycle}`;
-                    break;
                 case 'enterprise':
-                    // Redirect to contact sales
-                    window.location.href = '/contact-sales.html';
+                    if (planType === 'enterprise') {
+                        // For enterprise, redirect to contact form
+                        window.location.href = '/contact-sales.html';
+                        return;
+                    }
+                    
+                    // Show loading state
+                    if (clickedButton) {
+                        const originalText = clickedButton.innerHTML;
+                        clickedButton.innerHTML = '<span class="spinner"></span> Processing...';
+                        clickedButton.disabled = true;
+                    }
+                    
+                    try {
+                        // Create checkout session on your backend
+                        // For now, we'll simulate with a direct Stripe Checkout redirect
+                        const priceId = STRIPE_PRICE_IDS[planType][billingCycle];
+                        
+                        // In production, you would call your backend API to create a session
+                        // For testing, we'll use Stripe Checkout with Payment Links
+                        // You need to create these in your Stripe Dashboard
+                        
+                        // Simulated checkout session creation
+                        const checkoutUrl = await createStripeCheckoutSession(planType, billingCycle, priceId);
+                        
+                        if (checkoutUrl) {
+                            window.location.href = checkoutUrl;
+                        } else {
+                            throw new Error('Failed to create checkout session');
+                        }
+                        
+                    } catch (error) {
+                        console.error('Checkout error:', error);
+                        alert('Unable to process payment. Please try again or contact support.');
+                        
+                        // Restore button state
+                        if (clickedButton) {
+                            clickedButton.innerHTML = originalText;
+                            clickedButton.disabled = false;
+                        }
+                    }
                     break;
             }
+        }
+        
+        // Create Stripe Checkout Session (simulated for test mode)
+        async function createStripeCheckoutSession(planType, billingCycle, priceId) {
+            // In a real implementation, this would call your backend API
+            // Your backend would use Stripe's API to create a checkout session
+            
+            // For demonstration, we'll create a test payment link
+            // You should replace this with actual API call to your backend
+            
+            const testLinks = {
+                'price_test_pro_monthly': 'https://buy.stripe.com/test_YOUR_PRO_MONTHLY_LINK',
+                'price_test_pro_annual': 'https://buy.stripe.com/test_YOUR_PRO_ANNUAL_LINK',
+                'price_test_enterprise_monthly': 'https://buy.stripe.com/test_YOUR_ENTERPRISE_MONTHLY_LINK',
+                'price_test_enterprise_annual': 'https://buy.stripe.com/test_YOUR_ENTERPRISE_ANNUAL_LINK'
+            };
+            
+            // Return the test payment link
+            return testLinks[priceId] || null;
+            
+            /* 
+            // Example of what the real implementation would look like:
+            const response = await fetch('/api/create-checkout-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    priceId: priceId,
+                    planType: planType,
+                    billingCycle: billingCycle
+                })
+            });
+            
+            const session = await response.json();
+            return session.url;
+            */
         }
 
         // Initialize with monthly billing selected
