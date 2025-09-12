@@ -554,7 +554,7 @@
         }
         
         .pricing-header {
-            margin-top: 50px; /* Account for test banner */
+            /* margin-top: 50px; -- Only needed when test banner is active */
         }
         
         /* Loading Spinner */
@@ -647,10 +647,12 @@
     </style>
 </head>
 <body>
-    <!-- Test Mode Banner -->
+    <!-- Live Mode Banner (Comment out when going to production) -->
+    <!--
     <div class="test-mode-banner">
         🧪 TEST MODE - Use card <code>4242 4242 4242 4242</code> with any future date and CVC for testing
     </div>
+    -->
     
     <div class="pricing-page">
         <!-- Header -->
@@ -933,19 +935,19 @@
     </div>
 
     <script>
-        // Initialize Stripe (Test Mode)
+        // Initialize Stripe (Live Mode)
         // Replace with your actual Stripe publishable key
-        const stripe = Stripe('pk_test_YOUR_PUBLISHABLE_KEY_HERE');
+        const stripe = Stripe('pk_live_YOUR_PUBLISHABLE_KEY_HERE'); // You need to add your live publishable key
         
-        // Stripe Test Product/Price IDs (you'll need to create these in your Stripe dashboard)
+        // Stripe Live Product/Price IDs from your Stripe dashboard
         const STRIPE_PRICE_IDS = {
             pro: {
-                monthly: 'price_test_pro_monthly', // Replace with actual price ID
-                annual: 'price_test_pro_annual'    // Replace with actual price ID
+                monthly: 'price_1S4qIZ30DH9fxKOMCFVSgtaf', // RoAssistant Pro Monthly
+                annual: 'price_1S4qKE30DH9fxKOM13MbvneU'   // RoAssistant Pro Annual
             },
             enterprise: {
-                monthly: 'price_test_enterprise_monthly', // Replace with actual price ID
-                annual: 'price_test_enterprise_annual'    // Replace with actual price ID
+                monthly: 'price_1S4qKv30DH9fxKOMpqOWbeEe', // RoAssistant Enterprise Monthly
+                annual: 'price_1S4qMc30DH9fxKOM4yxoHcot'   // RoAssistant Enterprise Annual
             }
         };
         
@@ -1062,15 +1064,15 @@
             // For demonstration, we'll create a test payment link
             // You should replace this with actual API call to your backend
             
-            const testLinks = {
-                'price_test_pro_monthly': 'https://buy.stripe.com/test_YOUR_PRO_MONTHLY_LINK',
-                'price_test_pro_annual': 'https://buy.stripe.com/test_YOUR_PRO_ANNUAL_LINK',
-                'price_test_enterprise_monthly': 'https://buy.stripe.com/test_YOUR_ENTERPRISE_MONTHLY_LINK',
-                'price_test_enterprise_annual': 'https://buy.stripe.com/test_YOUR_ENTERPRISE_ANNUAL_LINK'
+            const paymentLinks = {
+                'price_1S4qIZ30DH9fxKOMCFVSgtaf': 'https://buy.stripe.com/fZu14g9OFeZPbhtdJo0Ny04', // Pro Monthly
+                'price_1S4qKE30DH9fxKOM13MbvneU': 'https://buy.stripe.com/9B6bIU9OF7xn71daxc0Ny05', // Pro Annual
+                'price_1S4qKv30DH9fxKOMpqOWbeEe': 'https://buy.stripe.com/fZu00c0e5dVL99laxc0Ny06', // Enterprise Monthly
+                'price_1S4qMc30DH9fxKOM4yxoHcot': 'https://buy.stripe.com/bJe00c5ypdVLadp7l00Ny07'  // Enterprise Annual
             };
             
-            // Return the test payment link
-            return testLinks[priceId] || null;
+            // Return the payment link
+            return paymentLinks[priceId] || null;
             
             /* 
             // Example of what the real implementation would look like:

@@ -18,7 +18,10 @@
       "WebSearch",
       "Bash(cat:*)",
       "Bash(start http://localhost:3002)",
-      "Read(//z/solo lebvel/stuff/**)"
+      "Read(//z/solo lebvel/stuff/**)",
+      "mcp__stripe__get_stripe_account_info",
+      "mcp__stripe__list_products",
+      "mcp__stripe__create_payment_link"
     ],
     "deny": [],
     "ask": []
