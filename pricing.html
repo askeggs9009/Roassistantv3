@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pricing - Roblox Luau AI Assistant</title>
     
+    <!-- Stripe.js -->
+    <script src="https://js.stripe.com/v3/"></script>
+    
     
     <style>
         /* Reset and Base Styles */
@@ -690,7 +693,7 @@
                         <h2 class="plan-name">Pro</h2>
                         <div class="plan-price">
                             <span class="currency">£</span>
-                            <span class="amount" id="proPrice">0.01</span>
+                            <span class="amount" id="proPrice">0.30</span>
                             <span class="period" id="proPeriod">/month</span>
                         </div>
                         <p class="plan-description">Ideal for serious developers</p>
@@ -721,8 +724,8 @@
                             <span class="feature-text">Team collaboration</span>
                         </div>
                     </div>
-                    <button class="plan-button primary" onclick="window.location.href='/login.html?plan=pro'">
-                        Start Pro Trial
+                    <button class="plan-button primary" onclick="selectPlan('pro')">
+                        Get Pro Plan
                     </button>
                 </div>
 
@@ -732,7 +735,7 @@
                         <h2 class="plan-name">Enterprise</h2>
                         <div class="plan-price">
                             <span class="currency">£</span>
-                            <span class="amount" id="enterprisePrice">0.01</span>
+                            <span class="amount" id="enterprisePrice">0.30</span>
                             <span class="period" id="enterprisePeriod">/month</span>
                         </div>
                         <p class="plan-description">For teams and studios</p>
@@ -763,8 +766,8 @@
                             <span class="feature-text">Custom integrations</span>
                         </div>
                     </div>
-                    <button class="plan-button premium" onclick="window.location.href='/contact-sales.html'">
-                        Contact Sales
+                    <button class="plan-button premium" onclick="selectPlan('enterprise')">
+                        Get Enterprise Plan
                     </button>
                 </div>
             </section>
@@ -833,8 +836,8 @@
                         <p class="faq-answer">You can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll prorate any differences.</p>
                     </div>
                     <div class="faq-item">
-                        <h3 class="faq-question">Is there a free trial?</h3>
-                        <p class="faq-answer">All paid plans come with a 7-day free trial. No credit card required to start!</p>
+                        <h3 class="faq-question">Can I start with the free plan?</h3>
+                        <p class="faq-answer">Yes! You can start with our free plan and upgrade anytime when you need more features.</p>
                     </div>
                     <div class="faq-item">
                         <h3 class="faq-question">What payment methods do you accept?</h3>
@@ -860,7 +863,7 @@
                 <h2 class="cta-title">Ready to Level Up Your Roblox Development?</h2>
                 <p class="cta-subtitle">Join thousands of developers creating amazing games with AI assistance</p>
                 <button class="cta-button" onclick="window.location.href='/login.html'">
-                    Start Your Free Trial
+                    Get Started Free
                 </button>
             </section>
         </div>
@@ -882,6 +885,21 @@
     </div>
 
     <script>
+        // Initialize Stripe with live publishable key
+        const stripe = Stripe('pk_live_51S6SwCGsDklELrgDqDKMpn2UnhGyACQ9TnSLo6SbFeD9AW1PD6caohbY3eRlIZaSH96bdz7BJ1dHK6MzniBi4PIr00kaEu7GC8');
+        
+        // Payment Links for 30p pricing
+        const PAYMENT_LINKS = {
+            pro: {
+                monthly: 'https://buy.stripe.com/28E8wP87IfLb5fm7um63K00', // Pro Monthly £0.30
+                annual: 'https://buy.stripe.com/9B65kD3RsgPf8ry4ia63K01'   // Pro Annual £0.30
+            },
+            enterprise: {
+                monthly: 'https://buy.stripe.com/fZudR987I42tcHObKC63K02', // Enterprise Monthly £0.30
+                annual: 'https://buy.stripe.com/00w28rcnYaqR5fm7um63K03'   // Enterprise Annual £0.30
+            }
+        };
+        
         // Billing toggle functionality
         function toggleBilling() {
             const toggle = document.getElementById('billingToggle');
@@ -898,25 +916,49 @@
             const annualLabel = document.getElementById('annualLabel');
             
             if (isAnnual) {
-                // Annual pricing (20% discount)
-                proPrice.textContent = '0.008';
-                enterprisePrice.textContent = '0.008';
-                proPeriod.textContent = '/month';
-                enterprisePeriod.textContent = '/month';
+                // Annual pricing - same as monthly due to 30p minimum
+                proPrice.textContent = '0.30';
+                enterprisePrice.textContent = '0.30';
+                proPeriod.textContent = '/year';
+                enterprisePeriod.textContent = '/year';
                 
                 // Update label styles
                 monthlyLabel.style.color = '#8b949e';
                 annualLabel.style.color = '#58a6ff';
             } else {
                 // Monthly pricing
-                proPrice.textContent = '0.01';
-                enterprisePrice.textContent = '0.01';
+                proPrice.textContent = '0.30';
+                enterprisePrice.textContent = '0.30';
                 proPeriod.textContent = '/month';
                 enterprisePeriod.textContent = '/month';
                 
                 // Update label styles
                 monthlyLabel.style.color = '#58a6ff';
                 annualLabel.style.color = '#8b949e';
+            }
+        }
+        
+        // Plan selection with Stripe payment
+        function selectPlan(planType) {
+            const isAnnual = document.getElementById('billingToggle').checked;
+            const billingCycle = isAnnual ? 'annual' : 'monthly';
+            
+            switch(planType) {
+                case 'free':
+                    // Redirect to login page for free plan
+                    window.location.href = '/login.html?plan=free';
+                    break;
+                    
+                case 'pro':
+                case 'enterprise':
+                    // Redirect to Stripe payment link
+                    const paymentUrl = PAYMENT_LINKS[planType][billingCycle];
+                    if (paymentUrl) {
+                        window.location.href = paymentUrl;
+                    } else {
+                        alert('Payment option not available. Please contact support.');
+                    }
+                    break;
             }
         }
 
