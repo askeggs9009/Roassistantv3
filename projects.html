@@ -526,6 +526,19 @@
             </button>
             <div class="header-title" id="chatTitle">Projects</div>
             
+            <!-- Search Bar -->
+            <div style="flex: 1; max-width: 400px; margin: 0 1rem;">
+                <input type="text" id="projectSearchBar" placeholder="🔍 Search projects..." style="
+                    width: 100%;
+                    padding: 0.5rem 1rem;
+                    background: rgba(33, 38, 45, 0.8);
+                    border: 1px solid #30363d;
+                    border-radius: 6px;
+                    color: #f0f6fc;
+                    font-size: 0.875rem;
+                " onkeyup="searchProjects(this.value)">
+            </div>
+            
             <!-- Subscription Status -->
             <div class="subscription-status" id="subscriptionStatus" style="display: none;">
                 <div class="plan-badge" id="planBadge">Free</div>
@@ -777,6 +790,14 @@
         class ProjectManager {
             constructor() {
                 this.projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
+                // Migrate old projects to include artifacts if they don't have them
+                this.projects = this.projects.map(project => {
+                    if (!project.artifacts) {
+                        project.artifacts = [];
+                    }
+                    return project;
+                });
+                this.saveProjects();
             }
 
             createProject(name, description, type) {
@@ -787,7 +808,8 @@
                     type,
                     created: Date.now(),
                     updated: Date.now(),
-                    files: []
+                    files: [],
+                    artifacts: [] // Store uploaded files and text content
                 };
                 this.projects.push(project);
                 this.saveProjects();
@@ -817,24 +839,75 @@
                 };
                 return icons[type] || '📋';
             }
+
+            addArtifact(projectId, artifact) {
+                const project = this.projects.find(p => p.id === projectId);
+                if (project) {
+                    if (!project.artifacts) {
+                        project.artifacts = [];
+                    }
+                    project.artifacts.push(artifact);
+                    project.updated = Date.now();
+                    this.saveProjects();
+                }
+            }
+
+            removeArtifact(projectId, artifactId) {
+                const project = this.projects.find(p => p.id === projectId);
+                if (project && project.artifacts) {
+                    project.artifacts = project.artifacts.filter(a => a.id !== artifactId);
+                    project.updated = Date.now();
+                    this.saveProjects();
+                }
+            }
         }
 
         const projectManager = new ProjectManager();
 
         // Render projects
-        function renderProjects() {
+        function renderProjects(searchQuery = '') {
             const grid = document.getElementById('projectsGrid');
             const emptyState = document.getElementById('emptyState');
             
-            if (projectManager.projects.length === 0) {
+            // Filter projects based on search query
+            let filteredProjects = projectManager.projects;
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                filteredProjects = projectManager.projects.filter(project => 
+                    project.name.toLowerCase().includes(query) || 
+                    (project.description && project.description.toLowerCase().includes(query)) ||
+                    project.type.toLowerCase().includes(query)
+                );
+            }
+            
+            if (filteredProjects.length === 0) {
                 grid.innerHTML = '';
-                emptyState.style.display = 'block';
+                if (projectManager.projects.length === 0) {
+                    emptyState.style.display = 'block';
+                    emptyState.innerHTML = `
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📋</div>
+                        <h3 style="color: #f0f6fc; margin: 0 0 0.5rem 0;">Create Your First Project</h3>
+                        <p style="color: #8b949e; margin: 0 0 2rem 0;">Start organizing your Roblox development work</p>
+                        <button onclick="openNewProjectModal()" style="background: #238636; border: none; border-radius: 6px; color: white; padding: 0.75rem 1.5rem; cursor: pointer; font-size: 1rem;">
+                            ➕ Create Project
+                        </button>
+                    `;
+                } else {
+                    emptyState.style.display = 'block';
+                    emptyState.innerHTML = `
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+                        <h3 style="color: #f0f6fc; margin: 0 0 0.5rem 0;">No projects found</h3>
+                        <p style="color: #8b949e; margin: 0 0 2rem 0;">Try searching with different keywords</p>
+                    `;
+                }
                 return;
             }
             
             emptyState.style.display = 'none';
             
-            grid.innerHTML = projectManager.projects.map(project => `
+            grid.innerHTML = filteredProjects.map(project => {
+                const artifactCount = project.artifacts ? project.artifacts.length : 0;
+                return `
                 <div class="project-card" onclick="projectManager.openProject('${project.id}')">
                     <div class="project-header">
                         <div class="project-icon">${projectManager.getProjectIcon(project.type)}</div>
@@ -843,13 +916,23 @@
                     <div class="project-content">
                         <h3>${project.name}</h3>
                         <p class="project-description">${project.description || 'No description'}</p>
+                        ${artifactCount > 0 ? `
+                            <div style="margin: 0.5rem 0; color: #58a6ff; font-size: 0.85rem;">
+                                📎 ${artifactCount} artifact${artifactCount !== 1 ? 's' : ''}
+                            </div>
+                        ` : ''}
                         <div class="project-meta">
                             <div class="project-type">${project.type}</div>
                             <div class="project-updated">${formatDate(project.updated)}</div>
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
+        }
+
+        // Search projects function
+        function searchProjects(query) {
+            renderProjects(query);
         }
 
         // Modal functions

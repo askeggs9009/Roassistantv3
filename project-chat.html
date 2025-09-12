@@ -429,7 +429,18 @@
                 <h3 id="projectName">Loading project...</h3>
                 <p id="projectDescription">Please wait while we load your project details.</p>
             </div>
-            <a href="projects.html" class="back-to-projects">← Back to Projects</a>
+            <div style="margin-left: auto; display: flex; gap: 0.5rem; align-items: center;">
+                <button onclick="openArtifactsModal()" style="background: rgba(88, 166, 255, 0.15); border: 1px solid rgba(88, 166, 255, 0.3); border-radius: 6px; color: #58a6ff; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem;">
+                    📎 <span id="artifactCount">0</span> Artifacts
+                </button>
+                <button onclick="openAddFileDialog()" style="background: #238636; border: none; border-radius: 6px; color: white; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.85rem;">
+                    📁 Add Files
+                </button>
+                <button onclick="openAddTextModal()" style="background: #1f6feb; border: none; border-radius: 6px; color: white; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.85rem;">
+                    📝 Add Text
+                </button>
+                <a href="projects.html" class="back-to-projects">← Back</a>
+            </div>
         </div>
 
         <!-- Header Banner Ad -->
@@ -626,7 +637,278 @@
                 'template': '📋'
             };
             iconElement.textContent = iconMap[currentProject.type] || '📂';
+            
+            // Update artifact count
+            const artifactCount = currentProject.artifacts ? currentProject.artifacts.length : 0;
+            document.getElementById('artifactCount').textContent = artifactCount;
         }
+
+        // Artifact Management Functions
+        function openArtifactsModal() {
+            document.getElementById('artifactsModal').style.display = 'block';
+            renderArtifacts();
+        }
+
+        function closeArtifactsModal() {
+            document.getElementById('artifactsModal').style.display = 'none';
+        }
+
+        function openAddTextModal() {
+            document.getElementById('addTextModal').style.display = 'block';
+            document.getElementById('artifactName').focus();
+        }
+
+        function closeAddTextModal() {
+            document.getElementById('addTextModal').style.display = 'none';
+            document.getElementById('artifactName').value = '';
+            document.getElementById('artifactContent').value = '';
+        }
+
+        function openAddFileDialog() {
+            document.getElementById('artifactFileInput').click();
+        }
+
+        function addTextArtifact(event) {
+            event.preventDefault();
+            const name = document.getElementById('artifactName').value.trim();
+            const content = document.getElementById('artifactContent').value.trim();
+            
+            if (!name || !content) return;
+            
+            const artifact = {
+                id: 'artifact_' + Date.now(),
+                type: 'text',
+                name: name,
+                content: content,
+                size: new Blob([content]).size,
+                created: Date.now()
+            };
+            
+            addArtifactToProject(artifact);
+            closeAddTextModal();
+        }
+
+        function handleArtifactFileSelect(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+            
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const artifact = {
+                        id: 'artifact_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                        type: 'file',
+                        name: file.name,
+                        content: e.target.result,
+                        mimeType: file.type,
+                        size: file.size,
+                        created: Date.now()
+                    };
+                    addArtifactToProject(artifact);
+                };
+                
+                // Read as text for text files, as data URL for others
+                if (file.type.startsWith('text/') || 
+                    file.name.endsWith('.lua') || 
+                    file.name.endsWith('.luau') || 
+                    file.name.endsWith('.js') || 
+                    file.name.endsWith('.json') ||
+                    file.name.endsWith('.md')) {
+                    reader.readAsText(file);
+                } else {
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Clear the file input
+            event.target.value = '';
+        }
+
+        function addArtifactToProject(artifact) {
+            if (!currentProject) return;
+            
+            if (!currentProject.artifacts) {
+                currentProject.artifacts = [];
+            }
+            
+            currentProject.artifacts.push(artifact);
+            currentProject.updated = Date.now();
+            
+            // Save to localStorage
+            const projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
+            const projectIndex = projects.findIndex(p => p.id === currentProject.id);
+            if (projectIndex !== -1) {
+                projects[projectIndex] = currentProject;
+                localStorage.setItem('roblox_projects', JSON.stringify(projects));
+            }
+            
+            // Update UI
+            updateProjectHeader();
+            renderArtifacts();
+            
+            // Show success message
+            showNotification(`Added "${artifact.name}" to project artifacts`);
+        }
+
+        function removeArtifact(artifactId) {
+            if (!currentProject || !currentProject.artifacts) return;
+            
+            const artifact = currentProject.artifacts.find(a => a.id === artifactId);
+            if (!artifact) return;
+            
+            if (confirm(`Remove "${artifact.name}" from artifacts?`)) {
+                currentProject.artifacts = currentProject.artifacts.filter(a => a.id !== artifactId);
+                currentProject.updated = Date.now();
+                
+                // Save to localStorage
+                const projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
+                const projectIndex = projects.findIndex(p => p.id === currentProject.id);
+                if (projectIndex !== -1) {
+                    projects[projectIndex] = currentProject;
+                    localStorage.setItem('roblox_projects', JSON.stringify(projects));
+                }
+                
+                // Update UI
+                updateProjectHeader();
+                renderArtifacts();
+                
+                // Show success message
+                showNotification(`Removed "${artifact.name}" from artifacts`);
+            }
+        }
+
+        function renderArtifacts() {
+            const artifactsList = document.getElementById('artifactsList');
+            
+            if (!currentProject || !currentProject.artifacts || currentProject.artifacts.length === 0) {
+                artifactsList.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #8b949e;">
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">📭</div>
+                        <p>No artifacts yet. Add files or text content to help the AI understand your project better.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            artifactsList.innerHTML = currentProject.artifacts.map(artifact => {
+                const icon = artifact.type === 'text' ? '📝' : getFileIcon(artifact.name);
+                const sizeStr = formatFileSize(artifact.size);
+                
+                return `
+                    <div class="artifact-item">
+                        <div class="artifact-info">
+                            <div class="artifact-icon">${icon}</div>
+                            <div class="artifact-details">
+                                <h4>${artifact.name}</h4>
+                                <p>${artifact.type === 'text' ? 'Text content' : 'File'} • ${sizeStr} • ${formatDate(artifact.created)}</p>
+                            </div>
+                        </div>
+                        <div class="artifact-actions">
+                            <button class="artifact-btn" onclick="viewArtifact('${artifact.id}')">View</button>
+                            <button class="artifact-btn delete" onclick="removeArtifact('${artifact.id}')">Remove</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function viewArtifact(artifactId) {
+            const artifact = currentProject.artifacts.find(a => a.id === artifactId);
+            if (!artifact) return;
+            
+            // For text content, show in a modal or copy to clipboard
+            if (artifact.type === 'text' || artifact.mimeType?.startsWith('text/')) {
+                const truncated = artifact.content.length > 1000 
+                    ? artifact.content.substring(0, 1000) + '...\n\n[Content truncated for preview]'
+                    : artifact.content;
+                
+                alert(`Content of "${artifact.name}":\n\n${truncated}`);
+            } else {
+                alert(`"${artifact.name}" is a binary file and cannot be previewed directly.`);
+            }
+        }
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const iconMap = {
+                'lua': '📜',
+                'luau': '📜',
+                'js': '🟨',
+                'json': '📋',
+                'md': '📄',
+                'txt': '📄',
+                'png': '🖼️',
+                'jpg': '🖼️',
+                'jpeg': '🖼️',
+                'gif': '🖼️',
+                'zip': '📦',
+                'rbxm': '🎮',
+                'rbxl': '🎮'
+            };
+            return iconMap[ext] || '📎';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function formatDate(timestamp) {
+            const now = Date.now();
+            const diff = now - timestamp;
+            const minutes = Math.floor(diff / 60000);
+            
+            if (minutes < 1) return 'Just now';
+            if (minutes === 1) return '1 minute ago';
+            if (minutes < 60) return `${minutes} minutes ago`;
+            
+            const hours = Math.floor(minutes / 60);
+            if (hours === 1) return '1 hour ago';
+            if (hours < 24) return `${hours} hours ago`;
+            
+            const days = Math.floor(hours / 24);
+            if (days === 1) return 'Yesterday';
+            if (days < 7) return `${days} days ago`;
+            
+            return new Date(timestamp).toLocaleDateString();
+        }
+
+        function showNotification(message) {
+            // Create a temporary notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                bottom: 2rem;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(45deg, #238636, #2ea043);
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                z-index: 1001;
+                animation: slideInUp 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Add modal close on click outside
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('modal')) {
+                if (event.target.id === 'artifactsModal') {
+                    closeArtifactsModal();
+                } else if (event.target.id === 'addTextModal') {
+                    closeAddTextModal();
+                }
+            }
+        });
 
         // FIXED: Account switching functionality
         class AccountManager {
@@ -881,6 +1163,214 @@
             <div class="ad-label">Advertisement</div>
         </div>
     </template>
+
+    <!-- Artifacts Modal -->
+    <div class="modal" id="artifactsModal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2 class="modal-title">Project Artifacts</h2>
+                <button class="modal-close" onclick="closeArtifactsModal()">×</button>
+            </div>
+            <div id="artifactsList" style="padding: 1rem 0;">
+                <!-- Artifacts will be listed here -->
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeArtifactsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Text Modal -->
+    <div class="modal" id="addTextModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Add Text Content</h2>
+                <button class="modal-close" onclick="closeAddTextModal()">×</button>
+            </div>
+            <form onsubmit="addTextArtifact(event)">
+                <div class="form-group">
+                    <label class="form-label" for="artifactName">Name</label>
+                    <input type="text" id="artifactName" class="form-input" placeholder="e.g., Game Logic, Player Stats, UI Code" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="artifactContent">Content</label>
+                    <textarea id="artifactContent" class="form-input form-textarea" placeholder="Paste your code or text here..." style="min-height: 200px; font-family: monospace;" required></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddTextModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Text</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Hidden file input for artifacts -->
+    <input type="file" id="artifactFileInput" accept="*" style="display: none;" onchange="handleArtifactFileSelect(event)" multiple>
+
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 480px;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal-title {
+            color: #f0f6fc;
+            margin: 0;
+            font-size: 1.25rem;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: #6e7681;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-label {
+            display: block;
+            color: #f0f6fc;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .form-input {
+            width: 100%;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 0.75rem;
+            color: #f0f6fc;
+            font-size: 0.875rem;
+            box-sizing: border-box;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+        
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: #238636;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: #8b949e;
+            border: 1px solid #30363d;
+        }
+
+        .artifact-item {
+            background: rgba(33, 38, 45, 0.6);
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .artifact-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex: 1;
+        }
+
+        .artifact-icon {
+            font-size: 1.5rem;
+        }
+
+        .artifact-details h4 {
+            color: #f0f6fc;
+            margin: 0 0 0.25rem 0;
+            font-size: 0.95rem;
+        }
+
+        .artifact-details p {
+            color: #8b949e;
+            margin: 0;
+            font-size: 0.8rem;
+        }
+
+        .artifact-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .artifact-btn {
+            background: none;
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            color: #8b949e;
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+
+        .artifact-btn:hover {
+            border-color: #58a6ff;
+            color: #58a6ff;
+        }
+
+        .artifact-btn.delete:hover {
+            border-color: #f85149;
+            color: #f85149;
+        }
+    </style>
 
 </body>
 </html>
