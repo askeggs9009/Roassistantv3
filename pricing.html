@@ -554,7 +554,7 @@
         }
         
         .pricing-header {
-            /* margin-top: 50px; -- Only needed when test banner is active */
+            margin-top: 50px; /* Account for test banner */
         }
         
         /* Loading Spinner */
@@ -647,12 +647,10 @@
     </style>
 </head>
 <body>
-    <!-- Live Mode Banner (Comment out when going to production) -->
-    <!--
+    <!-- Test Mode Banner -->
     <div class="test-mode-banner">
         🧪 TEST MODE - Use card <code>4242 4242 4242 4242</code> with any future date and CVC for testing
     </div>
-    -->
     
     <div class="pricing-page">
         <!-- Header -->
@@ -935,19 +933,19 @@
     </div>
 
     <script>
-        // Initialize Stripe (Live Mode)
-        // Replace with your actual Stripe publishable key
-        const stripe = Stripe('pk_live_YOUR_PUBLISHABLE_KEY_HERE'); // You need to add your live publishable key
+        // Initialize Stripe (Test Mode for aLEX sandbox)
+        // Replace with your actual Stripe test publishable key
+        const stripe = Stripe('pk_test_YOUR_TEST_PUBLISHABLE_KEY_HERE'); // You need to add your test publishable key
         
-        // Stripe Live Product/Price IDs from your Stripe dashboard
+        // Stripe Test Product/Price IDs from your test environment
         const STRIPE_PRICE_IDS = {
             pro: {
-                monthly: 'price_1S4qIZ30DH9fxKOMCFVSgtaf', // RoAssistant Pro Monthly
-                annual: 'price_1S4qKE30DH9fxKOM13MbvneU'   // RoAssistant Pro Annual
+                monthly: 'price_1S6SMr30DH9fxKOMwK9nZmOc', // RoAssistant Pro Monthly (Test)
+                annual: 'price_1S6SN330DH9fxKOMxQKayEWo'   // RoAssistant Pro Annual (Test) - $15.20/month
             },
             enterprise: {
-                monthly: 'price_1S4qKv30DH9fxKOMpqOWbeEe', // RoAssistant Enterprise Monthly
-                annual: 'price_1S4qMc30DH9fxKOM4yxoHcot'   // RoAssistant Enterprise Annual
+                monthly: 'price_1S6SNE30DH9fxKOMxIjjzRDi', // RoAssistant Enterprise Monthly (Test)
+                annual: 'price_1S6SNI30DH9fxKOMQWUMoP1L'   // RoAssistant Enterprise Annual (Test) - $79.20/month
             }
         };
         
@@ -1065,10 +1063,10 @@
             // You should replace this with actual API call to your backend
             
             const paymentLinks = {
-                'price_1S4qIZ30DH9fxKOMCFVSgtaf': 'https://buy.stripe.com/fZu14g9OFeZPbhtdJo0Ny04', // Pro Monthly
-                'price_1S4qKE30DH9fxKOM13MbvneU': 'https://buy.stripe.com/9B6bIU9OF7xn71daxc0Ny05', // Pro Annual
-                'price_1S4qKv30DH9fxKOMpqOWbeEe': 'https://buy.stripe.com/fZu00c0e5dVL99laxc0Ny06', // Enterprise Monthly
-                'price_1S4qMc30DH9fxKOM4yxoHcot': 'https://buy.stripe.com/bJe00c5ypdVLadp7l00Ny07'  // Enterprise Annual
+                'price_1S6SMr30DH9fxKOMwK9nZmOc': 'https://buy.stripe.com/6oUcMYaSJ7xndpB0WC0Ny08', // Pro Monthly (Test)
+                'price_1S6SN330DH9fxKOMxQKayEWo': 'https://buy.stripe.com/eVq4gs2mdcRH0CPcFk0Ny09', // Pro Annual (Test)
+                'price_1S6SNE30DH9fxKOMxIjjzRDi': 'https://buy.stripe.com/00w6oA1i9aJz3P1cFk0Ny0a', // Enterprise Monthly (Test)
+                'price_1S6SNI30DH9fxKOMQWUMoP1L': 'https://buy.stripe.com/dRmbIUe4V04V3P1cFk0Ny0b'  // Enterprise Annual (Test)
             };
             
             // Return the payment link
