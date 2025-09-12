@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Sales - Roblox Luau AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #21262d 100%);
+            color: #f0f6fc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .contact-container {
+            background: rgba(33, 38, 45, 0.8);
+            backdrop-filter: blur(20px);
+            border: 2px solid #9d4edd;
+            border-radius: 20px;
+            padding: 3rem;
+            max-width: 600px;
+            width: 100%;
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, #9d4edd, #7c3aed);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2rem;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #f0f6fc;
+        }
+        
+        .subtitle {
+            color: #8b949e;
+            line-height: 1.6;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            color: #f0f6fc;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            background: rgba(13, 17, 23, 0.6);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 0.75rem;
+            color: #f0f6fc;
+            font-size: 0.95rem;
+            transition: border-color 0.2s ease;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #9d4edd;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .enterprise-features {
+            background: rgba(13, 17, 23, 0.5);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .enterprise-features h3 {
+            color: #9d4edd;
+            margin-bottom: 1rem;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #8b949e;
+        }
+        
+        .feature-item span:first-child {
+            color: #9d4edd;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: linear-gradient(45deg, #9d4edd, #7c3aed);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(157, 78, 221, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 1.5rem;
+            color: #58a6ff;
+            text-decoration: none;
+            text-align: center;
+            width: 100%;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        .success-message {
+            display: none;
+            background: rgba(35, 134, 54, 0.2);
+            border: 1px solid #238636;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            text-align: center;
+            color: #2ea043;
+        }
+        
+        .success-message.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="contact-container">
+        <div class="header">
+            <div class="icon">💼</div>
+            <h1>Enterprise Plan</h1>
+            <p class="subtitle">
+                Get unlimited access and custom features for your team or studio
+            </p>
+        </div>
+        
+        <div class="enterprise-features">
+            <h3>What's Included:</h3>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <span>✓</span>
+                    <span>Unlimited AI requests</span>
+                </div>
+                <div class="feature-item">
+                    <span>✓</span>
+                    <span>Custom AI models</span>
+                </div>
+                <div class="feature-item">
+                    <span>✓</span>
+                    <span>Team collaboration</span>
+                </div>
+                <div class="feature-item">
+                    <span>✓</span>
+                    <span>Priority support 24/7</span>
+                </div>
+                <div class="feature-item">
+                    <span>✓</span>
+                    <span>Advanced analytics</span>
+                </div>
+                <div class="feature-item">
+                    <span>✓</span>
+                    <span>Custom integrations</span>
+                </div>
+                <div class="feature-item">
+                    <span>✓</span>
+                    <span>SLA guarantee</span>
+                </div>
+                <div class="feature-item">
+                    <span>✓</span>
+                    <span>Dedicated account manager</span>
+                </div>
+            </div>
+        </div>
+        
+        <form id="contactForm" onsubmit="handleSubmit(event)">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="firstName">First Name *</label>
+                    <input type="text" id="firstName" name="firstName" required>
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Last Name *</label>
+                    <input type="text" id="lastName" name="lastName" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Work Email *</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="company">Company/Studio Name *</label>
+                <input type="text" id="company" name="company" required>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="teamSize">Team Size *</label>
+                    <select id="teamSize" name="teamSize" required>
+                        <option value="">Select...</option>
+                        <option value="2-5">2-5 people</option>
+                        <option value="6-10">6-10 people</option>
+                        <option value="11-25">11-25 people</option>
+                        <option value="26-50">26-50 people</option>
+                        <option value="50+">50+ people</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="budget">Monthly Budget</label>
+                    <select id="budget" name="budget">
+                        <option value="">Select...</option>
+                        <option value="100-500">$100-500</option>
+                        <option value="500-1000">$500-1,000</option>
+                        <option value="1000-5000">$1,000-5,000</option>
+                        <option value="5000+">$5,000+</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="message">Tell us about your needs</label>
+                <textarea id="message" name="message" placeholder="What features are most important to your team? Any specific requirements?"></textarea>
+            </div>
+            
+            <button type="submit" class="btn" id="submitBtn">Send Message</button>
+        </form>
+        
+        <div class="success-message" id="successMessage">
+            ✅ Thank you! We'll contact you within 24 hours to discuss your Enterprise plan.
+        </div>
+        
+        <a href="/pricing.html" class="back-link">← Back to Pricing</a>
+    </div>
+    
+    <script>
+        function handleSubmit(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const submitBtn = document.getElementById('submitBtn');
+            const successMessage = document.getElementById('successMessage');
+            
+            // Show loading state
+            submitBtn.textContent = 'Sending...';
+            submitBtn.disabled = true;
+            
+            // Collect form data
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            
+            // In production, you would send this to your backend
+            console.log('Contact form data:', data);
+            
+            // Simulate sending (in production, make actual API call)
+            setTimeout(() => {
+                // Show success message
+                successMessage.classList.add('show');
+                form.reset();
+                submitBtn.textContent = 'Message Sent!';
+                
+                // Reset button after delay
+                setTimeout(() => {
+                    submitBtn.textContent = 'Send Message';
+                    submitBtn.disabled = false;
+                }, 3000);
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
