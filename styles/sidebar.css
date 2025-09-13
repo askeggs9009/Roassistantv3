@@ -175,8 +175,8 @@
     gap: 0.75rem;
     padding: 0.5rem;
     border-radius: 8px;
-    cursor: pointer;
     transition: all 0.2s ease;
+    min-width: 0; /* Ensure flex item can shrink */
 }
 
 .user-profile:hover {
@@ -194,21 +194,54 @@
     color: white;
     font-weight: 600;
     font-size: 0.85rem;
+    flex-shrink: 0;
 }
 
 .user-info {
     flex: 1;
+    min-width: 0; /* Allow text to wrap/truncate */
+    overflow: hidden;
 }
 
 .user-name {
     font-size: 0.9rem;
     font-weight: 500;
     color: #f0f6fc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 .user-plan {
     font-size: 0.75rem;
     color: #8b949e;
+    white-space: nowrap;
+}
+
+.user-actions {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.logout-btn {
+    background: #21262d;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    color: #8b949e;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logout-btn:hover {
+    background: #30363d;
+    border-color: #58a6ff;
+    color: #58a6ff;
 }
 
 /* Script Item Styles */

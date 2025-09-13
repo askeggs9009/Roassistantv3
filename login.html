@@ -338,12 +338,13 @@
             <!-- Email Login Form -->
             <form class="email-form" id="loginForm">
                 <div class="form-group name-field" id="nameGroup">
-                    <label class="form-label" for="name">Full Name (Optional)</label>
+                    <label class="form-label" for="name">Full Name *</label>
                     <input 
                         type="text" 
                         id="name" 
                         class="form-input" 
                         placeholder="Enter your full name"
+                        required
                     >
                 </div>
 
@@ -485,6 +486,17 @@
                 return;
             }
 
+            // Name validation for signup
+            if (isSignUp && !name?.trim()) {
+                showError('Please enter your full name.');
+                return;
+            }
+
+            if (isSignUp && name.trim().length < 2) {
+                showError('Name must be at least 2 characters long.');
+                return;
+            }
+
             // Password validation for signup
             if (isSignUp && password.length < 6) {
                 showError('Password must be at least 6 characters long.');
@@ -497,7 +509,7 @@
             try {
                 const endpoint = isSignUp ? '/auth/signup' : '/auth/login';
                 const body = isSignUp 
-                    ? { email, password, name: name || undefined }
+                    ? { email, password, name: name.trim() }
                     : { email, password };
 
                 console.log(`Attempting ${isSignUp ? 'signup' : 'login'} for:`, email);

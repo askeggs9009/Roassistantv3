@@ -510,17 +510,17 @@ class UIManager {
         
         if (userProfileElement && user) {
             userProfileElement.innerHTML = `
+                <div class="user-avatar">${(user.name || user.email || 'U').charAt(0).toUpperCase()}</div>
                 <div class="user-info">
-                    <div class="user-avatar">${user.name.charAt(0).toUpperCase()}</div>
-                    <div class="user-details">
-                        <div class="user-name">${user.name}</div>
-                        <div class="user-email">${user.email}</div>
-                        <div class="subscription-badge ${user.subscription?.plan || 'free'}">${(user.subscription?.plan || 'free').toUpperCase()}</div>
-                    </div>
+                    <div class="user-name">${user.name || user.email}</div>
+                    <div class="user-plan">${(user.subscription?.plan || 'free').toUpperCase()} Plan</div>
                 </div>
                 <div class="user-actions">
-                    <button class="btn-secondary" onclick="uiManager.showAccountSettings()">Settings</button>
-                    <button class="btn-secondary" onclick="uiManager.logout()">Logout</button>
+                    <button class="logout-btn" onclick="window.location.href='/login.html'" title="Logout">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M16 17v-3H9v-4h7V7l5 5-5 5M14 2a2 2 0 0 1 2 2v2h-2V4H4v16h10v-2h2v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h10z"/>
+                        </svg>
+                    </button>
                 </div>
             `;
         }
