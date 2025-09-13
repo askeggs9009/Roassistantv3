@@ -83,7 +83,13 @@ class UIManager {
         if (section === 'chats') {
             window.chatManager.loadChatHistory();
         } else if (section === 'scripts') {
-            window.scriptsManager.loadScriptsView();
+            console.log('About to call scriptsManager.loadScriptsView');
+            console.log('scriptsManager exists:', !!window.scriptsManager);
+            if (window.scriptsManager) {
+                window.scriptsManager.loadScriptsView();
+            } else {
+                console.error('scriptsManager not found on window object');
+            }
         } else if (section === 'projects') {
             // Redirect to projects.html
             window.location.href = '/projects.html';
@@ -101,6 +107,8 @@ function closeSidebar() {
 }
 
 function setActiveNav(element, section) {
+    console.log('Global setActiveNav called with:', section);
+    console.log('uiManager exists:', !!uiManager);
     uiManager.setActiveNav(element, section);
 }
 
@@ -205,3 +213,4 @@ function closeUpgradePrompt() {
 
 // Create global UI manager instance
 const uiManager = new UIManager();
+window.uiManager = uiManager;

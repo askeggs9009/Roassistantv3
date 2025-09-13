@@ -400,3 +400,4 @@ class ScriptsManager {
 
 // Create global scripts manager instance
 const scriptsManager = new ScriptsManager();
+window.scriptsManager = scriptsManager;
