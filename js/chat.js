@@ -216,6 +216,12 @@ class ChatManager {
 
     // Load chat history
     loadChatHistory() {
+        // Reset sidebar title when loading chats
+        const sidebarTitle = document.querySelector('.sidebar-header h3');
+        if (sidebarTitle) {
+            sidebarTitle.textContent = 'Recents';
+        }
+        
         // First load project context
         this.loadProjectContext();
         

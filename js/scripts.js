@@ -32,27 +32,35 @@ class ScriptsManager {
         // Load all scripts from all chats
         this.loadAllScriptsFromChats();
         
+        // Update sidebar header title
+        const sidebarTitle = document.querySelector('.sidebar-header h3');
+        if (sidebarTitle) {
+            sidebarTitle.textContent = '🔧 Scripts';
+        }
+        
         chatHistory.innerHTML = `
-            <div class="script-search">
-                <input type="text" 
-                       id="scriptSearch" 
-                       placeholder="Search scripts across all chats..." 
-                       style="width: 100%; padding: 0.5rem; background: rgba(33, 38, 45, 0.8); border: 1px solid #30363d; border-radius: 6px; color: #f0f6fc; font-size: 0.85rem; margin-bottom: 0.5rem; outline: none;"
-                       oninput="scriptsManager.searchScripts(this.value)">
-                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-                    <select id="chatFilter" 
-                            style="padding: 0.4rem; background: rgba(33, 38, 45, 0.8); border: 1px solid #30363d; border-radius: 6px; color: #f0f6fc; font-size: 0.8rem;"
-                            onchange="scriptsManager.filterByChat(this.value)">
-                        <option value="all">All Chats</option>
-                        ${this.getChatFilterOptions()}
-                    </select>
-                    <span style="color: #8b949e; font-size: 0.8rem; padding: 0.4rem;">
-                        Total: ${this.scripts.length} scripts
-                    </span>
+            <div class="scripts-view" style="height: 100%; display: flex; flex-direction: column;">
+                <div class="script-search" style="padding: 0.5rem; background: rgba(33, 38, 45, 0.6); border-bottom: 1px solid #30363d;">
+                    <input type="text" 
+                           id="scriptSearch" 
+                           placeholder="Search scripts across all chats..." 
+                           style="width: 100%; padding: 0.5rem; background: rgba(33, 38, 45, 0.8); border: 1px solid #30363d; border-radius: 6px; color: #f0f6fc; font-size: 0.85rem; outline: none;"
+                           oninput="scriptsManager.searchScripts(this.value)">
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; align-items: center;">
+                        <select id="chatFilter" 
+                                style="flex: 1; padding: 0.4rem; background: rgba(33, 38, 45, 0.8); border: 1px solid #30363d; border-radius: 6px; color: #f0f6fc; font-size: 0.8rem;"
+                                onchange="scriptsManager.filterByChat(this.value)">
+                            <option value="all">All Chats</option>
+                            ${this.getChatFilterOptions()}
+                        </select>
+                        <span style="color: #8b949e; font-size: 0.8rem; padding: 0.4rem; background: rgba(33, 38, 45, 0.8); border: 1px solid #30363d; border-radius: 6px;">
+                            ${this.scripts.length} scripts
+                        </span>
+                    </div>
                 </div>
-            </div>
-            <div id="scriptsContainer">
-                ${this.renderScripts(this.scripts)}
+                <div id="scriptsContainer" style="flex: 1; overflow-y: auto; padding: 0.5rem;">
+                    ${this.renderScripts(this.scripts)}
+                </div>
             </div>
         `;
     }
@@ -190,21 +198,35 @@ class ScriptsManager {
             const timeAgo = chatManager.getTimeAgo(new Date(script.createdAt));
             const chatInfo = script.chatTitle ? `<small style="color: #6e7681;">from: ${script.chatTitle}</small>` : '';
             return `
-                <div class="script-item" onclick="scriptsManager.viewScript('${script.id}')">
-                    <div class="script-header">
+                <div class="script-item" 
+                     style="background: rgba(33, 38, 45, 0.6); border: 1px solid #30363d; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s;"
+                     onmouseover="this.style.background='rgba(33, 38, 45, 0.9)'"
+                     onmouseout="this.style.background='rgba(33, 38, 45, 0.6)'"
+                     onclick="scriptsManager.viewScript('${script.id}')">
+                    <div class="script-header" style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
                         <div style="flex: 1;">
-                            <div class="script-title">${script.title}</div>
+                            <div class="script-title" style="color: #f0f6fc; font-weight: 500; font-size: 0.9rem; margin-bottom: 0.25rem;">${script.title}</div>
                             ${chatInfo}
                         </div>
-                        <div class="script-time">${timeAgo}</div>
+                        <div class="script-time" style="color: #6e7681; font-size: 0.75rem; white-space: nowrap;">${timeAgo}</div>
                     </div>
-                    <div class="script-description">${script.description}</div>
-                    <div class="script-actions">
-                        <button class="script-action-btn" onclick="scriptsManager.copyScript('${script.id}', event)" title="Copy to clipboard">
-                            📋
+                    <div class="script-description" style="color: #8b949e; font-size: 0.8rem; margin-bottom: 0.5rem; line-height: 1.3;">${script.description}</div>
+                    <div class="script-actions" style="display: flex; gap: 0.5rem;">
+                        <button class="script-action-btn" 
+                                style="background: #21262d; border: 1px solid #30363d; border-radius: 6px; color: #f0f6fc; padding: 0.25rem 0.5rem; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;"
+                                onmouseover="this.style.background='#30363d'"
+                                onmouseout="this.style.background='#21262d'"
+                                onclick="scriptsManager.copyScript('${script.id}', event)" 
+                                title="Copy to clipboard">
+                            📋 Copy
                         </button>
-                        <button class="script-action-btn" onclick="scriptsManager.deleteScript('${script.id}', event)" title="Delete script">
-                            🗑️
+                        <button class="script-action-btn" 
+                                style="background: #21262d; border: 1px solid #30363d; border-radius: 6px; color: #f0f6fc; padding: 0.25rem 0.5rem; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;"
+                                onmouseover="this.style.background='#30363d'"
+                                onmouseout="this.style.background='#21262d'"
+                                onclick="scriptsManager.deleteScript('${script.id}', event)" 
+                                title="Delete script">
+                            🗑️ Delete
                         </button>
                     </div>
                 </div>

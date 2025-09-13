@@ -66,6 +66,16 @@ class UIManager {
         
         this.currentView = section;
         
+        // Open sidebar for scripts and chats
+        if (section === 'chats' || section === 'scripts') {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (sidebar && !sidebar.classList.contains('open')) {
+                sidebar.classList.add('open');
+                if (overlay) overlay.classList.add('open');
+            }
+        }
+        
         if (section === 'chats') {
             window.chatManager.loadChatHistory();
         } else if (section === 'scripts') {
