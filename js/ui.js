@@ -50,12 +50,16 @@ class UIManager {
         overlay.classList.remove('open');
     }
 
-    // Set active navigation item - WITH AUTH RESTRICTIONS
+    // Set active navigation item - WITH AUTH RESTRICTIONS  
     setActiveNav(element, section) {
-        // Check if user is trying to access restricted sections
-        if ((section === 'scripts' || section === 'projects') && window.authManager && !window.authManager.isLoggedIn) {
+        console.log('setActiveNav called with section:', section);
+        console.log('Auth manager exists:', !!window.authManager);
+        console.log('User logged in:', window.authManager ? window.authManager.isLoggedIn : 'N/A');
+        
+        // Only restrict projects, not scripts - scripts should be accessible to all users
+        if (section === 'projects' && window.authManager && !window.authManager.isLoggedIn) {
             // Show sign-in prompt
-            alert('Please sign in to access ' + (section === 'scripts' ? 'Scripts' : 'Projects') + '.');
+            alert('Please sign in to access Projects.');
             return;
         }
         
