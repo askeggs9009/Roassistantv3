@@ -616,7 +616,7 @@
                     <a href="/index.html" class="nav-link">Home</a>
                     <a href="/about.html" class="nav-link">About</a>
                     <a href="/pricing.html" class="nav-link active">Pricing</a>
-                    <button class="sign-in-btn" onclick="window.location.href='/login.html'">Sign In</button>
+                    <button class="sign-in-btn" id="authButton" onclick="handleAuthAction()">Sign In</button>
                 </nav>
             </div>
         </header>
@@ -681,7 +681,7 @@
                             <span class="feature-text">Team collaboration</span>
                         </div>
                     </div>
-                    <button class="plan-button secondary" onclick="window.location.href='/login.html?plan=free'">
+                    <button class="plan-button secondary" id="freeButton" onclick="handleFreePlan()">
                         Get Started Free
                     </button>
                 </div>
@@ -862,7 +862,7 @@
             <section class="cta-section">
                 <h2 class="cta-title">Ready to Level Up Your Roblox Development?</h2>
                 <p class="cta-subtitle">Join thousands of developers creating amazing games with AI assistance</p>
-                <button class="cta-button" onclick="window.location.href='/login.html'">
+                <button class="cta-button" id="ctaButton" onclick="handleCTAAction()">
                     Get Started Free
                 </button>
             </section>
@@ -885,6 +885,66 @@
     </div>
 
     <script>
+        // Check authentication status and update buttons
+        function checkAuthStatus() {
+            const user = localStorage.getItem('user');
+            const authButton = document.getElementById('authButton');
+            const ctaButton = document.getElementById('ctaButton');
+            const freeButton = document.getElementById('freeButton');
+
+            if (user) {
+                const userData = JSON.parse(user);
+
+                // Update header auth button
+                if (authButton) {
+                    authButton.textContent = userData.name || 'Dashboard';
+                    authButton.onclick = () => window.location.href = '/index.html';
+                }
+
+                // Update CTA button
+                if (ctaButton) {
+                    ctaButton.textContent = 'Go to Dashboard';
+                    ctaButton.onclick = () => window.location.href = '/index.html';
+                }
+
+                // Update free plan button
+                if (freeButton) {
+                    freeButton.textContent = 'Go to Dashboard';
+                    freeButton.onclick = () => window.location.href = '/index.html';
+                }
+            }
+        }
+
+        // Handle auth button action
+        function handleAuthAction() {
+            const user = localStorage.getItem('user');
+            if (user) {
+                window.location.href = '/index.html';
+            } else {
+                window.location.href = '/login.html';
+            }
+        }
+
+        // Handle CTA button action
+        function handleCTAAction() {
+            const user = localStorage.getItem('user');
+            if (user) {
+                window.location.href = '/index.html';
+            } else {
+                window.location.href = '/login.html';
+            }
+        }
+
+        // Handle free plan selection
+        function handleFreePlan() {
+            const user = localStorage.getItem('user');
+            if (user) {
+                window.location.href = '/index.html';
+            } else {
+                window.location.href = '/login.html?plan=free';
+            }
+        }
+
         // Initialize Stripe with live publishable key
         const stripe = Stripe('pk_live_51S6SwCGsDklELrgDqDKMpn2UnhGyACQ9TnSLo6SbFeD9AW1PD6caohbY3eRlIZaSH96bdz7BJ1dHK6MzniBi4PIr00kaEu7GC8');
         
@@ -966,6 +1026,9 @@
         document.addEventListener('DOMContentLoaded', function() {
             const monthlyLabel = document.getElementById('monthlyLabel');
             monthlyLabel.style.color = '#58a6ff';
+
+            // Check auth status on page load
+            checkAuthStatus();
         });
 
         // Smooth scrolling for internal links
