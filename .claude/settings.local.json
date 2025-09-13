@@ -24,7 +24,9 @@
       "mcp__stripe__create_payment_link",
       "mcp__stripe__create_product",
       "mcp__stripe__create_price",
-      "mcp__stripe__list_prices"
+      "mcp__stripe__list_prices",
+      "mcp__Railway__check-railway-status",
+      "mcp__Railway__list-projects"
     ],
     "deny": [],
     "ask": []

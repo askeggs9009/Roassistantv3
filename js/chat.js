@@ -121,6 +121,13 @@ class ChatManager {
                     <div class="message-text">${this.formatAssistantMessage(content)}</div>
                 </div>
             `;
+            
+            // Extract and save scripts from assistant responses
+            if (window.scriptsManager) {
+                const chatId = this.getCurrentChatId();
+                const chatTitle = document.getElementById('chatTitle')?.textContent || 'Chat';
+                window.scriptsManager.extractAndSaveScriptsFromChat(content, chatId, chatTitle);
+            }
         } else if (type === 'error') {
             messageDiv.innerHTML = `
                 <div class="message-content error">
@@ -136,8 +143,10 @@ class ChatManager {
         messagesContainer.appendChild(messageDiv);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
         
-        // Store message
-        this.messages.push({ type, content, timestamp: Date.now() });
+        // Store message with chat ID
+        const chatId = this.getCurrentChatId();
+        this.messages.push({ type, content, timestamp: Date.now(), chatId });
+        this.saveChatHistory();
     }
 
     // Format assistant messages (handle code blocks, etc.)
@@ -241,14 +250,42 @@ class ChatManager {
     // Save chat history
     saveChatHistory() {
         try {
+            const chatId = this.getCurrentChatId();
+            const allChats = JSON.parse(localStorage.getItem('allChatHistories') || '{}');
+            allChats[chatId] = {
+                messages: this.messages,
+                title: document.getElementById('chatTitle')?.textContent || 'New Chat',
+                lastUpdated: Date.now(),
+                projectContext: this.currentProject
+            };
+            localStorage.setItem('allChatHistories', JSON.stringify(allChats));
             localStorage.setItem('chatHistory', JSON.stringify(this.messages));
         } catch (error) {
             console.error('Error saving chat history:', error);
         }
     }
 
+    // Get current chat ID
+    getCurrentChatId() {
+        let chatId = sessionStorage.getItem('currentChatId');
+        if (!chatId) {
+            chatId = 'chat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            sessionStorage.setItem('currentChatId', chatId);
+        }
+        return chatId;
+    }
+
     // Start new chat
     startNewChat() {
+        // Save current chat before starting new one
+        if (this.messages.length > 0) {
+            this.saveChatHistory();
+        }
+        
+        // Generate new chat ID
+        const newChatId = 'chat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        sessionStorage.setItem('currentChatId', newChatId);
+        
         this.messages = [];
         const messagesContainer = document.getElementById('messagesContainer');
         if (messagesContainer) {
@@ -256,6 +293,12 @@ class ChatManager {
         }
         this.clearAttachedFiles();
         localStorage.removeItem('chatHistory');
+        
+        // Reset chat title
+        const chatTitle = document.getElementById('chatTitle');
+        if (chatTitle) {
+            chatTitle.textContent = 'New Chat';
+        }
         
         // Reload project context if needed
         this.loadProjectContext();
