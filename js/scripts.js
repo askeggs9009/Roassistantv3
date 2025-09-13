@@ -27,9 +27,7 @@ class ScriptsManager {
 
     // Load scripts view
     loadScriptsView() {
-        console.log('loadScriptsView called');
         const chatHistory = document.getElementById('chatHistory');
-        console.log('chatHistory element found:', !!chatHistory);
         
         // Load all scripts from all chats
         this.loadAllScriptsFromChats();

@@ -52,9 +52,6 @@ class UIManager {
 
     // Set active navigation item - WITH AUTH RESTRICTIONS  
     setActiveNav(element, section) {
-        console.log('setActiveNav called with section:', section);
-        console.log('Auth manager exists:', !!window.authManager);
-        console.log('User logged in:', window.authManager ? window.authManager.isLoggedIn : 'N/A');
         
         // Only restrict projects, not scripts - scripts should be accessible to all users
         if (section === 'projects' && window.authManager && !window.authManager.isLoggedIn) {
@@ -83,16 +80,11 @@ class UIManager {
         if (section === 'chats') {
             window.chatManager.loadChatHistory();
         } else if (section === 'scripts') {
-            console.log('About to call scriptsManager.loadScriptsView');
-            console.log('scriptsManager exists:', !!window.scriptsManager);
-            if (window.scriptsManager) {
-                window.scriptsManager.loadScriptsView();
-            } else {
-                console.error('scriptsManager not found on window object');
-            }
+            // Redirect to scripts.html
+            window.location.href = 'scripts.html';
         } else if (section === 'projects') {
             // Redirect to projects.html
-            window.location.href = '/projects.html';
+            window.location.href = 'projects.html';
         }
     }
 }
@@ -107,8 +99,6 @@ function closeSidebar() {
 }
 
 function setActiveNav(element, section) {
-    console.log('Global setActiveNav called with:', section);
-    console.log('uiManager exists:', !!uiManager);
     uiManager.setActiveNav(element, section);
 }
 
