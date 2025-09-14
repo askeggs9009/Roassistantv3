@@ -150,20 +150,91 @@ class ChatManager {
         this.saveChatHistory();
     }
 
-    // Format assistant messages (handle code blocks, etc.)
+    // Format assistant messages with enhanced markdown support
     formatAssistantMessage(content) {
-        // Simple code block detection
+        // Generate unique ID for code blocks in this message
+        const messageId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        let codeBlockIndex = 0;
+
+        // Code blocks with copy button
         content = content.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, language, code) => {
-            return `<pre class="code-block ${language || ''}"><code>${this.escapeHtml(code.trim())}</code></pre>`;
+            const blockId = `${messageId}_code_${codeBlockIndex++}`;
+            const trimmedCode = code.trim();
+            const escapedCode = this.escapeHtml(trimmedCode);
+            const langLabel = language || 'lua';
+
+            return `
+                <div class="code-block-container">
+                    <div class="code-block-header">
+                        <span class="code-language">${langLabel}</span>
+                        <button class="copy-code-btn" onclick="window.chatManager.copyCode('${blockId}')" title="Copy code">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                            </svg>
+                            <span class="copy-text">Copy</span>
+                        </button>
+                    </div>
+                    <pre class="code-block ${langLabel}"><code id="${blockId}">${escapedCode}</code></pre>
+                </div>
+            `;
         });
-        
+
+        // Headers (must be at line start)
+        content = content.replace(/^### (.+)$/gm, '<h3 class="md-h3">$1</h3>');
+        content = content.replace(/^## (.+)$/gm, '<h2 class="md-h2">$1</h2>');
+        content = content.replace(/^# (.+)$/gm, '<h1 class="md-h1">$1</h1>');
+
+        // Bold text
+        content = content.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        content = content.replace(/__(.+?)__/g, '<strong>$1</strong>');
+
+        // Italic text
+        content = content.replace(/\*(.+?)\*/g, '<em>$1</em>');
+        content = content.replace(/_(.+?)_/g, '<em>$1</em>');
+
+        // Underline text
+        content = content.replace(/~~(.+?)~~/g, '<del>$1</del>');
+        content = content.replace(/<u>(.+?)<\/u>/g, '<u>$1</u>');
+
+        // Lists
+        content = content.replace(/^\* (.+)$/gm, '<li>$1</li>');
+        content = content.replace(/^- (.+)$/gm, '<li>$1</li>');
+        content = content.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+        content = content.replace(/(<li>.*<\/li>\n?)+/g, (match) => {
+            return '<ul class="md-list">' + match + '</ul>';
+        });
+
+        // Links
+        content = content.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
         // Inline code
         content = content.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
-        
+
         // Line breaks
         content = content.replace(/\n/g, '<br>');
-        
+
         return content;
+    }
+
+    // Copy code to clipboard
+    copyCode(blockId) {
+        const codeBlock = document.getElementById(blockId);
+        if (codeBlock) {
+            const code = codeBlock.textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                // Update button text
+                const button = codeBlock.closest('.code-block-container').querySelector('.copy-code-btn');
+                if (button) {
+                    const copyText = button.querySelector('.copy-text');
+                    copyText.textContent = 'Copied!';
+                    setTimeout(() => {
+                        copyText.textContent = 'Copy';
+                    }, 2000);
+                }
+            }).catch(err => {
+                console.error('Failed to copy code:', err);
+            });
+        }
     }
 
     // Escape HTML to prevent XSS
