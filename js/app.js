@@ -6,11 +6,22 @@ class App {
 
     // Initialize the app
     init() {
+        console.log('[App] Initializing application...');
+
         // Wait a bit for DOM and all scripts to be fully ready
         setTimeout(() => {
+            console.log('[App] Checking for managers...');
+            console.log('[App] authManager exists:', !!window.authManager);
+            console.log('[App] chatManager exists:', !!window.chatManager);
+            console.log('[App] uiManager exists:', !!window.uiManager);
+
             if (window.authManager) {
+                console.log('[App] Calling authManager.checkAuth()');
                 window.authManager.checkAuth();
+            } else {
+                console.error('[App] authManager not found!');
             }
+
             if (window.chatManager) {
                 window.chatManager.loadChatHistory();
             }

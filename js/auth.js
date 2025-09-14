@@ -7,22 +7,28 @@ class AuthManager {
 
     // Check authentication status
     checkAuth() {
+        console.log('[AuthManager] Checking authentication...');
+
         // Check for multiple possible token names
         this.authToken = localStorage.getItem('authToken') || localStorage.getItem('token');
         const user = localStorage.getItem('user');
 
+        console.log('[AuthManager] Token found:', !!this.authToken);
+        console.log('[AuthManager] User data found:', !!user);
+
         if (this.authToken && user) {
             try {
                 const userData = JSON.parse(user);
+                console.log('[AuthManager] User authenticated:', userData.email);
                 this.showLoggedInUser(userData);
                 this.isLoggedIn = true;
-                console.log('User authenticated:', userData.email);
             } catch (error) {
-                console.log('Auth check failed, showing guest user');
+                console.log('[AuthManager] Auth check failed, showing guest user:', error);
                 this.showGuestUser();
                 this.isLoggedIn = false;
             }
         } else {
+            console.log('[AuthManager] No auth data found, showing guest user');
             this.showGuestUser();
             this.isLoggedIn = false;
         }
