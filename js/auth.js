@@ -22,3 +22,45 @@ class AuthManager {
                 this.showGuestUser();
                 this.isLoggedIn = false;
             }
+        } else {
+            this.showGuestUser();
+            this.isLoggedIn = false;
+        }
+    }
+
+    // Show logged in user
+    showLoggedInUser(userData) {
+        const userProfile = document.getElementById('userProfile');
+        if (userProfile) {
+            userProfile.innerHTML = `
+                <span class="user-name">${userData.name || userData.email}</span>
+                <span class="user-plan">${userData.plan || 'Free'}</span>
+            `;
+            userProfile.style.display = 'flex';
+        }
+    }
+
+    // Show guest user
+    showGuestUser() {
+        const userProfile = document.getElementById('userProfile');
+        if (userProfile) {
+            userProfile.innerHTML = `
+                <span class="user-name">Guest</span>
+                <button onclick="window.location.href='/login.html'" style="background: #58a6ff; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
+                    Sign In
+                </button>
+            `;
+            userProfile.style.display = 'flex';
+        }
+    }
+
+    // Logout
+    async logout() {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        window.location.href = '/login.html';
+    }
+}
+
+// Create global instance
+const authManager = new AuthManager();

@@ -26,7 +26,8 @@
       "mcp__stripe__create_price",
       "mcp__stripe__list_prices",
       "mcp__Railway__check-railway-status",
-      "mcp__Railway__list-projects"
+      "mcp__Railway__list-projects",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

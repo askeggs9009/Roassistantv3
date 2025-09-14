@@ -1,21 +1,23 @@
 // Main Application Module
 class App {
     constructor() {
-        // Make managers globally accessible
-        window.authManager = authManager;
-        window.chatManager = chatManager;
-        window.scriptsManager = scriptsManager;
-        window.uiManager = uiManager;
+        // Managers are already globally accessible from their respective files
     }
 
     // Initialize the app
     init() {
-        // Wait a bit for DOM to be fully ready
+        // Wait a bit for DOM and all scripts to be fully ready
         setTimeout(() => {
-            window.authManager.checkAuth();
-            window.chatManager.loadChatHistory();
-            window.uiManager.setupEventListeners();
-            
+            if (window.authManager) {
+                window.authManager.checkAuth();
+            }
+            if (window.chatManager) {
+                window.chatManager.loadChatHistory();
+            }
+            if (window.uiManager) {
+                window.uiManager.setupEventListeners();
+            }
+
             // Check for project parameter in URL
             this.checkProjectParameter();
         }, 100);

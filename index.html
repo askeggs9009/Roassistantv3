@@ -672,17 +672,16 @@
             }
         }
 
-        // Logout function
+        // Logout function (redirect to authManager if available)
         function logout() {
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('user');
-
-            isLoggedIn = false;
-            authToken = null;
-            currentUser = null;
-
-            // Redirect to login page
-            window.location.href = '/login.html';
+            if (window.authManager) {
+                window.authManager.logout();
+            } else {
+                // Fallback if authManager isn't loaded
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('user');
+                window.location.href = '/login.html';
+            }
         }
 
         // Update model selector for auth status
