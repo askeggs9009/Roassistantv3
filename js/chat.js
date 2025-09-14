@@ -92,58 +92,11 @@ class ChatManager {
         }
     }
 
-    // Add message to chat display
+    // Add message to chat display and save it
     addMessage(type, content) {
-        const messagesContainer = document.getElementById('messagesContainer');
-        if (!messagesContainer) return;
+        // Display the message using the displayMessage method
+        this.displayMessage(type, content);
 
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${type}`;
-        
-        const timestamp = new Date().toLocaleTimeString();
-        
-        if (type === 'user') {
-            messageDiv.innerHTML = `
-                <div class="message-content">
-                    <div class="message-header">
-                        <span class="message-sender">You</span>
-                        <span class="message-time">${timestamp}</span>
-                    </div>
-                    <div class="message-text">${this.escapeHtml(content)}</div>
-                </div>
-            `;
-        } else if (type === 'assistant') {
-            messageDiv.innerHTML = `
-                <div class="message-content">
-                    <div class="message-header">
-                        <span class="message-sender">Roblox Luau AI</span>
-                        <span class="message-time">${timestamp}</span>
-                    </div>
-                    <div class="message-text">${this.formatAssistantMessage(content)}</div>
-                </div>
-            `;
-            
-            // Extract and save scripts from assistant responses
-            if (window.scriptsManager) {
-                const chatId = this.getCurrentChatId();
-                const chatTitle = document.getElementById('chatTitle')?.textContent || 'Chat';
-                window.scriptsManager.extractAndSaveScriptsFromChat(content, chatId, chatTitle);
-            }
-        } else if (type === 'error') {
-            messageDiv.innerHTML = `
-                <div class="message-content error">
-                    <div class="message-header">
-                        <span class="message-sender">Error</span>
-                        <span class="message-time">${timestamp}</span>
-                    </div>
-                    <div class="message-text">${this.escapeHtml(content)}</div>
-                </div>
-            `;
-        }
-
-        messagesContainer.appendChild(messageDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        
         // Store message with chat ID
         const chatId = this.getCurrentChatId();
         this.messages.push({ type, content, timestamp: Date.now(), chatId });
@@ -324,7 +277,7 @@ class ChatManager {
 
         messagesContainer.innerHTML = '';
         this.messages.forEach(msg => {
-            this.addMessage(msg.type, msg.content);
+            this.displayMessage(msg.type, msg.content);
         });
     }
 
@@ -664,6 +617,59 @@ class ChatManager {
                 console.error('Error deleting chat:', error);
             }
         }
+    }
+
+    // Display message without saving (used for loading saved messages)
+    displayMessage(type, content) {
+        const messagesContainer = document.getElementById('messagesContainer');
+        if (!messagesContainer) return;
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}`;
+
+        const timestamp = new Date().toLocaleTimeString();
+
+        if (type === 'user') {
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="message-sender">You</span>
+                        <span class="message-time">${timestamp}</span>
+                    </div>
+                    <div class="message-text">${this.escapeHtml(content)}</div>
+                </div>
+            `;
+        } else if (type === 'assistant') {
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="message-sender">Roblox Luau AI</span>
+                        <span class="message-time">${timestamp}</span>
+                    </div>
+                    <div class="message-text">${this.formatAssistantMessage(content)}</div>
+                </div>
+            `;
+
+            // Extract and save scripts from assistant responses
+            if (window.scriptsManager) {
+                const chatId = this.getCurrentChatId();
+                const chatTitle = document.getElementById('chatTitle')?.textContent || 'Chat';
+                window.scriptsManager.extractAndSaveScriptsFromChat(content, chatId, chatTitle);
+            }
+        } else if (type === 'error') {
+            messageDiv.innerHTML = `
+                <div class="message-content error">
+                    <div class="message-header">
+                        <span class="message-sender">Error</span>
+                        <span class="message-time">${timestamp}</span>
+                    </div>
+                    <div class="message-text">${this.escapeHtml(content)}</div>
+                </div>
+            `;
+        }
+
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 }
 
