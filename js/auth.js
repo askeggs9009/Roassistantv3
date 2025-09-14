@@ -71,9 +71,23 @@ class AuthManager {
 
     // Logout
     async logout() {
+        console.log('[AuthManager] Logging out user...');
+
+        // Clear auth data
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
-        window.location.href = '/login.html';
+
+        // Update state
+        this.isLoggedIn = false;
+        this.authToken = null;
+
+        // Show guest user interface
+        this.showGuestUser();
+
+        // Optionally refresh the page to reset all states
+        // window.location.reload();
+
+        console.log('[AuthManager] User logged out successfully');
     }
 }
 

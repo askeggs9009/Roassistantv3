@@ -1071,11 +1071,22 @@
 
         // Logout function
         function logout() {
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('user');
+            if (window.authManager) {
+                window.authManager.logout();
+            } else {
+                // Fallback if authManager isn't loaded
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('user');
 
-            // Redirect to login page
-            window.location.href = '/login.html';
+                // Reset state variables
+                isLoggedIn = false;
+                authToken = null;
+                currentUser = null;
+
+                // Show guest user interface
+                showGuestUser();
+                updateModelSelector();
+            }
         }
 
         // Update model selector for auth status
