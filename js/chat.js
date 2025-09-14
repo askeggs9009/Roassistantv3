@@ -4,7 +4,8 @@ class ChatManager {
         this.messages = [];
         this.attachedFiles = [];
         this.isLoading = false;
-        this.API_BASE_URL = window.location.origin;
+        // Use the backend API URL
+        this.API_BASE_URL = 'https://roassistantv3-production.up.railway.app';
         this.currentProject = null;
         this.projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
     }
@@ -25,12 +26,12 @@ class ChatManager {
             this.addMessage('user', message);
             messageInput.value = '';
 
-            // Get auth token
-            const token = localStorage.getItem('token');
+            // Get auth token (check both possible keys)
+            const token = localStorage.getItem('authToken') || localStorage.getItem('token');
             const headers = {
                 'Content-Type': 'application/json'
             };
-            
+
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
             }
