@@ -293,10 +293,13 @@ class ChatManager {
         if (sidebarTitle) {
             sidebarTitle.textContent = 'Recents';
         }
-        
+
         // First load project context
         this.loadProjectContext();
-        
+
+        // Load recent chats in sidebar
+        this.loadRecentChats();
+
         // Load from localStorage or server
         const savedMessages = localStorage.getItem('chatHistory');
         if (savedMessages) {
@@ -307,7 +310,7 @@ class ChatManager {
                 console.error('Error loading chat history:', error);
             }
         }
-        
+
         // Show welcome message if no messages
         if (this.messages.length === 0) {
             this.showWelcomeMessage();
@@ -338,6 +341,9 @@ class ChatManager {
             };
             localStorage.setItem('allChatHistories', JSON.stringify(allChats));
             localStorage.setItem('chatHistory', JSON.stringify(this.messages));
+
+            // Update recent chats display
+            this.updateRecentChats();
         } catch (error) {
             console.error('Error saving chat history:', error);
         }
@@ -359,11 +365,11 @@ class ChatManager {
         if (this.messages.length > 0) {
             this.saveChatHistory();
         }
-        
+
         // Generate new chat ID
         const newChatId = 'chat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         sessionStorage.setItem('currentChatId', newChatId);
-        
+
         this.messages = [];
         const messagesContainer = document.getElementById('messagesContainer');
         if (messagesContainer) {
@@ -371,18 +377,21 @@ class ChatManager {
         }
         this.clearAttachedFiles();
         localStorage.removeItem('chatHistory');
-        
+
         // Reset chat title
         const chatTitle = document.getElementById('chatTitle');
         if (chatTitle) {
             chatTitle.textContent = 'New Chat';
         }
-        
+
         // Reload project context if needed
         this.loadProjectContext();
-        
+
         // Show welcome message
         this.showWelcomeMessage();
+
+        // Update recent chats display
+        this.updateRecentChats();
     }
 
     // Show welcome message
@@ -502,6 +511,134 @@ class ChatManager {
             'other': `<svg fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>`
         };
         return icons[type] || icons['other'];
+    }
+
+    // Load and display recent chats in sidebar
+    loadRecentChats() {
+        try {
+            const allChats = JSON.parse(localStorage.getItem('allChatHistories') || '{}');
+            this.updateRecentChatsDisplay(allChats);
+        } catch (error) {
+            console.error('Error loading recent chats:', error);
+        }
+    }
+
+    // Update recent chats display
+    updateRecentChats() {
+        try {
+            const allChats = JSON.parse(localStorage.getItem('allChatHistories') || '{}');
+            this.updateRecentChatsDisplay(allChats);
+        } catch (error) {
+            console.error('Error updating recent chats:', error);
+        }
+    }
+
+    // Update recent chats display in sidebar
+    updateRecentChatsDisplay(allChats) {
+        const chatHistoryContainer = document.getElementById('chatHistory');
+        if (!chatHistoryContainer) return;
+
+        // Sort chats by lastUpdated timestamp
+        const sortedChats = Object.entries(allChats)
+            .sort(([, a], [, b]) => b.lastUpdated - a.lastUpdated)
+            .slice(0, 10); // Show only recent 10 chats
+
+        if (sortedChats.length === 0) {
+            chatHistoryContainer.innerHTML = '<div class="no-chats">No recent chats</div>';
+            return;
+        }
+
+        const currentChatId = this.getCurrentChatId();
+
+        chatHistoryContainer.innerHTML = sortedChats.map(([chatId, chat]) => {
+            const isActive = chatId === currentChatId;
+            const title = chat.title || 'New Chat';
+            const truncatedTitle = title.length > 25 ? title.substring(0, 25) + '...' : title;
+            const lastUpdated = new Date(chat.lastUpdated).toLocaleDateString();
+
+            return `
+                <div class="chat-item ${isActive ? 'active' : ''}" onclick="window.chatManager.loadChat('${chatId}')">
+                    <div class="chat-item-content">
+                        <div class="chat-title">${this.escapeHtml(truncatedTitle)}</div>
+                        <div class="chat-date">${lastUpdated}</div>
+                    </div>
+                    <button class="chat-delete" onclick="event.stopPropagation(); window.chatManager.deleteChat('${chatId}')" title="Delete chat">
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Load a specific chat
+    loadChat(chatId) {
+        try {
+            const allChats = JSON.parse(localStorage.getItem('allChatHistories') || '{}');
+            const chatData = allChats[chatId];
+
+            if (!chatData) {
+                console.error('Chat not found:', chatId);
+                return;
+            }
+
+            // Save current chat before switching
+            this.saveChatHistory();
+
+            // Set the new chat ID
+            sessionStorage.setItem('currentChatId', chatId);
+
+            // Load the chat data
+            this.messages = chatData.messages || [];
+            this.currentProject = chatData.projectContext || null;
+
+            // Update UI
+            const chatTitle = document.getElementById('chatTitle');
+            if (chatTitle) {
+                chatTitle.textContent = chatData.title || 'New Chat';
+            }
+
+            // Clear and display messages
+            const messagesContainer = document.getElementById('messagesContainer');
+            if (messagesContainer) {
+                messagesContainer.innerHTML = '';
+            }
+
+            this.displaySavedMessages();
+
+            // Show welcome message if no messages
+            if (this.messages.length === 0) {
+                this.showWelcomeMessage();
+            }
+
+            // Update recent chats display
+            this.updateRecentChats();
+
+        } catch (error) {
+            console.error('Error loading chat:', error);
+        }
+    }
+
+    // Delete a specific chat
+    deleteChat(chatId) {
+        if (confirm('Are you sure you want to delete this chat?')) {
+            try {
+                const allChats = JSON.parse(localStorage.getItem('allChatHistories') || '{}');
+                delete allChats[chatId];
+                localStorage.setItem('allChatHistories', JSON.stringify(allChats));
+
+                // If we're deleting the current chat, start a new one
+                const currentChatId = this.getCurrentChatId();
+                if (chatId === currentChatId) {
+                    this.startNewChat();
+                } else {
+                    this.updateRecentChats();
+                }
+            } catch (error) {
+                console.error('Error deleting chat:', error);
+            }
+        }
     }
 }
 
