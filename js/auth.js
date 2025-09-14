@@ -32,9 +32,18 @@ class AuthManager {
     showLoggedInUser(userData) {
         const userProfile = document.getElementById('userProfile');
         if (userProfile) {
+            const planText = userData.plan || 'free';
+            const planDisplay = planText.charAt(0).toUpperCase() + planText.slice(1);
+
             userProfile.innerHTML = `
-                <span class="user-name">${userData.name || userData.email}</span>
-                <span class="user-plan">${userData.plan || 'Free'}</span>
+                <div class="user-avatar">${(userData.name || userData.email || 'U').charAt(0).toUpperCase()}</div>
+                <div class="user-info">
+                    <div class="user-name">${userData.name || userData.email || 'User'}</div>
+                    <div class="user-plan">${planDisplay} Plan</div>
+                </div>
+                <button onclick="logout()" style="background: #f85149; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
+                    Logout
+                </button>
             `;
             userProfile.style.display = 'flex';
         }

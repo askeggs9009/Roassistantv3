@@ -318,6 +318,12 @@ class ChatManager {
         const messagesContainer = document.getElementById('messagesContainer');
         if (!messagesContainer) return;
 
+        // Check if welcome message already exists
+        const existingWelcome = messagesContainer.querySelector('.welcome-message');
+        if (existingWelcome) {
+            return; // Don't add duplicate welcome message
+        }
+
         const welcomeDiv = document.createElement('div');
         welcomeDiv.className = 'welcome-message';
         

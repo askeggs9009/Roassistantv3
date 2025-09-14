@@ -706,7 +706,8 @@
         // Initialize app
         function initApp() {
             console.log('Initializing app...');
-            checkAuth();
+            // Don't call local checkAuth here - let authManager handle it
+            // checkAuth();
         }
 
         // Check subscription status (stub for now)
