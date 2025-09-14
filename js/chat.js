@@ -331,15 +331,16 @@ class ChatManager {
     // Save chat history
     saveChatHistory() {
         try {
+            const userStorageKey = this.getUserStorageKey('allChatHistories');
             const chatId = this.getCurrentChatId();
-            const allChats = JSON.parse(localStorage.getItem('allChatHistories') || '{}');
+            const allChats = JSON.parse(localStorage.getItem(userStorageKey) || '{}');
             allChats[chatId] = {
                 messages: this.messages,
                 title: document.getElementById('chatTitle')?.textContent || 'New Chat',
                 lastUpdated: Date.now(),
                 projectContext: this.currentProject
             };
-            localStorage.setItem('allChatHistories', JSON.stringify(allChats));
+            localStorage.setItem(userStorageKey, JSON.stringify(allChats));
             localStorage.setItem('chatHistory', JSON.stringify(this.messages));
 
             // Update recent chats display
@@ -347,6 +348,26 @@ class ChatManager {
         } catch (error) {
             console.error('Error saving chat history:', error);
         }
+    }
+
+    // Get current user ID
+    getCurrentUserId() {
+        try {
+            const user = localStorage.getItem('user');
+            if (user) {
+                const userData = JSON.parse(user);
+                return userData.email || userData.id || 'guest';
+            }
+        } catch (error) {
+            console.error('Error getting user ID:', error);
+        }
+        return 'guest';
+    }
+
+    // Get user-specific storage key
+    getUserStorageKey(baseKey) {
+        const userId = this.getCurrentUserId();
+        return `${baseKey}_${userId}`;
     }
 
     // Get current chat ID
@@ -516,7 +537,8 @@ class ChatManager {
     // Load and display recent chats in sidebar
     loadRecentChats() {
         try {
-            const allChats = JSON.parse(localStorage.getItem('allChatHistories') || '{}');
+            const userStorageKey = this.getUserStorageKey('allChatHistories');
+            const allChats = JSON.parse(localStorage.getItem(userStorageKey) || '{}');
             this.updateRecentChatsDisplay(allChats);
         } catch (error) {
             console.error('Error loading recent chats:', error);
@@ -526,7 +548,8 @@ class ChatManager {
     // Update recent chats display
     updateRecentChats() {
         try {
-            const allChats = JSON.parse(localStorage.getItem('allChatHistories') || '{}');
+            const userStorageKey = this.getUserStorageKey('allChatHistories');
+            const allChats = JSON.parse(localStorage.getItem(userStorageKey) || '{}');
             this.updateRecentChatsDisplay(allChats);
         } catch (error) {
             console.error('Error updating recent chats:', error);
@@ -575,7 +598,8 @@ class ChatManager {
     // Load a specific chat
     loadChat(chatId) {
         try {
-            const allChats = JSON.parse(localStorage.getItem('allChatHistories') || '{}');
+            const userStorageKey = this.getUserStorageKey('allChatHistories');
+            const allChats = JSON.parse(localStorage.getItem(userStorageKey) || '{}');
             const chatData = allChats[chatId];
 
             if (!chatData) {
@@ -624,9 +648,10 @@ class ChatManager {
     deleteChat(chatId) {
         if (confirm('Are you sure you want to delete this chat?')) {
             try {
-                const allChats = JSON.parse(localStorage.getItem('allChatHistories') || '{}');
+                const userStorageKey = this.getUserStorageKey('allChatHistories');
+                const allChats = JSON.parse(localStorage.getItem(userStorageKey) || '{}');
                 delete allChats[chatId];
-                localStorage.setItem('allChatHistories', JSON.stringify(allChats));
+                localStorage.setItem(userStorageKey, JSON.stringify(allChats));
 
                 // If we're deleting the current chat, start a new one
                 const currentChatId = this.getCurrentChatId();
