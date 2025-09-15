@@ -1,3 +1,71 @@
+/* Roblox Loading Animation */
+.roblox-loading {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    animation: robloxRotate 2s linear infinite;
+    background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="yellow" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23f7dc00;stop-opacity:1" /><stop offset="100%" style="stop-color:%23e6c700;stop-opacity:1" /></linearGradient><linearGradient id="blue" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%230066cc;stop-opacity:1" /><stop offset="100%" style="stop-color:%23004499;stop-opacity:1" /></linearGradient><linearGradient id="green" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%236b8e23;stop-opacity:1" /><stop offset="100%" style="stop-color:%23556b2f;stop-opacity:1" /></linearGradient></defs><!-- Head --><rect x="40" y="10" width="20" height="20" fill="url(%23yellow)" rx="3"/><circle cx="45" cy="18" r="1.5" fill="%23000"/><circle cx="55" cy="18" r="1.5" fill="%23000"/><path d="M 42 22 Q 50 26 58 22" stroke="%23000" stroke-width="1.5" fill="none"/><!-- Torso --><rect x="35" y="30" width="30" height="25" fill="url(%23blue)" rx="2"/><!-- Left Arm --><rect x="20" y="32" width="15" height="20" fill="url(%23yellow)" rx="2"/><!-- Right Arm --><rect x="65" y="32" width="15" height="20" fill="url(%23yellow)" rx="2"/><!-- Left Leg --><rect x="38" y="55" width="10" height="25" fill="url(%23green)" rx="2"/><!-- Right Leg --><rect x="52" y="55" width="10" height="25" fill="url(%23green)" rx="2"/></svg>');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+@keyframes robloxRotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    animation: robloxRotate 2s linear infinite;
+    background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="yellow" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23f7dc00;stop-opacity:1" /><stop offset="100%" style="stop-color:%23e6c700;stop-opacity:1" /></linearGradient><linearGradient id="blue" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%230066cc;stop-opacity:1" /><stop offset="100%" style="stop-color:%23004499;stop-opacity:1" /></linearGradient><linearGradient id="green" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%236b8e23;stop-opacity:1" /><stop offset="100%" style="stop-color:%23556b2f;stop-opacity:1" /></linearGradient></defs><!-- Head --><rect x="40" y="10" width="20" height="20" fill="url(%23yellow)" rx="3"/><circle cx="45" cy="18" r="1.5" fill="%23000"/><circle cx="55" cy="18" r="1.5" fill="%23000"/><path d="M 42 22 Q 50 26 58 22" stroke="%23000" stroke-width="1.5" fill="none"/><!-- Torso --><rect x="35" y="30" width="30" height="25" fill="url(%23blue)" rx="2"/><!-- Left Arm --><rect x="20" y="32" width="15" height="20" fill="url(%23yellow)" rx="2"/><!-- Right Arm --><rect x="65" y="32" width="15" height="20" fill="url(%23yellow)" rx="2"/><!-- Left Leg --><rect x="38" y="55" width="10" height="25" fill="url(%23green)" rx="2"/><!-- Right Leg --><rect x="52" y="55" width="10" height="25" fill="url(%23green)" rx="2"/></svg>');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* AI Response Loading Animation */
+.ai-thinking {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: rgba(33, 38, 45, 0.6);
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    margin: 1rem auto;
+    max-width: 800px;
+    animation: fadeIn 0.3s ease;
+}
+
+.ai-thinking .roblox-loading {
+    width: 32px;
+    height: 32px;
+}
+
+.ai-thinking-text {
+    color: #8b949e;
+    font-style: italic;
+    font-size: 0.95rem;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* Chat Area Styles */
 .chat-area {
     flex: 1;

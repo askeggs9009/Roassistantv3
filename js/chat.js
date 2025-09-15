@@ -84,6 +84,9 @@ class ChatManager {
                 requestBody.prompt = message + contextMessage;
             }
 
+            // Show AI thinking animation
+            this.showAiThinking();
+
             // Send to API
             const response = await fetch(`${this.API_BASE_URL}/ask`, {
                 method: 'POST',
@@ -92,6 +95,9 @@ class ChatManager {
             });
 
             const data = await response.json();
+
+            // Hide AI thinking animation
+            this.hideAiThinking();
             
             if (response.ok) {
                 this.addMessage('assistant', data.reply);
@@ -111,11 +117,40 @@ class ChatManager {
 
         } catch (error) {
             console.error('Error sending message:', error);
+            this.hideAiThinking(); // Hide thinking animation on error
             this.addMessage('error', 'Network error. Please check your connection and try again.');
         } finally {
             this.isLoading = false;
             this.updateSendButton(false);
             this.clearAttachedFiles();
+        }
+    }
+
+    // Show AI thinking animation
+    showAiThinking() {
+        const messagesContainer = document.getElementById('messagesContainer');
+        if (!messagesContainer) return;
+
+        // Remove any existing AI thinking animation
+        this.hideAiThinking();
+
+        const thinkingDiv = document.createElement('div');
+        thinkingDiv.className = 'ai-thinking';
+        thinkingDiv.id = 'aiThinking';
+        thinkingDiv.innerHTML = `
+            <div class="roblox-loading"></div>
+            <span class="ai-thinking-text">AI is thinking...</span>
+        `;
+
+        messagesContainer.appendChild(thinkingDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // Hide AI thinking animation
+    hideAiThinking() {
+        const thinkingDiv = document.getElementById('aiThinking');
+        if (thinkingDiv) {
+            thinkingDiv.remove();
         }
     }
 
