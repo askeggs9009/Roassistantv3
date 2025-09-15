@@ -21,10 +21,37 @@ class ChatManager {
         try {
             this.isLoading = true;
             this.updateSendButton(true);
-            
+
+            // Check if this is the first user message in a new chat
+            const isFirstMessage = this.messages.length === 0;
+
             // Add user message to chat
             this.addMessage('user', message);
             messageInput.value = '';
+
+            // Generate chat title if this is the first user message
+            if (isFirstMessage && message.trim()) {
+                // Generate title asynchronously but don't wait for it
+                this.generateChatTitle(message).then(title => {
+                    if (title && title !== 'New Chat') {
+                        // Update the chat title in the UI
+                        const chatTitle = document.getElementById('chatTitle');
+                        if (chatTitle) {
+                            chatTitle.textContent = title;
+                        }
+
+                        // Save the updated chat with new title
+                        this.saveChatHistory();
+
+                        // Update the sidebar display
+                        this.updateRecentChats();
+
+                        console.log('[ChatManager] Chat title updated to:', title);
+                    }
+                }).catch(error => {
+                    console.error('[ChatManager] Error updating chat title:', error);
+                });
+            }
 
             // Get auth token (check both possible keys)
             const token = localStorage.getItem('authToken') || localStorage.getItem('token');
@@ -89,6 +116,42 @@ class ChatManager {
             this.isLoading = false;
             this.updateSendButton(false);
             this.clearAttachedFiles();
+        }
+    }
+
+    // Generate chat title from first user message
+    async generateChatTitle(message) {
+        try {
+            console.log('[ChatManager] Generating chat title for:', message.substring(0, 50));
+
+            // Get auth token (check both possible keys)
+            const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(`${this.API_BASE_URL}/api/generate-chat-title`, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ message: message })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.title) {
+                console.log('[ChatManager] Generated chat title:', data.title);
+                return data.title;
+            } else {
+                console.warn('[ChatManager] Failed to generate title, using fallback');
+                return 'New Chat';
+            }
+        } catch (error) {
+            console.error('[ChatManager] Error generating chat title:', error);
+            return 'New Chat';
         }
     }
 

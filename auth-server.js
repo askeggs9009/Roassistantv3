@@ -1435,6 +1435,66 @@ app.delete("/api/user-chats/:chatId", authenticateToken, (req, res) => {
     }
 });
 
+// Generate chat title from first message
+app.post("/api/generate-chat-title", optionalAuthenticateToken, async (req, res) => {
+    try {
+        const { message } = req.body;
+
+        if (!message || typeof message !== 'string' || message.trim().length === 0) {
+            return res.status(400).json({ error: 'Message is required' });
+        }
+
+        // Truncate very long messages to avoid token limits
+        const truncatedMessage = message.length > 300 ? message.substring(0, 300) + '...' : message;
+
+        const titlePrompt = `Generate a concise, descriptive title (2-6 words) for a chat that starts with this user message: "${truncatedMessage}"
+
+Requirements:
+- Keep it short and clear (2-6 words maximum)
+- Capture the main topic or question
+- Make it suitable for a chat history list
+- Don't include quotes or special characters
+- Use title case
+
+Examples:
+User: "How do I create a Roblox game?" → Title: "Creating Roblox Games"
+User: "What's the best way to learn Luau scripting?" → Title: "Learning Luau Scripting"
+User: "I need help with a bug in my code" → Title: "Debugging Code Issues"
+User: "Can you explain how DataStores work?" → Title: "DataStore Explanation"
+
+Generate only the title, nothing else:`;
+
+        const response = await openai.chat.completions.create({
+            model: "gpt-3.5-turbo", // Use cheaper model for title generation
+            messages: [
+                { role: "user", content: titlePrompt }
+            ],
+            max_tokens: 20,
+            temperature: 0.3 // Lower temperature for more consistent titles
+        });
+
+        let title = response.choices[0].message.content.trim();
+
+        // Clean up the title
+        title = title.replace(/[""'']/g, ''); // Remove quotes
+        title = title.replace(/[^\w\s\-]/g, ''); // Remove special characters except hyphens
+        title = title.trim();
+
+        // Fallback if title is empty or too long
+        if (!title || title.length === 0) {
+            title = 'New Chat';
+        } else if (title.length > 50) {
+            title = title.substring(0, 47) + '...';
+        }
+
+        res.json({ title: title });
+    } catch (error) {
+        console.error('[ERROR] Failed to generate chat title:', error);
+        // Return fallback title on error
+        res.json({ title: 'New Chat' });
+    }
+});
+
 app.get("/usage-limits", optionalAuthenticateToken, (req, res) => {
     const userIdentifier = getUserIdentifier(req);
     const isAuthenticated = req.user !== null;
