@@ -239,6 +239,28 @@ class ChatManager {
         }
     }
 
+    // Clear current chat display and messages
+    clearCurrentChat() {
+        console.log('[ChatManager] Clearing current chat');
+
+        // Clear messages array
+        this.messages = [];
+
+        // Clear the messages container
+        const messagesContainer = document.getElementById('messagesContainer');
+        if (messagesContainer) {
+            messagesContainer.innerHTML = '';
+        }
+
+        // Clear attached files
+        this.clearAttachedFiles();
+
+        // Reset any selected chat in sidebar
+        document.querySelectorAll('.chat-item').forEach(item => {
+            item.classList.remove('active');
+        });
+    }
+
     // Load chat history
     loadChatHistory() {
         // Reset sidebar title when loading chats
