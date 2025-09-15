@@ -23,6 +23,7 @@ class AuthManager {
             try {
                 const userData = JSON.parse(user);
                 console.log('[AuthManager] User authenticated:', userData.email);
+                console.log('[AuthManager] Full user data:', userData);
                 this.showLoggedInUser(userData);
                 this.isLoggedIn = true;
             } catch (error) {
@@ -78,19 +79,20 @@ class AuthManager {
     showLoggedInUser(userData) {
         const userProfile = document.getElementById('userProfile');
         if (userProfile) {
-            const planText = userData.plan || 'free';
+            // Fix: Access subscription.plan correctly
+            const planText = (userData.subscription && userData.subscription.plan) || userData.plan || 'free';
             const planDisplay = planText.charAt(0).toUpperCase() + planText.slice(1);
 
-            userProfile.innerHTML = \`
-                <div class="user-avatar">\${(userData.name || userData.email || 'U').charAt(0).toUpperCase()}</div>
+            userProfile.innerHTML = `
+                <div class="user-avatar">${(userData.name || userData.email || 'U').charAt(0).toUpperCase()}</div>
                 <div class="user-info">
-                    <div class="user-name">\${userData.name || userData.email || 'User'}</div>
-                    <div class="user-plan">\${planDisplay} Plan</div>
+                    <div class="user-name">${userData.name || userData.email || 'User'}</div>
+                    <div class="user-plan">${planDisplay} Plan</div>
                 </div>
-                <button onclick="logout()" style="background: #f85149; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
+                <button onclick="authManager.logout()" style="background: #f85149; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
                     Logout
                 </button>
-            \`;
+            `;
             userProfile.style.display = 'flex';
         }
     }
@@ -99,12 +101,12 @@ class AuthManager {
     showGuestUser() {
         const userProfile = document.getElementById('userProfile');
         if (userProfile) {
-            userProfile.innerHTML = \`
+            userProfile.innerHTML = `
                 <span class="user-name">Guest</span>
                 <button onclick="window.location.href='/login.html'" style="background: #58a6ff; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
                     Sign In
                 </button>
-            \`;
+            `;
             userProfile.style.display = 'flex';
         }
     }
@@ -115,6 +117,7 @@ class AuthManager {
 
         // Clear auth data
         localStorage.removeItem('authToken');
+        localStorage.removeItem('token');
         localStorage.removeItem('user');
 
         // Update state
