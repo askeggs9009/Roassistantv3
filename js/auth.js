@@ -64,8 +64,9 @@ class AuthManager {
                     // Clear hash to clean URL
                     window.location.hash = '';
 
-                    // Reload chat history for the new user
+                    // Clear current chat and reload history for the new user
                     if (window.chatManager) {
+                        window.chatManager.clearCurrentChat();
                         window.chatManager.loadChatHistory();
                     }
                 }
@@ -127,8 +128,11 @@ class AuthManager {
         // Show guest user interface
         this.showGuestUser();
 
-        // Optionally refresh the page to reset all states
-        // window.location.reload();
+        // Clear current chat and reload guest chats
+        if (window.chatManager) {
+            window.chatManager.clearCurrentChat();
+            window.chatManager.loadChatHistory();
+        }
 
         console.log('[AuthManager] User logged out successfully');
     }
