@@ -156,124 +156,45 @@ class ChatManager {
 
     // Typewriter effect for AI responses
     async typewriterEffect(element, text, onComplete) {
-        // Calculate dynamic speed based on text length
-        const wordCount = text.split(' ').length;
-        let baseSpeed = 30; // Base milliseconds per character
-
-        // Adjust speed based on message length
-        if (wordCount < 20) {
-            baseSpeed = 50; // Slower for short messages
-        } else if (wordCount < 100) {
-            baseSpeed = 25; // Medium speed for medium messages
-        } else if (wordCount < 300) {
-            baseSpeed = 15; // Faster for long messages
-        } else {
-            baseSpeed = 8; // Very fast for very long messages
-        }
-
-        // Add some randomness to make it feel more natural
-        const getRandomSpeed = () => baseSpeed + Math.random() * 20 - 10;
-
         const container = element.querySelector('.message-text') || element;
 
-        // Pre-process the text to formatted HTML
-        const formattedHtml = this.formatAssistantMessage(text);
+        console.log('[Typewriter] Starting effect for:', text.substring(0, 50) + '...');
 
-        // Create a hidden container with the fully formatted content
-        const hiddenContainer = document.createElement('div');
-        hiddenContainer.innerHTML = formattedHtml;
-        hiddenContainer.style.visibility = 'hidden';
-        hiddenContainer.style.position = 'absolute';
-        hiddenContainer.style.top = '-9999px';
-        document.body.appendChild(hiddenContainer);
+        // Clear any existing content first
+        container.innerHTML = '';
 
-        // Extract all visible text content
-        const fullText = hiddenContainer.textContent || hiddenContainer.innerText || '';
+        // Split text into words for streaming effect
+        const words = text.split(' ');
+        const totalWords = words.length;
 
-        // Clean up
-        document.body.removeChild(hiddenContainer);
+        // Calculate delay based on total content length
+        const baseDelay = Math.max(30, Math.min(150 - (totalWords / 20), 150));
 
-        // Clear container and set up for typing
-        container.innerHTML = formattedHtml;
+        let wordIndex = 0;
+        let currentText = '';
 
-        // Create a mask that will reveal text gradually
-        const textWalker = document.createTreeWalker(
-            container,
-            NodeFilter.SHOW_TEXT,
-            null,
-            false
-        );
+        const streamNextWord = () => {
+            if (wordIndex < totalWords) {
+                // Add next word
+                currentText += (wordIndex > 0 ? ' ' : '') + words[wordIndex];
+                wordIndex++;
 
-        // Collect all text nodes
-        const textNodes = [];
-        let node;
-        while (node = textWalker.nextNode()) {
-            if (node.textContent.trim()) {
-                textNodes.push({
-                    node: node,
-                    originalText: node.textContent,
-                    currentLength: 0
-                });
-            }
-        }
+                // Format and display the current text with cursor
+                container.innerHTML = this.formatAssistantMessage(currentText) + '<span class="typewriter-cursor">|</span>';
 
-        // Hide all text content initially
-        textNodes.forEach(({ node }) => {
-            node.textContent = '';
-        });
-
-        // Add cursor at the end
-        const cursor = document.createElement('span');
-        cursor.className = 'typewriter-cursor';
-        cursor.textContent = '|';
-        container.appendChild(cursor);
-
-        let totalCharsTyped = 0;
-        let currentNodeIndex = 0;
-        let currentNodeCharIndex = 0;
-
-        const typeNext = () => {
-            if (totalCharsTyped < fullText.length && currentNodeIndex < textNodes.length) {
-                const currentNodeData = textNodes[currentNodeIndex];
-
-                // Check if we need to move to the next node
-                if (currentNodeCharIndex >= currentNodeData.originalText.length) {
-                    currentNodeIndex++;
-                    currentNodeCharIndex = 0;
-
-                    if (currentNodeIndex < textNodes.length) {
-                        setTimeout(typeNext, getRandomSpeed() * 0.5); // Quick transition between nodes
-                    } else {
-                        // Finished typing
-                        cursor.remove();
-                        if (onComplete) onComplete();
-                    }
-                    return;
-                }
-
-                // Add next character to current node
-                const nextChar = currentNodeData.originalText[currentNodeCharIndex];
-                currentNodeData.node.textContent = currentNodeData.originalText.substring(0, currentNodeCharIndex + 1);
-
-                currentNodeCharIndex++;
-                totalCharsTyped++;
-
-                // Variable speed
-                let speed = getRandomSpeed();
-                if (nextChar === ' ') speed *= 0.3;
-                if (/[.,!?;:]/.test(nextChar)) speed *= 1.5;
-                if (nextChar === '\n') speed *= 2;
-
-                // Scroll to bottom
+                // Scroll to keep message visible
                 const messagesContainer = document.getElementById('messagesContainer');
                 if (messagesContainer) {
                     messagesContainer.scrollTop = messagesContainer.scrollHeight;
                 }
 
-                setTimeout(typeNext, speed);
+                // Continue streaming with slight randomness
+                setTimeout(streamNextWord, baseDelay + Math.random() * 30);
             } else {
-                // Finished typing
-                cursor.remove();
+                // Streaming complete - remove cursor and show final formatted content
+                container.innerHTML = this.formatAssistantMessage(text);
+
+                console.log('[Typewriter] Effect completed');
 
                 // Final scroll
                 const messagesContainer = document.getElementById('messagesContainer');
@@ -281,14 +202,15 @@ class ChatManager {
                     messagesContainer.scrollTop = messagesContainer.scrollHeight;
                 }
 
+                // Call completion callback
                 if (onComplete) {
                     onComplete();
                 }
             }
         };
 
-        // Start typing
-        setTimeout(typeNext, 500);
+        // Start streaming immediately (no delay)
+        streamNextWord();
     }
 
     // Get user avatar HTML for messages
