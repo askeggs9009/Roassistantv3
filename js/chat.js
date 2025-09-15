@@ -227,6 +227,35 @@ class ChatManager {
         setTimeout(typeNext, 500); // Small delay before starting
     }
 
+    // Get user avatar HTML for messages
+    getUserAvatarHtml() {
+        try {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+            if (user.picture) {
+                return `
+                    <div class="message-avatar">
+                        <img class="message-avatar-img" src="${user.picture}" alt="Profile" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="message-avatar-fallback" style="display:none;">${(user.name || user.email || 'U').charAt(0).toUpperCase()}</div>
+                    </div>
+                `;
+            } else {
+                const initial = (user.name || user.email || 'U').charAt(0).toUpperCase();
+                return `
+                    <div class="message-avatar">
+                        <div class="message-avatar-fallback">${initial}</div>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            return `
+                <div class="message-avatar">
+                    <div class="message-avatar-fallback">U</div>
+                </div>
+            `;
+        }
+    }
+
     // Generate chat title from first user message
     async generateChatTitle(message) {
         try {
@@ -905,6 +934,9 @@ class ChatManager {
         const timestamp = new Date().toLocaleTimeString();
 
         messageDiv.innerHTML = `
+            <div class="message-avatar message-avatar-ai">
+                <div class="message-avatar-fallback">🤖</div>
+            </div>
             <div class="message-content">
                 <div class="message-header">
                     <span class="message-sender">Roblox Luau AI</span>
@@ -940,6 +972,7 @@ class ChatManager {
 
         if (type === 'user') {
             messageDiv.innerHTML = `
+                ${this.getUserAvatarHtml()}
                 <div class="message-content">
                     <div class="message-header">
                         <span class="message-sender">You</span>
@@ -950,6 +983,9 @@ class ChatManager {
             `;
         } else if (type === 'assistant') {
             messageDiv.innerHTML = `
+                <div class="message-avatar message-avatar-ai">
+                    <div class="message-avatar-fallback">🤖</div>
+                </div>
                 <div class="message-content">
                     <div class="message-header">
                         <span class="message-sender">Roblox Luau AI</span>

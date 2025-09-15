@@ -226,6 +226,46 @@
     width: 100%;
 }
 
+/* Message Avatar Styles */
+.message-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    position: relative;
+    flex-shrink: 0;
+    overflow: hidden;
+    margin-top: 0.25rem; /* Slight offset to align with message header */
+}
+
+.message-avatar-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+
+.message-avatar-fallback {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #58a6ff, #1f6feb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.85rem;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.message-avatar-ai .message-avatar-fallback {
+    background: linear-gradient(45deg, #00d4ff, #9d4edd);
+    font-size: 1.1rem;
+}
+
 .message.user {
     flex-direction: row-reverse;
 }

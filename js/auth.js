@@ -112,8 +112,18 @@ class AuthManager {
             const planText = (userData.subscription && userData.subscription.plan) || userData.plan || 'free';
             const planDisplay = planText.charAt(0).toUpperCase() + planText.slice(1);
 
+            // Create avatar element based on whether user has profile picture
+            const avatarElement = userData.picture
+                ? `<img class="user-avatar-img" src="${userData.picture}" alt="Profile" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`
+                : '';
+
+            const fallbackAvatar = `<div class="user-avatar-fallback" ${userData.picture ? 'style="display:none;"' : ''}>${(userData.name || userData.email || 'U').charAt(0).toUpperCase()}</div>`;
+
             userProfile.innerHTML = `
-                <div class="user-avatar">${(userData.name || userData.email || 'U').charAt(0).toUpperCase()}</div>
+                <div class="user-avatar-container">
+                    ${avatarElement}
+                    ${fallbackAvatar}
+                </div>
                 <div class="user-info">
                     <div class="user-name">${userData.name || userData.email || 'User'}</div>
                     <div class="user-plan">${planDisplay} Plan</div>

@@ -183,6 +183,40 @@
     background: rgba(255, 255, 255, 0.05);
 }
 
+.user-avatar-container {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    position: relative;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.user-avatar-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+
+.user-avatar-fallback {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #58a6ff, #1f6feb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.85rem;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* Legacy support for existing user-avatar class */
 .user-avatar {
     width: 32px;
     height: 32px;
