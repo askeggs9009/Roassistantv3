@@ -318,8 +318,8 @@
 
                 // Redirect to main app after 2 seconds
                 setTimeout(() => {
-                    console.log('Redirecting to /index.html');
-                    window.location.href = `/index.html#token=${encodeURIComponent(token)}&user=${encodeURIComponent(JSON.stringify(user))}`;
+                    console.log('Redirecting to Railway app');
+                    window.location.href = `https://roassistantv3-production.up.railway.app/index.html#token=${encodeURIComponent(token)}&user=${encodeURIComponent(JSON.stringify(user))}`;
                 }, 2000);
 
             } catch (error) {
