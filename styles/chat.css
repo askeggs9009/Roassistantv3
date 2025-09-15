@@ -66,6 +66,23 @@
     }
 }
 
+/* Typewriter Cursor Animation */
+.typewriter-cursor {
+    color: #58a6ff;
+    font-weight: bold;
+    animation: blink 1s infinite;
+    margin-left: 1px;
+}
+
+@keyframes blink {
+    0%, 50% {
+        opacity: 1;
+    }
+    51%, 100% {
+        opacity: 0;
+    }
+}
+
 /* Chat Area Styles */
 .chat-area {
     flex: 1;

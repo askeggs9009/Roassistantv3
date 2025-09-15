@@ -154,6 +154,79 @@ class ChatManager {
         }
     }
 
+    // Typewriter effect for AI responses
+    async typewriterEffect(element, text, onComplete) {
+        // Calculate dynamic speed based on text length
+        const wordCount = text.split(' ').length;
+        let baseSpeed = 30; // Base milliseconds per character
+
+        // Adjust speed based on message length
+        if (wordCount < 20) {
+            baseSpeed = 50; // Slower for short messages
+        } else if (wordCount < 100) {
+            baseSpeed = 25; // Medium speed for medium messages
+        } else if (wordCount < 300) {
+            baseSpeed = 15; // Faster for long messages
+        } else {
+            baseSpeed = 8; // Very fast for very long messages
+        }
+
+        // Add some randomness to make it feel more natural
+        const getRandomSpeed = () => baseSpeed + Math.random() * 20 - 10;
+
+        let index = 0;
+        const container = element.querySelector('.message-text') || element;
+
+        // Clear existing content
+        container.innerHTML = '';
+
+        // Add cursor
+        const cursor = document.createElement('span');
+        cursor.className = 'typewriter-cursor';
+        cursor.textContent = '|';
+        container.appendChild(cursor);
+
+        const typeNext = () => {
+            if (index < text.length) {
+                const char = text[index];
+
+                // Insert character before cursor
+                const textNode = document.createTextNode(char);
+                container.insertBefore(textNode, cursor);
+
+                index++;
+
+                // Variable speed with faster typing for spaces and punctuation
+                let speed = getRandomSpeed();
+                if (char === ' ') speed *= 0.3; // Faster for spaces
+                if (/[.,!?;:]/.test(char)) speed *= 1.5; // Slightly slower for punctuation
+                if (char === '\n') speed *= 2; // Slower for line breaks
+
+                setTimeout(typeNext, speed);
+            } else {
+                // Remove cursor and process markdown after typing is complete
+                cursor.remove();
+
+                // Re-process the content for markdown formatting
+                container.innerHTML = this.formatAssistantMessage(text);
+
+                // Scroll to bottom
+                const messagesContainer = document.getElementById('messagesContainer');
+                if (messagesContainer) {
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
+
+                // Call completion callback
+                if (onComplete) {
+                    onComplete();
+                }
+            }
+        };
+
+        // Start typing
+        setTimeout(typeNext, 500); // Small delay before starting
+    }
+
     // Generate chat title from first user message
     async generateChatTitle(message) {
         try {
@@ -192,8 +265,12 @@ class ChatManager {
 
     // Add message to chat display and save it
     addMessage(type, content) {
-        // Display the message using the displayMessage method
-        this.displayMessage(type, content);
+        // Use typewriter effect for assistant messages, regular display for others
+        if (type === 'assistant') {
+            this.displayAssistantMessageWithTypewriter(content);
+        } else {
+            this.displayMessage(type, content);
+        }
 
         // Store message with chat ID
         const chatId = this.getCurrentChatId();
@@ -815,6 +892,40 @@ class ChatManager {
                 console.error('Error deleting chat:', error);
             }
         }
+    }
+
+    // Display assistant message with typewriter effect
+    displayAssistantMessageWithTypewriter(content) {
+        const messagesContainer = document.getElementById('messagesContainer');
+        if (!messagesContainer) return;
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message assistant';
+
+        const timestamp = new Date().toLocaleTimeString();
+
+        messageDiv.innerHTML = `
+            <div class="message-content">
+                <div class="message-header">
+                    <span class="message-sender">Roblox Luau AI</span>
+                    <span class="message-time">${timestamp}</span>
+                </div>
+                <div class="message-text"></div>
+            </div>
+        `;
+
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        // Start typewriter effect
+        this.typewriterEffect(messageDiv, content, () => {
+            // After typing is complete, extract and save scripts
+            if (window.scriptsManager) {
+                const chatId = this.getCurrentChatId();
+                const chatTitle = document.getElementById('chatTitle')?.textContent || 'Chat';
+                window.scriptsManager.extractAndSaveScriptsFromChat(content, chatId, chatTitle);
+            }
+        });
     }
 
     // Display message without saving (used for loading saved messages)
