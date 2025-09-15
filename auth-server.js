@@ -62,7 +62,7 @@ const app = express();
 // Enhanced CORS configuration to fix OAuth issues
 app.use(cors({
     origin: [
-        'https://roassistantv3-production.up.railway.app',
+        'https://musical-youtiao-b05928.netlify.app',
         'http://localhost:3000',
         'http://localhost:5000',
         'http://127.0.0.1:5500',
@@ -782,13 +782,13 @@ app.get("/auth/google", (req, res) => {
         res.redirect(authUrl);
     } catch (error) {
         console.error('[ERROR] Google auth initiation failed:', error);
-        const frontendUrl = process.env.FRONTEND_URL || 'https://roassistantv3-production.up.railway.app';
+        const frontendUrl = process.env.FRONTEND_URL || 'https://musical-youtiao-b05928.netlify.app';
         res.redirect(`${frontendUrl}/login.html?error=oauth_setup_failed`);
     }
 });
 
 app.get("/auth/google/callback", async (req, res) => {
-    const frontendUrl = process.env.FRONTEND_URL || 'https://roassistantv3-production.up.railway.app';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://musical-youtiao-b05928.netlify.app';
     
     try {
         const { code, error: oauthError } = req.query;
