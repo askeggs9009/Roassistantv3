@@ -174,41 +174,95 @@ class ChatManager {
         // Add some randomness to make it feel more natural
         const getRandomSpeed = () => baseSpeed + Math.random() * 20 - 10;
 
-        let index = 0;
         const container = element.querySelector('.message-text') || element;
 
-        // Clear existing content
-        container.innerHTML = '';
+        // Pre-process the text to formatted HTML
+        const formattedHtml = this.formatAssistantMessage(text);
 
-        // Add cursor
+        // Create a hidden container with the fully formatted content
+        const hiddenContainer = document.createElement('div');
+        hiddenContainer.innerHTML = formattedHtml;
+        hiddenContainer.style.visibility = 'hidden';
+        hiddenContainer.style.position = 'absolute';
+        hiddenContainer.style.top = '-9999px';
+        document.body.appendChild(hiddenContainer);
+
+        // Extract all visible text content
+        const fullText = hiddenContainer.textContent || hiddenContainer.innerText || '';
+
+        // Clean up
+        document.body.removeChild(hiddenContainer);
+
+        // Clear container and set up for typing
+        container.innerHTML = formattedHtml;
+
+        // Create a mask that will reveal text gradually
+        const textWalker = document.createTreeWalker(
+            container,
+            NodeFilter.SHOW_TEXT,
+            null,
+            false
+        );
+
+        // Collect all text nodes
+        const textNodes = [];
+        let node;
+        while (node = textWalker.nextNode()) {
+            if (node.textContent.trim()) {
+                textNodes.push({
+                    node: node,
+                    originalText: node.textContent,
+                    currentLength: 0
+                });
+            }
+        }
+
+        // Hide all text content initially
+        textNodes.forEach(({ node }) => {
+            node.textContent = '';
+        });
+
+        // Add cursor at the end
         const cursor = document.createElement('span');
         cursor.className = 'typewriter-cursor';
         cursor.textContent = '|';
         container.appendChild(cursor);
 
+        let totalCharsTyped = 0;
+        let currentNodeIndex = 0;
+        let currentNodeCharIndex = 0;
+
         const typeNext = () => {
-            if (index < text.length) {
-                const char = text[index];
+            if (totalCharsTyped < fullText.length && currentNodeIndex < textNodes.length) {
+                const currentNodeData = textNodes[currentNodeIndex];
 
-                // Insert character before cursor
-                const textNode = document.createTextNode(char);
-                container.insertBefore(textNode, cursor);
+                // Check if we need to move to the next node
+                if (currentNodeCharIndex >= currentNodeData.originalText.length) {
+                    currentNodeIndex++;
+                    currentNodeCharIndex = 0;
 
-                index++;
+                    if (currentNodeIndex < textNodes.length) {
+                        setTimeout(typeNext, getRandomSpeed() * 0.5); // Quick transition between nodes
+                    } else {
+                        // Finished typing
+                        cursor.remove();
+                        if (onComplete) onComplete();
+                    }
+                    return;
+                }
 
-                // Variable speed with faster typing for spaces and punctuation
+                // Add next character to current node
+                const nextChar = currentNodeData.originalText[currentNodeCharIndex];
+                currentNodeData.node.textContent = currentNodeData.originalText.substring(0, currentNodeCharIndex + 1);
+
+                currentNodeCharIndex++;
+                totalCharsTyped++;
+
+                // Variable speed
                 let speed = getRandomSpeed();
-                if (char === ' ') speed *= 0.3; // Faster for spaces
-                if (/[.,!?;:]/.test(char)) speed *= 1.5; // Slightly slower for punctuation
-                if (char === '\n') speed *= 2; // Slower for line breaks
-
-                setTimeout(typeNext, speed);
-            } else {
-                // Remove cursor and process markdown after typing is complete
-                cursor.remove();
-
-                // Re-process the content for markdown formatting
-                container.innerHTML = this.formatAssistantMessage(text);
+                if (nextChar === ' ') speed *= 0.3;
+                if (/[.,!?;:]/.test(nextChar)) speed *= 1.5;
+                if (nextChar === '\n') speed *= 2;
 
                 // Scroll to bottom
                 const messagesContainer = document.getElementById('messagesContainer');
@@ -216,7 +270,17 @@ class ChatManager {
                     messagesContainer.scrollTop = messagesContainer.scrollHeight;
                 }
 
-                // Call completion callback
+                setTimeout(typeNext, speed);
+            } else {
+                // Finished typing
+                cursor.remove();
+
+                // Final scroll
+                const messagesContainer = document.getElementById('messagesContainer');
+                if (messagesContainer) {
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
+
                 if (onComplete) {
                     onComplete();
                 }
@@ -224,7 +288,7 @@ class ChatManager {
         };
 
         // Start typing
-        setTimeout(typeNext, 500); // Small delay before starting
+        setTimeout(typeNext, 500);
     }
 
     // Get user avatar HTML for messages
