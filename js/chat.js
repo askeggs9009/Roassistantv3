@@ -241,7 +241,11 @@ class ChatManager {
 
     // Clear current chat display and messages
     clearCurrentChat() {
-        console.log('[ChatManager] Clearing current chat');
+        console.log('[ChatManager] Clearing current chat for privacy');
+
+        // Generate new chat ID to ensure complete privacy separation
+        const newChatId = 'chat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        sessionStorage.setItem('currentChatId', newChatId);
 
         // Clear messages array
         this.messages = [];
@@ -259,6 +263,15 @@ class ChatManager {
         document.querySelectorAll('.chat-item').forEach(item => {
             item.classList.remove('active');
         });
+
+        // Reset chat title
+        const chatTitle = document.getElementById('chatTitle');
+        if (chatTitle) {
+            chatTitle.textContent = 'New Chat';
+        }
+
+        // Clear localStorage chat history (but keep user-specific histories)
+        localStorage.removeItem('chatHistory');
     }
 
     // Load chat history

@@ -24,15 +24,43 @@ class AuthManager {
                 const userData = JSON.parse(user);
                 console.log('[AuthManager] User authenticated:', userData.email);
                 console.log('[AuthManager] Full user data:', userData);
+
+                // Only reload chat if user state changed
+                const wasLoggedIn = this.isLoggedIn;
+                if (!wasLoggedIn) {
+                    console.log('[AuthManager] User state changed - clearing chat and loading user chats');
+                    if (window.chatManager) {
+                        window.chatManager.clearCurrentChat();
+                        window.chatManager.loadChatHistory();
+                    }
+                }
+
                 this.showLoggedInUser(userData);
                 this.isLoggedIn = true;
             } catch (error) {
                 console.log('[AuthManager] Auth check failed, showing guest user:', error);
                 this.showGuestUser();
                 this.isLoggedIn = false;
+
+                // Clear chat and load guest chats
+                if (window.chatManager) {
+                    window.chatManager.clearCurrentChat();
+                    window.chatManager.loadChatHistory();
+                }
             }
         } else {
             console.log('[AuthManager] No auth data found, showing guest user');
+
+            // Only reload chat if user state changed
+            const wasLoggedIn = this.isLoggedIn;
+            if (wasLoggedIn) {
+                console.log('[AuthManager] User state changed - clearing chat and loading guest chats');
+                if (window.chatManager) {
+                    window.chatManager.clearCurrentChat();
+                    window.chatManager.loadChatHistory();
+                }
+            }
+
             this.showGuestUser();
             this.isLoggedIn = false;
         }
