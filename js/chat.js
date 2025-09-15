@@ -921,7 +921,7 @@ class ChatManager {
 
         messageDiv.innerHTML = `
             <div class="message-avatar message-avatar-ai">
-                <div class="message-avatar-fallback">🤖</div>
+                <img src="./noob.png" alt="AI" class="message-avatar-img" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
             </div>
             <div class="message-content">
                 <div class="message-header">
@@ -970,7 +970,7 @@ class ChatManager {
         } else if (type === 'assistant') {
             messageDiv.innerHTML = `
                 <div class="message-avatar message-avatar-ai">
-                    <div class="message-avatar-fallback">🤖</div>
+                    <img src="./noob.png" alt="AI" class="message-avatar-img" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
                 </div>
                 <div class="message-content">
                     <div class="message-header">
