@@ -253,6 +253,7 @@
                 }
 
                 const data = await response.json();
+                console.log('Admin dashboard data:', data); // Debug logging
                 displayData(data);
 
             } catch (error) {
@@ -265,22 +266,28 @@
             document.getElementById('loading').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
 
+            // Ensure data has expected structure
+            if (!data || !data.riskAnalysis) {
+                showError('Invalid data received from server');
+                return;
+            }
+
             // Update stats
             const statsHtml = `
                 <div class="stat-card">
-                    <div class="stat-number">${data.totalUsers}</div>
+                    <div class="stat-number">${data.totalUsers || 0}</div>
                     <div class="stat-label">Total Users</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">${data.usersWithScores}</div>
+                    <div class="stat-number">${data.usersWithScores || 0}</div>
                     <div class="stat-label">Users with Scores</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">${data.riskAnalysis.filter(u => u.averageScore !== 'No data' && parseFloat(u.averageScore) < 0.5).length}</div>
+                    <div class="stat-number">${data.riskAnalysis.filter(u => u.averageScore !== 'No data' && !isNaN(parseFloat(u.averageScore)) && parseFloat(u.averageScore) < 0.5).length}</div>
                     <div class="stat-label">High Risk Users</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">${data.riskAnalysis.filter(u => u.averageScore !== 'No data' && parseFloat(u.averageScore) >= 0.7).length}</div>
+                    <div class="stat-number">${data.riskAnalysis.filter(u => u.averageScore !== 'No data' && !isNaN(parseFloat(u.averageScore)) && parseFloat(u.averageScore) >= 0.7).length}</div>
                     <div class="stat-label">Low Risk Users</div>
                 </div>
             `;
@@ -298,11 +305,11 @@
                     <td>${user.totalAttempts}</td>
                     <td>${user.lastActivity ? formatDate(user.lastActivity) : 'Never'}</td>
                     <td class="recent-scores">
-                        ${user.recentScores.map(score =>
-                            `<span class="recent-score ${getScoreClass(score.score.toFixed(3))}" title="${score.action} - ${formatDate(score.timestamp)} - ${score.ip}">
-                                ${score.score.toFixed(3)}
+                        ${user.recentScores ? user.recentScores.map(score =>
+                            `<span class="recent-score ${getScoreClass(score.score ? score.score.toFixed(3) : 'No data')}" title="${score.action || 'unknown'} - ${score.timestamp ? formatDate(score.timestamp) : 'unknown'} - ${score.ip || 'unknown'}">
+                                ${score.score ? score.score.toFixed(3) : 'N/A'}
                             </span>`
-                        ).join('')}
+                        ).join('') : 'No data'}
                     </td>
                 </tr>
             `).join('');

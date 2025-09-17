@@ -838,24 +838,29 @@ app.get('/admin/recaptcha-scores', authenticateToken, async (req, res) => {
 
         const users = await DatabaseManager.getAllUsers();
 
-        const riskAnalysis = users.map(user => ({
-            email: user.email,
-            name: user.name,
-            averageScore: user.recaptchaScores?.length > 0
-                ? (user.recaptchaScores.reduce((sum, entry) => sum + entry.score, 0) / user.recaptchaScores.length).toFixed(3)
-                : 'No data',
-            lowestScore: user.recaptchaScores?.length > 0
-                ? Math.min(...user.recaptchaScores.map(entry => entry.score)).toFixed(3)
-                : 'No data',
-            totalAttempts: user.recaptchaScores?.length || 0,
-            lastActivity: user.lastLogin,
-            recentScores: user.recaptchaScores?.slice(-5).map(entry => ({
-                score: entry.score,
-                action: entry.action,
-                timestamp: entry.timestamp,
-                ip: entry.ip
-            })) || []
-        })).sort((a, b) => {
+        const riskAnalysis = users.map(user => {
+            const scores = user.recaptchaScores || [];
+            const validScores = scores.filter(s => s && typeof s.score === 'number');
+
+            return {
+                email: user.email,
+                name: user.name,
+                averageScore: validScores.length > 0
+                    ? (validScores.reduce((sum, entry) => sum + entry.score, 0) / validScores.length).toFixed(3)
+                    : 'No data',
+                lowestScore: validScores.length > 0
+                    ? Math.min(...validScores.map(entry => entry.score)).toFixed(3)
+                    : 'No data',
+                totalAttempts: validScores.length,
+                lastActivity: user.lastLogin,
+                recentScores: validScores.slice(-5).map(entry => ({
+                    score: entry.score || 0,
+                    action: entry.action || 'unknown',
+                    timestamp: entry.timestamp || new Date(),
+                    ip: entry.ip || 'unknown'
+                }))
+            };
+        }).sort((a, b) => {
             // Sort by lowest average score (most suspicious first)
             if (a.averageScore === 'No data') return 1;
             if (b.averageScore === 'No data') return -1;
