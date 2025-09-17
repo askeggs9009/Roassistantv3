@@ -47,7 +47,10 @@
       "mcp__Railway__get-logs",
       "WebFetch(domain:roassistantv3-production.up.railway.app)",
       "mcp__stripe__create_customer",
-      "mcp__stripe__list_customers"
+      "mcp__stripe__list_customers",
+      "mcp__stripe__list_payment_intents",
+      "mcp__stripe__list_subscriptions",
+      "mcp__stripe__fetch_stripe_resources"
     ],
     "deny": [],
     "ask": []

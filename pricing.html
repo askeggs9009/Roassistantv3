@@ -692,8 +692,8 @@
                     <div class="card-header">
                         <h2 class="plan-name">Pro</h2>
                         <div class="plan-price">
-                            <span class="currency">£</span>
-                            <span class="amount" id="proPrice">0.30</span>
+                            <span class="currency">$</span>
+                            <span class="amount" id="proPrice">9.99</span>
                             <span class="period" id="proPeriod">/month</span>
                         </div>
                         <p class="plan-description">Ideal for serious developers</p>
@@ -734,8 +734,8 @@
                     <div class="card-header">
                         <h2 class="plan-name">Enterprise</h2>
                         <div class="plan-price">
-                            <span class="currency">£</span>
-                            <span class="amount" id="enterprisePrice">0.30</span>
+                            <span class="currency">$</span>
+                            <span class="amount" id="enterprisePrice">19.99</span>
                             <span class="period" id="enterprisePeriod">/month</span>
                         </div>
                         <p class="plan-description">For teams and studios</p>
@@ -987,19 +987,19 @@
             const annualLabel = document.getElementById('annualLabel');
             
             if (isAnnual) {
-                // Annual pricing - same as monthly due to 30p minimum
-                proPrice.textContent = '0.30';
-                enterprisePrice.textContent = '0.30';
+                // Annual pricing
+                proPrice.textContent = '99.99';
+                enterprisePrice.textContent = '199.99';
                 proPeriod.textContent = '/year';
                 enterprisePeriod.textContent = '/year';
-                
+
                 // Update label styles
                 monthlyLabel.style.color = '#8b949e';
                 annualLabel.style.color = '#58a6ff';
             } else {
                 // Monthly pricing
-                proPrice.textContent = '0.30';
-                enterprisePrice.textContent = '0.30';
+                proPrice.textContent = '9.99';
+                enterprisePrice.textContent = '19.99';
                 proPeriod.textContent = '/month';
                 enterprisePeriod.textContent = '/month';
                 
