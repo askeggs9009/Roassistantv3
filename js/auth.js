@@ -6,7 +6,7 @@ class AuthManager {
     }
 
     // Check authentication status
-    checkAuth() {
+    async checkAuth() {
         console.log('[AuthManager] Checking authentication...');
 
         // Handle OAuth callback first
@@ -25,6 +25,9 @@ class AuthManager {
                 console.log('[AuthManager] User authenticated:', userData.email);
                 console.log('[AuthManager] Full user data:', userData);
 
+                // Fetch latest user data including subscription status
+                await this.refreshUserData();
+
                 // Only reload chat if user state changed
                 const wasLoggedIn = this.isLoggedIn;
                 if (!wasLoggedIn) {
@@ -35,7 +38,9 @@ class AuthManager {
                     }
                 }
 
-                this.showLoggedInUser(userData);
+                // Re-read user data after refresh
+                const refreshedUser = JSON.parse(localStorage.getItem('user'));
+                this.showLoggedInUser(refreshedUser);
                 this.isLoggedIn = true;
             } catch (error) {
                 console.log('[AuthManager] Auth check failed, showing guest user:', error);
@@ -63,6 +68,35 @@ class AuthManager {
 
             this.showGuestUser();
             this.isLoggedIn = false;
+        }
+    }
+
+    // Refresh user data from server
+    async refreshUserData() {
+        try {
+            const response = await fetch('https://roassistantv3-production.up.railway.app/api/user/profile', {
+                headers: {
+                    'Authorization': `Bearer ${this.authToken}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('[AuthManager] Refreshed user data from server:', data);
+
+                // Update stored user data with latest from server
+                const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+                const updatedUser = {
+                    ...currentUser,
+                    ...data,
+                    subscription: data.subscription || currentUser.subscription
+                };
+
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+                console.log('[AuthManager] Updated stored user data with subscription:', updatedUser.subscription);
+            }
+        } catch (error) {
+            console.log('[AuthManager] Could not refresh user data:', error);
         }
     }
 
