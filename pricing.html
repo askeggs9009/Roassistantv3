@@ -886,31 +886,52 @@
 
     <script>
         // Check authentication status and update buttons
-        function checkAuthStatus() {
+        async function checkAuthStatus() {
+            const token = localStorage.getItem('authToken');
             const user = localStorage.getItem('user');
             const authButton = document.getElementById('authButton');
             const ctaButton = document.getElementById('ctaButton');
             const freeButton = document.getElementById('freeButton');
 
-            if (user) {
-                const userData = JSON.parse(user);
+            if (token && user) {
+                try {
+                    // Verify token is still valid
+                    const response = await fetch('/auth/verify', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
 
-                // Update header auth button
-                if (authButton) {
-                    authButton.textContent = userData.name || 'Dashboard';
-                    authButton.onclick = () => window.location.href = '/index.html';
-                }
+                    if (response.ok) {
+                        const userData = JSON.parse(user);
 
-                // Update CTA button
-                if (ctaButton) {
-                    ctaButton.textContent = 'Go to Dashboard';
-                    ctaButton.onclick = () => window.location.href = '/index.html';
-                }
+                        // Update header auth button
+                        if (authButton) {
+                            authButton.textContent = userData.name || 'Dashboard';
+                            authButton.onclick = () => window.location.href = '/index.html';
+                        }
 
-                // Update free plan button
-                if (freeButton) {
-                    freeButton.textContent = 'Go to Dashboard';
-                    freeButton.onclick = () => window.location.href = '/index.html';
+                        // Update CTA button
+                        if (ctaButton) {
+                            ctaButton.textContent = 'Go to Dashboard';
+                            ctaButton.onclick = () => window.location.href = '/index.html';
+                        }
+
+                        // Update free plan button
+                        if (freeButton) {
+                            freeButton.textContent = 'Go to Dashboard';
+                            freeButton.onclick = () => window.location.href = '/index.html';
+                        }
+                    } else {
+                        // Token invalid, clear auth
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('user');
+                    }
+                } catch (error) {
+                    console.error('Auth verification failed:', error);
+                    // On error, clear auth
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
                 }
             }
         }
