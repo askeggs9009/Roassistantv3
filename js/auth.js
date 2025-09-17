@@ -154,28 +154,144 @@ class AuthManager {
             const fallbackAvatar = `<div class="user-avatar-fallback" ${userData.picture ? 'style="display:none;"' : ''}>${(userData.name || userData.email || 'U').charAt(0).toUpperCase()}</div>`;
 
             userProfile.innerHTML = `
-                <div class="user-avatar-container">
-                    ${avatarElement}
-                    ${fallbackAvatar}
+                <div class="user-dropdown-trigger" onclick="authManager.toggleDropdown(event)" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; width: 100%; padding: 0.5rem; border-radius: 8px; transition: background 0.2s;">
+                    <div class="user-avatar-container">
+                        ${avatarElement}
+                        ${fallbackAvatar}
+                    </div>
+                    <div class="user-info" style="flex: 1;">
+                        <div class="user-name">${userData.name || userData.email || 'User'}</div>
+                        <div class="user-plan">
+                            <span>${planDisplay} Plan</span>
+                        </div>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="#8b949e" style="transition: transform 0.2s;">
+                        <path d="M12.78 6.22a.75.75 0 010 1.06l-4.25 4.25a.75.75 0 01-1.06 0L3.22 7.28a.75.75 0 011.06-1.06L8 9.94l3.72-3.72a.75.75 0 011.06 0z"/>
+                    </svg>
                 </div>
-                <div class="user-info">
-                    <div class="user-name">${userData.name || userData.email || 'User'}</div>
-                    <div class="user-plan">
-                        <span>${planDisplay} Plan</span>
-                        <a href="/account.html" style="color: #58a6ff; text-decoration: none; font-size: 0.8rem; margin-left: 0.5rem;" title="Account Settings">⚙️</a>
+                <div id="userDropdownMenu" class="user-dropdown-menu" style="display: none;">
+                    <div class="dropdown-item" onclick="window.location.href='/account.html'">
+                        <span>⚙️</span>
+                        <span>Settings</span>
+                    </div>
+                    ${planText === 'free' ? `
+                    <div class="dropdown-item" onclick="window.location.href='/pricing.html'">
+                        <span>⚡</span>
+                        <span>Upgrade Plan</span>
+                    </div>
+                    ` : ''}
+                    <div class="dropdown-item" onclick="window.open('https://github.com/askeggs9009/Roassistantv3/issues', '_blank')">
+                        <span>❓</span>
+                        <span>Get Help</span>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-item logout" onclick="authManager.logout()">
+                        <span>🚪</span>
+                        <span>Logout</span>
                     </div>
                 </div>
-                <div style="display: flex; gap: 0.25rem;">
-                    <button onclick="window.location.href='/account.html'" style="background: none; border: none; color: #8b949e; cursor: pointer; padding: 0.25rem;" title="Account Settings">
-                        ⚙️
-                    </button>
-                    <button onclick="authManager.logout()" style="background: #f85149; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer;">
-                        Logout
-                    </button>
-                </div>
             `;
-            userProfile.style.display = 'flex';
+            userProfile.style.display = 'block';
+            userProfile.style.position = 'relative';
+
+            // Add styles if not already present
+            if (!document.getElementById('dropdownStyles')) {
+                const style = document.createElement('style');
+                style.id = 'dropdownStyles';
+                style.innerHTML = `
+                    .user-dropdown-trigger:hover {
+                        background: rgba(255, 255, 255, 0.05) !important;
+                    }
+
+                    .user-dropdown-menu {
+                        position: absolute;
+                        bottom: 100%;
+                        left: 0;
+                        right: 0;
+                        background: #1c2128;
+                        border: 1px solid #30363d;
+                        border-radius: 8px;
+                        margin-bottom: 0.5rem;
+                        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+                        z-index: 1000;
+                        overflow: hidden;
+                        animation: dropdownSlideUp 0.2s ease;
+                    }
+
+                    @keyframes dropdownSlideUp {
+                        from {
+                            opacity: 0;
+                            transform: translateY(10px);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+                    }
+
+                    .dropdown-item {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+                        padding: 0.75rem 1rem;
+                        color: #c9d1d9;
+                        cursor: pointer;
+                        transition: background 0.2s;
+                        font-size: 0.9rem;
+                    }
+
+                    .dropdown-item:hover {
+                        background: rgba(255, 255, 255, 0.1);
+                    }
+
+                    .dropdown-item.logout {
+                        color: #f85149;
+                    }
+
+                    .dropdown-divider {
+                        height: 1px;
+                        background: #30363d;
+                        margin: 0.25rem 0;
+                    }
+
+                    .dropdown-open svg {
+                        transform: rotate(180deg);
+                    }
+                `;
+                document.head.appendChild(style);
+            }
         }
+    }
+
+    // Toggle dropdown menu
+    toggleDropdown(event) {
+        event.stopPropagation();
+        const menu = document.getElementById('userDropdownMenu');
+        const trigger = document.querySelector('.user-dropdown-trigger');
+        const svg = trigger.querySelector('svg');
+
+        if (menu.style.display === 'none') {
+            menu.style.display = 'block';
+            svg.style.transform = 'rotate(180deg)';
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', this.closeDropdown);
+        } else {
+            this.closeDropdown();
+        }
+    }
+
+    // Close dropdown
+    closeDropdown() {
+        const menu = document.getElementById('userDropdownMenu');
+        const svg = document.querySelector('.user-dropdown-trigger svg');
+        if (menu) {
+            menu.style.display = 'none';
+        }
+        if (svg) {
+            svg.style.transform = 'rotate(0deg)';
+        }
+        document.removeEventListener('click', authManager.closeDropdown);
     }
 
     // Show guest user
@@ -183,12 +299,104 @@ class AuthManager {
         const userProfile = document.getElementById('userProfile');
         if (userProfile) {
             userProfile.innerHTML = `
-                <span class="user-name">Guest</span>
-                <button onclick="window.location.href='/login.html'" style="background: #58a6ff; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
-                    Sign In
-                </button>
+                <div class="user-dropdown-trigger" onclick="authManager.toggleDropdown(event)" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; width: 100%; padding: 0.5rem; border-radius: 8px; transition: background 0.2s;">
+                    <div class="user-avatar-container">
+                        <div class="user-avatar-fallback" style="background: #30363d;">G</div>
+                    </div>
+                    <div class="user-info" style="flex: 1;">
+                        <div class="user-name">Guest</div>
+                        <div class="user-plan">
+                            <span>Free Plan</span>
+                        </div>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="#8b949e" style="transition: transform 0.2s;">
+                        <path d="M12.78 6.22a.75.75 0 010 1.06l-4.25 4.25a.75.75 0 01-1.06 0L3.22 7.28a.75.75 0 011.06-1.06L8 9.94l3.72-3.72a.75.75 0 011.06 0z"/>
+                    </svg>
+                </div>
+                <div id="userDropdownMenu" class="user-dropdown-menu" style="display: none;">
+                    <div class="dropdown-item" onclick="window.location.href='/login.html'">
+                        <span>🔑</span>
+                        <span>Sign In</span>
+                    </div>
+                    <div class="dropdown-item" onclick="window.location.href='/pricing.html'">
+                        <span>⚡</span>
+                        <span>View Plans</span>
+                    </div>
+                    <div class="dropdown-item" onclick="window.open('https://github.com/askeggs9009/Roassistantv3/issues', '_blank')">
+                        <span>❓</span>
+                        <span>Get Help</span>
+                    </div>
+                </div>
             `;
-            userProfile.style.display = 'flex';
+            userProfile.style.display = 'block';
+            userProfile.style.position = 'relative';
+
+            // Add styles if not already present
+            if (!document.getElementById('dropdownStyles')) {
+                const style = document.createElement('style');
+                style.id = 'dropdownStyles';
+                style.innerHTML = `
+                    .user-dropdown-trigger:hover {
+                        background: rgba(255, 255, 255, 0.05) !important;
+                    }
+
+                    .user-dropdown-menu {
+                        position: absolute;
+                        bottom: 100%;
+                        left: 0;
+                        right: 0;
+                        background: #1c2128;
+                        border: 1px solid #30363d;
+                        border-radius: 8px;
+                        margin-bottom: 0.5rem;
+                        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+                        z-index: 1000;
+                        overflow: hidden;
+                        animation: dropdownSlideUp 0.2s ease;
+                    }
+
+                    @keyframes dropdownSlideUp {
+                        from {
+                            opacity: 0;
+                            transform: translateY(10px);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+                    }
+
+                    .dropdown-item {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+                        padding: 0.75rem 1rem;
+                        color: #c9d1d9;
+                        cursor: pointer;
+                        transition: background 0.2s;
+                        font-size: 0.9rem;
+                    }
+
+                    .dropdown-item:hover {
+                        background: rgba(255, 255, 255, 0.1);
+                    }
+
+                    .dropdown-item.logout {
+                        color: #f85149;
+                    }
+
+                    .dropdown-divider {
+                        height: 1px;
+                        background: #30363d;
+                        margin: 0.25rem 0;
+                    }
+
+                    .dropdown-open svg {
+                        transform: rotate(180deg);
+                    }
+                `;
+                document.head.appendChild(style);
+            }
         }
     }
 
