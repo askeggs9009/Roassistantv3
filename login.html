@@ -465,8 +465,16 @@
             }
         }
 
-        // Handle form submission
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        // Initialize event listeners
+        function initializeEventListeners() {
+            // Handle form submission
+            const loginForm = document.getElementById('loginForm');
+            if (!loginForm) {
+                console.error('Login form not found');
+                return;
+            }
+
+            loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
 
             const email = document.getElementById('email').value.trim();
@@ -576,7 +584,28 @@
             } finally {
                 setLoading(false);
             }
-        });
+            });
+
+            // Handle Enter key in form fields
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+
+            if (emailInput) {
+                emailInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' && !isSignUp) {
+                        passwordInput?.focus();
+                    }
+                });
+            }
+
+            if (passwordInput) {
+                passwordInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        loginForm.dispatchEvent(new Event('submit'));
+                    }
+                });
+            }
+        }
 
         // Check if user is already logged in
         window.addEventListener('load', async function() {
@@ -665,18 +694,8 @@
             }
         });
 
-        // Handle Enter key in form fields
-        document.getElementById('email').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && !isSignUp) {
-                document.getElementById('password').focus();
-            }
-        });
-
-        document.getElementById('password').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                document.getElementById('loginForm').dispatchEvent(new Event('submit'));
-            }
-        });
+        // Initialize event listeners when DOM is ready
+        initializeEventListeners();
     </script>
 </body>
 </html>
