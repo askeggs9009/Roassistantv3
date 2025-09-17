@@ -51,6 +51,37 @@ initializeEmailService().catch(err => {
     console.error('Failed to initialize email service:', err.message);
 });
 
+// reCAPTCHA verification function
+async function verifyRecaptcha(token) {
+    if (!token) {
+        return { success: false, error: 'reCAPTCHA token is required' };
+    }
+
+    if (!process.env.RECAPTCHA_SECRET_KEY || process.env.RECAPTCHA_SECRET_KEY === 'YOUR_SECRET_KEY_HERE') {
+        console.log('⚠️ reCAPTCHA secret key not configured, skipping verification');
+        return { success: true }; // Skip verification in development
+    }
+
+    try {
+        const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${token}`
+        });
+
+        const data = await response.json();
+        return {
+            success: data.success,
+            error: data.success ? null : 'reCAPTCHA verification failed'
+        };
+    } catch (error) {
+        console.error('reCAPTCHA verification error:', error);
+        return { success: false, error: 'reCAPTCHA verification service unavailable' };
+    }
+}
+
 // Debug email configuration
 console.log('🔍 Debug Email Config:');
 console.log('RESEND_API_KEY:', process.env.RESEND_API_KEY ? 'Set (length: ' + process.env.RESEND_API_KEY.length + ')' : 'Missing');
@@ -1006,15 +1037,23 @@ app.get("/api/subscription-plans", (req, res) => {
 app.post("/auth/signup", async (req, res) => {
     console.log('[SIGNUP] Endpoint hit, processing request...');
     console.log('[SIGNUP] Request body:', JSON.stringify(req.body));
-    
+
     try {
-        const { email, password, name } = req.body;
+        const { email, password, name, recaptchaToken } = req.body;
 
         console.log(`[SIGNUP] Attempt for: ${email}`);
 
         if (!email || !password || !name) {
             return res.status(400).json({ error: 'Name, email and password are required' });
         }
+
+        // Verify reCAPTCHA
+        const recaptchaResult = await verifyRecaptcha(recaptchaToken);
+        if (!recaptchaResult.success) {
+            console.log('[SIGNUP] reCAPTCHA verification failed:', recaptchaResult.error);
+            return res.status(400).json({ error: recaptchaResult.error });
+        }
+        console.log('[SIGNUP] ✅ reCAPTCHA verification passed');
 
         if (name.trim().length < 2) {
             return res.status(400).json({ error: 'Name must be at least 2 characters long' });
@@ -1288,11 +1327,19 @@ app.post("/auth/resend-verification", async (req, res) => {
 
 app.post("/auth/login", async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, recaptchaToken } = req.body;
 
         if (!email || !password) {
             return res.status(400).json({ error: 'Email and password are required' });
         }
+
+        // Verify reCAPTCHA
+        const recaptchaResult = await verifyRecaptcha(recaptchaToken);
+        if (!recaptchaResult.success) {
+            console.log('[LOGIN] reCAPTCHA verification failed:', recaptchaResult.error);
+            return res.status(400).json({ error: recaptchaResult.error });
+        }
+        console.log('[LOGIN] ✅ reCAPTCHA verification passed');
 
         const user = await DatabaseManager.findUserByEmail(email);
         if (!user) {

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In - Roblox Luau AI Assistant</title>
+    <!-- Google reCAPTCHA -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
         * {
             margin: 0;
@@ -370,6 +372,11 @@
                     >
                 </div>
 
+                <!-- reCAPTCHA -->
+                <div class="recaptcha-container" id="recaptchaContainer" style="margin: 1rem 0; display: flex; justify-content: center;">
+                    <div class="g-recaptcha" data-sitekey="6LfTu8wrAAAAAJyQE_CJpXnW2x5B71VyDKdLjIM3"></div>
+                </div>
+
                 <button type="submit" class="submit-button" id="submitButton">
                     <span id="submitText">Sign In</span>
                     <div class="loading" id="submitLoading">
@@ -389,7 +396,10 @@
     <script>
         // Railway backend URL
         const API_BASE_URL = 'https://roassistantv3-production.up.railway.app';
-        
+
+        // reCAPTCHA Site Key
+        const RECAPTCHA_SITE_KEY = '6LfTu8wrAAAAAJyQE_CJpXnW2x5B71VyDKdLjIM3';
+
         let isSignUp = false;
 
         // Toggle between sign in and sign up
@@ -518,14 +528,21 @@
                 return;
             }
 
+            // reCAPTCHA validation
+            const recaptchaResponse = grecaptcha.getResponse();
+            if (!recaptchaResponse) {
+                showError('Please complete the reCAPTCHA verification.');
+                return;
+            }
+
             setLoading(true);
             clearMessages();
 
             try {
                 const endpoint = isSignUp ? '/auth/signup' : '/auth/login';
-                const body = isSignUp 
-                    ? { email, password, name: name.trim() }
-                    : { email, password };
+                const body = isSignUp
+                    ? { email, password, name: name.trim(), recaptchaToken: recaptchaResponse }
+                    : { email, password, recaptchaToken: recaptchaResponse };
 
                 console.log(`Attempting ${isSignUp ? 'signup' : 'login'} for:`, email);
 
@@ -590,6 +607,10 @@
                 }
             } finally {
                 setLoading(false);
+                // Reset reCAPTCHA for security
+                if (typeof grecaptcha !== 'undefined') {
+                    grecaptcha.reset();
+                }
             }
             });
 
