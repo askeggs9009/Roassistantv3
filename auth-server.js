@@ -1494,6 +1494,78 @@ app.post("/api/contact-support", authenticateToken, async (req, res) => {
     }
 });
 
+// Debug endpoint to test subscription sync
+app.get("/api/debug-subscription/:email", async (req, res) => {
+    try {
+        const { email } = req.params;
+        console.log(`[DEBUG] Testing subscription for ${email}`);
+
+        const user = await DatabaseManager.findUserByEmail(email);
+        if (!user) {
+            return res.json({ error: 'User not found' });
+        }
+
+        console.log(`[DEBUG] Current user subscription:`, user.subscription);
+
+        // Check Stripe for subscriptions
+        let customerId = user.subscription?.stripeCustomerId;
+        console.log(`[DEBUG] Customer ID from DB: ${customerId}`);
+
+        if (!customerId) {
+            const customers = await stripe.customers.list({
+                email: email,
+                limit: 1
+            });
+            console.log(`[DEBUG] Found ${customers.data.length} customers in Stripe`);
+            if (customers.data.length > 0) {
+                customerId = customers.data[0].id;
+                console.log(`[DEBUG] Found customer ID: ${customerId}`);
+            }
+        }
+
+        if (customerId) {
+            const subscriptions = await stripe.subscriptions.list({
+                customer: customerId,
+                status: 'all',
+                limit: 10
+            });
+
+            console.log(`[DEBUG] Found ${subscriptions.data.length} subscriptions`);
+
+            const debugData = {
+                user: {
+                    email: user.email,
+                    currentPlan: user.subscription?.plan || 'free',
+                    stripeCustomerId: user.subscription?.stripeCustomerId
+                },
+                stripe: {
+                    customerId,
+                    subscriptions: subscriptions.data.map(sub => ({
+                        id: sub.id,
+                        status: sub.status,
+                        priceId: sub.items.data[0]?.price.id,
+                        planName: sub.items.data[0]?.price.nickname || 'Unknown'
+                    }))
+                },
+                environment: {
+                    proMonthly: process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
+                    proAnnual: process.env.STRIPE_PRO_ANNUAL_PRICE_ID,
+                    enterpriseMonthly: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID,
+                    enterpriseAnnual: process.env.STRIPE_ENTERPRISE_ANNUAL_PRICE_ID
+                }
+            };
+
+            return res.json(debugData);
+        }
+
+        res.json({ error: 'No customer found in Stripe', user: user.email });
+
+    } catch (error) {
+        console.error('[DEBUG] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Get available subscription plans
 app.get("/api/subscription-plans", (req, res) => {
     res.json(SUBSCRIPTION_PLANS);
