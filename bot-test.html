@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>reCAPTCHA Bot Testing Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #005a87;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .results {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .success {
+            color: #28a745;
+        }
+
+        .error {
+            color: #dc3545;
+        }
+
+        .info {
+            color: #17a2b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 reCAPTCHA Bot Testing Tool</h1>
+
+        <div class="warning">
+            <strong>⚠️ Educational Purpose Only</strong><br>
+            This tool is for testing your own reCAPTCHA implementation. Use responsibly and only on your own applications.
+        </div>
+
+        <div class="test-section">
+            <h3>🚀 Automated Request Tests</h3>
+            <p>These tests simulate different types of automated behavior to see how reCAPTCHA v3 responds.</p>
+
+            <button onclick="testRapidRequests()">Rapid Fire Test (5 requests)</button>
+            <button onclick="testSlowRequests()">Slow Bot Test (3 requests)</button>
+            <button onclick="testInvalidTokens()">Invalid Token Test</button>
+            <button onclick="clearResults()">Clear Results</button>
+
+            <div id="testResults" class="results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Expected Results</h3>
+            <ul>
+                <li><strong>Valid users:</strong> reCAPTCHA scores 0.7-0.9</li>
+                <li><strong>Automated scripts:</strong> reCAPTCHA scores 0.1-0.3</li>
+                <li><strong>Invalid tokens:</strong> Should be rejected immediately</li>
+                <li><strong>Rapid requests:</strong> Lower scores due to bot-like behavior</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Monitoring</h3>
+            <p>Monitor results in:</p>
+            <ul>
+                <li><a href="/admin.html" target="_blank">Admin Dashboard</a> - View user risk scores</li>
+                <li><strong>Railway Logs</strong> - See real-time reCAPTCHA verification</li>
+                <li><strong>Browser Console</strong> - View test responses</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://roassistantv3-production.up.railway.app';
+        let testCount = 0;
+
+        function log(message, type = 'info') {
+            const results = document.getElementById('testResults');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            results.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            results.scrollTop = results.scrollHeight;
+            console.log(`[Bot Test] ${message}`);
+        }
+
+        function clearResults() {
+            document.getElementById('testResults').innerHTML = '';
+            testCount = 0;
+        }
+
+        async function makeTestRequest(requestData, description) {
+            testCount++;
+            log(`🤖 Test ${testCount}: ${description}`, 'info');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'User-Agent': 'BotTest/1.0 (Automated Testing)'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    log(`✅ Response ${response.status}: ${JSON.stringify(data)}`, 'success');
+                } else {
+                    log(`❌ Response ${response.status}: ${data.error || 'Unknown error'}`, 'error');
+                    if (data.error && data.error.includes('reCAPTCHA')) {
+                        log(`🛡️ Bot detected by reCAPTCHA!`, 'success');
+                    }
+                }
+
+            } catch (error) {
+                log(`💥 Request failed: ${error.message}`, 'error');
+            }
+
+            log(`---`, 'info');
+        }
+
+        async function testRapidRequests() {
+            log('🚀 Starting Rapid Fire Test...', 'info');
+
+            const requests = [];
+            for (let i = 0; i < 5; i++) {
+                requests.push(makeTestRequest({
+                    email: 'bot-test@example.com',
+                    password: 'botpassword123',
+                    recaptchaToken: `fake-rapid-token-${i}-${Date.now()}`
+                }, `Rapid request #${i + 1}`));
+            }
+
+            await Promise.all(requests);
+            log('🏁 Rapid fire test complete!', 'success');
+        }
+
+        async function testSlowRequests() {
+            log('🐌 Starting Slow Bot Test...', 'info');
+
+            for (let i = 0; i < 3; i++) {
+                await makeTestRequest({
+                    email: 'slow-bot@example.com',
+                    password: 'slowbotpass123',
+                    recaptchaToken: `fake-slow-token-${i}-${Date.now()}`
+                }, `Slow request #${i + 1}`);
+
+                if (i < 2) {
+                    log('⏱️ Waiting 2 seconds...', 'info');
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+            }
+
+            log('🏁 Slow bot test complete!', 'success');
+        }
+
+        async function testInvalidTokens() {
+            log('🚫 Starting Invalid Token Test...', 'info');
+
+            const invalidTokens = [
+                '',
+                'null',
+                'undefined',
+                'fake-token',
+                '12345',
+                'a'.repeat(2000)
+            ];
+
+            for (let i = 0; i < invalidTokens.length; i++) {
+                await makeTestRequest({
+                    email: 'invalid-test@example.com',
+                    password: 'invalidtest123',
+                    recaptchaToken: invalidTokens[i]
+                }, `Invalid token: "${invalidTokens[i].substring(0, 20)}${invalidTokens[i].length > 20 ? '...' : ''}"`);
+
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+
+            log('🏁 Invalid token test complete!', 'success');
+        }
+
+        // Initialize
+        log('🤖 Bot Testing Tool Ready', 'success');
+        log('Click the buttons above to start testing reCAPTCHA behavior', 'info');
+    </script>
+</body>
+</html>
