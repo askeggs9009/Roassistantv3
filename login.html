@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In - Roblox Luau AI Assistant</title>
-    <!-- Google reCAPTCHA -->
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <!-- Google reCAPTCHA v3 -->
+    <script src="https://www.google.com/recaptcha/api.js?render=6LfTu8wrAAAAAJyQE_CJpXnW2x5B71VyDKdLjIM3"></script>
     <style>
         * {
             margin: 0;
@@ -372,10 +372,7 @@
                     >
                 </div>
 
-                <!-- reCAPTCHA -->
-                <div class="recaptcha-container" id="recaptchaContainer" style="margin: 1rem 0; display: flex; justify-content: center;">
-                    <div class="g-recaptcha" data-sitekey="6LfTu8wrAAAAAJyQE_CJpXnW2x5B71VyDKdLjIM3"></div>
-                </div>
+                <!-- reCAPTCHA v3 - invisible, no widget needed -->
 
                 <button type="submit" class="submit-button" id="submitButton">
                     <span id="submitText">Sign In</span>
@@ -528,10 +525,16 @@
                 return;
             }
 
-            // reCAPTCHA validation
-            const recaptchaResponse = grecaptcha.getResponse();
-            if (!recaptchaResponse) {
-                showError('Please complete the reCAPTCHA verification.');
+            // reCAPTCHA v3 validation - get token programmatically
+            let recaptchaResponse;
+            try {
+                recaptchaResponse = await grecaptcha.execute('6LfTu8wrAAAAAJyQE_CJpXnW2x5B71VyDKdLjIM3', {
+                    action: isSignUp ? 'signup' : 'login'
+                });
+                console.log('✅ reCAPTCHA v3 token obtained');
+            } catch (error) {
+                console.error('❌ reCAPTCHA v3 failed:', error);
+                showError('Security verification failed. Please try again.');
                 return;
             }
 
@@ -607,10 +610,7 @@
                 }
             } finally {
                 setLoading(false);
-                // Reset reCAPTCHA for security
-                if (typeof grecaptcha !== 'undefined') {
-                    grecaptcha.reset();
-                }
+                // Note: reCAPTCHA v3 doesn't need to be reset like v2
             }
             });
 

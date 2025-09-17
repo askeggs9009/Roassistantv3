@@ -51,8 +51,8 @@ initializeEmailService().catch(err => {
     console.error('Failed to initialize email service:', err.message);
 });
 
-// reCAPTCHA verification function
-async function verifyRecaptcha(token) {
+// reCAPTCHA v3 verification function
+async function verifyRecaptcha(token, expectedAction = null) {
     if (!token) {
         return { success: false, error: 'reCAPTCHA token is required' };
     }
@@ -72,10 +72,29 @@ async function verifyRecaptcha(token) {
         });
 
         const data = await response.json();
-        return {
-            success: data.success,
-            error: data.success ? null : 'reCAPTCHA verification failed'
-        };
+
+        // reCAPTCHA v3 returns a score (0.0-1.0) where 1.0 is very likely a good interaction
+        // and 0.0 is very likely a bot
+        const minScore = 0.5; // Adjust this threshold as needed
+
+        if (!data.success) {
+            console.log('reCAPTCHA verification failed:', data['error-codes']);
+            return { success: false, error: 'reCAPTCHA verification failed' };
+        }
+
+        if (data.score < minScore) {
+            console.log(`reCAPTCHA score ${data.score} below threshold ${minScore}`);
+            return { success: false, error: 'Security verification failed. Please try again.' };
+        }
+
+        if (expectedAction && data.action !== expectedAction) {
+            console.log(`reCAPTCHA action mismatch: expected ${expectedAction}, got ${data.action}`);
+            return { success: false, error: 'Security verification failed. Please try again.' };
+        }
+
+        console.log(`✅ reCAPTCHA v3 verified: score ${data.score}, action: ${data.action}`);
+        return { success: true, score: data.score };
+
     } catch (error) {
         console.error('reCAPTCHA verification error:', error);
         return { success: false, error: 'reCAPTCHA verification service unavailable' };
@@ -1047,13 +1066,13 @@ app.post("/auth/signup", async (req, res) => {
             return res.status(400).json({ error: 'Name, email and password are required' });
         }
 
-        // Verify reCAPTCHA
-        const recaptchaResult = await verifyRecaptcha(recaptchaToken);
+        // Verify reCAPTCHA v3
+        const recaptchaResult = await verifyRecaptcha(recaptchaToken, 'signup');
         if (!recaptchaResult.success) {
             console.log('[SIGNUP] reCAPTCHA verification failed:', recaptchaResult.error);
             return res.status(400).json({ error: recaptchaResult.error });
         }
-        console.log('[SIGNUP] ✅ reCAPTCHA verification passed');
+        console.log(`[SIGNUP] ✅ reCAPTCHA v3 verification passed (score: ${recaptchaResult.score})`);
 
         if (name.trim().length < 2) {
             return res.status(400).json({ error: 'Name must be at least 2 characters long' });
@@ -1333,13 +1352,13 @@ app.post("/auth/login", async (req, res) => {
             return res.status(400).json({ error: 'Email and password are required' });
         }
 
-        // Verify reCAPTCHA
-        const recaptchaResult = await verifyRecaptcha(recaptchaToken);
+        // Verify reCAPTCHA v3
+        const recaptchaResult = await verifyRecaptcha(recaptchaToken, 'login');
         if (!recaptchaResult.success) {
             console.log('[LOGIN] reCAPTCHA verification failed:', recaptchaResult.error);
             return res.status(400).json({ error: recaptchaResult.error });
         }
-        console.log('[LOGIN] ✅ reCAPTCHA verification passed');
+        console.log(`[LOGIN] ✅ reCAPTCHA v3 verification passed (score: ${recaptchaResult.score})`);
 
         const user = await DatabaseManager.findUserByEmail(email);
         if (!user) {
