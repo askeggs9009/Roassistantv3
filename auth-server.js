@@ -477,7 +477,7 @@ When providing code, always use proper Luau syntax and follow Roblox scripting b
 
 Be helpful, clear, and provide working examples when possible.`;
 
-function checkUsageLimits(req, res, next) {
+async function checkUsageLimits(req, res, next) {
     const userIdentifier = getUserIdentifier(req);
     const isAuthenticated = req.user !== null;
     const model = req.body.model || "gpt-4o-mini";
@@ -511,9 +511,9 @@ function checkUsageLimits(req, res, next) {
         });
     } else {
         // Check subscription limits for authenticated users
-        const user = users.get(req.user.email);
+        const user = await DatabaseManager.findUserByEmail(req.user.email);
         const canSend = canUserSendMessage(user);
-        
+
         if (!canSend.allowed) {
             return res.status(429).json({
                 error: canSend.error,
@@ -774,7 +774,7 @@ async function updateUserSubscription(userEmail, subscription, eventType) {
 async function handlePaymentFailure(invoice) {
     try {
         if (invoice.customer_email) {
-            const user = users.get(invoice.customer_email);
+            const user = await DatabaseManager.findUserByEmail(invoice.customer_email);
             if (user && user.subscription) {
                 // You can implement logic here to handle failed payments
                 // For example, send an email notification or temporarily suspend service
@@ -971,8 +971,8 @@ app.get("/auth/google/callback", async (req, res) => {
 app.post("/api/create-checkout-session", authenticateToken, async (req, res) => {
     try {
         const { plan, billing } = req.body;
-        const user = users.get(req.user.email);
-        
+        const user = await DatabaseManager.findUserByEmail(req.user.email);
+
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
@@ -1015,8 +1015,8 @@ app.post("/api/create-checkout-session", authenticateToken, async (req, res) => 
 // Get User Subscription Status
 app.get("/api/user-subscription", authenticateToken, async (req, res) => {
     try {
-        const user = users.get(req.user.email);
-        
+        const user = await DatabaseManager.findUserByEmail(req.user.email);
+
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
@@ -1049,20 +1049,20 @@ app.get("/api/user-subscription", authenticateToken, async (req, res) => {
 // Cancel Subscription
 app.post("/api/cancel-subscription", authenticateToken, async (req, res) => {
     try {
-        const user = users.get(req.user.email);
-        
+        const user = await DatabaseManager.findUserByEmail(req.user.email);
+
         if (!user || !user.subscription?.stripeSubscriptionId) {
             return res.status(400).json({ error: 'No active subscription found' });
         }
-        
+
         const subscription = await stripe.subscriptions.update(
             user.subscription.stripeSubscriptionId,
             { cancel_at_period_end: true }
         );
-        
-        user.subscription.cancelAtPeriodEnd = true;
-        users.set(req.user.email, user);
-        saveUsers(); // Persist user changes
+
+        await DatabaseManager.updateUser(req.user.email, {
+            'subscription.cancelAtPeriodEnd': true
+        });
         
         res.json({
             success: true,
@@ -1442,13 +1442,13 @@ app.get("/auth/verify", authenticateToken, async (req, res) => {
 });
 
 // FIXED: New endpoints for user-specific chats and scripts
-app.get("/api/user-chats", authenticateToken, (req, res) => {
+app.get("/api/user-chats", authenticateToken, async (req, res) => {
     try {
-        const user = users.get(req.user.email);
+        const user = await DatabaseManager.findUserByEmail(req.user.email);
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
-        
+
         res.json({
             chats: user.chats || [],
             total: (user.chats || []).length
@@ -1459,9 +1459,9 @@ app.get("/api/user-chats", authenticateToken, (req, res) => {
     }
 });
 
-app.post("/api/user-chats", authenticateToken, (req, res) => {
+app.post("/api/user-chats", authenticateToken, async (req, res) => {
     try {
-        const user = users.get(req.user.email);
+        const user = await DatabaseManager.findUserByEmail(req.user.email);
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
@@ -1471,15 +1471,14 @@ app.post("/api/user-chats", authenticateToken, (req, res) => {
             return res.status(400).json({ error: 'Chat data is required' });
         }
 
-        if (!user.chats) user.chats = [];
-        user.chats.push(chat);
-        users.set(req.user.email, user);
-        saveUsers(); // Persist user changes
+        await DatabaseManager.updateUser(req.user.email, {
+            $push: { chats: chat }
+        });
 
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             message: 'Chat saved successfully',
-            chat: chat 
+            chat: chat
         });
     } catch (error) {
         console.error('[ERROR] Failed to save chat:', error);
@@ -1487,9 +1486,9 @@ app.post("/api/user-chats", authenticateToken, (req, res) => {
     }
 });
 
-app.put("/api/user-chats/:chatId", authenticateToken, (req, res) => {
+app.put("/api/user-chats/:chatId", authenticateToken, async (req, res) => {
     try {
-        const user = users.get(req.user.email);
+        const user = await DatabaseManager.findUserByEmail(req.user.email);
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
@@ -1498,15 +1497,14 @@ app.put("/api/user-chats/:chatId", authenticateToken, (req, res) => {
         const { chat } = req.body;
 
         if (!user.chats) user.chats = [];
-        
+
         const chatIndex = user.chats.findIndex(c => c.id === chatId);
         if (chatIndex === -1) {
             return res.status(404).json({ error: 'Chat not found' });
         }
 
         user.chats[chatIndex] = { ...user.chats[chatIndex], ...chat };
-        users.set(req.user.email, user);
-        saveUsers(); // Persist user changes
+        await DatabaseManager.updateUser(req.user.email, { chats: user.chats });
 
         res.json({ 
             success: true, 
@@ -1519,9 +1517,9 @@ app.put("/api/user-chats/:chatId", authenticateToken, (req, res) => {
     }
 });
 
-app.delete("/api/user-chats/:chatId", authenticateToken, (req, res) => {
+app.delete("/api/user-chats/:chatId", authenticateToken, async (req, res) => {
     try {
-        const user = users.get(req.user.email);
+        const user = await DatabaseManager.findUserByEmail(req.user.email);
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
@@ -1529,15 +1527,14 @@ app.delete("/api/user-chats/:chatId", authenticateToken, (req, res) => {
         const { chatId } = req.params;
 
         if (!user.chats) user.chats = [];
-        
+
         const chatIndex = user.chats.findIndex(c => c.id === chatId);
         if (chatIndex === -1) {
             return res.status(404).json({ error: 'Chat not found' });
         }
 
         user.chats.splice(chatIndex, 1);
-        users.set(req.user.email, user);
-        saveUsers(); // Persist user changes
+        await DatabaseManager.updateUser(req.user.email, { chats: user.chats });
 
         res.json({ 
             success: true, 
@@ -1651,11 +1648,11 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
 
         // Check if authenticated user can use this model
         if (isAuthenticated) {
-            const user = users.get(req.user.email);
+            const user = await DatabaseManager.findUserByEmail(req.user.email);
             const subscription = getUserSubscription(user);
-            
+
             if (!subscription.limits.models.includes(model)) {
-                return res.status(403).json({ 
+                return res.status(403).json({
                     error: `Model ${model} requires a higher subscription plan.`,
                     availableModels: subscription.limits.models,
                     subscription: subscription,
@@ -1687,9 +1684,9 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
 
         if (isAuthenticated) {
             // Increment user usage for authenticated users
-            const user = users.get(req.user.email);
+            const user = await DatabaseManager.findUserByEmail(req.user.email);
             incrementUserUsage(user);
-            
+
             const subscription = getUserSubscription(user);
             responseData.subscription = {
                 plan: subscription.plan,
@@ -1725,14 +1722,14 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
     }
 });
 
-app.get("/models", optionalAuthenticateToken, (req, res) => {
+app.get("/models", optionalAuthenticateToken, async (req, res) => {
     const isAuthenticated = req.user !== null;
     const userIdentifier = getUserIdentifier(req);
-    
+
     let availableModels = ['gpt-4o-mini']; // Default for guests
-    
+
     if (isAuthenticated) {
-        const user = users.get(req.user.email);
+        const user = await DatabaseManager.findUserByEmail(req.user.email);
         const subscription = getUserSubscription(user);
         availableModels = subscription.limits.models;
     }
