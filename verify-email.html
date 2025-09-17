@@ -228,11 +228,6 @@
             color: #58a6ff;
         }
 
-        .attempts-remaining {
-            color: #f79000;
-            font-size: 0.8rem;
-            margin-top: 0.5rem;
-        }
 
         @media (max-width: 480px) {
             .verification-container {
@@ -284,7 +279,6 @@
                 </div>
             </button>
 
-            <div id="attemptsRemaining" class="attempts-remaining" style="display: none;"></div>
         </form>
 
         <div class="resend-section">
@@ -303,7 +297,6 @@
     <script>
         let userEmail = '';
         let resendCountdownInterval = null;
-        let verificationAttempts = 0;
 
         // Initialize the page
         function initVerificationPage() {
@@ -447,18 +440,7 @@
 
                 } else {
                     // Error
-                    verificationAttempts++;
-                    
-                    if (data.attemptsRemaining !== undefined) {
-                        showError(data.error);
-                        showAttemptsRemaining(data.attemptsRemaining);
-                        
-                        if (data.attemptsRemaining === 0) {
-                            setTimeout(() => {
-                                window.location.href = '/login.html';
-                            }, 3000);
-                        }
-                    } else if (data.action === 'signup_required') {
+                    if (data.action === 'signup_required') {
                         showError(data.error);
                         setTimeout(() => {
                             window.location.href = '/login.html';
@@ -510,9 +492,6 @@
                     showSuccess(data.message || 'Verification code sent successfully!');
                     startResendCountdown();
                     
-                    // Reset attempts counter
-                    verificationAttempts = 0;
-                    hideAttemptsRemaining();
                     
                     // Clear and focus input
                     document.getElementById('verificationCode').value = '';
@@ -596,22 +575,6 @@
             document.getElementById('successMessage').style.display = 'none';
         }
 
-        // Show attempts remaining
-        function showAttemptsRemaining(attempts) {
-            const attemptsDiv = document.getElementById('attemptsRemaining');
-            if (attempts > 0) {
-                attemptsDiv.textContent = `${attempts} attempts remaining`;
-                attemptsDiv.style.display = 'block';
-            } else {
-                attemptsDiv.textContent = 'No attempts remaining. Redirecting to sign up...';
-                attemptsDiv.style.display = 'block';
-            }
-        }
-
-        // Hide attempts remaining
-        function hideAttemptsRemaining() {
-            document.getElementById('attemptsRemaining').style.display = 'none';
-        }
 
         // Handle browser back/forward buttons
         window.addEventListener('popstate', function(e) {
