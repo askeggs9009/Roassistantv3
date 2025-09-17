@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Management - Roblox Luau AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #21262d 100%);
+            min-height: 100vh;
+            color: #f0f6fc;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #58a6ff, #1f6feb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .account-card {
+            background: rgba(33, 38, 45, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            color: #58a6ff;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .subscription-info {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #8b949e;
+        }
+
+        .info-value {
+            font-weight: 500;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: rgba(46, 160, 67, 0.2);
+            color: #2ea043;
+            border: 1px solid #2ea043;
+        }
+
+        .status-cancelled {
+            background: rgba(248, 81, 73, 0.2);
+            color: #f85149;
+            border: 1px solid #f85149;
+        }
+
+        .plan-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 16px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .plan-free {
+            background: rgba(139, 148, 158, 0.2);
+            color: #8b949e;
+        }
+
+        .plan-pro {
+            background: linear-gradient(45deg, #58a6ff, #1f6feb);
+            color: white;
+        }
+
+        .plan-enterprise {
+            background: linear-gradient(45deg, #f79000, #d29922);
+            color: white;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #58a6ff, #1f6feb);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(88, 166, 255, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #f85149, #da3633);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(248, 81, 73, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(240, 246, 252, 0.1);
+            color: #f0f6fc;
+            border: 1px solid #30363d;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(240, 246, 252, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #30363d;
+            border-top: 4px solid #58a6ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .usage-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .usage-card {
+            background: rgba(22, 27, 34, 0.5);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .usage-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #58a6ff;
+        }
+
+        .usage-label {
+            color: #8b949e;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .actions {
+                flex-direction: column;
+            }
+
+            .info-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Account Management</h1>
+            <p>Manage your subscription and view usage statistics</p>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Loading account information...</p>
+        </div>
+
+        <div id="account-content" style="display: none;">
+            <!-- User Info Card -->
+            <div class="account-card">
+                <h2 class="card-title">
+                    👤 Account Information
+                </h2>
+                <div class="subscription-info">
+                    <div class="info-row">
+                        <span class="info-label">Email:</span>
+                        <span class="info-value" id="user-email">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Member Since:</span>
+                        <span class="info-value" id="member-since">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subscription Card -->
+            <div class="account-card">
+                <h2 class="card-title">
+                    💎 Subscription Details
+                </h2>
+                <div class="subscription-info">
+                    <div class="info-row">
+                        <span class="info-label">Current Plan:</span>
+                        <span class="info-value">
+                            <span id="plan-badge" class="plan-badge plan-free">Free</span>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value">
+                            <span id="status-badge" class="status-badge status-active">Active</span>
+                        </span>
+                    </div>
+                    <div class="info-row" id="period-end-row" style="display: none;">
+                        <span class="info-label">Next Billing Date:</span>
+                        <span class="info-value" id="period-end">-</span>
+                    </div>
+                    <div class="info-row" id="cancel-end-row" style="display: none;">
+                        <span class="info-label">Cancellation:</span>
+                        <span class="info-value" id="cancel-end">Will cancel at period end</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Usage Statistics -->
+            <div class="account-card">
+                <h2 class="card-title">
+                    📊 Usage Statistics
+                </h2>
+                <div class="usage-stats">
+                    <div class="usage-card">
+                        <div class="usage-number" id="daily-usage">0</div>
+                        <div class="usage-label">Messages Today</div>
+                    </div>
+                    <div class="usage-card">
+                        <div class="usage-number" id="daily-limit">10</div>
+                        <div class="usage-label">Daily Limit</div>
+                    </div>
+                    <div class="usage-card">
+                        <div class="usage-number" id="models-count">1</div>
+                        <div class="usage-label">Available Models</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="actions">
+                <a href="/" class="btn btn-primary">Return to Chat</a>
+                <a href="/pricing.html" class="btn btn-secondary">Upgrade Plan</a>
+                <button id="cancel-subscription" class="btn btn-danger" style="display: none;">Cancel Subscription</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSubscription = null;
+
+        async function loadAccountInfo() {
+            try {
+                const token = localStorage.getItem('authToken');
+                if (!token) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                // Verify token and get user info
+                const authResponse = await fetch('/auth/verify', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!authResponse.ok) {
+                    localStorage.removeItem('authToken');
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                const user = await authResponse.json();
+
+                // Get subscription info
+                const subResponse = await fetch('/api/user-subscription', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!subResponse.ok) {
+                    throw new Error('Failed to load subscription info');
+                }
+
+                const subscription = await subResponse.json();
+                currentSubscription = subscription;
+
+                // Update UI
+                updateAccountUI(user, subscription);
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('account-content').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading account info:', error);
+                document.getElementById('loading').innerHTML = `
+                    <p style="color: #f85149;">Error loading account information</p>
+                    <a href="/" class="btn btn-secondary">Return to Chat</a>
+                `;
+            }
+        }
+
+        function updateAccountUI(user, subscription) {
+            // User info
+            document.getElementById('user-email').textContent = user.email || user.user?.email || 'Unknown';
+
+            // Plan badge
+            const planBadge = document.getElementById('plan-badge');
+            planBadge.textContent = subscription.plan.toUpperCase();
+            planBadge.className = `plan-badge plan-${subscription.plan}`;
+
+            // Status badge
+            const statusBadge = document.getElementById('status-badge');
+            statusBadge.textContent = subscription.status.toUpperCase();
+            statusBadge.className = `status-badge status-${subscription.status}`;
+
+            // Billing info
+            if (subscription.currentPeriodEnd && subscription.plan !== 'free') {
+                const periodEndRow = document.getElementById('period-end-row');
+                const periodEnd = new Date(subscription.currentPeriodEnd);
+                document.getElementById('period-end').textContent = periodEnd.toLocaleDateString();
+                periodEndRow.style.display = 'flex';
+
+                // Show cancel button for active paid subscriptions
+                if (subscription.status === 'active' && !subscription.cancelAtPeriodEnd) {
+                    document.getElementById('cancel-subscription').style.display = 'inline-block';
+                }
+
+                // Show cancellation info
+                if (subscription.cancelAtPeriodEnd) {
+                    document.getElementById('cancel-end-row').style.display = 'flex';
+                }
+            }
+
+            // Usage statistics
+            document.getElementById('daily-usage').textContent = subscription.usage?.daily_messages || 0;
+            document.getElementById('daily-limit').textContent =
+                subscription.usage?.daily_limit === -1 ? '∞' : subscription.usage?.daily_limit || 10;
+            document.getElementById('models-count').textContent = subscription.limits?.models?.length || 1;
+        }
+
+        async function cancelSubscription() {
+            if (!confirm('Are you sure you want to cancel your subscription? It will remain active until the end of your current billing period.')) {
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/cancel-subscription', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    alert('Subscription cancelled successfully. It will remain active until the end of your billing period.');
+                    location.reload();
+                } else {
+                    const error = await response.json();
+                    alert('Error cancelling subscription: ' + error.error);
+                }
+            } catch (error) {
+                alert('Error cancelling subscription. Please try again.');
+            }
+        }
+
+        // Event listeners
+        document.getElementById('cancel-subscription').addEventListener('click', cancelSubscription);
+
+        // Load account info on page load
+        loadAccountInfo();
+    </script>
+</body>
+</html>

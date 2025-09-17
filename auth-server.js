@@ -757,8 +757,8 @@ async function updateUserSubscription(userEmail, subscription, eventType) {
             stripeCustomerId: subscription.customer,
             stripeSubscriptionId: subscription.id,
             status: status,
-            currentPeriodStart: new Date(subscription.current_period_start * 1000),
-            currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+            currentPeriodStart: subscription.current_period_start ? new Date(subscription.current_period_start * 1000) : new Date(),
+            currentPeriodEnd: subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Default to 30 days from now
             cancelAtPeriodEnd: subscription.cancel_at_period_end || false,
             updatedAt: new Date()
         }
