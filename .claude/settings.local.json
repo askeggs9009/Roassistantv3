@@ -45,7 +45,9 @@
       "Read(//z/solo lebvel/**)",
       "Bash(npm run build:*)",
       "mcp__Railway__get-logs",
-      "WebFetch(domain:roassistantv3-production.up.railway.app)"
+      "WebFetch(domain:roassistantv3-production.up.railway.app)",
+      "mcp__stripe__create_customer",
+      "mcp__stripe__list_customers"
     ],
     "deny": [],
     "ask": []

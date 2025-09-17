@@ -948,17 +948,7 @@
         // Initialize Stripe with live publishable key
         const stripe = Stripe('pk_live_51S6SwCGsDklELrgDqDKMpn2UnhGyACQ9TnSLo6SbFeD9AW1PD6caohbY3eRlIZaSH96bdz7BJ1dHK6MzniBi4PIr00kaEu7GC8');
         
-        // Payment Links for 30p pricing
-        const PAYMENT_LINKS = {
-            pro: {
-                monthly: 'https://buy.stripe.com/28E8wP87IfLb5fm7um63K00', // Pro Monthly £0.30
-                annual: 'https://buy.stripe.com/9B65kD3RsgPf8ry4ia63K01'   // Pro Annual £0.30
-            },
-            enterprise: {
-                monthly: 'https://buy.stripe.com/fZudR987I42tcHObKC63K02', // Enterprise Monthly £0.30
-                annual: 'https://buy.stripe.com/00w28rcnYaqR5fm7um63K03'   // Enterprise Annual £0.30
-            }
-        };
+        // Using custom checkout API instead of payment links for proper account linking
         
         // Billing toggle functionality
         function toggleBilling() {
@@ -999,24 +989,58 @@
         }
         
         // Plan selection with Stripe payment
-        function selectPlan(planType) {
+        async function selectPlan(planType) {
             const isAnnual = document.getElementById('billingToggle').checked;
             const billingCycle = isAnnual ? 'annual' : 'monthly';
-            
+
             switch(planType) {
                 case 'free':
                     // Redirect to login page for free plan
                     window.location.href = '/login.html?plan=free';
                     break;
-                    
+
                 case 'pro':
                 case 'enterprise':
-                    // Redirect to Stripe payment link
-                    const paymentUrl = PAYMENT_LINKS[planType][billingCycle];
-                    if (paymentUrl) {
-                        window.location.href = paymentUrl;
-                    } else {
-                        alert('Payment option not available. Please contact support.');
+                    // Check if user is logged in
+                    const token = localStorage.getItem('authToken');
+                    if (!token) {
+                        // Redirect to login first
+                        window.location.href = `/login.html?redirect=pricing&plan=${planType}&billing=${billingCycle}`;
+                        return;
+                    }
+
+                    try {
+                        // Create checkout session via your API
+                        const response = await fetch('/api/create-checkout-session', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                                plan: planType,
+                                billing: billingCycle
+                            })
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+
+                        const { sessionId } = await response.json();
+
+                        // Redirect to Stripe Checkout
+                        const result = await stripe.redirectToCheckout({
+                            sessionId: sessionId
+                        });
+
+                        if (result.error) {
+                            throw new Error(result.error.message);
+                        }
+
+                    } catch (error) {
+                        console.error('Checkout error:', error);
+                        alert(`Error creating checkout session: ${error.message}`);
                     }
                     break;
             }
