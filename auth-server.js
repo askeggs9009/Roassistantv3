@@ -88,69 +88,15 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
 
-// File-based storage for persistence
-import fs from 'fs';
-const USERS_FILE = path.join(__dirname, 'data', 'users.json');
-const PENDING_FILE = path.join(__dirname, 'data', 'pending.json');
+// MongoDB Database
+import { connectToDatabase, DatabaseManager, User, PendingVerification } from './models/database.js';
 
-// Ensure data directory exists
-if (!fs.existsSync(path.join(__dirname, 'data'))) {
-    fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
-}
+// Initialize database connection
+await connectToDatabase();
 
-// Load users from file or create empty map
-function loadUsers() {
-    try {
-        if (fs.existsSync(USERS_FILE)) {
-            const data = fs.readFileSync(USERS_FILE, 'utf8');
-            const usersObj = JSON.parse(data);
-            return new Map(Object.entries(usersObj));
-        }
-    } catch (error) {
-        console.error('[STORAGE] Error loading users:', error.message);
-    }
-    return new Map();
-}
-
-// Save users to file
-function saveUsers() {
-    try {
-        const usersObj = Object.fromEntries(users);
-        fs.writeFileSync(USERS_FILE, JSON.stringify(usersObj, null, 2));
-    } catch (error) {
-        console.error('[STORAGE] Error saving users:', error.message);
-    }
-}
-
-// Load pending verifications from file or create empty map
-function loadPendingVerifications() {
-    try {
-        if (fs.existsSync(PENDING_FILE)) {
-            const data = fs.readFileSync(PENDING_FILE, 'utf8');
-            const pendingObj = JSON.parse(data);
-            return new Map(Object.entries(pendingObj));
-        }
-    } catch (error) {
-        console.error('[STORAGE] Error loading pending verifications:', error.message);
-    }
-    return new Map();
-}
-
-// Save pending verifications to file
-function savePendingVerifications() {
-    try {
-        const pendingObj = Object.fromEntries(pendingVerifications);
-        fs.writeFileSync(PENDING_FILE, JSON.stringify(pendingObj, null, 2));
-    } catch (error) {
-        console.error('[STORAGE] Error saving pending verifications:', error.message);
-    }
-}
-
-// Initialize storage
-const users = loadUsers();
-const pendingVerifications = loadPendingVerifications();
-
-console.log(`[STORAGE] Loaded ${users.size} users and ${pendingVerifications.size} pending verifications`);
+// Get initial user count
+const userCount = await DatabaseManager.getUserCount();
+console.log(`[DATABASE] Connected to MongoDB with ${userCount} existing users`);
 
 // Subscription Plans Configuration
 const SUBSCRIPTION_PLANS = {
@@ -205,10 +151,10 @@ const userUsage = new Map();
 const guestUsage = new Map();
 const dailyUsage = new Map();
 
-function getUserPlan(userId) {
-    const user = users.get(userId);
+async function getUserPlan(userId) {
+    const user = await DatabaseManager.findUserById(userId);
     if (!user) return SUBSCRIPTION_PLANS.free;
-    
+
     const plan = user.subscription?.plan || 'free';
     return SUBSCRIPTION_PLANS[plan] || SUBSCRIPTION_PLANS.free;
 }
@@ -738,7 +684,7 @@ async function handleSubscriptionChange(subscription, eventType) {
 
 // FIXED: New function to properly update user subscriptions
 async function updateUserSubscription(userEmail, subscription, eventType) {
-    const user = users.get(userEmail);
+    const user = await DatabaseManager.findUserByEmail(userEmail);
     if (!user) {
         console.error(`[STRIPE] User not found: ${userEmail}`);
         return;
@@ -771,19 +717,20 @@ async function updateUserSubscription(userEmail, subscription, eventType) {
     }
 
     // Update user subscription
-    user.subscription = {
-        plan: finalPlan,
-        stripeCustomerId: subscription.customer,
-        stripeSubscriptionId: subscription.id,
-        status: status,
-        currentPeriodStart: new Date(subscription.current_period_start * 1000),
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-        cancelAtPeriodEnd: subscription.cancel_at_period_end || false,
-        updatedAt: new Date()
+    const subscriptionUpdate = {
+        subscription: {
+            plan: finalPlan,
+            stripeCustomerId: subscription.customer,
+            stripeSubscriptionId: subscription.id,
+            status: status,
+            currentPeriodStart: new Date(subscription.current_period_start * 1000),
+            currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+            cancelAtPeriodEnd: subscription.cancel_at_period_end || false,
+            updatedAt: new Date()
+        }
     };
 
-    users.set(userEmail, user);
-    saveUsers(); // Persist user changes
+    await DatabaseManager.updateUser(userEmail, subscriptionUpdate);
     console.log(`[SUBSCRIPTION] User ${userEmail} updated to ${finalPlan} (${status})`);
 }
 
@@ -883,9 +830,9 @@ app.get("/auth/google/callback", async (req, res) => {
         console.log('[OAUTH] User info retrieved:', data.email);
         
         // Create or update user
-        let user = users.get(data.email);
+        let user = await DatabaseManager.findUserByEmail(data.email);
         if (!user) {
-            user = {
+            const userData = {
                 id: Date.now().toString(),
                 email: data.email,
                 name: data.name,
@@ -898,14 +845,15 @@ app.get("/auth/google/callback", async (req, res) => {
                 chats: [], // FIXED: Initialize user-specific chats
                 scripts: [] // FIXED: Initialize user-specific scripts
             };
-            users.set(data.email, user);
-            saveUsers(); // Persist new user
+            user = await DatabaseManager.createUser(userData);
             console.log('[OAUTH] New user created:', data.email);
         } else {
-            user.lastLogin = new Date();
-            // FIXED: Ensure chats and scripts arrays exist for existing users
-            if (!user.chats) user.chats = [];
-            if (!user.scripts) user.scripts = [];
+            // Update last login
+            await DatabaseManager.updateUser(data.email, {
+                lastLogin: new Date(),
+                picture: data.picture, // Update profile picture if changed
+                name: data.name // Update name if changed
+            });
             console.log('[OAUTH] Existing user logged in:', data.email);
         }
         
@@ -1081,7 +1029,8 @@ app.post("/auth/signup", async (req, res) => {
             return res.status(400).json({ error: 'Please enter a valid email address' });
         }
 
-        if (users.has(email)) {
+        const existingUser = await DatabaseManager.findUserByEmail(email);
+        if (existingUser) {
             console.log(`[SIGNUP] Account already exists for: ${email}`);
             return res.status(400).json({ error: 'An account with this email already exists' });
         }
@@ -1092,7 +1041,7 @@ app.post("/auth/signup", async (req, res) => {
             console.log('[SIGNUP] Email not configured, creating account directly');
             // If email not configured, create account directly
             const hashedPassword = await bcrypt.hash(password, 10);
-            const user = {
+            const userData = {
                 id: Date.now().toString(),
                 email: email,
                 password: hashedPassword,
@@ -1106,8 +1055,7 @@ app.post("/auth/signup", async (req, res) => {
                 scripts: [] // FIXED: Initialize user-specific scripts
             };
 
-            users.set(email, user);
-            saveUsers(); // Persist new user
+            const user = await DatabaseManager.createUser(userData);
             console.log(`[SIGNUP] Account created successfully for: ${email}`);
 
             const token = jwt.sign(
@@ -1131,13 +1079,13 @@ app.post("/auth/signup", async (req, res) => {
         }
 
         // Check for existing pending verification
-        if (pendingVerifications.has(email)) {
-            const existing = pendingVerifications.get(email);
-            const timeSinceLastRequest = Date.now() - existing.timestamp;
-            
+        const existing = await DatabaseManager.findPendingVerification(email);
+        if (existing) {
+            const timeSinceLastRequest = Date.now() - existing.timestamp.getTime();
+
             if (timeSinceLastRequest < 60000) {
                 const waitTime = Math.ceil((60000 - timeSinceLastRequest) / 1000);
-                return res.status(429).json({ 
+                return res.status(429).json({
                     error: `Please wait ${waitTime} seconds before requesting another verification code.`,
                     retryAfter: waitTime
                 });
@@ -1147,16 +1095,15 @@ app.post("/auth/signup", async (req, res) => {
         const verificationCode = generateVerificationCode();
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        pendingVerifications.set(email, {
+        await DatabaseManager.createPendingVerification({
             email,
             password: hashedPassword,
             name,
             verificationCode,
-            timestamp: Date.now(),
-            expires: Date.now() + (15 * 60 * 1000), // 15 minutes
+            timestamp: new Date(),
+            expires: new Date(Date.now() + (15 * 60 * 1000)), // 15 minutes
             attempts: 0
         });
-        savePendingVerifications(); // Persist pending verification
 
         try {
             await sendVerificationEmail(email, verificationCode, name);
@@ -1202,17 +1149,17 @@ app.post("/auth/verify-email", async (req, res) => {
             return res.status(400).json({ error: 'Verification code must be 6 digits' });
         }
 
-        const pendingVerification = pendingVerifications.get(email);
+        const pendingVerification = await DatabaseManager.findPendingVerification(email);
 
         if (!pendingVerification) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 error: 'No pending verification found for this email. Please sign up again.',
                 action: 'signup_required'
             });
         }
 
-        if (Date.now() > pendingVerification.expires) {
-            pendingVerifications.delete(email);
+        if (Date.now() > pendingVerification.expires.getTime()) {
+            await DatabaseManager.deletePendingVerification(email);
             return res.status(400).json({ 
                 error: 'Verification code has expired. Please sign up again.',
                 action: 'signup_required'
@@ -1237,7 +1184,7 @@ app.post("/auth/verify-email", async (req, res) => {
         }
 
         // FIXED: Create user with proper structure
-        const user = {
+        const userData = {
             id: Date.now().toString(),
             email: pendingVerification.email,
             password: pendingVerification.password,
@@ -1251,10 +1198,8 @@ app.post("/auth/verify-email", async (req, res) => {
             scripts: [] // FIXED: Initialize user-specific scripts
         };
 
-        users.set(email, user);
-        saveUsers(); // Persist new verified user
-        pendingVerifications.delete(email);
-        savePendingVerifications(); // Persist pending changes
+        const user = await DatabaseManager.createUser(userData);
+        await DatabaseManager.deletePendingVerification(email);
 
         const token = jwt.sign(
             { id: user.id, email: user.email },
@@ -1349,7 +1294,7 @@ app.post("/auth/login", async (req, res) => {
             return res.status(400).json({ error: 'Email and password are required' });
         }
 
-        const user = users.get(email);
+        const user = await DatabaseManager.findUserByEmail(email);
         if (!user) {
             return res.status(400).json({ error: 'Invalid email or password' });
         }
@@ -1359,11 +1304,10 @@ app.post("/auth/login", async (req, res) => {
             return res.status(400).json({ error: 'Invalid email or password' });
         }
 
-        user.lastLogin = new Date();
-        
-        // FIXED: Ensure user has chats and scripts arrays
-        if (!user.chats) user.chats = [];
-        if (!user.scripts) user.scripts = [];
+        // Update last login
+        await DatabaseManager.updateUser(email, {
+            lastLogin: new Date()
+        });
 
         const token = jwt.sign(
             { id: user.id, email: user.email },
@@ -1388,10 +1332,10 @@ app.post("/auth/login", async (req, res) => {
     }
 });
 
-app.get("/auth/verify", authenticateToken, (req, res) => {
-    const user = users.get(req.user.email);
-    res.json({ 
-        valid: true, 
+app.get("/auth/verify", authenticateToken, async (req, res) => {
+    const user = await DatabaseManager.findUserByEmail(req.user.email);
+    res.json({
+        valid: true,
         user: {
             ...req.user,
             subscription: user?.subscription || { plan: 'free', status: 'active' }
