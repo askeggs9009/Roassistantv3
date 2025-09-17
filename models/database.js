@@ -87,6 +87,15 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
+    recaptchaScores: [{
+        score: Number,
+        action: String,
+        timestamp: {
+            type: Date,
+            default: Date.now
+        },
+        ip: String
+    }],
     subscription: {
         plan: {
             type: String,

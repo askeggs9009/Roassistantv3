@@ -825,6 +825,55 @@ app.get("/health", (req, res) => {
     });
 });
 
+// Admin endpoint to view reCAPTCHA risk scores
+app.get('/admin/recaptcha-scores', authenticateToken, async (req, res) => {
+    try {
+        // Simple admin check - you might want to add proper admin role checking
+        const adminEmails = ['askeggs9009@gmail.com', 'askeggs9008@gmail.com']; // Add your admin emails here
+        const userEmail = req.user.email;
+
+        if (!adminEmails.includes(userEmail)) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const users = await DatabaseManager.getAllUsers();
+
+        const riskAnalysis = users.map(user => ({
+            email: user.email,
+            name: user.name,
+            averageScore: user.recaptchaScores?.length > 0
+                ? (user.recaptchaScores.reduce((sum, entry) => sum + entry.score, 0) / user.recaptchaScores.length).toFixed(3)
+                : 'No data',
+            lowestScore: user.recaptchaScores?.length > 0
+                ? Math.min(...user.recaptchaScores.map(entry => entry.score)).toFixed(3)
+                : 'No data',
+            totalAttempts: user.recaptchaScores?.length || 0,
+            lastActivity: user.lastLogin,
+            recentScores: user.recaptchaScores?.slice(-5).map(entry => ({
+                score: entry.score,
+                action: entry.action,
+                timestamp: entry.timestamp,
+                ip: entry.ip
+            })) || []
+        })).sort((a, b) => {
+            // Sort by lowest average score (most suspicious first)
+            if (a.averageScore === 'No data') return 1;
+            if (b.averageScore === 'No data') return -1;
+            return parseFloat(a.averageScore) - parseFloat(b.averageScore);
+        });
+
+        res.json({
+            totalUsers: users.length,
+            usersWithScores: users.filter(u => u.recaptchaScores?.length > 0).length,
+            riskAnalysis
+        });
+
+    } catch (error) {
+        console.error('[ADMIN] Error fetching reCAPTCHA scores:', error);
+        res.status(500).json({ error: 'Failed to fetch risk analysis' });
+    }
+});
+
 // FIXED: Enhanced Google OAuth routes with comprehensive error handling
 app.get("/auth/google", (req, res) => {
     try {
@@ -1073,6 +1122,15 @@ app.post("/auth/signup", async (req, res) => {
             return res.status(400).json({ error: recaptchaResult.error });
         }
         console.log(`[SIGNUP] ✅ reCAPTCHA v3 verification passed (score: ${recaptchaResult.score})`);
+
+        // Store reCAPTCHA score for analysis
+        const clientIP = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+        const recaptchaEntry = {
+            score: recaptchaResult.score,
+            action: 'signup',
+            timestamp: new Date(),
+            ip: clientIP
+        };
 
         if (name.trim().length < 2) {
             return res.status(400).json({ error: 'Name must be at least 2 characters long' });
@@ -1360,6 +1418,9 @@ app.post("/auth/login", async (req, res) => {
         }
         console.log(`[LOGIN] ✅ reCAPTCHA v3 verification passed (score: ${recaptchaResult.score})`);
 
+        // Store reCAPTCHA score for analysis
+        const clientIP = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+
         const user = await DatabaseManager.findUserByEmail(email);
         if (!user) {
             return res.status(400).json({ error: 'Invalid email or password' });
@@ -1370,9 +1431,17 @@ app.post("/auth/login", async (req, res) => {
             return res.status(400).json({ error: 'Invalid email or password' });
         }
 
-        // Update last login
+        // Update last login and save reCAPTCHA score
         await DatabaseManager.updateUser(email, {
-            lastLogin: new Date()
+            lastLogin: new Date(),
+            $push: {
+                recaptchaScores: {
+                    score: recaptchaResult.score,
+                    action: 'login',
+                    timestamp: new Date(),
+                    ip: clientIP
+                }
+            }
         });
 
         const token = jwt.sign(
