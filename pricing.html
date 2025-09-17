@@ -625,6 +625,9 @@
         <section class="pricing-hero">
             <h1 class="hero-title">Choose Your Plan</h1>
             <p class="hero-subtitle">Start free, upgrade when you need more power</p>
+            <div style="background: #ff6b35; color: white; padding: 0.75rem; border-radius: 8px; margin: 1rem auto; max-width: 500px; text-align: center; font-weight: bold;">
+                🧪 TEST MODE - Use fake card numbers, no real charges!
+            </div>
             
             <!-- Billing Toggle -->
             <div class="billing-toggle">
@@ -693,7 +696,7 @@
                         <h2 class="plan-name">Pro</h2>
                         <div class="plan-price">
                             <span class="currency">$</span>
-                            <span class="amount" id="proPrice">9.99</span>
+                            <span class="amount" id="proPrice">1.00</span>
                             <span class="period" id="proPeriod">/month</span>
                         </div>
                         <p class="plan-description">Ideal for serious developers</p>
@@ -735,7 +738,7 @@
                         <h2 class="plan-name">Enterprise</h2>
                         <div class="plan-price">
                             <span class="currency">$</span>
-                            <span class="amount" id="enterprisePrice">19.99</span>
+                            <span class="amount" id="enterprisePrice">2.00</span>
                             <span class="period" id="enterprisePeriod">/month</span>
                         </div>
                         <p class="plan-description">For teams and studios</p>
@@ -966,8 +969,8 @@
             }
         }
 
-        // Initialize Stripe with live publishable key
-        const stripe = Stripe('pk_live_51S6SwCGsDklELrgDqDKMpn2UnhGyACQ9TnSLo6SbFeD9AW1PD6caohbY3eRlIZaSH96bdz7BJ1dHK6MzniBi4PIr00kaEu7GC8');
+        // Initialize Stripe with TEST publishable key
+        const stripe = Stripe('pk_test_51S6SwCGsDklELrgDOxDL5igB9MzXZQlV8UCvt3KwvwFUW1CoC1oW63JTIMP9pOVbbEoG9VXfo0Tknun9SQeRpFTQ00JWLA1m5q');
         
         // Using custom checkout API instead of payment links for proper account linking
         
@@ -987,9 +990,9 @@
             const annualLabel = document.getElementById('annualLabel');
             
             if (isAnnual) {
-                // Annual pricing
-                proPrice.textContent = '99.99';
-                enterprisePrice.textContent = '199.99';
+                // Annual pricing (TEST PRICES)
+                proPrice.textContent = '10.00';
+                enterprisePrice.textContent = '20.00';
                 proPeriod.textContent = '/year';
                 enterprisePeriod.textContent = '/year';
 
@@ -997,9 +1000,9 @@
                 monthlyLabel.style.color = '#8b949e';
                 annualLabel.style.color = '#58a6ff';
             } else {
-                // Monthly pricing
-                proPrice.textContent = '9.99';
-                enterprisePrice.textContent = '19.99';
+                // Monthly pricing (TEST PRICES)
+                proPrice.textContent = '1.00';
+                enterprisePrice.textContent = '2.00';
                 proPeriod.textContent = '/month';
                 enterprisePeriod.textContent = '/month';
                 
