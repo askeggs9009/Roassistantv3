@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-reCAPTCHA Selenium Bot Testing Script
+reCAPTCHA Edge Bot Testing Script (Windows-friendly alternative)
 
-This script uses Selenium to automate a real browser and test how reCAPTCHA v3
-detects automated browser behavior vs human behavior.
+This script uses Microsoft Edge instead of Chrome, which is more compatible with Windows systems.
+Edge WebDriver is usually more reliable on Windows than ChromeDriver.
 
 Install requirements:
 pip install selenium webdriver-manager
@@ -19,19 +19,20 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
-import platform
+from selenium.webdriver.edge.service import Service
+from selenium.webdriver.edge.options import Options
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
 
 # Configuration
 LOGIN_URL = "https://roassistantv3-production.up.railway.app/login.html"
 ADMIN_URL = "https://roassistantv3-production.up.railway.app/admin.html"
-TEST_EMAIL = "askeggs9008@gmail.com"  # Use your test account
-TEST_PASSWORD = input("Enter password for askeggs9008@gmail.com: ")  # Prompt for password
+TEST_EMAIL = "askeggs9008@gmail.com"
+TEST_PASSWORD = input("Enter password for askeggs9008@gmail.com: ")
 
 def create_bot_driver():
-    """Create a Chrome driver configured to look like a bot"""
+    """Create an Edge driver configured to look like a bot"""
+    print("🔧 Setting up Microsoft Edge WebDriver...")
+
     options = Options()
 
     # Bot-like settings
@@ -42,35 +43,27 @@ def create_bot_driver():
     # Make it obvious it's automated
     options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 BotTest/1.0")
 
-    # Windows compatibility fixes
+    # Windows compatibility
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--disable-gpu")
-
-    # Optional: Run headless (more bot-like)
-    # options.add_argument("--headless")
 
     try:
-        # Try to get ChromeDriver with better error handling
-        print("🔧 Setting up Chrome WebDriver...")
-
-        # Force download of latest ChromeDriver
-        driver_path = ChromeDriverManager().install()
-        print(f"✅ ChromeDriver installed at: {driver_path}")
+        # Download and setup Edge WebDriver
+        driver_path = EdgeChromiumDriverManager().install()
+        print(f"✅ Edge WebDriver installed at: {driver_path}")
 
         service = Service(driver_path)
-        driver = webdriver.Chrome(service=service, options=options)
+        driver = webdriver.Edge(service=service, options=options)
 
-        print("✅ Chrome browser opened successfully")
+        print("✅ Microsoft Edge browser opened successfully")
         return driver
 
     except Exception as e:
-        print(f"❌ Chrome setup failed: {e}")
+        print(f"❌ Edge setup failed: {e}")
         print("\n🔧 Troubleshooting Tips:")
-        print("1. Make sure Google Chrome is installed")
+        print("1. Make sure Microsoft Edge is installed (should be on Windows 10/11)")
         print("2. Try running as administrator")
-        print("3. Check if Chrome is up to date")
-        print("4. Try: pip install --upgrade selenium webdriver-manager")
+        print("3. Try: pip install --upgrade selenium webdriver-manager")
         raise
 
 def bot_login_attempt(driver, attempt_number):
@@ -78,30 +71,25 @@ def bot_login_attempt(driver, attempt_number):
     print(f"\n🤖 Bot Login Attempt #{attempt_number}")
 
     try:
-        # Navigate to login page
         driver.get(LOGIN_URL)
-
-        # Wait for page to load
         wait = WebDriverWait(driver, 10)
 
-        # Find and fill email field (bot-like: no delays)
+        # Bot behavior: immediate actions, no delays
         email_field = wait.until(EC.presence_of_element_located((By.ID, "email")))
         email_field.clear()
         email_field.send_keys(TEST_EMAIL)
 
-        # Find and fill password field (bot-like: immediate action)
         password_field = driver.find_element(By.ID, "password")
         password_field.clear()
         password_field.send_keys(TEST_PASSWORD)
 
-        # Click submit immediately (no human-like hesitation)
+        # Click immediately (bot-like)
         submit_button = driver.find_element(By.ID, "submitButton")
         submit_button.click()
 
-        # Wait for response
         time.sleep(3)
 
-        # Check for error messages or success
+        # Check results
         try:
             error_element = driver.find_element(By.ID, "errorMessage")
             if error_element.text:
@@ -109,12 +97,9 @@ def bot_login_attempt(driver, attempt_number):
                 if "reCAPTCHA" in error_element.text or "Security" in error_element.text:
                     print(f"   ✅ Bot detected by reCAPTCHA!")
         except:
-            # Check if login was successful
             current_url = driver.current_url
             if "index.html" in current_url or current_url.endswith("/"):
                 print(f"   ⚠️ Login successful - bot not detected!")
-            else:
-                print(f"   🔄 Login page still shown")
 
     except Exception as e:
         print(f"   ❌ Bot attempt failed: {e}")
@@ -127,24 +112,22 @@ def human_like_login_attempt(driver, attempt_number):
         driver.get(LOGIN_URL)
         wait = WebDriverWait(driver, 10)
 
-        # Human-like delays and behavior
-        time.sleep(random.uniform(1, 3))  # Think time
+        # Human-like delays
+        time.sleep(random.uniform(1, 3))
 
-        # Scroll around like a human might
+        # Simulate reading the page
         driver.execute_script("window.scrollBy(0, 100);")
         time.sleep(random.uniform(0.5, 1.5))
-        driver.execute_script("window.scrollBy(0, -50);")
 
-        # Fill email with human-like typing delays
+        # Human-like typing with delays
         email_field = wait.until(EC.presence_of_element_located((By.ID, "email")))
         email_field.clear()
         for char in TEST_EMAIL:
             email_field.send_keys(char)
-            time.sleep(random.uniform(0.05, 0.2))  # Typing speed variation
+            time.sleep(random.uniform(0.05, 0.2))
 
-        time.sleep(random.uniform(0.5, 2))  # Pause between fields
+        time.sleep(random.uniform(0.5, 2))
 
-        # Fill password with delays
         password_field = driver.find_element(By.ID, "password")
         password_field.clear()
         for char in TEST_PASSWORD:
@@ -159,7 +142,6 @@ def human_like_login_attempt(driver, attempt_number):
 
         time.sleep(3)
 
-        # Check results
         try:
             error_element = driver.find_element(By.ID, "errorMessage")
             if error_element.text:
@@ -173,10 +155,10 @@ def human_like_login_attempt(driver, attempt_number):
         print(f"   ❌ Human-like attempt failed: {e}")
 
 def run_bot_tests():
-    """Run comprehensive bot testing"""
-    print("🧪 reCAPTCHA Selenium Bot Testing")
-    print("==================================")
-    print("This script tests reCAPTCHA v3 detection using real browser automation.\n")
+    """Run comprehensive bot testing with Edge"""
+    print("🧪 reCAPTCHA Edge Bot Testing")
+    print("=============================")
+    print("Using Microsoft Edge for better Windows compatibility.\n")
 
     if not TEST_PASSWORD or len(TEST_PASSWORD) < 3:
         print("❌ Password cannot be empty")
@@ -185,34 +167,34 @@ def run_bot_tests():
     driver = create_bot_driver()
 
     try:
-        print("📋 Expected Results:")
+        print("\n📋 Expected Results:")
         print("   - Bot attempts: Should get low reCAPTCHA scores (0.1-0.4)")
         print("   - Human-like attempts: Should get higher scores (0.6-0.9)")
         print("   - Check admin dashboard for score comparison\n")
 
-        # Test 1: Rapid bot attempts
-        print("🔥 Test 1: Rapid Bot Attempts")
+        # Test 1: Bot attempts
+        print("🔥 Test 1: Bot Attempts (Rapid & Robotic)")
         for i in range(3):
             bot_login_attempt(driver, i + 1)
-            time.sleep(1)  # Minimal delay between attempts
+            time.sleep(1)
 
-        time.sleep(5)  # Break between test types
+        time.sleep(5)
 
         # Test 2: Human-like attempts
-        print("\n🧠 Test 2: Human-like Attempts")
+        print("\n🧠 Test 2: Human-like Attempts (Delays & Natural)")
         for i in range(2):
             human_like_login_attempt(driver, i + 1)
-            time.sleep(random.uniform(3, 7))  # Human-like break
+            time.sleep(random.uniform(3, 7))
 
         print("\n✅ Testing complete!")
         print("📊 Opening admin dashboard to view results...")
 
-        # Automatically open admin dashboard
+        # Open admin dashboard
         driver.get(ADMIN_URL)
         time.sleep(3)
 
-        print("📋 Admin dashboard opened in browser")
-        print("🔍 You should see the different reCAPTCHA scores:")
+        print("📋 Admin dashboard opened")
+        print("🔍 You should see different reCAPTCHA scores:")
         print("   - Bot attempts: Low scores (0.1-0.4)")
         print("   - Human-like: Higher scores (0.6-0.9)")
 
