@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In - Roblox Luau AI Assistant</title>
-    <!-- Google reCAPTCHA v3 -->
-    <script src="https://www.google.com/recaptcha/api.js?render=6LfTu8wrAAAAAJyQE_CJpXnW2x5B71VyDKdLjIM3"></script>
+    <!-- Google reCAPTCHA v2 -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
         * {
             margin: 0;
@@ -372,7 +372,10 @@
                     >
                 </div>
 
-                <!-- reCAPTCHA v3 - invisible, no widget needed -->
+                <!-- reCAPTCHA v2 -->
+                <div class="recaptcha-container" id="recaptchaContainer" style="margin: 1rem 0; display: flex; justify-content: center;">
+                    <div class="g-recaptcha" data-sitekey="6LfTu8wrAAAAAJyQE_CJpXnW2x5B71VyDKdLjIM3"></div>
+                </div>
 
                 <button type="submit" class="submit-button" id="submitButton">
                     <span id="submitText">Sign In</span>
@@ -394,7 +397,7 @@
         // Railway backend URL
         const API_BASE_URL = 'https://roassistantv3-production.up.railway.app';
 
-        // reCAPTCHA Site Key
+        // reCAPTCHA v2 Site Key (replace with your v2 site key)
         const RECAPTCHA_SITE_KEY = '6LfTu8wrAAAAAJyQE_CJpXnW2x5B71VyDKdLjIM3';
 
         let isSignUp = false;
@@ -525,18 +528,13 @@
                 return;
             }
 
-            // reCAPTCHA v3 validation - get token programmatically
-            let recaptchaResponse;
-            try {
-                recaptchaResponse = await grecaptcha.execute('6LfTu8wrAAAAAJyQE_CJpXnW2x5B71VyDKdLjIM3', {
-                    action: isSignUp ? 'signup' : 'login'
-                });
-                console.log('✅ reCAPTCHA v3 token obtained');
-            } catch (error) {
-                console.error('❌ reCAPTCHA v3 failed:', error);
-                showError('Security verification failed. Please try again.');
+            // reCAPTCHA v2 validation - check if user completed the challenge
+            const recaptchaResponse = grecaptcha.getResponse();
+            if (!recaptchaResponse) {
+                showError('Please complete the reCAPTCHA verification.');
                 return;
             }
+            console.log('✅ reCAPTCHA v2 completed');
 
             setLoading(true);
             clearMessages();
@@ -610,7 +608,10 @@
                 }
             } finally {
                 setLoading(false);
-                // Note: reCAPTCHA v3 doesn't need to be reset like v2
+                // Reset reCAPTCHA v2 for next attempt
+                if (typeof grecaptcha !== 'undefined') {
+                    grecaptcha.reset();
+                }
             }
             });
 

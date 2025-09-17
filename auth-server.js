@@ -51,10 +51,10 @@ initializeEmailService().catch(err => {
     console.error('Failed to initialize email service:', err.message);
 });
 
-// reCAPTCHA v3 verification function
-async function verifyRecaptcha(token, expectedAction = null) {
+// reCAPTCHA v2 verification function
+async function verifyRecaptcha(token) {
     if (!token) {
-        return { success: false, error: 'reCAPTCHA token is required' };
+        return { success: false, error: 'reCAPTCHA verification is required' };
     }
 
     if (!process.env.RECAPTCHA_SECRET_KEY || process.env.RECAPTCHA_SECRET_KEY === 'YOUR_SECRET_KEY_HERE') {
@@ -73,27 +73,13 @@ async function verifyRecaptcha(token, expectedAction = null) {
 
         const data = await response.json();
 
-        // reCAPTCHA v3 returns a score (0.0-1.0) where 1.0 is very likely a good interaction
-        // and 0.0 is very likely a bot
-        const minScore = 0.5; // Adjust this threshold as needed
-
         if (!data.success) {
-            console.log('reCAPTCHA verification failed:', data['error-codes']);
-            return { success: false, error: 'reCAPTCHA verification failed' };
+            console.log('reCAPTCHA v2 verification failed:', data['error-codes']);
+            return { success: false, error: 'reCAPTCHA verification failed. Please try again.' };
         }
 
-        if (data.score < minScore) {
-            console.log(`reCAPTCHA score ${data.score} below threshold ${minScore}`);
-            return { success: false, error: 'Security verification failed. Please try again.' };
-        }
-
-        if (expectedAction && data.action !== expectedAction) {
-            console.log(`reCAPTCHA action mismatch: expected ${expectedAction}, got ${data.action}`);
-            return { success: false, error: 'Security verification failed. Please try again.' };
-        }
-
-        console.log(`✅ reCAPTCHA v3 verified: score ${data.score}, action: ${data.action}`);
-        return { success: true, score: data.score };
+        console.log('✅ reCAPTCHA v2 verification passed');
+        return { success: true };
 
     } catch (error) {
         console.error('reCAPTCHA verification error:', error);
@@ -826,7 +812,7 @@ app.get("/health", (req, res) => {
 });
 
 // Admin endpoint to view reCAPTCHA risk scores
-app.get('/admin/recaptcha-scores', authenticateToken, async (req, res) => {
+app.get('/admin/user-activity', authenticateToken, async (req, res) => {
     try {
         // Simple admin check - you might want to add proper admin role checking
         const adminEmails = ['askeggs9009@gmail.com', 'askeggs9008@gmail.com']; // Add your admin emails here
@@ -838,44 +824,32 @@ app.get('/admin/recaptcha-scores', authenticateToken, async (req, res) => {
 
         const users = await DatabaseManager.getAllUsers();
 
-        const riskAnalysis = users.map(user => {
-            const scores = user.recaptchaScores || [];
-            const validScores = scores.filter(s => s && typeof s.score === 'number');
-
+        const userActivity = users.map(user => {
             return {
                 email: user.email,
                 name: user.name,
-                averageScore: validScores.length > 0
-                    ? (validScores.reduce((sum, entry) => sum + entry.score, 0) / validScores.length).toFixed(3)
-                    : 'No data',
-                lowestScore: validScores.length > 0
-                    ? Math.min(...validScores.map(entry => entry.score)).toFixed(3)
-                    : 'No data',
-                totalAttempts: validScores.length,
+                provider: user.provider || 'email',
+                emailVerified: user.emailVerified || false,
+                createdAt: user.createdAt,
                 lastActivity: user.lastLogin,
-                recentScores: validScores.slice(-5).map(entry => ({
-                    score: entry.score || 0,
-                    action: entry.action || 'unknown',
-                    timestamp: entry.timestamp || new Date(),
-                    ip: entry.ip || 'unknown'
-                }))
+                subscription: user.subscription?.plan || 'free'
             };
         }).sort((a, b) => {
-            // Sort by lowest average score (most suspicious first)
-            if (a.averageScore === 'No data') return 1;
-            if (b.averageScore === 'No data') return -1;
-            return parseFloat(a.averageScore) - parseFloat(b.averageScore);
+            // Sort by most recent activity
+            if (!a.lastActivity) return 1;
+            if (!b.lastActivity) return -1;
+            return new Date(b.lastActivity) - new Date(a.lastActivity);
         });
 
         res.json({
             totalUsers: users.length,
-            usersWithScores: users.filter(u => u.recaptchaScores?.length > 0).length,
-            riskAnalysis
+            verifiedUsers: users.filter(u => u.emailVerified).length,
+            userActivity
         });
 
     } catch (error) {
-        console.error('[ADMIN] Error fetching reCAPTCHA scores:', error);
-        res.status(500).json({ error: 'Failed to fetch risk analysis' });
+        console.error('[ADMIN] Error fetching user activity:', error);
+        res.status(500).json({ error: 'Failed to fetch user activity' });
     }
 });
 
@@ -1120,22 +1094,15 @@ app.post("/auth/signup", async (req, res) => {
             return res.status(400).json({ error: 'Name, email and password are required' });
         }
 
-        // Verify reCAPTCHA v3
-        const recaptchaResult = await verifyRecaptcha(recaptchaToken, 'signup');
+        // Verify reCAPTCHA v2
+        const recaptchaResult = await verifyRecaptcha(recaptchaToken);
         if (!recaptchaResult.success) {
             console.log('[SIGNUP] reCAPTCHA verification failed:', recaptchaResult.error);
             return res.status(400).json({ error: recaptchaResult.error });
         }
-        console.log(`[SIGNUP] ✅ reCAPTCHA v3 verification passed (score: ${recaptchaResult.score})`);
+        console.log('[SIGNUP] ✅ reCAPTCHA v2 verification passed');
 
-        // Store reCAPTCHA score for analysis
-        const clientIP = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
-        const recaptchaEntry = {
-            score: recaptchaResult.score,
-            action: 'signup',
-            timestamp: new Date(),
-            ip: clientIP
-        };
+        // reCAPTCHA v2 verified (no score tracking needed)
 
         if (name.trim().length < 2) {
             return res.status(400).json({ error: 'Name must be at least 2 characters long' });
@@ -1415,16 +1382,15 @@ app.post("/auth/login", async (req, res) => {
             return res.status(400).json({ error: 'Email and password are required' });
         }
 
-        // Verify reCAPTCHA v3
-        const recaptchaResult = await verifyRecaptcha(recaptchaToken, 'login');
+        // Verify reCAPTCHA v2
+        const recaptchaResult = await verifyRecaptcha(recaptchaToken);
         if (!recaptchaResult.success) {
             console.log('[LOGIN] reCAPTCHA verification failed:', recaptchaResult.error);
             return res.status(400).json({ error: recaptchaResult.error });
         }
-        console.log(`[LOGIN] ✅ reCAPTCHA v3 verification passed (score: ${recaptchaResult.score})`);
+        console.log('[LOGIN] ✅ reCAPTCHA v2 verification passed');
 
-        // Store reCAPTCHA score for analysis
-        const clientIP = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+        // reCAPTCHA v2 verified (no score tracking needed)
 
         const user = await DatabaseManager.findUserByEmail(email);
         if (!user) {
@@ -1436,17 +1402,9 @@ app.post("/auth/login", async (req, res) => {
             return res.status(400).json({ error: 'Invalid email or password' });
         }
 
-        // Update last login and save reCAPTCHA score
+        // Update last login (no score tracking for reCAPTCHA v2)
         await DatabaseManager.updateUser(email, {
-            lastLogin: new Date(),
-            $push: {
-                recaptchaScores: {
-                    score: recaptchaResult.score,
-                    action: 'login',
-                    timestamp: new Date(),
-                    ip: clientIP
-                }
-            }
+            lastLogin: new Date()
         });
 
         const token = jwt.sign(

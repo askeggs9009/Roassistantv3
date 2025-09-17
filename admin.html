@@ -87,9 +87,6 @@
             color: #f0f6fc;
         }
 
-        .score-high { color: #56d364; }
-        .score-medium { color: #f85149; }
-        .score-low { color: #f85149; font-weight: bold; }
 
         .loading {
             text-align: center;
@@ -130,25 +127,13 @@
             opacity: 0.8;
         }
 
-        .recent-scores {
-            font-size: 0.85rem;
-            color: #8b949e;
-        }
-
-        .recent-score {
-            display: inline-block;
-            margin: 0.1rem;
-            padding: 0.2rem 0.4rem;
-            background: rgba(56, 139, 253, 0.1);
-            border-radius: 4px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🛡️ reCAPTCHA Risk Analysis</h1>
-            <p>Monitor user security scores and detect suspicious activity</p>
+            <h1>👥 User Activity Dashboard</h1>
+            <p>Monitor user registrations and activity</p>
         </div>
 
         <div id="loginPrompt" class="login-prompt" style="display: none;">
@@ -168,11 +153,11 @@
                     <thead>
                         <tr>
                             <th>User</th>
-                            <th>Average Score</th>
-                            <th>Lowest Score</th>
-                            <th>Total Attempts</th>
+                            <th>Provider</th>
+                            <th>Email Verified</th>
+                            <th>Subscription</th>
+                            <th>Created At</th>
                             <th>Last Activity</th>
-                            <th>Recent Scores</th>
                         </tr>
                     </thead>
                     <tbody id="userTable">
@@ -183,7 +168,7 @@
         </div>
 
         <div id="loading" class="loading">
-            <p>🔍 Loading security data...</p>
+            <p>🔍 Loading user activity data...</p>
         </div>
 
         <div id="error" class="error" style="display: none;">
@@ -194,13 +179,6 @@
     <script>
         const API_BASE_URL = 'https://roassistantv3-production.up.railway.app';
 
-        function getScoreClass(score) {
-            if (score === 'No data') return '';
-            const num = parseFloat(score);
-            if (num >= 0.7) return 'score-high';
-            if (num >= 0.5) return 'score-medium';
-            return 'score-low';
-        }
 
         function formatDate(dateString) {
             return new Date(dateString).toLocaleString();
@@ -228,7 +206,7 @@
             }
 
             try {
-                const response = await fetch(`${API_BASE_URL}/admin/recaptcha-scores`, {
+                const response = await fetch(`${API_BASE_URL}/admin/user-activity`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -267,7 +245,7 @@
             document.getElementById('dashboard').style.display = 'block';
 
             // Ensure data has expected structure
-            if (!data || !data.riskAnalysis) {
+            if (!data || !data.userActivity) {
                 showError('Invalid data received from server');
                 return;
             }
@@ -279,38 +257,32 @@
                     <div class="stat-label">Total Users</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">${data.usersWithScores || 0}</div>
-                    <div class="stat-label">Users with Scores</div>
+                    <div class="stat-number">${data.verifiedUsers || 0}</div>
+                    <div class="stat-label">Verified Users</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">${data.riskAnalysis.filter(u => u.averageScore !== 'No data' && !isNaN(parseFloat(u.averageScore)) && parseFloat(u.averageScore) < 0.5).length}</div>
-                    <div class="stat-label">High Risk Users</div>
+                    <div class="stat-number">${data.userActivity.filter(u => u.provider === 'google').length}</div>
+                    <div class="stat-label">Google Users</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">${data.riskAnalysis.filter(u => u.averageScore !== 'No data' && !isNaN(parseFloat(u.averageScore)) && parseFloat(u.averageScore) >= 0.7).length}</div>
-                    <div class="stat-label">Low Risk Users</div>
+                    <div class="stat-number">${data.userActivity.filter(u => u.provider === 'email').length}</div>
+                    <div class="stat-label">Email Users</div>
                 </div>
             `;
             document.getElementById('stats').innerHTML = statsHtml;
 
             // Update table
-            const tableHtml = data.riskAnalysis.map(user => `
+            const tableHtml = data.userActivity.map(user => `
                 <tr>
                     <td>
                         <strong>${user.name}</strong><br>
                         <small style="color: #8b949e;">${user.email}</small>
                     </td>
-                    <td class="${getScoreClass(user.averageScore)}">${user.averageScore}</td>
-                    <td class="${getScoreClass(user.lowestScore)}">${user.lowestScore}</td>
-                    <td>${user.totalAttempts}</td>
+                    <td>${user.provider === 'google' ? '🔵 Google' : '📧 Email'}</td>
+                    <td>${user.emailVerified ? '✅ Yes' : '❌ No'}</td>
+                    <td>${user.subscription || 'free'}</td>
+                    <td>${user.createdAt ? formatDate(user.createdAt) : 'Unknown'}</td>
                     <td>${user.lastActivity ? formatDate(user.lastActivity) : 'Never'}</td>
-                    <td class="recent-scores">
-                        ${user.recentScores ? user.recentScores.map(score =>
-                            `<span class="recent-score ${getScoreClass(score.score ? score.score.toFixed(3) : 'No data')}" title="${score.action || 'unknown'} - ${score.timestamp ? formatDate(score.timestamp) : 'unknown'} - ${score.ip || 'unknown'}">
-                                ${score.score ? score.score.toFixed(3) : 'N/A'}
-                            </span>`
-                        ).join('') : 'No data'}
-                    </td>
                 </tr>
             `).join('');
             document.getElementById('userTable').innerHTML = tableHtml;
