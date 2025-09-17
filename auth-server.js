@@ -109,6 +109,62 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
+// Stripe webhook MUST come before express.json() to receive raw body
+app.post('/webhook/stripe', express.raw({type: 'application/json'}), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    let event;
+
+    try {
+        event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+    } catch (err) {
+        console.error('[STRIPE] Webhook signature verification failed:', err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    console.log(`[STRIPE] Received event: ${event.type}`);
+
+    // Handle the event
+    switch (event.type) {
+        case 'checkout.session.completed':
+            const session = event.data.object;
+            console.log('[STRIPE] Checkout session completed:', session.id);
+            await handleSuccessfulSubscription(session);
+            break;
+
+        case 'customer.subscription.created':
+        case 'customer.subscription.updated':
+        case 'customer.subscription.deleted':
+            const subscription = event.data.object;
+            console.log(`[STRIPE] Subscription ${event.type}:`, subscription.id);
+            await handleSubscriptionChange(subscription, event.type);
+            break;
+
+        case 'invoice.payment_succeeded':
+            const invoice = event.data.object;
+            console.log('[STRIPE] Invoice payment succeeded:', invoice.id);
+            if (invoice.subscription) {
+                const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+                await handleSubscriptionChange(subscription, 'payment_success');
+            }
+            break;
+
+        case 'invoice.payment_failed':
+            const failedInvoice = event.data.object;
+            console.log('[STRIPE] Invoice payment failed:', failedInvoice.id);
+            if (failedInvoice.subscription) {
+                await handlePaymentFailure(failedInvoice);
+            }
+            break;
+
+        default:
+            console.log(`[STRIPE] Unhandled event type ${event.type}`);
+    }
+
+    res.json({received: true});
+});
+
 app.use(express.json());
 app.use(express.static(__dirname));
 
@@ -588,60 +644,6 @@ function authenticateToken(req, res, next) {
 }
 
 // FIXED: Stripe Webhook Handler - Now properly handles subscription updates
-app.post('/webhook/stripe', express.raw({type: 'application/json'}), async (req, res) => {
-    const sig = req.headers['stripe-signature'];
-    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-    let event;
-
-    try {
-        event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-    } catch (err) {
-        console.error('[STRIPE] Webhook signature verification failed:', err.message);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-
-    console.log(`[STRIPE] Received event: ${event.type}`);
-
-    // Handle the event
-    switch (event.type) {
-        case 'checkout.session.completed':
-            const session = event.data.object;
-            console.log('[STRIPE] Checkout session completed:', session.id);
-            await handleSuccessfulSubscription(session);
-            break;
-            
-        case 'customer.subscription.created':
-        case 'customer.subscription.updated':
-        case 'customer.subscription.deleted':
-            const subscription = event.data.object;
-            console.log(`[STRIPE] Subscription ${event.type}:`, subscription.id);
-            await handleSubscriptionChange(subscription, event.type);
-            break;
-            
-        case 'invoice.payment_succeeded':
-            const invoice = event.data.object;
-            console.log('[STRIPE] Invoice payment succeeded:', invoice.id);
-            if (invoice.subscription) {
-                const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
-                await handleSubscriptionChange(subscription, 'payment_success');
-            }
-            break;
-
-        case 'invoice.payment_failed':
-            const failedInvoice = event.data.object;
-            console.log('[STRIPE] Invoice payment failed:', failedInvoice.id);
-            if (failedInvoice.subscription) {
-                await handlePaymentFailure(failedInvoice);
-            }
-            break;
-            
-        default:
-            console.log(`[STRIPE] Unhandled event type ${event.type}`);
-    }
-
-    res.json({received: true});
-});
 
 // FIXED: Enhanced subscription handling
 async function handleSuccessfulSubscription(session) {
