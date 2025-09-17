@@ -654,15 +654,8 @@ async function handleSuccessfulSubscription(session) {
             return;
         }
 
-        // Find user by email
-        let user = null;
-        for (const [email, userData] of users.entries()) {
-            if (email === userEmail) {
-                user = userData;
-                break;
-            }
-        }
-
+        // Find user by email in database
+        const user = await DatabaseManager.findUserByEmail(userEmail);
         if (!user) {
             console.error(`[STRIPE] User not found: ${userEmail}`);
             return;
@@ -685,11 +678,13 @@ async function handleSubscriptionChange(subscription, eventType) {
     try {
         console.log(`[STRIPE] Processing subscription change: ${eventType}`);
         
-        // Find user by Stripe customer ID
+        // Find user by Stripe customer ID in database
+        const allUsers = await DatabaseManager.getAllUsers();
         let userEmail = null;
-        for (const [email, user] of users.entries()) {
+
+        for (const user of allUsers) {
             if (user.subscription?.stripeCustomerId === subscription.customer) {
-                userEmail = email;
+                userEmail = user.email;
                 break;
             }
         }
@@ -699,9 +694,10 @@ async function handleSubscriptionChange(subscription, eventType) {
             try {
                 const customer = await stripe.customers.retrieve(subscription.customer);
                 userEmail = customer.email;
-                
-                // Find user by email
-                if (!users.has(userEmail)) {
+
+                // Find user by email in database
+                const user = await DatabaseManager.findUserByEmail(userEmail);
+                if (!user) {
                     console.error(`[STRIPE] User not found: ${userEmail}`);
                     return;
                 }
