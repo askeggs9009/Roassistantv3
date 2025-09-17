@@ -126,11 +126,19 @@ class AuthManager {
                 </div>
                 <div class="user-info">
                     <div class="user-name">${userData.name || userData.email || 'User'}</div>
-                    <div class="user-plan">${planDisplay} Plan</div>
+                    <div class="user-plan">
+                        <span>${planDisplay} Plan</span>
+                        <a href="/account.html" style="color: #58a6ff; text-decoration: none; font-size: 0.8rem; margin-left: 0.5rem;" title="Account Settings">⚙️</a>
+                    </div>
                 </div>
-                <button onclick="authManager.logout()" style="background: #f85149; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
-                    Logout
-                </button>
+                <div style="display: flex; gap: 0.25rem;">
+                    <button onclick="window.location.href='/account.html'" style="background: none; border: none; color: #8b949e; cursor: pointer; padding: 0.25rem;" title="Account Settings">
+                        ⚙️
+                    </button>
+                    <button onclick="authManager.logout()" style="background: #f85149; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer;">
+                        Logout
+                    </button>
+                </div>
             `;
             userProfile.style.display = 'flex';
         }

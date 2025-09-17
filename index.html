@@ -298,6 +298,10 @@
                     <span class="nav-icon">🔧</span>
                     Scripts
                 </div>
+                <div class="nav-item authenticated-only" onclick="window.location.href='/account.html'" style="color: #8b949e;">
+                    <span class="nav-icon">⚙️</span>
+                    Account
+                </div>
                 <div class="nav-item" onclick="window.location.href='/pricing.html'" style="color: #58a6ff;">
                     <span class="nav-icon">💎</span>
                     Upgrade Plan
@@ -339,7 +343,9 @@
             
             <!-- Subscription Status -->
             <div class="subscription-status" id="subscriptionStatus" style="display: none;">
-                <div class="plan-badge" id="planBadge">Free</div>
+                <a href="/account.html" style="text-decoration: none;">
+                    <div class="plan-badge" id="planBadge" style="cursor: pointer; transition: transform 0.2s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" title="View Account Details">Free</div>
+                </a>
                 <div class="usage-counter">
                     <span id="usageText">0/10</span>
                     <div class="usage-bar">
