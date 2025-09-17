@@ -87,8 +87,70 @@ const openai = new OpenAI({
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
-const users = new Map();
-const pendingVerifications = new Map();
+
+// File-based storage for persistence
+import fs from 'fs';
+const USERS_FILE = path.join(__dirname, 'data', 'users.json');
+const PENDING_FILE = path.join(__dirname, 'data', 'pending.json');
+
+// Ensure data directory exists
+if (!fs.existsSync(path.join(__dirname, 'data'))) {
+    fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
+}
+
+// Load users from file or create empty map
+function loadUsers() {
+    try {
+        if (fs.existsSync(USERS_FILE)) {
+            const data = fs.readFileSync(USERS_FILE, 'utf8');
+            const usersObj = JSON.parse(data);
+            return new Map(Object.entries(usersObj));
+        }
+    } catch (error) {
+        console.error('[STORAGE] Error loading users:', error.message);
+    }
+    return new Map();
+}
+
+// Save users to file
+function saveUsers() {
+    try {
+        const usersObj = Object.fromEntries(users);
+        fs.writeFileSync(USERS_FILE, JSON.stringify(usersObj, null, 2));
+    } catch (error) {
+        console.error('[STORAGE] Error saving users:', error.message);
+    }
+}
+
+// Load pending verifications from file or create empty map
+function loadPendingVerifications() {
+    try {
+        if (fs.existsSync(PENDING_FILE)) {
+            const data = fs.readFileSync(PENDING_FILE, 'utf8');
+            const pendingObj = JSON.parse(data);
+            return new Map(Object.entries(pendingObj));
+        }
+    } catch (error) {
+        console.error('[STORAGE] Error loading pending verifications:', error.message);
+    }
+    return new Map();
+}
+
+// Save pending verifications to file
+function savePendingVerifications() {
+    try {
+        const pendingObj = Object.fromEntries(pendingVerifications);
+        fs.writeFileSync(PENDING_FILE, JSON.stringify(pendingObj, null, 2));
+    } catch (error) {
+        console.error('[STORAGE] Error saving pending verifications:', error.message);
+    }
+}
+
+// Initialize storage
+const users = loadUsers();
+const pendingVerifications = loadPendingVerifications();
+
+console.log(`[STORAGE] Loaded ${users.size} users and ${pendingVerifications.size} pending verifications`);
 
 // Subscription Plans Configuration
 const SUBSCRIPTION_PLANS = {
@@ -721,6 +783,7 @@ async function updateUserSubscription(userEmail, subscription, eventType) {
     };
 
     users.set(userEmail, user);
+    saveUsers(); // Persist user changes
     console.log(`[SUBSCRIPTION] User ${userEmail} updated to ${finalPlan} (${status})`);
 }
 
@@ -836,6 +899,7 @@ app.get("/auth/google/callback", async (req, res) => {
                 scripts: [] // FIXED: Initialize user-specific scripts
             };
             users.set(data.email, user);
+            saveUsers(); // Persist new user
             console.log('[OAUTH] New user created:', data.email);
         } else {
             user.lastLogin = new Date();
@@ -972,6 +1036,7 @@ app.post("/api/cancel-subscription", authenticateToken, async (req, res) => {
         
         user.subscription.cancelAtPeriodEnd = true;
         users.set(req.user.email, user);
+        saveUsers(); // Persist user changes
         
         res.json({
             success: true,
@@ -1042,6 +1107,7 @@ app.post("/auth/signup", async (req, res) => {
             };
 
             users.set(email, user);
+            saveUsers(); // Persist new user
             console.log(`[SIGNUP] Account created successfully for: ${email}`);
 
             const token = jwt.sign(
@@ -1090,6 +1156,7 @@ app.post("/auth/signup", async (req, res) => {
             expires: Date.now() + (15 * 60 * 1000), // 15 minutes
             attempts: 0
         });
+        savePendingVerifications(); // Persist pending verification
 
         try {
             await sendVerificationEmail(email, verificationCode, name);
@@ -1185,7 +1252,9 @@ app.post("/auth/verify-email", async (req, res) => {
         };
 
         users.set(email, user);
+        saveUsers(); // Persist new verified user
         pendingVerifications.delete(email);
+        savePendingVerifications(); // Persist pending changes
 
         const token = jwt.sign(
             { id: user.id, email: user.email },
@@ -1363,6 +1432,7 @@ app.post("/api/user-chats", authenticateToken, (req, res) => {
         if (!user.chats) user.chats = [];
         user.chats.push(chat);
         users.set(req.user.email, user);
+        saveUsers(); // Persist user changes
 
         res.json({ 
             success: true, 
@@ -1394,6 +1464,7 @@ app.put("/api/user-chats/:chatId", authenticateToken, (req, res) => {
 
         user.chats[chatIndex] = { ...user.chats[chatIndex], ...chat };
         users.set(req.user.email, user);
+        saveUsers(); // Persist user changes
 
         res.json({ 
             success: true, 
@@ -1424,6 +1495,7 @@ app.delete("/api/user-chats/:chatId", authenticateToken, (req, res) => {
 
         user.chats.splice(chatIndex, 1);
         users.set(req.user.email, user);
+        saveUsers(); // Persist user changes
 
         res.json({ 
             success: true, 
