@@ -1257,7 +1257,7 @@ app.get("/api/billing-history", authenticateToken, async (req, res) => {
     }
 });
 
-// Get User Profile
+// Get User Profile (also available at /api/user/profile)
 app.get("/api/user-profile", authenticateToken, async (req, res) => {
     try {
         const user = await DatabaseManager.findUserByEmail(req.user.email);
@@ -1274,6 +1274,37 @@ app.get("/api/user-profile", authenticateToken, async (req, res) => {
             lastLogin: user.lastLogin,
             provider: user.provider,
             emailVerified: user.emailVerified,
+            subscription: user.subscription || { plan: 'free' },
+            preferences: user.preferences || {
+                theme: 'dark',
+                notifications: true,
+                language: 'en'
+            }
+        });
+    } catch (error) {
+        console.error('[ERROR] Failed to get user profile:', error);
+        res.status(500).json({ error: 'Failed to retrieve user profile' });
+    }
+});
+
+// Alias for user profile (used by auth.js)
+app.get("/api/user/profile", authenticateToken, async (req, res) => {
+    try {
+        const user = await DatabaseManager.findUserByEmail(req.user.email);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json({
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            picture: user.picture,
+            createdAt: user.createdAt,
+            lastLogin: user.lastLogin,
+            provider: user.provider,
+            emailVerified: user.emailVerified,
+            subscription: user.subscription || { plan: 'free' },
             preferences: user.preferences || {
                 theme: 'dark',
                 notifications: true,
