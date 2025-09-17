@@ -50,7 +50,12 @@
       "mcp__stripe__list_customers",
       "mcp__stripe__list_payment_intents",
       "mcp__stripe__list_subscriptions",
-      "mcp__stripe__fetch_stripe_resources"
+      "mcp__stripe__fetch_stripe_resources",
+      "Bash(cmd /c:*)",
+      "Bash(railway --version)",
+      "Bash(railway status:*)",
+      "Bash(railway variables set:*)",
+      "Bash(railway variables:*)"
     ],
     "deny": [],
     "ask": []

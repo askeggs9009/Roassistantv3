@@ -724,31 +724,51 @@ async function updateUserSubscription(userEmail, subscription, eventType) {
         return;
     }
 
+    console.log(`[STRIPE DEBUG] Processing subscription for ${userEmail}`);
+    console.log(`[STRIPE DEBUG] Event type: ${eventType}`);
+    console.log(`[STRIPE DEBUG] Subscription status: ${subscription.status}`);
+    console.log(`[STRIPE DEBUG] Subscription ID: ${subscription.id}`);
+
     // Determine plan based on price ID
     let plan = 'free';
     if (subscription.items && subscription.items.data.length > 0) {
         const priceId = subscription.items.data[0].price.id;
-        
-        if (priceId === process.env.STRIPE_PRO_MONTHLY_PRICE_ID || 
+        console.log(`[STRIPE DEBUG] Price ID received: ${priceId}`);
+        console.log(`[STRIPE DEBUG] Expected Pro Monthly: ${process.env.STRIPE_PRO_MONTHLY_PRICE_ID}`);
+        console.log(`[STRIPE DEBUG] Expected Pro Annual: ${process.env.STRIPE_PRO_ANNUAL_PRICE_ID}`);
+        console.log(`[STRIPE DEBUG] Expected Enterprise Monthly: ${process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID}`);
+        console.log(`[STRIPE DEBUG] Expected Enterprise Annual: ${process.env.STRIPE_ENTERPRISE_ANNUAL_PRICE_ID}`);
+
+        if (priceId === process.env.STRIPE_PRO_MONTHLY_PRICE_ID ||
             priceId === process.env.STRIPE_PRO_ANNUAL_PRICE_ID) {
             plan = 'pro';
-        } else if (priceId === process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || 
+            console.log(`[STRIPE DEBUG] Matched Pro plan`);
+        } else if (priceId === process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID ||
                    priceId === process.env.STRIPE_ENTERPRISE_ANNUAL_PRICE_ID) {
             plan = 'enterprise';
+            console.log(`[STRIPE DEBUG] Matched Enterprise plan`);
+        } else {
+            console.log(`[STRIPE DEBUG] No plan match found - defaulting to free`);
         }
+    } else {
+        console.log(`[STRIPE DEBUG] No subscription items found`);
     }
 
     // Handle different subscription statuses
     let finalPlan = plan;
     let status = subscription.status;
 
-    if (subscription.status === 'canceled' || subscription.status === 'unpaid' || 
+    if (subscription.status === 'canceled' || subscription.status === 'unpaid' ||
         subscription.status === 'past_due' || eventType === 'customer.subscription.deleted') {
         finalPlan = 'free';
         status = 'canceled';
+        console.log(`[STRIPE DEBUG] Setting to free plan due to status: ${subscription.status}`);
     } else if (subscription.status === 'active' || subscription.status === 'trialing') {
         status = 'active';
+        console.log(`[STRIPE DEBUG] Setting status to active`);
     }
+
+    console.log(`[STRIPE DEBUG] Final plan: ${finalPlan}, Final status: ${status}`);
 
     // Update user subscription
     const subscriptionUpdate = {
@@ -764,8 +784,14 @@ async function updateUserSubscription(userEmail, subscription, eventType) {
         }
     };
 
+    console.log(`[STRIPE DEBUG] Subscription update object:`, JSON.stringify(subscriptionUpdate, null, 2));
+
     await DatabaseManager.updateUser(userEmail, subscriptionUpdate);
     console.log(`[SUBSCRIPTION] User ${userEmail} updated to ${finalPlan} (${status})`);
+
+    // Verify the update worked
+    const updatedUser = await DatabaseManager.findUserByEmail(userEmail);
+    console.log(`[STRIPE DEBUG] User after update - Plan: ${updatedUser.subscription?.plan}, Status: ${updatedUser.subscription?.status}`);
 }
 
 // FIXED: New function to handle payment failures
@@ -1044,6 +1070,85 @@ app.get("/api/user-subscription", authenticateToken, async (req, res) => {
     }
 });
 
+// Manual Subscription Verification and Sync
+app.post("/api/verify-subscription", authenticateToken, async (req, res) => {
+    try {
+        const user = await DatabaseManager.findUserByEmail(req.user.email);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        console.log(`[MANUAL SYNC] Verifying subscription for ${req.user.email}`);
+
+        // Get all subscriptions for this customer
+        let subscriptions = [];
+        if (user.subscription?.stripeCustomerId) {
+            const response = await stripe.subscriptions.list({
+                customer: user.subscription.stripeCustomerId,
+                status: 'all',
+                limit: 10
+            });
+            subscriptions = response.data;
+        }
+
+        // Also check by email if no customer ID
+        if (subscriptions.length === 0) {
+            try {
+                const customers = await stripe.customers.list({
+                    email: user.email,
+                    limit: 1
+                });
+
+                if (customers.data.length > 0) {
+                    const customerId = customers.data[0].id;
+                    const response = await stripe.subscriptions.list({
+                        customer: customerId,
+                        status: 'all',
+                        limit: 10
+                    });
+                    subscriptions = response.data;
+                }
+            } catch (error) {
+                console.log('[MANUAL SYNC] No customer found in Stripe');
+            }
+        }
+
+        console.log(`[MANUAL SYNC] Found ${subscriptions.length} subscriptions`);
+
+        // Find the most recent active subscription
+        const activeSubscription = subscriptions.find(sub =>
+            sub.status === 'active' || sub.status === 'trialing'
+        );
+
+        if (activeSubscription) {
+            console.log(`[MANUAL SYNC] Found active subscription: ${activeSubscription.id}`);
+            await updateUserSubscription(user.email, activeSubscription, 'manual_sync');
+
+            // Return updated user data
+            const updatedUser = await DatabaseManager.findUserByEmail(req.user.email);
+            res.json({
+                success: true,
+                message: 'Subscription synchronized successfully',
+                subscription: updatedUser.subscription
+            });
+        } else {
+            console.log(`[MANUAL SYNC] No active subscription found`);
+            res.json({
+                success: false,
+                message: 'No active subscription found in Stripe',
+                subscriptions: subscriptions.map(sub => ({
+                    id: sub.id,
+                    status: sub.status,
+                    created: sub.created
+                }))
+            });
+        }
+    } catch (error) {
+        console.error('[ERROR] Manual subscription verification failed:', error);
+        res.status(500).json({ error: 'Failed to verify subscription' });
+    }
+});
+
 // Cancel Subscription
 app.post("/api/cancel-subscription", authenticateToken, async (req, res) => {
     try {
@@ -1061,7 +1166,7 @@ app.post("/api/cancel-subscription", authenticateToken, async (req, res) => {
         await DatabaseManager.updateUser(req.user.email, {
             'subscription.cancelAtPeriodEnd': true
         });
-        
+
         res.json({
             success: true,
             message: 'Subscription will be canceled at the end of the billing period',
@@ -1070,6 +1175,322 @@ app.post("/api/cancel-subscription", authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('[ERROR] Failed to cancel subscription:', error);
         res.status(500).json({ error: 'Failed to cancel subscription' });
+    }
+});
+
+// Get Billing History
+app.get("/api/billing-history", authenticateToken, async (req, res) => {
+    try {
+        const user = await DatabaseManager.findUserByEmail(req.user.email);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        let customerId = user.subscription?.stripeCustomerId;
+
+        // If no customer ID, try to find customer by email
+        if (!customerId) {
+            try {
+                const customers = await stripe.customers.list({
+                    email: user.email,
+                    limit: 1
+                });
+
+                if (customers.data.length > 0) {
+                    customerId = customers.data[0].id;
+                }
+            } catch (error) {
+                console.log('[BILLING] No customer found in Stripe');
+            }
+        }
+
+        if (!customerId) {
+            return res.json({
+                invoices: [],
+                total: 0,
+                message: 'No billing history found'
+            });
+        }
+
+        // Get invoices for this customer
+        const invoices = await stripe.invoices.list({
+            customer: customerId,
+            limit: 50,
+            expand: ['data.subscription', 'data.payment_intent']
+        });
+
+        // Format invoice data for frontend
+        const formattedInvoices = invoices.data.map(invoice => ({
+            id: invoice.id,
+            amount: invoice.amount_paid,
+            currency: invoice.currency,
+            status: invoice.status,
+            date: new Date(invoice.created * 1000),
+            dueDate: invoice.due_date ? new Date(invoice.due_date * 1000) : null,
+            paidDate: invoice.status_transitions.paid_at ? new Date(invoice.status_transitions.paid_at * 1000) : null,
+            description: invoice.lines.data[0]?.description || 'Subscription payment',
+            invoiceUrl: invoice.hosted_invoice_url,
+            receiptUrl: invoice.receipt_number,
+            subscriptionId: invoice.subscription,
+            paymentStatus: invoice.payment_intent?.status || 'unknown',
+            period: {
+                start: invoice.lines.data[0]?.period?.start ? new Date(invoice.lines.data[0].period.start * 1000) : null,
+                end: invoice.lines.data[0]?.period?.end ? new Date(invoice.lines.data[0].period.end * 1000) : null
+            }
+        }));
+
+        // Calculate total paid
+        const totalPaid = invoices.data
+            .filter(invoice => invoice.status === 'paid')
+            .reduce((sum, invoice) => sum + invoice.amount_paid, 0);
+
+        res.json({
+            invoices: formattedInvoices,
+            total: formattedInvoices.length,
+            totalPaid: totalPaid,
+            currency: invoices.data[0]?.currency || 'usd'
+        });
+
+    } catch (error) {
+        console.error('[ERROR] Failed to get billing history:', error);
+        res.status(500).json({ error: 'Failed to retrieve billing history' });
+    }
+});
+
+// Get User Profile
+app.get("/api/user-profile", authenticateToken, async (req, res) => {
+    try {
+        const user = await DatabaseManager.findUserByEmail(req.user.email);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json({
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            picture: user.picture,
+            createdAt: user.createdAt,
+            lastLogin: user.lastLogin,
+            provider: user.provider,
+            emailVerified: user.emailVerified,
+            preferences: user.preferences || {
+                theme: 'dark',
+                notifications: true,
+                language: 'en'
+            }
+        });
+    } catch (error) {
+        console.error('[ERROR] Failed to get user profile:', error);
+        res.status(500).json({ error: 'Failed to retrieve user profile' });
+    }
+});
+
+// Update User Profile
+app.put("/api/user-profile", authenticateToken, async (req, res) => {
+    try {
+        const { name, picture, preferences } = req.body;
+        const user = await DatabaseManager.findUserByEmail(req.user.email);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const updateData = {};
+
+        // Update name if provided
+        if (name && name.trim() && name !== user.name) {
+            updateData.name = name.trim();
+        }
+
+        // Update picture if provided
+        if (picture !== undefined && picture !== user.picture) {
+            updateData.picture = picture;
+        }
+
+        // Update preferences if provided
+        if (preferences && typeof preferences === 'object') {
+            updateData.preferences = {
+                ...user.preferences,
+                ...preferences
+            };
+        }
+
+        if (Object.keys(updateData).length === 0) {
+            return res.json({
+                success: true,
+                message: 'No changes to update',
+                user: {
+                    name: user.name,
+                    picture: user.picture,
+                    preferences: user.preferences
+                }
+            });
+        }
+
+        await DatabaseManager.updateUser(req.user.email, updateData);
+
+        res.json({
+            success: true,
+            message: 'Profile updated successfully',
+            user: {
+                name: updateData.name || user.name,
+                picture: updateData.picture !== undefined ? updateData.picture : user.picture,
+                preferences: updateData.preferences || user.preferences
+            }
+        });
+
+    } catch (error) {
+        console.error('[ERROR] Failed to update user profile:', error);
+        res.status(500).json({ error: 'Failed to update profile' });
+    }
+});
+
+// Get User Preferences
+app.get("/api/user-preferences", authenticateToken, async (req, res) => {
+    try {
+        const user = await DatabaseManager.findUserByEmail(req.user.email);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const defaultPreferences = {
+            theme: 'dark',
+            notifications: true,
+            language: 'en',
+            emailNotifications: true,
+            marketingEmails: false
+        };
+
+        res.json({
+            preferences: {
+                ...defaultPreferences,
+                ...user.preferences
+            }
+        });
+    } catch (error) {
+        console.error('[ERROR] Failed to get user preferences:', error);
+        res.status(500).json({ error: 'Failed to retrieve preferences' });
+    }
+});
+
+// Update User Preferences
+app.put("/api/user-preferences", authenticateToken, async (req, res) => {
+    try {
+        const { preferences } = req.body;
+
+        if (!preferences || typeof preferences !== 'object') {
+            return res.status(400).json({ error: 'Invalid preferences data' });
+        }
+
+        const user = await DatabaseManager.findUserByEmail(req.user.email);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const updatedPreferences = {
+            ...user.preferences,
+            ...preferences
+        };
+
+        await DatabaseManager.updateUser(req.user.email, {
+            preferences: updatedPreferences
+        });
+
+        res.json({
+            success: true,
+            message: 'Preferences updated successfully',
+            preferences: updatedPreferences
+        });
+
+    } catch (error) {
+        console.error('[ERROR] Failed to update user preferences:', error);
+        res.status(500).json({ error: 'Failed to update preferences' });
+    }
+});
+
+// Contact Support
+app.post("/api/contact-support", authenticateToken, async (req, res) => {
+    try {
+        const { subject, message, category, priority } = req.body;
+
+        if (!subject || !message) {
+            return res.status(400).json({ error: 'Subject and message are required' });
+        }
+
+        const user = await DatabaseManager.findUserByEmail(req.user.email);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Create support ticket ID
+        const ticketId = `TICKET-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+        // Email content for support team
+        const supportEmail = {
+            from: process.env.EMAIL_FROM,
+            to: process.env.EMAIL_FROM, // Send to support team
+            subject: `[Support] ${subject} - ${ticketId}`,
+            html: `
+                <h2>New Support Ticket</h2>
+                <p><strong>Ticket ID:</strong> ${ticketId}</p>
+                <p><strong>User:</strong> ${user.name} (${user.email})</p>
+                <p><strong>Category:</strong> ${category || 'General'}</p>
+                <p><strong>Priority:</strong> ${priority || 'Normal'}</p>
+                <p><strong>Subject:</strong> ${subject}</p>
+
+                <h3>Message:</h3>
+                <div style="background: #f5f5f5; padding: 15px; border-radius: 5px;">
+                    ${message.replace(/\n/g, '<br>')}
+                </div>
+
+                <h3>User Details:</h3>
+                <ul>
+                    <li>Subscription Plan: ${user.subscription?.plan || 'free'}</li>
+                    <li>Subscription Status: ${user.subscription?.status || 'N/A'}</li>
+                    <li>Account Created: ${user.createdAt}</li>
+                    <li>Last Login: ${user.lastLogin}</li>
+                </ul>
+            `
+        };
+
+        // Send email to support team
+        const emailService = (await import('./services/email.js')).default;
+        await emailService.sendEmail(supportEmail);
+
+        // Send confirmation email to user
+        const confirmationEmail = {
+            from: process.env.EMAIL_FROM,
+            to: user.email,
+            subject: `Support Ticket Created - ${ticketId}`,
+            html: `
+                <h2>Support Ticket Created</h2>
+                <p>Hi ${user.name},</p>
+                <p>Thank you for contacting our support team. We've received your message and will get back to you as soon as possible.</p>
+
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                    <p><strong>Ticket ID:</strong> ${ticketId}</p>
+                    <p><strong>Subject:</strong> ${subject}</p>
+                    <p><strong>Priority:</strong> ${priority || 'Normal'}</p>
+                </div>
+
+                <p>Our support team typically responds within 24-48 hours for standard inquiries, or within 4-6 hours for urgent matters.</p>
+
+                <p>Best regards,<br>RoAssistant Support Team</p>
+            `
+        };
+
+        await emailService.sendEmail(confirmationEmail);
+
+        res.json({
+            success: true,
+            ticketId: ticketId,
+            message: 'Support ticket created successfully. You will receive a confirmation email shortly.'
+        });
+
+    } catch (error) {
+        console.error('[ERROR] Failed to create support ticket:', error);
+        res.status(500).json({ error: 'Failed to create support ticket. Please try again.' });
     }
 });
 

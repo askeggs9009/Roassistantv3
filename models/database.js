@@ -124,7 +124,30 @@ const userSchema = new mongoose.Schema({
     scripts: [{
         type: mongoose.Schema.Types.Mixed,
         default: []
-    }]
+    }],
+    preferences: {
+        theme: {
+            type: String,
+            enum: ['light', 'dark', 'auto'],
+            default: 'dark'
+        },
+        notifications: {
+            type: Boolean,
+            default: true
+        },
+        language: {
+            type: String,
+            default: 'en'
+        },
+        emailNotifications: {
+            type: Boolean,
+            default: true
+        },
+        marketingEmails: {
+            type: Boolean,
+            default: false
+        }
+    }
 }, {
     timestamps: true
 });
