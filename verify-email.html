@@ -428,7 +428,13 @@
                     // Store auth data
                     if (data.token) {
                         localStorage.setItem('authToken', data.token);
+                        localStorage.setItem('token', data.token); // Also store as 'token' for compatibility
                         localStorage.setItem('sessionId', data.sessionId || '');
+                    }
+
+                    // Store user data
+                    if (data.user) {
+                        localStorage.setItem('user', JSON.stringify(data.user));
                     }
                     
                     // Clear pending verification
