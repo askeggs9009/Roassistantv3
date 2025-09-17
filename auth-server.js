@@ -20,7 +20,7 @@ dotenv.config();
 import { sendVerificationEmailWithResend, testResendConnection } from './resend-email.js';
 
 // Email service status
-let emailServiceAvailable = false;
+let emailServiceAvailable = true;
 
 // Initialize Resend email service
 async function initializeEmailService() {
@@ -502,7 +502,7 @@ async function sendVerificationEmail(email, code, name = null) {
         console.error('Resend email sending error:', error.message);
         
         // If Resend fails, disable email service for future requests
-        if (error.message.includes('timeout') || error.message.includes('API') || error.message.includes('domain')) {
+        if (error.message.includes('timeout') || error.message.includes('API') || error.message.includes('domain') || error.message.includes('testing emails')) {
             console.log('⚠️ Resend error detected - temporarily disabling email verification');
             emailServiceAvailable = false;
         }
@@ -1021,7 +1021,7 @@ app.post("/auth/signup", async (req, res) => {
             return res.status(400).json({ error: 'An account with this email already exists' });
         }
 
-        // FIXED: Always require email verification if email is configured
+        // FIXED: Check if Resend is in testing mode or email service unavailable
         console.log('[DEBUG] emailServiceAvailable status:', emailServiceAvailable);
         if (!emailServiceAvailable) {
             console.log('[SIGNUP] Email not configured, creating account directly');
@@ -1040,16 +1040,16 @@ app.post("/auth/signup", async (req, res) => {
                 chats: [], // FIXED: Initialize user-specific chats
                 scripts: [] // FIXED: Initialize user-specific scripts
             };
-            
+
             users.set(email, user);
             console.log(`[SIGNUP] Account created successfully for: ${email}`);
-            
+
             const token = jwt.sign(
                 { id: user.id, email: user.email },
                 JWT_SECRET,
                 { expiresIn: '7d' }
             );
-            
+
             console.log(`[SIGNUP] JWT token generated for: ${email}`);
             return res.json({
                 token,
@@ -1060,7 +1060,7 @@ app.post("/auth/signup", async (req, res) => {
                     createdAt: user.createdAt,
                     subscription: user.subscription
                 },
-                message: 'Account created successfully! (Email verification not available)'
+                message: 'Account created successfully! (Email verification temporarily disabled)'
             });
         }
 
