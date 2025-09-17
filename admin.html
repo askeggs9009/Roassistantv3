@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - reCAPTCHA Risk Scores</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #21262d 100%);
+            min-height: 100vh;
+            color: #f0f6fc;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, #58a6ff, #79c0ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(33, 38, 45, 0.8);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #58a6ff;
+        }
+
+        .stat-label {
+            color: #8b949e;
+            margin-top: 0.5rem;
+        }
+
+        .table-container {
+            background: rgba(33, 38, 45, 0.8);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 0.75rem;
+            border-bottom: 1px solid #30363d;
+        }
+
+        th {
+            background: rgba(13, 17, 23, 0.8);
+            font-weight: 600;
+            color: #f0f6fc;
+        }
+
+        .score-high { color: #56d364; }
+        .score-medium { color: #f85149; }
+        .score-low { color: #f85149; font-weight: bold; }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #8b949e;
+        }
+
+        .error {
+            background: #f85149;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .login-prompt {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .login-prompt a {
+            color: #58a6ff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(45deg, #58a6ff, #1f6feb);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+
+        .refresh-btn:hover {
+            opacity: 0.8;
+        }
+
+        .recent-scores {
+            font-size: 0.85rem;
+            color: #8b949e;
+        }
+
+        .recent-score {
+            display: inline-block;
+            margin: 0.1rem;
+            padding: 0.2rem 0.4rem;
+            background: rgba(56, 139, 253, 0.1);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ reCAPTCHA Risk Analysis</h1>
+            <p>Monitor user security scores and detect suspicious activity</p>
+        </div>
+
+        <div id="loginPrompt" class="login-prompt" style="display: none;">
+            <h2>🔐 Authentication Required</h2>
+            <p>Please <a href="/login.html">log in</a> to access the admin dashboard.</p>
+        </div>
+
+        <div id="dashboard" style="display: none;">
+            <button class="refresh-btn" onclick="loadData()">🔄 Refresh Data</button>
+
+            <div class="stats" id="stats">
+                <!-- Stats will be populated here -->
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Average Score</th>
+                            <th>Lowest Score</th>
+                            <th>Total Attempts</th>
+                            <th>Last Activity</th>
+                            <th>Recent Scores</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTable">
+                        <!-- User data will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">
+            <p>🔍 Loading security data...</p>
+        </div>
+
+        <div id="error" class="error" style="display: none;">
+            <!-- Error messages will appear here -->
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://roassistantv3-production.up.railway.app';
+
+        function getScoreClass(score) {
+            if (score === 'No data') return '';
+            const num = parseFloat(score);
+            if (num >= 0.7) return 'score-high';
+            if (num >= 0.5) return 'score-medium';
+            return 'score-low';
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleString();
+        }
+
+        function showError(message) {
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').textContent = message;
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        async function loadData() {
+            hideError();
+            document.getElementById('loading').style.display = 'block';
+
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('loginPrompt').style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/recaptcha-scores`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    // Token expired
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('loginPrompt').style.display = 'block';
+                    return;
+                }
+
+                if (response.status === 403) {
+                    showError('❌ Admin access required. You are not authorized to view this data.');
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                displayData(data);
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showError(`Failed to load data: ${error.message}`);
+            }
+        }
+
+        function displayData(data) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+
+            // Update stats
+            const statsHtml = `
+                <div class="stat-card">
+                    <div class="stat-number">${data.totalUsers}</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${data.usersWithScores}</div>
+                    <div class="stat-label">Users with Scores</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${data.riskAnalysis.filter(u => u.averageScore !== 'No data' && parseFloat(u.averageScore) < 0.5).length}</div>
+                    <div class="stat-label">High Risk Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${data.riskAnalysis.filter(u => u.averageScore !== 'No data' && parseFloat(u.averageScore) >= 0.7).length}</div>
+                    <div class="stat-label">Low Risk Users</div>
+                </div>
+            `;
+            document.getElementById('stats').innerHTML = statsHtml;
+
+            // Update table
+            const tableHtml = data.riskAnalysis.map(user => `
+                <tr>
+                    <td>
+                        <strong>${user.name}</strong><br>
+                        <small style="color: #8b949e;">${user.email}</small>
+                    </td>
+                    <td class="${getScoreClass(user.averageScore)}">${user.averageScore}</td>
+                    <td class="${getScoreClass(user.lowestScore)}">${user.lowestScore}</td>
+                    <td>${user.totalAttempts}</td>
+                    <td>${user.lastActivity ? formatDate(user.lastActivity) : 'Never'}</td>
+                    <td class="recent-scores">
+                        ${user.recentScores.map(score =>
+                            `<span class="recent-score ${getScoreClass(score.score.toFixed(3))}" title="${score.action} - ${formatDate(score.timestamp)} - ${score.ip}">
+                                ${score.score.toFixed(3)}
+                            </span>`
+                        ).join('')}
+                    </td>
+                </tr>
+            `).join('');
+            document.getElementById('userTable').innerHTML = tableHtml;
+        }
+
+        // Load data when page loads
+        window.addEventListener('load', loadData);
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadData, 30000);
+    </script>
+</body>
+</html>
