@@ -25,8 +25,9 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 # Configuration
 LOGIN_URL = "https://roassistantv3-production.up.railway.app/login.html"
+ADMIN_URL = "https://roassistantv3-production.up.railway.app/admin.html"
 TEST_EMAIL = "askeggs9008@gmail.com"  # Use your test account
-TEST_PASSWORD = "your_password_here"  # Add your password
+TEST_PASSWORD = input("Enter password for askeggs9008@gmail.com: ")  # Prompt for password
 
 def create_bot_driver():
     """Create a Chrome driver configured to look like a bot"""
@@ -153,8 +154,8 @@ def run_bot_tests():
     print("==================================")
     print("This script tests reCAPTCHA v3 detection using real browser automation.\n")
 
-    if TEST_PASSWORD == "your_password_here":
-        print("❌ Please update TEST_PASSWORD in the script with your actual password")
+    if not TEST_PASSWORD or len(TEST_PASSWORD) < 3:
+        print("❌ Password cannot be empty")
         return
 
     driver = create_bot_driver()
@@ -180,11 +181,19 @@ def run_bot_tests():
             time.sleep(random.uniform(3, 7))  # Human-like break
 
         print("\n✅ Testing complete!")
-        print("📊 Check admin dashboard: /admin.html")
-        print("📋 Check Railway logs for reCAPTCHA score differences")
+        print("📊 Opening admin dashboard to view results...")
+
+        # Automatically open admin dashboard
+        driver.get(ADMIN_URL)
+        time.sleep(3)
+
+        print("📋 Admin dashboard opened in browser")
+        print("🔍 You should see the different reCAPTCHA scores:")
+        print("   - Bot attempts: Low scores (0.1-0.4)")
+        print("   - Human-like: Higher scores (0.6-0.9)")
 
     finally:
-        input("\nPress Enter to close browser...")
+        input("\n✨ Check the admin dashboard scores, then press Enter to close browser...")
         driver.quit()
 
 if __name__ == "__main__":
