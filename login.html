@@ -467,14 +467,18 @@
 
         // Initialize event listeners
         function initializeEventListeners() {
+            console.log('🔧 Initializing event listeners...');
+
             // Handle form submission
             const loginForm = document.getElementById('loginForm');
             if (!loginForm) {
-                console.error('Login form not found');
+                console.error('❌ Login form not found');
                 return;
             }
 
+            console.log('✅ Login form found, attaching submit listener');
             loginForm.addEventListener('submit', async function(e) {
+                console.log('📝 Form submit event triggered');
             e.preventDefault();
 
             const email = document.getElementById('email').value.trim();
@@ -695,7 +699,9 @@
         });
 
         // Initialize event listeners when DOM is ready
+        console.log('🚀 DOM ready, calling initializeEventListeners...');
         initializeEventListeners();
+        console.log('✅ Event listeners initialization complete');
     </script>
 </body>
 </html>
