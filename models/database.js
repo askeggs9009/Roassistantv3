@@ -153,8 +153,8 @@ const userSchema = new mongoose.Schema({
 });
 
 // Index for faster queries
-userSchema.index({ email: 1 });
-userSchema.index({ id: 1 });
+// Indexes already created by unique: true in schema
+// Only add index for non-unique fields
 userSchema.index({ 'subscription.stripeCustomerId': 1 });
 
 // Pending Verification Schema
@@ -197,7 +197,7 @@ const pendingVerificationSchema = new mongoose.Schema({
 });
 
 // Index for faster queries and auto-cleanup
-pendingVerificationSchema.index({ email: 1 });
+// Email already has unique: true, only need expires index
 pendingVerificationSchema.index({ expires: 1 });
 
 // Create models

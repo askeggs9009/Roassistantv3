@@ -242,6 +242,7 @@ const SUBSCRIPTION_PLANS = {
 const userUsage = new Map();
 const guestUsage = new Map();
 const dailyUsage = new Map();
+const pendingVerifications = new Map();
 
 async function getUserPlan(userId) {
     const user = await DatabaseManager.findUserById(userId);
