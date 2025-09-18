@@ -5,7 +5,7 @@ class ChatManager {
         this.attachedFiles = [];
         this.isLoading = false;
         // Use the backend API URL
-        this.API_BASE_URL = 'https://roassistantv3-production.up.railway.app';
+        this.API_BASE_URL = 'https://www.roassistant.me';
         this.currentProject = null;
         this.projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
     }

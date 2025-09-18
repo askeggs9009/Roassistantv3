@@ -98,6 +98,8 @@ const app = express();
 // Enhanced CORS configuration to fix OAuth issues
 app.use(cors({
     origin: [
+        'https://www.roassistant.me',
+        'https://roassistant.me',
         'https://roassistantv3-production.up.railway.app',
         'http://localhost:3000',
         'http://localhost:5000',

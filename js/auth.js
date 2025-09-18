@@ -74,7 +74,7 @@ class AuthManager {
     // Refresh user data from server
     async refreshUserData() {
         try {
-            const response = await fetch('https://roassistantv3-production.up.railway.app/api/user/profile', {
+            const response = await fetch('https://www.roassistant.me/api/user/profile', {
                 headers: {
                     'Authorization': `Bearer ${this.authToken}`
                 }
