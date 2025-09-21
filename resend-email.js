@@ -1,4 +1,4 @@
-// Resend Email Service for Roblox Luau AI Assistant
+// Resend Email Service for RoAssistant
 import { Resend } from 'resend';
 
 import dotenv from 'dotenv';
@@ -28,7 +28,7 @@ export async function sendVerificationEmailWithResend(email, verificationCode, n
         const { data, error } = await resend.emails.send({
             from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
             to: [email],
-            subject: '🚀 Verify Your Roblox Luau AI Account',
+            subject: '🚀 Verify Your RoAssistant Account',
             html: `
                 <!DOCTYPE html>
                 <html>
@@ -38,7 +38,7 @@ export async function sendVerificationEmailWithResend(email, verificationCode, n
                 </head>
                 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
                     <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 20px; border-radius: 10px; margin-bottom: 30px;">
-                        <h1 style="margin: 0; font-size: 28px;">🚀 Welcome to Roblox Luau AI!</h1>
+                        <h1 style="margin: 0; font-size: 28px;">🚀 Welcome to RoAssistant!</h1>
                     </div>
                     
                     <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; margin-bottom: 30px;">
@@ -73,7 +73,7 @@ export async function sendVerificationEmailWithResend(email, verificationCode, n
                     <div style="text-align: center; margin-top: 30px; padding: 20px; border-top: 1px solid #e9ecef; color: #666; font-size: 12px;">
                         <p style="margin: 0;">
                             If you didn't create an account, please ignore this email.<br>
-                            This verification code was sent from Roblox Luau AI Assistant.
+                            This verification code was sent from RoAssistant.
                         </p>
                     </div>
                 </body>

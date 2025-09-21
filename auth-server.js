@@ -1830,7 +1830,7 @@ app.post("/auth/verify-email", async (req, res) => {
                 emailVerified: user.emailVerified,
                 subscription: user.subscription
             },
-            message: 'Account created and verified successfully! Welcome to Roblox Luau AI!'
+            message: 'Account created and verified successfully! Welcome to RoAssistant!'
         });
 
     } catch (error) {
@@ -2327,14 +2327,14 @@ app.get("/", (req, res) => {
 });
 
 function startServer() {
-    console.log('\n[INIT] Starting Roblox Luau AI Server with Subscription System...');
+    console.log('\n[INIT] Starting RoAssistant Server with Subscription System...');
     
     const port = process.env.PORT || 3000;
     const baseUrl = getBaseUrl();
     
     app.listen(port, '0.0.0.0', () => {
         console.log("\n" + "=".repeat(60));
-        console.log("[SUCCESS] Roblox Luau AI Server Running");
+        console.log("[SUCCESS] RoAssistant Server Running");
         console.log(`[PORT] ${port}`);
         console.log(`[BASE_URL] ${baseUrl}`);
         console.log(`[HEALTH] ${baseUrl}/health`);

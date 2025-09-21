@@ -637,7 +637,7 @@ class ChatManager {
                             </svg>
                         </div>
                         <div class="welcome-title">
-                            <h2>Welcome to Roblox Luau AI</h2>
+                            <h2>Welcome to RoAssistant</h2>
                             <p class="welcome-subtitle">Your intelligent assistant for Roblox game development</p>
                         </div>
                     </div>
@@ -678,7 +678,7 @@ class ChatManager {
         if (!this.currentProject) return;
 
         // Update page title
-        document.title = `${this.currentProject.name} - Roblox Luau AI`;
+        document.title = `${this.currentProject.name} - RoAssistant`;
         
         // Add project indicator to header
         this.addProjectIndicator();
@@ -862,7 +862,7 @@ class ChatManager {
             </div>
             <div class="message-content">
                 <div class="message-header">
-                    <span class="message-sender">Roblox Luau AI</span>
+                    <span class="message-sender">RoAssistant</span>
                     <span class="message-time">${timestamp}</span>
                 </div>
                 <div class="message-text"></div>
@@ -911,7 +911,7 @@ class ChatManager {
                 </div>
                 <div class="message-content">
                     <div class="message-header">
-                        <span class="message-sender">Roblox Luau AI</span>
+                        <span class="message-sender">RoAssistant</span>
                         <span class="message-time">${timestamp}</span>
                     </div>
                     <div class="message-text">${this.formatAssistantMessage(content)}</div>
