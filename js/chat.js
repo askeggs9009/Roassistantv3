@@ -167,8 +167,8 @@ class ChatManager {
         const words = text.split(' ');
         const totalWords = words.length;
 
-        // Calculate delay based on total content length
-        const baseDelay = Math.max(30, Math.min(150 - (totalWords / 20), 150));
+        // Calculate delay based on total content length (faster typing)
+        const baseDelay = Math.max(10, Math.min(50 - (totalWords / 20), 50));
 
         let wordIndex = 0;
         let currentText = '';
@@ -188,8 +188,8 @@ class ChatManager {
                     messagesContainer.scrollTop = messagesContainer.scrollHeight;
                 }
 
-                // Continue streaming with slight randomness
-                setTimeout(streamNextWord, baseDelay + Math.random() * 30);
+                // Continue streaming with slight randomness (reduced for faster effect)
+                setTimeout(streamNextWord, baseDelay + Math.random() * 10);
             } else {
                 // Streaming complete - remove cursor and show final formatted content
                 container.innerHTML = this.formatAssistantMessage(text);
