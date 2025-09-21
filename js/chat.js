@@ -638,70 +638,7 @@ class ChatManager {
                         </div>
                         <div class="welcome-title">
                             <h2>Welcome to Roblox Luau AI</h2>
-                            <p class="welcome-subtitle">Your intelligent Roblox scripting assistant</p>
-                        </div>
-                    </div>
-
-                    <div class="welcome-description">
-                        <p>I'm here to help you build amazing Roblox experiences! I can assist with scripting, debugging, game mechanics, and much more.</p>
-                    </div>
-
-                    <div class="welcome-examples">
-                        <h3>✨ Try asking me:</h3>
-                        <div class="example-grid">
-                            <div class="example-card" onclick="document.getElementById('messageInput').value = 'Create a script that makes a part glow when touched'; document.getElementById('messageInput').focus();">
-                                <div class="example-icon">🌟</div>
-                                <div class="example-text">
-                                    <strong>Visual Effects</strong>
-                                    <span>Create a script that makes a part glow when touched</span>
-                                </div>
-                            </div>
-
-                            <div class="example-card" onclick="document.getElementById('messageInput').value = 'How do I use RemoteEvents?'; document.getElementById('messageInput').focus();">
-                                <div class="example-icon">📡</div>
-                                <div class="example-text">
-                                    <strong>Networking</strong>
-                                    <span>How do I use RemoteEvents?</span>
-                                </div>
-                            </div>
-
-                            <div class="example-card" onclick="document.getElementById('messageInput').value = 'Debug this error: attempt to index nil'; document.getElementById('messageInput').focus();">
-                                <div class="example-icon">🐛</div>
-                                <div class="example-text">
-                                    <strong>Debugging</strong>
-                                    <span>Debug this error: attempt to index nil</span>
-                                </div>
-                            </div>
-
-                            <div class="example-card" onclick="document.getElementById('messageInput').value = 'Create a shop GUI with purchase functionality'; document.getElementById('messageInput').focus();">
-                                <div class="example-icon">🛒</div>
-                                <div class="example-text">
-                                    <strong>GUI Systems</strong>
-                                    <span>Create a shop GUI with purchase functionality</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="welcome-tip">
-                        <div class="tip-icon">💡</div>
-                        <div class="tip-content">
-                            <strong>Pro Tip:</strong> <a href="/projects.html" style="color: #58a6ff; text-decoration: none;">Create a project</a> to get more focused, context-aware assistance tailored to your specific game!
-                        </div>
-                    </div>
-
-                    <div class="welcome-features">
-                        <div class="feature">
-                            <span class="feature-icon">⚡</span>
-                            <span>Instant script generation</span>
-                        </div>
-                        <div class="feature">
-                            <span class="feature-icon">🔧</span>
-                            <span>Smart debugging help</span>
-                        </div>
-                        <div class="feature">
-                            <span class="feature-icon">📚</span>
-                            <span>Best practices guidance</span>
+                            <p class="welcome-subtitle">Your intelligent assistant for Roblox game development</p>
                         </div>
                     </div>
                 </div>
