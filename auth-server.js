@@ -581,7 +581,26 @@ const MODEL_CONFIGS = {
     }
 };
 
-const SYSTEM_PROMPT = `You are a helpful Roblox Luau scripting assistant. You specialize in:
+function getSystemPrompt(modelName) {
+    let modelIdentity = '';
+
+    if (modelName.startsWith('claude-3-haiku')) {
+        modelIdentity = 'I am Claude 3 Haiku, Anthropic\'s fast and efficient AI model.';
+    } else if (modelName.startsWith('claude-3-sonnet')) {
+        modelIdentity = 'I am Claude 3 Sonnet, Anthropic\'s balanced AI model.';
+    } else if (modelName.startsWith('claude-3-opus')) {
+        modelIdentity = 'I am Claude 3 Opus, Anthropic\'s most capable AI model.';
+    } else if (modelName === 'gpt-4o-mini') {
+        modelIdentity = 'I am GPT-4o mini, OpenAI\'s efficient language model.';
+    } else if (modelName === 'gpt-4.1' || modelName === 'gpt-4') {
+        modelIdentity = 'I am GPT-4, OpenAI\'s advanced language model.';
+    } else if (modelName === 'gpt-5' || modelName === 'gpt-4-turbo-preview') {
+        modelIdentity = 'I am GPT-4 Turbo, OpenAI\'s latest and most advanced model.';
+    } else {
+        modelIdentity = `I am ${modelName}, an AI language model.`;
+    }
+
+    return `${modelIdentity} I am a helpful Roblox Luau scripting assistant. I specialize in:
 
 1. Creating Roblox Luau scripts for various game mechanics
 2. Debugging existing Roblox code
@@ -592,6 +611,7 @@ const SYSTEM_PROMPT = `You are a helpful Roblox Luau scripting assistant. You sp
 When providing code, always use proper Luau syntax and follow Roblox scripting best practices. Include comments to explain complex logic and suggest where scripts should be placed (ServerScriptService, StarterPlayerScripts, etc.).
 
 Be helpful, clear, and provide working examples when possible.`;
+}
 
 async function checkUsageLimits(req, res, next) {
     const userIdentifier = getUserIdentifier(req);
@@ -2183,7 +2203,7 @@ User: "Can you explain how DataStores work?" → Title: "DataStore Explanation"
 Generate only the title, nothing else:`;
 
         const response = await openai.chat.completions.create({
-            model: "gpt-3.5-turbo", // Use cheaper model for title generation
+            model: "gpt-4o-mini", // Use gpt-4o-mini for title generation
             messages: [
                 { role: "user", content: titlePrompt }
             ],
@@ -2276,13 +2296,15 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
         let response;
         let reply;
 
+        const systemPrompt = getSystemPrompt(model);
+
         if (config.provider === 'anthropic') {
             // Use Claude/Anthropic API
             response = await anthropic.messages.create({
                 model: config.model,
                 max_tokens: 2000,
                 temperature: 0.7,
-                system: SYSTEM_PROMPT,
+                system: systemPrompt,
                 messages: [
                     { role: "user", content: prompt }
                 ]
@@ -2293,7 +2315,7 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             response = await openai.chat.completions.create({
                 model: config.model,
                 messages: [
-                    { role: "system", content: SYSTEM_PROMPT },
+                    { role: "system", content: systemPrompt },
                     { role: "user", content: prompt }
                 ],
                 max_tokens: 2000,
