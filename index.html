@@ -356,9 +356,11 @@
             </div>
             
             <select class="model-selector" id="modelSelector">
-                <option value="gpt-4o-mini">GPT-4o Mini</option>
                 <option value="gpt-4.1">GPT-4.1</option>
                 <option value="gpt-5">GPT-5</option>
+                <option value="claude-3-haiku">Claude 3 Haiku</option>
+                <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                <option value="claude-3-opus">Claude 3 Opus</option>
             </select>
         </div>
 
@@ -470,7 +472,7 @@
         let isLoggedIn = false;
         let authToken = null;
         let currentUser = null;
-        let selectedModel = 'gpt-4o-mini';
+        let selectedModel = 'gpt-4.1';
         let currentView = 'chats';
         let attachedFiles = [];
 
@@ -674,17 +676,31 @@
             const modelSelector = document.getElementById('modelSelector');
             if (modelSelector) {
                 const options = modelSelector.querySelectorAll('option');
-                
+
+                // All models now require authentication
                 options.forEach(option => {
-                    if (option.value !== 'gpt-4o-mini') {
-                        option.disabled = !isLoggedIn;
-                        if (!isLoggedIn && !option.textContent.includes('Sign in required')) {
-                            option.textContent += ' - Sign in required';
-                        } else if (isLoggedIn && option.textContent.includes(' - Sign in required')) {
-                            option.textContent = option.textContent.replace(' - Sign in required', '');
-                        }
+                    option.disabled = !isLoggedIn;
+                    if (!isLoggedIn && !option.textContent.includes('Sign in required')) {
+                        option.textContent += ' - Sign in required';
+                    } else if (isLoggedIn && option.textContent.includes(' - Sign in required')) {
+                        option.textContent = option.textContent.replace(' - Sign in required', '');
                     }
                 });
+
+                // Add event listener for model selection
+                if (!modelSelector.hasAttribute('data-listener-added')) {
+                    modelSelector.addEventListener('change', function() {
+                        selectedModel = this.value;
+                        console.log('Model changed to:', selectedModel);
+
+                        // Update UI to show selected model
+                        const currentModelDisplay = document.querySelector('.current-model');
+                        if (currentModelDisplay) {
+                            currentModelDisplay.textContent = this.options[this.selectedIndex].text;
+                        }
+                    });
+                    modelSelector.setAttribute('data-listener-added', 'true');
+                }
             }
         }
 

@@ -219,13 +219,13 @@ const SUBSCRIPTION_PLANS = {
         name: 'Free',
         limits: {
             daily_messages: 10,
-            models: ['gpt-4o-mini'],
+            models: ['gpt-4.1'],
             max_file_size: 1048576, // 1MB
             scripts_storage: 5,
             projects: 0,
             support: 'community'
         },
-        features: ['Basic AI assistant', 'Limited daily messages', 'Community support']
+        features: ['Basic AI assistant', 'GPT-4.1 access', 'Limited daily messages', 'Community support']
     },
     pro: {
         name: 'Pro',
@@ -333,12 +333,6 @@ const getGoogleClient = () => {
 };
 
 const USAGE_LIMITS = {
-    "gpt-4o-mini": {
-        dailyLimit: 10,
-        hourlyLimit: 5,
-        cost: 0.15,
-        description: "Basic AI model"
-    },
     "gpt-4.1": {
         dailyLimit: 5,
         hourlyLimit: 2,
@@ -2270,7 +2264,7 @@ app.get("/usage-limits", optionalAuthenticateToken, (req, res) => {
 
 app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) => {
     try {
-        const { prompt, model = "gpt-4o-mini" } = req.body;
+        const { prompt, model = "gpt-4.1" } = req.body;
         const isAuthenticated = req.user !== null;
 
         // Check if authenticated user can use this model
@@ -2378,7 +2372,7 @@ app.get("/models", optionalAuthenticateToken, async (req, res) => {
     const isAuthenticated = req.user !== null;
     const userIdentifier = getUserIdentifier(req);
 
-    let availableModels = ['gpt-4o-mini']; // Default for guests
+    let availableModels = []; // No models for guests - require authentication
 
     if (isAuthenticated) {
         const user = await DatabaseManager.findUserByEmail(req.user.email);
