@@ -112,18 +112,28 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// Stripe webhook MUST come before express.json() to receive raw body
-app.post('/webhook/stripe', express.raw({type: 'application/json'}), async (req, res) => {
+// Stripe webhook handler function
+async function handleStripeWebhook(req, res) {
     const sig = req.headers['stripe-signature'];
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     let event;
 
-    try {
-        event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-    } catch (err) {
-        console.error('[STRIPE] Webhook signature verification failed:', err.message);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
+    if (!endpointSecret) {
+        console.log('[STRIPE] No webhook secret configured, parsing webhook directly (DEVELOPMENT ONLY)');
+        try {
+            event = JSON.parse(req.body.toString());
+        } catch (err) {
+            console.error('[STRIPE] Failed to parse webhook body:', err.message);
+            return res.status(400).send(`Webhook Error: ${err.message}`);
+        }
+    } else {
+        try {
+            event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+        } catch (err) {
+            console.error('[STRIPE] Webhook signature verification failed:', err.message);
+            return res.status(400).send(`Webhook Error: ${err.message}`);
+        }
     }
 
     console.log(`[STRIPE] Received event: ${event.type}`);
@@ -166,7 +176,12 @@ app.post('/webhook/stripe', express.raw({type: 'application/json'}), async (req,
     }
 
     res.json({received: true});
-});
+}
+
+// Stripe webhook MUST come before express.json() to receive raw body
+// Support both /webhook/stripe and /stripe/webhook endpoints
+app.post('/webhook/stripe', express.raw({type: 'application/json'}), handleStripeWebhook);
+app.post('/stripe/webhook', express.raw({type: 'application/json'}), handleStripeWebhook);
 
 app.use(express.json());
 app.use(express.static(__dirname));
@@ -1570,6 +1585,28 @@ app.post("/api/contact-support", authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('[ERROR] Failed to create support ticket:', error);
         res.status(500).json({ error: 'Failed to create support ticket. Please try again.' });
+    }
+});
+
+// Debug endpoint to check current user subscription
+app.get("/api/debug-user-subscription", authenticateToken, async (req, res) => {
+    try {
+        const user = await DatabaseManager.findUserByEmail(req.user.email);
+        if (!user) {
+            return res.json({ error: 'User not found' });
+        }
+
+        console.log(`[DEBUG] Current user subscription for ${req.user.email}:`, JSON.stringify(user.subscription, null, 2));
+
+        res.json({
+            email: user.email,
+            subscription: user.subscription,
+            currentPlan: user.subscription?.plan || 'free',
+            availableModels: SUBSCRIPTION_PLANS[user.subscription?.plan || 'free']?.limits?.models || ['gpt-4o-mini']
+        });
+    } catch (error) {
+        console.error('[DEBUG] Error checking user subscription:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 
