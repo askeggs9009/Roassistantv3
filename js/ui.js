@@ -1,7 +1,7 @@
 // UI Management Module
 class UIManager {
     constructor() {
-        this.selectedModel = 'gpt-4o-mini';
+        this.selectedModel = 'claude-sonnet-4';
         this.currentView = 'chats';
     }
 
@@ -23,9 +23,9 @@ class UIManager {
         });
 
         modelSelector.addEventListener('change', function() {
-            if (this.value !== 'gpt-4o-mini' && (!window.authManager || !window.authManager.isLoggedIn)) {
+            if (this.value === 'claude-opus-4' && (!window.authManager || !window.authManager.isLoggedIn)) {
                 this.value = uiManager.selectedModel;
-                alert('Please sign in to access premium models');
+                alert('Please sign in to access Claude Opus 4');
                 return;
             }
             uiManager.selectedModel = this.value;

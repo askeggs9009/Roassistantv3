@@ -356,11 +356,8 @@
             </div>
             
             <select class="model-selector" id="modelSelector">
-                <option value="gpt-4.1">GPT-4.1</option>
-                <option value="gpt-5">GPT-5</option>
-                <option value="claude-3-haiku">Claude 3 Haiku</option>
-                <option value="claude-3-sonnet">Claude 3 Sonnet</option>
-                <option value="claude-3-opus">Claude 3 Opus</option>
+                <option value="claude-sonnet-4">Claude Sonnet 4</option>
+                <option value="claude-opus-4">Claude Opus 4 (Premium)</option>
             </select>
         </div>
 
@@ -677,13 +674,15 @@
             if (modelSelector) {
                 const options = modelSelector.querySelectorAll('option');
 
-                // All models now require authentication
+                // Only Claude Opus 4 requires authentication
                 options.forEach(option => {
-                    option.disabled = !isLoggedIn;
-                    if (!isLoggedIn && !option.textContent.includes('Sign in required')) {
-                        option.textContent += ' - Sign in required';
-                    } else if (isLoggedIn && option.textContent.includes(' - Sign in required')) {
-                        option.textContent = option.textContent.replace(' - Sign in required', '');
+                    if (option.value === 'claude-opus-4') {
+                        option.disabled = !isLoggedIn;
+                        if (!isLoggedIn && !option.textContent.includes('Sign in required')) {
+                            option.textContent = 'Claude Opus 4 (Premium) - Sign in required';
+                        } else if (isLoggedIn) {
+                            option.textContent = 'Claude Opus 4 (Premium)';
+                        }
                     }
                 });
 

@@ -66,7 +66,7 @@ class ChatManager {
             // Prepare request body
             const requestBody = {
                 prompt: message,
-                model: this.getSelectedModel() || 'gpt-4o-mini'
+                model: this.getSelectedModel() || 'claude-sonnet-4'
             };
 
             // Add project context if available
@@ -403,8 +403,8 @@ class ChatManager {
 
     // Get selected model
     getSelectedModel() {
-        const modelSelect = document.getElementById('modelSelect');
-        return modelSelect ? modelSelect.value : 'gpt-4o-mini';
+        const modelSelect = document.getElementById('modelSelector');
+        return modelSelect ? modelSelect.value : 'claude-sonnet-4';
     }
 
     // Update usage display
