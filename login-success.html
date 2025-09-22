@@ -219,7 +219,7 @@
             console.log('Processing session-based authentication...');
             
             try {
-                const response = await fetch(`https://roassistantv3-production.up.railway.app/auth/oauth-session/${sessionKey}`);
+                const response = await fetch(`https://www.roassistant.me/auth/oauth-session/${sessionKey}`);
                 
                 if (!response.ok) {
                     const error = await response.json();
@@ -319,7 +319,7 @@
                 // Redirect to main app after 2 seconds
                 setTimeout(() => {
                     console.log('Redirecting to Railway app');
-                    window.location.href = `https://roassistantv3-production.up.railway.app/index.html#token=${encodeURIComponent(token)}&user=${encodeURIComponent(JSON.stringify(user))}`;
+                    window.location.href = `https://www.roassistant.me/index.html#token=${encodeURIComponent(token)}&user=${encodeURIComponent(JSON.stringify(user))}`;
                 }, 2000);
 
             } catch (error) {
