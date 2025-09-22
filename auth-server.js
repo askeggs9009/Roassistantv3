@@ -2291,6 +2291,8 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
         let reply;
 
         const systemPrompt = getSystemPrompt(model);
+        console.log(`[DEBUG] Model: ${model}, Provider: ${config.provider}`);
+        console.log(`[DEBUG] System prompt starts with: ${systemPrompt.substring(0, 100)}...`);
 
         if (config.provider === 'anthropic') {
             // Use Claude/Anthropic API

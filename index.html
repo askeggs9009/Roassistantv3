@@ -690,13 +690,24 @@
                 // Add event listener for model selection
                 if (!modelSelector.hasAttribute('data-listener-added')) {
                     modelSelector.addEventListener('change', function() {
-                        selectedModel = this.value;
-                        console.log('Model changed to:', selectedModel);
+                        const newModel = this.value;
+                        console.log('Model changed to:', newModel);
 
-                        // Update UI to show selected model
-                        const currentModelDisplay = document.querySelector('.current-model');
-                        if (currentModelDisplay) {
-                            currentModelDisplay.textContent = this.options[this.selectedIndex].text;
+                        // If the model actually changed, start a new chat
+                        if (newModel !== selectedModel) {
+                            selectedModel = newModel;
+
+                            // Start a new chat when model changes
+                            startNewChat();
+
+                            // Update UI to show selected model
+                            const currentModelDisplay = document.querySelector('.current-model');
+                            if (currentModelDisplay) {
+                                currentModelDisplay.textContent = this.options[this.selectedIndex].text;
+                            }
+
+                            // Show a message indicating the model change
+                            addMessage('system', `🔄 Switched to ${this.options[this.selectedIndex].text}. Starting a new conversation.`);
                         }
                     });
                     modelSelector.setAttribute('data-listener-added', 'true');
