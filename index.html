@@ -354,11 +354,6 @@
                     </div>
                 </div>
             </div>
-            
-            <select class="model-selector" id="modelSelector">
-                <option value="claude-sonnet-4">Claude Sonnet 4</option>
-                <option value="claude-opus-4">Claude Opus 4 (Premium)</option>
-            </select>
         </div>
 
         <!-- Usage Warning -->
@@ -399,6 +394,21 @@
                             <button class="attach-button" id="attachButton" onclick="openFileDialog()" title="Add file or image">
                                 <span>📎</span>
                             </button>
+                            <button class="model-button" id="modelButton" onclick="toggleModelSelector()" title="Select AI Model">
+                                <span>🤖</span>
+                            </button>
+                            <!-- Model Selector Dropdown -->
+                            <div class="model-dropdown" id="modelDropdown" style="display: none;">
+                                <div class="model-dropdown-header">Select Model</div>
+                                <div class="model-option" data-model="claude-sonnet-4" onclick="selectModel('claude-sonnet-4')">
+                                    <div class="model-name">Claude Sonnet 4</div>
+                                    <div class="model-badge">Free</div>
+                                </div>
+                                <div class="model-option premium" data-model="claude-opus-4" onclick="selectModel('claude-opus-4')">
+                                    <div class="model-name">Claude Opus 4</div>
+                                    <div class="model-badge">Premium</div>
+                                </div>
+                            </div>
                             <textarea 
                                 class="input-area" 
                                 id="messageInput" 
@@ -469,7 +479,7 @@
         let isLoggedIn = false;
         let authToken = null;
         let currentUser = null;
-        let selectedModel = 'gpt-4.1';
+        let selectedModel = 'claude-sonnet-4';
         let currentView = 'chats';
         let attachedFiles = [];
 
@@ -668,50 +678,62 @@
             }
         }
 
+        // Toggle model selector dropdown
+        function toggleModelSelector() {
+            const dropdown = document.getElementById('modelDropdown');
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Select a model
+        function selectModel(model) {
+            // Check if user needs to be logged in for Opus 4
+            if (model === 'claude-opus-4' && !isLoggedIn) {
+                alert('Please sign in to access Claude Opus 4');
+                return;
+            }
+
+            const newModel = model;
+            console.log('Model changed to:', newModel);
+
+            // If the model actually changed, start a new chat
+            if (newModel !== selectedModel) {
+                selectedModel = newModel;
+
+                // Update button icon to show current model
+                updateModelButton();
+
+                // Start a new chat when model changes
+                startNewChat();
+
+                // Show a message indicating the model change
+                const modelName = model === 'claude-opus-4' ? 'Claude Opus 4' : 'Claude Sonnet 4';
+                addMessage('system', `🔄 Switched to ${modelName}. Starting a new conversation.`);
+            }
+
+            // Hide dropdown
+            document.getElementById('modelDropdown').style.display = 'none';
+        }
+
+        // Update model button to show current selection
+        function updateModelButton() {
+            const modelButton = document.getElementById('modelButton');
+            if (modelButton) {
+                // Update title to show current model
+                const modelName = selectedModel === 'claude-opus-4' ? 'Claude Opus 4' : 'Claude Sonnet 4';
+                modelButton.title = `Current Model: ${modelName}`;
+            }
+        }
+
         // Update model selector for auth status
         function updateModelSelector() {
-            const modelSelector = document.getElementById('modelSelector');
-            if (modelSelector) {
-                const options = modelSelector.querySelectorAll('option');
-
-                // Only Claude Opus 4 requires authentication
-                options.forEach(option => {
-                    if (option.value === 'claude-opus-4') {
-                        option.disabled = !isLoggedIn;
-                        if (!isLoggedIn && !option.textContent.includes('Sign in required')) {
-                            option.textContent = 'Claude Opus 4 (Premium) - Sign in required';
-                        } else if (isLoggedIn) {
-                            option.textContent = 'Claude Opus 4 (Premium)';
-                        }
-                    }
-                });
-
-                // Add event listener for model selection
-                if (!modelSelector.hasAttribute('data-listener-added')) {
-                    modelSelector.addEventListener('change', function() {
-                        const newModel = this.value;
-                        console.log('Model changed to:', newModel);
-
-                        // If the model actually changed, start a new chat
-                        if (newModel !== selectedModel) {
-                            selectedModel = newModel;
-
-                            // Start a new chat when model changes
-                            startNewChat();
-
-                            // Update UI to show selected model
-                            const currentModelDisplay = document.querySelector('.current-model');
-                            if (currentModelDisplay) {
-                                currentModelDisplay.textContent = this.options[this.selectedIndex].text;
-                            }
-
-                            // Show a message indicating the model change
-                            addMessage('system', `🔄 Switched to ${this.options[this.selectedIndex].text}. Starting a new conversation.`);
-                        }
-                    });
-                    modelSelector.setAttribute('data-listener-added', 'true');
-                }
+            // Update the premium model option based on auth status
+            const premiumOption = document.querySelector('.model-option.premium');
+            if (premiumOption && !isLoggedIn) {
+                premiumOption.classList.add('disabled');
+            } else if (premiumOption) {
+                premiumOption.classList.remove('disabled');
             }
+            updateModelButton();
         }
 
         // Initialize app
@@ -742,6 +764,21 @@
         document.addEventListener('DOMContentLoaded', function() {
             const app = new App();
             app.init();
+
+            // Add click outside listener for model dropdown
+            document.addEventListener('click', function(e) {
+                const modelDropdown = document.getElementById('modelDropdown');
+                const modelButton = document.getElementById('modelButton');
+
+                if (modelDropdown && modelButton) {
+                    if (!modelButton.contains(e.target) && !modelDropdown.contains(e.target)) {
+                        modelDropdown.style.display = 'none';
+                    }
+                }
+            });
+
+            // Initialize model button
+            updateModelButton();
         });
     </script>
 

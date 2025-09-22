@@ -229,6 +229,114 @@
     transform: rotate(-5deg) scale(0.95);
 }
 
+/* Model Button */
+.model-button {
+    background: transparent;
+    border: none;
+    color: #8b949e;
+    padding: 0.5rem;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.model-button:hover {
+    background: rgba(88, 166, 255, 0.1);
+    color: #58a6ff;
+    transform: scale(1.1);
+}
+
+.model-button:active {
+    transform: scale(0.95);
+}
+
+/* Model Dropdown */
+.model-dropdown {
+    position: absolute;
+    bottom: 100%;
+    left: 50px;
+    margin-bottom: 10px;
+    background: rgba(33, 38, 45, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(88, 166, 255, 0.3);
+    border-radius: 12px;
+    padding: 0.5rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    min-width: 200px;
+    animation: dropdownSlide 0.3s ease;
+}
+
+@keyframes dropdownSlide {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.model-dropdown-header {
+    color: #8b949e;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 0.5rem;
+}
+
+.model-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.model-option:hover:not(.disabled) {
+    background: rgba(88, 166, 255, 0.1);
+    transform: translateX(5px);
+}
+
+.model-option.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.model-name {
+    color: #e1e4e8;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.model-badge {
+    background: linear-gradient(45deg, #58a6ff, #1f6feb);
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.model-option.premium .model-badge {
+    background: linear-gradient(45deg, #9d4edd, #7c3aed);
+}
+
+.model-option.disabled .model-badge {
+    background: linear-gradient(45deg, #6e7681, #484f58);
+}
+
 .send-button {
     background: linear-gradient(135deg, #58a6ff, #1f6feb);
     border: none;
