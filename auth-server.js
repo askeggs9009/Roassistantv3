@@ -1,5 +1,6 @@
 import express from "express";
 import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import cors from "cors";
 import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
@@ -100,7 +101,7 @@ app.use(cors({
     origin: [
         'https://www.roassistant.me',
         'https://roassistant.me',
-        'https://roassistantv3-production.up.railway.app',
+        'https://www.roassistant.me',
         'http://localhost:3000',
         'http://localhost:5000',
         'http://127.0.0.1:5500',
@@ -177,6 +178,11 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Initialize Claude/Anthropic API
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -210,7 +216,7 @@ const SUBSCRIPTION_PLANS = {
         name: 'Pro',
         limits: {
             daily_messages: 500,
-            models: ['gpt-4o-mini', 'gpt-4.1'],
+            models: ['gpt-4o-mini', 'gpt-4.1', 'claude-3-haiku'],
             max_file_size: 10485760, // 10MB
             scripts_storage: -1, // unlimited
             projects: 5,
@@ -220,13 +226,13 @@ const SUBSCRIPTION_PLANS = {
             monthly: process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
             annual: process.env.STRIPE_PRO_ANNUAL_PRICE_ID
         },
-        features: ['Advanced AI models', '500 messages/day', 'Priority support', 'No ads']
+        features: ['Advanced AI models', 'Claude 3 Haiku', '500 messages/day', 'Priority support', 'No ads']
     },
     enterprise: {
         name: 'Enterprise',
         limits: {
             daily_messages: -1, // unlimited
-            models: ['gpt-4o-mini', 'gpt-4.1', 'gpt-5'],
+            models: ['gpt-4o-mini', 'gpt-4.1', 'gpt-5', 'claude-3-haiku', 'claude-3-sonnet', 'claude-3-opus'],
             max_file_size: 52428800, // 50MB
             scripts_storage: -1, // unlimited
             projects: -1, // unlimited
@@ -236,7 +242,7 @@ const SUBSCRIPTION_PLANS = {
             monthly: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID,
             annual: process.env.STRIPE_ENTERPRISE_ANNUAL_PRICE_ID
         },
-        features: ['All AI models', 'Unlimited messages', 'Premium support', 'Custom integrations']
+        features: ['All AI models', 'Claude 3 Sonnet & Opus', 'Unlimited messages', 'Premium support', 'Custom integrations']
     }
 };
 
@@ -329,6 +335,24 @@ const USAGE_LIMITS = {
         hourlyLimit: 1,
         cost: 3.00,
         description: "Premium AI model"
+    },
+    "claude-3-haiku": {
+        dailyLimit: 5,
+        hourlyLimit: 2,
+        cost: 1.50,
+        description: "Fast Claude model"
+    },
+    "claude-3-sonnet": {
+        dailyLimit: 3,
+        hourlyLimit: 1,
+        cost: 2.50,
+        description: "Balanced Claude model"
+    },
+    "claude-3-opus": {
+        dailyLimit: 2,
+        hourlyLimit: 1,
+        cost: 4.00,
+        description: "Most capable Claude model"
     }
 };
 
@@ -512,15 +536,33 @@ function recordUsage(userIdentifier, model) {
 const MODEL_CONFIGS = {
     "gpt-4o-mini": {
         model: "gpt-4o-mini",
-        requiresPlan: 'free'
+        requiresPlan: 'free',
+        provider: 'openai'
     },
     "gpt-4.1": {
         model: "gpt-4",
-        requiresPlan: 'pro'
+        requiresPlan: 'pro',
+        provider: 'openai'
     },
     "gpt-5": {
         model: "gpt-4-turbo-preview",
-        requiresPlan: 'enterprise'
+        requiresPlan: 'enterprise',
+        provider: 'openai'
+    },
+    "claude-3-haiku": {
+        model: "claude-3-haiku-20240307",
+        requiresPlan: 'pro',
+        provider: 'anthropic'
+    },
+    "claude-3-sonnet": {
+        model: "claude-3-sonnet-20240229",
+        requiresPlan: 'enterprise',
+        provider: 'anthropic'
+    },
+    "claude-3-opus": {
+        model: "claude-3-opus-20240229",
+        requiresPlan: 'enterprise',
+        provider: 'anthropic'
     }
 };
 
@@ -832,8 +874,11 @@ app.get("/health", (req, res) => {
             configured: !!process.env.STRIPE_SECRET_KEY,
             webhookSecret: !!process.env.STRIPE_WEBHOOK_SECRET
         },
+        ai: {
+            openai: !!process.env.OPENAI_API_KEY,
+            claude: !!process.env.ANTHROPIC_API_KEY
+        },
         subscriptionPlans: Object.keys(SUBSCRIPTION_PLANS),
-        activeUsers: users.size,
         activeGuests: guestUsage.size
     });
 });
@@ -897,13 +942,13 @@ app.get("/auth/google", (req, res) => {
         res.redirect(authUrl);
     } catch (error) {
         console.error('[ERROR] Google auth initiation failed:', error);
-        const frontendUrl = process.env.FRONTEND_URL || 'https://roassistantv3-production.up.railway.app';
+        const frontendUrl = process.env.FRONTEND_URL || 'https://www.roassistant.me';
         res.redirect(`${frontendUrl}/login.html?error=oauth_setup_failed`);
     }
 });
 
 app.get("/auth/google/callback", async (req, res) => {
-    const frontendUrl = process.env.FRONTEND_URL || 'https://roassistantv3-production.up.railway.app';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://www.roassistant.me';
     
     try {
         const { code, error: oauthError } = req.query;
@@ -2191,20 +2236,40 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             return res.status(400).json({ error: "Invalid model selected" });
         }
 
-        const response = await openai.chat.completions.create({
-            model: config.model,
-            messages: [
-                { role: "system", content: SYSTEM_PROMPT },
-                { role: "user", content: prompt }
-            ],
-            max_tokens: 2000,
-            temperature: 0.7
-        });
+        let response;
+        let reply;
+
+        if (config.provider === 'anthropic') {
+            // Use Claude/Anthropic API
+            response = await anthropic.messages.create({
+                model: config.model,
+                max_tokens: 2000,
+                temperature: 0.7,
+                system: SYSTEM_PROMPT,
+                messages: [
+                    { role: "user", content: prompt }
+                ]
+            });
+            reply = response.content[0].text;
+        } else {
+            // Use OpenAI API
+            response = await openai.chat.completions.create({
+                model: config.model,
+                messages: [
+                    { role: "system", content: SYSTEM_PROMPT },
+                    { role: "user", content: prompt }
+                ],
+                max_tokens: 2000,
+                temperature: 0.7
+            });
+            reply = response.choices[0].message.content;
+        }
 
         const userIdentifier = getUserIdentifier(req);
-        let responseData = { 
-            reply: response.choices[0].message.content, 
-            model: model
+        let responseData = {
+            reply: reply,
+            model: model,
+            provider: config.provider
         };
 
         if (isAuthenticated) {
@@ -2226,7 +2291,7 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
                 hourlyUsed: limitCheck.limitsInfo.hourlyUsed,
                 hourlyLimit: USAGE_LIMITS[model].hourlyLimit,
                 userType: "guest",
-                upgradeMessage: limitCheck.limitsInfo.dailyUsed >= USAGE_LIMITS[model].dailyLimit - 1 ? 
+                upgradeMessage: limitCheck.limitsInfo.dailyUsed >= USAGE_LIMITS[model].dailyLimit - 1 ?
                     "You're almost out! Sign up for unlimited access." : null
             };
         }
@@ -2234,13 +2299,16 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
         res.json(responseData);
     } catch (error) {
         console.error("[ERROR] AI Error:", error);
-        
+
+        // Handle both OpenAI and Anthropic errors
         if (error.status === 401) {
-            res.status(500).json({ error: "OpenAI API key is invalid or expired" });
+            const apiProvider = error.message?.includes('anthropic') || error.name?.includes('Anthropic') ? 'Claude' : 'OpenAI';
+            res.status(500).json({ error: `${apiProvider} API key is invalid or expired` });
         } else if (error.status === 429) {
-            res.status(500).json({ error: "OpenAI API rate limit exceeded. Please try again later." });
+            const apiProvider = error.message?.includes('anthropic') || error.name?.includes('Anthropic') ? 'Claude' : 'OpenAI';
+            res.status(500).json({ error: `${apiProvider} API rate limit exceeded. Please try again later.` });
         } else if (error.status === 402) {
-            res.status(500).json({ error: "OpenAI API quota exceeded. Please check your billing." });
+            res.status(500).json({ error: "API quota exceeded. Please check your billing." });
         } else {
             res.status(500).json({ error: error.message || "An error occurred while processing your request" });
         }
@@ -2263,7 +2331,9 @@ app.get("/models", optionalAuthenticateToken, async (req, res) => {
         const modelInfo = {
             name: key,
             model: MODEL_CONFIGS[key].model,
-            requiresAuth: !availableModels.includes(key)
+            provider: MODEL_CONFIGS[key].provider,
+            requiresAuth: !availableModels.includes(key),
+            requiresPlan: MODEL_CONFIGS[key].requiresPlan
         };
 
         if (!isAuthenticated) {
@@ -2365,7 +2435,8 @@ function startServer() {
         
         console.log("\n[USAGE LIMITS] (Guests Only):");
         Object.entries(USAGE_LIMITS).forEach(([model, limits]) => {
-            console.log(`   ${model}: ${limits.dailyLimit}/day, ${limits.hourlyLimit}/hour`);
+            const provider = MODEL_CONFIGS[model]?.provider || 'unknown';
+            console.log(`   ${model} (${provider}): ${limits.dailyLimit}/day, ${limits.hourlyLimit}/hour`);
         });
         
         console.log("\n[GOOGLE OAUTH]");
