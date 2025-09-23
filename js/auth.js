@@ -43,7 +43,22 @@ class AuthManager {
                 this.showLoggedInUser(refreshedUser);
                 this.isLoggedIn = true;
             } catch (error) {
-                console.log('[AuthManager] Auth check failed, showing guest user:', error);
+                console.log('[AuthManager] Auth check failed, redirecting to welcome page:', error);
+
+                // Check if we're not already on the welcome page to avoid redirect loop
+                const currentPath = window.location.pathname;
+                const isWelcomePage = currentPath.endsWith('welcome.html') || currentPath === '/welcome';
+                const isLoginPage = currentPath.endsWith('login.html') || currentPath === '/login';
+                const isPricingPage = currentPath.endsWith('pricing.html') || currentPath === '/pricing';
+                const isAboutPage = currentPath.endsWith('about.html') || currentPath === '/about';
+
+                // Don't redirect if we're on public pages
+                if (!isWelcomePage && !isLoginPage && !isPricingPage && !isAboutPage) {
+                    console.log('[AuthManager] Redirecting to welcome page...');
+                    window.location.href = '/welcome.html';
+                    return;
+                }
+
                 this.showGuestUser();
                 this.isLoggedIn = false;
 
@@ -54,7 +69,21 @@ class AuthManager {
                 }
             }
         } else {
-            console.log('[AuthManager] No auth data found, showing guest user');
+            console.log('[AuthManager] No auth data found, redirecting to welcome page');
+
+            // Check if we're not already on the welcome page to avoid redirect loop
+            const currentPath = window.location.pathname;
+            const isWelcomePage = currentPath.endsWith('welcome.html') || currentPath === '/welcome';
+            const isLoginPage = currentPath.endsWith('login.html') || currentPath === '/login';
+            const isPricingPage = currentPath.endsWith('pricing.html') || currentPath === '/pricing';
+            const isAboutPage = currentPath.endsWith('about.html') || currentPath === '/about';
+
+            // Don't redirect if we're on public pages
+            if (!isWelcomePage && !isLoginPage && !isPricingPage && !isAboutPage) {
+                console.log('[AuthManager] Redirecting to welcome page...');
+                window.location.href = '/welcome.html';
+                return;
+            }
 
             // Only reload chat if user state changed
             const wasLoggedIn = this.isLoggedIn;

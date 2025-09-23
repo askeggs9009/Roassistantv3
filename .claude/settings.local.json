@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(then echo \"$file\")"
+      "Bash(then echo \"$file\")",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
