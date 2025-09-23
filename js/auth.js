@@ -451,7 +451,10 @@ class AuthManager {
             window.chatManager.loadChatHistory();
         }
 
-        console.log('[AuthManager] User logged out successfully');
+        console.log('[AuthManager] User logged out successfully, redirecting to welcome page...');
+
+        // Redirect to welcome page
+        window.location.href = '/welcome.html';
     }
 }
 
