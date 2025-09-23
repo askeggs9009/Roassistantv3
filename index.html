@@ -9,7 +9,8 @@
     <link rel="stylesheet" href="styles/chat.css">
     <link rel="stylesheet" href="styles/animations.css">
     <link rel="stylesheet" href="styles/responsive.css">
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <!-- AdSense Integration -->
     <link rel="stylesheet" href="styles/ads.css">
     <script src="js/adsense.js"></script>
@@ -200,7 +201,9 @@
         }
 
         .model-locked::after {
-            content: '🔒';
+            content: '\f023';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
             position: absolute;
             right: 35px;
             top: 50%;
@@ -263,7 +266,7 @@
     <!-- FIXED: Account Switch Notification -->
     <div class="account-switch-notification" id="accountSwitchNotification">
         <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span>🔄</span>
+            <i class="fas fa-sync-alt"></i>
             <span>Account switched! Loading your data...</span>
         </div>
     </div>
@@ -279,7 +282,7 @@
         </div>
 
         <button class="new-chat-btn" onclick="startNewChat()">
-            <span>➕</span>
+            <span>+</span>
             New chat
         </button>
 
@@ -288,15 +291,15 @@
             <!-- Main Navigation -->
             <div class="nav-section">
                 <div class="nav-item active" onclick="setActiveNav(this, 'chats')">
-                    <span class="nav-icon">💬</span>
+                    <span class="nav-icon"><i class="fas fa-comments"></i></span>
                     Chats
                 </div>
                 <div class="nav-item" onclick="setActiveNav(this, 'projects')">
-                    <span class="nav-icon">📂</span>
+                    <span class="nav-icon"><i class="fas fa-folder"></i></span>
                     Projects
                 </div>
                 <div class="nav-item" onclick="setActiveNav(this, 'scripts')">
-                    <span class="nav-icon">🔧</span>
+                    <span class="nav-icon"><i class="fas fa-wrench"></i></span>
                     Scripts
                 </div>
                 <div class="nav-item authenticated-only" onclick="window.location.href='/account.html'" style="color: #8b949e;">
@@ -304,7 +307,7 @@
                     Account
                 </div>
                 <div class="nav-item" onclick="window.location.href='/pricing.html'" style="color: #58a6ff;">
-                    <span class="nav-icon">💎</span>
+                    <span class="nav-icon"><i class="fas fa-gem"></i></span>
                     Upgrade Plan
                 </div>
             </div>
@@ -321,7 +324,7 @@
         <div class="sidebar-footer">
             <div class="user-profile" id="userProfile">
                 <!-- Default Sign In button - will be replaced by JavaScript -->
-                <div class="user-avatar">👤</div>
+                <div class="user-avatar"><i class="fas fa-user"></i></div>
                 <div class="user-info">
                     <div class="user-name">Guest User</div>
                     <div class="user-plan">Free Plan - <span style="color: #58a6ff; cursor: pointer;" onclick="window.location.href='/login.html'">Sign In for More</span></div>
@@ -358,12 +361,12 @@
 
         <!-- Usage Warning -->
         <div id="usageWarning" class="usage-warning">
-            ⚠️ You're approaching your daily message limit. Consider upgrading for unlimited access!
+            <i class="fas fa-exclamation-triangle"></i> You're approaching your daily message limit. Consider upgrading for unlimited access!
         </div>
 
         <!-- Usage Limit Reached -->
         <div id="usageLimitReached" class="usage-limit-reached">
-            🚫 Daily message limit reached. <a href="/pricing.html" style="color: #58a6ff;">Upgrade now</a> for unlimited messages!
+            <i class="fas fa-ban"></i> Daily message limit reached. <a href="/pricing.html" style="color: #58a6ff;">Upgrade now</a> for unlimited messages!
         </div>
 
         <!-- Header Banner Ad -->
@@ -376,7 +379,7 @@
             <div class="messages-container" id="messagesContainer">
                 <!-- Welcome Screen -->
                 <div class="welcome-screen stagger-animation" id="welcomeScreen">
-                    <div class="welcome-icon">🚀</div>
+                    <div class="welcome-icon"><i class="fas fa-rocket"></i></div>
                     <h1 class="welcome-title" data-text="Welcome to RoAssistant">Welcome to RoAssistant</h1>
                     <p class="welcome-subtitle">Your intelligent assistant for Roblox game development</p>
                 </div>
@@ -392,10 +395,10 @@
                         <!-- Input row -->
                         <div class="input-row">
                             <button class="attach-button" id="attachButton" onclick="openFileDialog()" title="Add file or image">
-                                <span>📎</span>
+                                <span><i class="fas fa-paperclip"></i></span>
                             </button>
                             <button class="model-button" id="modelButton" onclick="toggleModelSelector()" title="Select AI Model">
-                                <span>🤖</span>
+                                <span><i class="fas fa-robot"></i></span>
                             </button>
                             <!-- Model Selector Dropdown -->
                             <div class="model-dropdown" id="modelDropdown" style="display: none;">
@@ -426,7 +429,7 @@
                 <!-- Drag & Drop Overlay -->
                 <div class="drag-overlay" id="dragOverlay" style="display: none;">
                     <div class="drag-content">
-                        <div class="drag-icon">📁</div>
+                        <div class="drag-icon"><i class="fas fa-folder-open"></i></div>
                         <div class="drag-text">Drop files here to upload</div>
                         <div class="drag-subtext">Images, code files, and documents</div>
                     </div>
@@ -443,7 +446,7 @@
     <!-- Upgrade Prompt -->
     <div class="upgrade-prompt" id="upgradePrompt">
         <div class="upgrade-prompt-header">
-            <div class="upgrade-prompt-title">🚀 Unlock More Power</div>
+            <div class="upgrade-prompt-title"><i class="fas fa-rocket"></i> Unlock More Power</div>
             <button class="upgrade-prompt-close" onclick="closeUpgradePrompt()">×</button>
         </div>
         <div class="upgrade-prompt-message" id="upgradePromptMessage">
@@ -643,7 +646,7 @@
             const userProfile = document.getElementById('userProfile');
             if (userProfile) {
                 userProfile.innerHTML = `
-                    <div class="user-avatar">👤</div>
+                    <div class="user-avatar"><i class="fas fa-user"></i></div>
                     <div class="user-info">
                         <div class="user-name">Guest User</div>
                         <div class="user-plan">Free Plan - <span style="color: #58a6ff; cursor: pointer;" onclick="window.location.href='/login.html'">Sign In for More</span></div>
@@ -707,7 +710,7 @@
 
                 // Show a message indicating the model change
                 const modelName = model === 'claude-opus-4' ? 'Claude Opus 4' : 'Claude Sonnet 4';
-                addMessage('system', `🔄 Switched to ${modelName}. Starting a new conversation.`);
+                addMessage('system', `<i class="fas fa-sync-alt"></i> Switched to ${modelName}. Starting a new conversation.`);
             }
 
             // Hide dropdown

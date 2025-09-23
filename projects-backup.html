@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="styles/sidebar.css">
     <link rel="stylesheet" href="styles/chat.css">
     <link rel="stylesheet" href="styles/responsive.css">
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <!-- AdSense Integration -->
     <link rel="stylesheet" href="styles/ads.css">
     <script src="js/adsense.js"></script>
@@ -278,7 +279,7 @@
         </div>
 
         <button class="new-chat-btn" onclick="startNewChat()">
-            <span>➕</span>
+            <span>+</span>
             New chat
         </button>
 
@@ -287,19 +288,19 @@
             <!-- Main Navigation -->
             <div class="nav-section">
                 <div class="nav-item active" onclick="setActiveNav(this, 'chats')">
-                    <span class="nav-icon">💬</span>
+                    <span class="nav-icon"><i class="fas fa-comments"></i></span>
                     Chats
                 </div>
                 <div class="nav-item" onclick="setActiveNav(this, 'projects')">
-                    <span class="nav-icon">📂</span>
+                    <span class="nav-icon"><i class="fas fa-folder"></i></span>
                     Projects
                 </div>
                 <div class="nav-item" onclick="setActiveNav(this, 'scripts')">
-                    <span class="nav-icon">🔧</span>
+                    <span class="nav-icon"><i class="fas fa-wrench"></i></span>
                     Scripts
                 </div>
                 <div class="nav-item" onclick="window.location.href='/pricing.html'" style="color: #58a6ff;">
-                    <span class="nav-icon">💎</span>
+                    <span class="nav-icon"><i class="fas fa-gem"></i></span>
                     Upgrade Plan
                 </div>
             </div>
@@ -316,7 +317,7 @@
         <div class="sidebar-footer">
             <div class="user-profile" id="userProfile">
                 <!-- Default Sign In button - will be replaced by JavaScript -->
-                <div class="user-avatar">👤</div>
+                <div class="user-avatar"><i class="fas fa-user"></i></div>
                 <div class="user-info">
                     <div class="user-name">Guest User</div>
                     <div class="user-plan">Free Plan - <span style="color: #58a6ff; cursor: pointer;" onclick="window.location.href='/login.html'">Sign In for More</span></div>
@@ -435,7 +436,7 @@
                 <!-- Drag & Drop Overlay -->
                 <div class="drag-overlay" id="dragOverlay" style="display: none;">
                     <div class="drag-content">
-                        <div class="drag-icon">📁</div>
+                        <div class="drag-icon"><i class="fas fa-folder-open"></i></div>
                         <div class="drag-text">Drop files here to upload</div>
                         <div class="drag-subtext">Images, code files, and documents</div>
                     </div>
@@ -652,7 +653,7 @@
             const userProfile = document.getElementById('userProfile');
             if (userProfile) {
                 userProfile.innerHTML = `
-                    <div class="user-avatar">👤</div>
+                    <div class="user-avatar"><i class="fas fa-user"></i></div>
                     <div class="user-info">
                         <div class="user-name">Guest User</div>
                         <div class="user-plan">Free Plan - <span style="color: #58a6ff; cursor: pointer;" onclick="window.location.href='/login.html'">Sign In for More</span></div>

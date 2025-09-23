@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="styles/responsive.css">
     <link rel="stylesheet" href="styles/ads.css">
     <link rel="stylesheet" href="styles/chat.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <!-- Google AdSense Verification Code -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7434697703458325"
@@ -240,7 +241,7 @@
         </div>
 
         <button class="new-chat-btn" onclick="window.location.href='index.html'">
-            <span>➕</span>
+            <span>+</span>
             New chat
         </button>
 
@@ -249,19 +250,19 @@
             <!-- Main Navigation -->
             <div class="nav-section">
                 <div class="nav-item" onclick="setActiveNav(this, 'chats')">
-                    <span class="nav-icon">💬</span>
+                    <span class="nav-icon"><i class="fas fa-comments"></i></span>
                     Chats
                 </div>
                 <div class="nav-item" onclick="setActiveNav(this, 'projects')">
-                    <span class="nav-icon">📂</span>
+                    <span class="nav-icon"><i class="fas fa-folder"></i></span>
                     Projects
                 </div>
                 <div class="nav-item active" onclick="setActiveNav(this, 'scripts')">
-                    <span class="nav-icon">🔧</span>
+                    <span class="nav-icon"><i class="fas fa-wrench"></i></span>
                     Scripts
                 </div>
                 <div class="nav-item" onclick="window.location.href='/pricing.html'" style="color: #58a6ff;">
-                    <span class="nav-icon">💎</span>
+                    <span class="nav-icon"><i class="fas fa-gem"></i></span>
                     Upgrade Plan
                 </div>
             </div>
@@ -278,7 +279,7 @@
         <div class="sidebar-footer">
             <div class="user-profile" id="userProfile">
                 <!-- Default Sign In button - will be replaced by JavaScript -->
-                <div class="user-avatar">👤</div>
+                <div class="user-avatar"><i class="fas fa-user"></i></div>
                 <div class="user-info">
                     <div class="user-name">Guest User</div>
                     <div class="user-plan">Free Plan - <span style="color: #58a6ff; cursor: pointer;" onclick="window.location.href='/login.html'">Sign In for More</span></div>
@@ -308,7 +309,7 @@
         <div class="scripts-page">
             <div class="scripts-header">
                 <div class="scripts-title">
-                    🔧 Scripts
+                    <i class="fas fa-wrench"></i> Scripts
                 </div>
                 <div class="scripts-controls">
                     <div class="stats-badge" id="scriptsCount">
@@ -494,7 +495,7 @@
                 if (this.filteredScripts.length === 0) {
                     grid.innerHTML = `
                         <div class="empty-state" style="grid-column: 1 / -1;">
-                            <div class="empty-state-icon">🔧</div>
+                            <div class="empty-state-icon"><i class="fas fa-wrench"></i></div>
                             <h3 style="color: #f0f6fc; margin-bottom: 0.5rem;">No scripts found</h3>
                             <p>${this.scripts.length === 0 ? 'Generate some Luau scripts by chatting with the AI!' : 'Try a different search term or filter.'}</p>
                             <a href="index.html" class="nav-link">← Back to Chat</a>
@@ -507,7 +508,7 @@
                     const timeAgo = this.getTimeAgo(new Date(script.createdAt));
                     return `
                         <div class="script-card" onclick="scriptsPageManager.viewScript('${script.id}')">
-                            <div class="script-icon">🔧</div>
+                            <div class="script-icon"><i class="fas fa-wrench"></i></div>
                             <div class="script-title">${script.title}</div>
                             <div class="script-description">${script.description}</div>
                             <div class="script-metadata">
@@ -516,13 +517,13 @@
                             </div>
                             <div class="script-actions">
                                 <button class="script-action-btn" onclick="scriptsPageManager.copyScript('${script.id}', event)">
-                                    📋 Copy
+                                    <i class="fas fa-clipboard"></i> Copy
                                 </button>
                                 <button class="script-action-btn" onclick="scriptsPageManager.downloadScript('${script.id}', event)">
-                                    💾 Download
+                                    <i class="fas fa-save"></i> Download
                                 </button>
                                 <button class="script-action-btn" onclick="scriptsPageManager.deleteScript('${script.id}', event)" style="color: #f85149;">
-                                    🗑️ Delete
+                                    <i class="fas fa-trash"></i> Delete
                                 </button>
                             </div>
                         </div>
@@ -546,7 +547,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid #30363d; padding-bottom: 1rem;">
                             <h1 style="color: #f0f6fc; margin: 0; font-size: 1.5rem;">${script.title}</h1>
                             <button onclick="scriptsPageManager.closeModal()" style="background: #21262d; border: 1px solid #30363d; border-radius: 6px; color: #f0f6fc; padding: 0.5rem 1rem; cursor: pointer;">
-                                ✕ Close
+                                <i class="fas fa-times"></i> Close
                             </button>
                         </div>
                         <div style="margin-bottom: 1.5rem;">
@@ -555,10 +556,10 @@
                         </div>
                         <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
                             <button onclick="scriptsPageManager.copyScriptContent('${script.id}')" style="background: #238636; border: none; border-radius: 6px; color: white; padding: 0.75rem 1.5rem; font-weight: 500; cursor: pointer;">
-                                📋 Copy Script
+                                <i class="fas fa-clipboard"></i> Copy Script
                             </button>
                             <button onclick="scriptsPageManager.downloadScript('${script.id}')" style="background: #1f6feb; border: none; border-radius: 6px; color: white; padding: 0.75rem 1.5rem; font-weight: 500; cursor: pointer;">
-                                💾 Download
+                                <i class="fas fa-save"></i> Download
                             </button>
                         </div>
                         <div style="background: #0d1117; border: 1px solid #21262d; border-radius: 8px; padding: 1.5rem; overflow-x: auto;">
@@ -584,7 +585,7 @@
                 navigator.clipboard.writeText(script.content).then(() => {
                     const button = event.target;
                     const originalText = button.textContent;
-                    button.textContent = '✅ Copied!';
+                    button.innerHTML = '<i class="fas fa-check"></i> Copied!';
                     
                     setTimeout(() => {
                         button.textContent = originalText;
@@ -601,7 +602,7 @@
                 navigator.clipboard.writeText(script.content).then(() => {
                     const button = event.target;
                     const originalText = button.textContent;
-                    button.textContent = '✅ Copied!';
+                    button.innerHTML = '<i class="fas fa-check"></i> Copied!';
                     button.style.background = '#2ea043';
                     
                     setTimeout(() => {

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - reCAPTCHA Risk Scores</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -132,17 +133,17 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>👥 User Activity Dashboard</h1>
+            <h1><i class="fas fa-users"></i> User Activity Dashboard</h1>
             <p>Monitor user registrations and activity</p>
         </div>
 
         <div id="loginPrompt" class="login-prompt" style="display: none;">
-            <h2>🔐 Authentication Required</h2>
+            <h2><i class="fas fa-shield-alt"></i> Authentication Required</h2>
             <p>Please <a href="/login.html">log in</a> to access the admin dashboard.</p>
         </div>
 
         <div id="dashboard" style="display: none;">
-            <button class="refresh-btn" onclick="loadData()">🔄 Refresh Data</button>
+            <button class="refresh-btn" onclick="loadData()"><i class="fas fa-sync-alt"></i> Refresh Data</button>
 
             <div class="stats" id="stats">
                 <!-- Stats will be populated here -->
@@ -168,7 +169,7 @@
         </div>
 
         <div id="loading" class="loading">
-            <p>🔍 Loading user activity data...</p>
+            <p><i class="fas fa-search"></i> Loading user activity data...</p>
         </div>
 
         <div id="error" class="error" style="display: none;">
@@ -222,7 +223,7 @@
                 }
 
                 if (response.status === 403) {
-                    showError('❌ Admin access required. You are not authorized to view this data.');
+                    showError('<i class="fas fa-times"></i> Admin access required. You are not authorized to view this data.');
                     return;
                 }
 
@@ -278,8 +279,8 @@
                         <strong>${user.name}</strong><br>
                         <small style="color: #8b949e;">${user.email}</small>
                     </td>
-                    <td>${user.provider === 'google' ? '🔵 Google' : '📧 Email'}</td>
-                    <td>${user.emailVerified ? '✅ Yes' : '❌ No'}</td>
+                    <td>${user.provider === 'google' ? '<i class="fas fa-circle" style="color: #007bff;"></i> Google' : '<i class="fas fa-envelope"></i> Email'}</td>
+                    <td>${user.emailVerified ? '<i class="fas fa-check" style="color: #2ea043;"></i> Yes' : '<i class="fas fa-times" style="color: #f85149;"></i> No'}</td>
                     <td>${user.subscription || 'free'}</td>
                     <td>${user.createdAt ? formatDate(user.createdAt) : 'Unknown'}</td>
                     <td>${user.lastActivity ? formatDate(user.lastActivity) : 'Never'}</td>

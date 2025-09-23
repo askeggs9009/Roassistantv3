@@ -6,6 +6,7 @@
     <title>Sign In - RoAssistant</title>
     <!-- Google reCAPTCHA v2 -->
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <!-- Google AdSense Verification Code -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7434697703458325"
@@ -334,7 +335,7 @@
                 </a>
 
                 <a href="/index.html" class="auth-button back-button">
-                    ← Back to AI Assistant
+                    <i class="fas fa-arrow-left"></i> Back to AI Assistant
                 </a>
             </div>
 
@@ -428,7 +429,7 @@
                 nameGroup.style.display = 'flex';
                 nameInput.required = true;
                 verificationInfo.style.display = 'block';
-                verificationInfo.innerHTML = '📧 You\'ll receive a verification code via email to complete your registration.';
+                verificationInfo.innerHTML = '<i class="fas fa-envelope"></i> You\'ll receive a verification code via email to complete your registration.';
             } else {
                 loginTitle.textContent = 'Welcome Back';
                 loginSubtitle.textContent = 'Sign in to your RoAssistant';

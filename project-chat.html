@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="styles/sidebar.css">
     <link rel="stylesheet" href="styles/chat.css">
     <link rel="stylesheet" href="styles/responsive.css">
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <!-- AdSense Integration -->
     <link rel="stylesheet" href="styles/ads.css">
     <script src="js/adsense.js"></script>
@@ -252,7 +253,9 @@
         }
 
         .model-locked::after {
-            content: '🔒';
+            content: '\f023';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
             position: absolute;
             right: 35px;
             top: 50%;
@@ -315,7 +318,7 @@
     <!-- FIXED: Account Switch Notification -->
     <div class="account-switch-notification" id="accountSwitchNotification">
         <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span>🔄</span>
+            <i class="fas fa-sync-alt"></i>
             <span>Account switched! Loading your data...</span>
         </div>
     </div>
@@ -331,7 +334,7 @@
         </div>
 
         <button class="new-chat-btn" onclick="startNewChat()">
-            <span>➕</span>
+            <span>+</span>
             New chat
         </button>
 
@@ -340,19 +343,19 @@
             <!-- Main Navigation -->
             <div class="nav-section">
                 <div class="nav-item" onclick="setActiveNav(this, 'chats')">
-                    <span class="nav-icon">💬</span>
+                    <span class="nav-icon"><i class="fas fa-comments"></i></span>
                     Chats
                 </div>
                 <div class="nav-item active" onclick="setActiveNav(this, 'projects')">
-                    <span class="nav-icon">📂</span>
+                    <span class="nav-icon"><i class="fas fa-folder"></i></span>
                     Projects
                 </div>
                 <div class="nav-item" onclick="setActiveNav(this, 'scripts')">
-                    <span class="nav-icon">🔧</span>
+                    <span class="nav-icon"><i class="fas fa-wrench"></i></span>
                     Scripts
                 </div>
                 <div class="nav-item" onclick="window.location.href='/pricing.html'" style="color: #58a6ff;">
-                    <span class="nav-icon">💎</span>
+                    <span class="nav-icon"><i class="fas fa-gem"></i></span>
                     Upgrade Plan
                 </div>
             </div>
@@ -369,7 +372,7 @@
         <div class="sidebar-footer">
             <div class="user-profile" id="userProfile">
                 <!-- Default Sign In button - will be replaced by JavaScript -->
-                <div class="user-avatar">👤</div>
+                <div class="user-avatar"><i class="fas fa-user"></i></div>
                 <div class="user-info">
                     <div class="user-name">Guest User</div>
                     <div class="user-plan">Free Plan - <span style="color: #58a6ff; cursor: pointer;" onclick="window.location.href='/login.html'">Sign In for More</span></div>
@@ -404,32 +407,32 @@
 
         <!-- Usage Warning -->
         <div id="usageWarning" class="usage-warning">
-            ⚠️ You're approaching your daily message limit. Consider upgrading for unlimited access!
+            <i class="fas fa-exclamation-triangle"></i> You're approaching your daily message limit. Consider upgrading for unlimited access!
         </div>
 
         <!-- Usage Limit Reached -->
         <div id="usageLimitReached" class="usage-limit-reached">
-            🚫 Daily message limit reached. <a href="/pricing.html" style="color: #58a6ff;">Upgrade now</a> for unlimited messages!
+            <i class="fas fa-ban"></i> Daily message limit reached. <a href="/pricing.html" style="color: #58a6ff;">Upgrade now</a> for unlimited messages!
         </div>
 
         <!-- Project Context Header -->
         <div class="project-context-header" id="projectContextHeader">
-            <div class="project-icon" id="projectIcon">📂</div>
+            <div class="project-icon" id="projectIcon"><i class="fas fa-folder"></i></div>
             <div class="project-context-info">
                 <h3 id="projectName">Loading project...</h3>
                 <p id="projectDescription">Please wait while we load your project details.</p>
             </div>
             <div style="margin-left: auto; display: flex; gap: 0.5rem; align-items: center;">
                 <button onclick="openArtifactsModal()" style="background: rgba(88, 166, 255, 0.15); border: 1px solid rgba(88, 166, 255, 0.3); border-radius: 6px; color: #58a6ff; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem;">
-                    📎 <span id="artifactCount">0</span> Artifacts
+                    <i class="fas fa-paperclip"></i> <span id="artifactCount">0</span> Artifacts
                 </button>
                 <button onclick="openAddFileDialog()" style="background: #238636; border: none; border-radius: 6px; color: white; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.85rem;">
-                    📁 Add Files
+                    <i class="fas fa-folder-open"></i> Add Files
                 </button>
                 <button onclick="openAddTextModal()" style="background: #1f6feb; border: none; border-radius: 6px; color: white; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.85rem;">
-                    📝 Add Text
+                    <i class="fas fa-edit"></i> Add Text
                 </button>
-                <a href="projects.html" class="back-to-projects">← Back</a>
+                <a href="projects.html" class="back-to-projects"><i class="fas fa-arrow-left"></i> Back</a>
             </div>
         </div>
 
@@ -443,36 +446,36 @@
             <div class="messages-container" id="messagesContainer">
                 <!-- Welcome Screen -->
                 <div class="welcome-screen" id="welcomeScreen">
-                    <div class="welcome-icon">🚀</div>
+                    <div class="welcome-icon"><i class="fas fa-rocket"></i></div>
                     <h1 class="welcome-title">Project Chat</h1>
                     <p class="welcome-subtitle">Discuss your project with context-aware AI assistance</p>
                     
                     <div class="project-files-info" id="projectFilesInfo">
-                        <strong>📁 Project Context Loaded</strong><br>
+                        <strong><i class="fas fa-folder-open"></i> Project Context Loaded</strong><br>
                         Your AI assistant has access to this project's files and can help you with specific questions about your code, debugging, and improvements.
                     </div>
                     
                     <div class="quick-actions">
                         <div class="quick-action" onclick="useQuickAction('Analyze my project structure and suggest improvements')">
-                            <span class="action-icon">🔍</span>
+                            <span class="action-icon"><i class="fas fa-search"></i></span>
                             <div class="action-title">Analyze Project</div>
                             <div class="action-desc">Review your project structure and code</div>
                         </div>
                         
                         <div class="quick-action" onclick="useQuickAction('Help me debug issues in this project')">
-                            <span class="action-icon">🐛</span>
+                            <span class="action-icon"><i class="fas fa-bug"></i></span>
                             <div class="action-title">Debug Issues</div>
                             <div class="action-desc">Find and fix problems in your code</div>
                         </div>
                         
                         <div class="quick-action" onclick="useQuickAction('Suggest new features for this project')">
-                            <span class="action-icon">✨</span>
+                            <span class="action-icon"><i class="fas fa-star"></i></span>
                             <div class="action-title">Add Features</div>
                             <div class="action-desc">Get ideas for project enhancements</div>
                         </div>
                         
                         <div class="quick-action" onclick="useQuickAction('Help me optimize the performance of this project')">
-                            <span class="action-icon">⚡</span>
+                            <span class="action-icon"><i class="fas fa-bolt"></i></span>
                             <div class="action-title">Optimize Code</div>
                             <div class="action-desc">Improve speed and efficiency</div>
                         </div>
@@ -490,10 +493,10 @@
                         <!-- Input row -->
                         <div class="input-row">
                             <button class="attach-button" id="attachButton" onclick="openFileDialog()" title="Add file or image">
-                                <span>📎</span>
+                                <span><i class="fas fa-paperclip"></i></span>
                             </button>
                             <button class="model-button" id="modelButton" onclick="toggleModelSelector()" title="Select AI Model">
-                                <span>🤖</span>
+                                <span><i class="fas fa-robot"></i></span>
                             </button>
                             <!-- Model Selector Dropdown -->
                             <div class="model-dropdown" id="modelDropdown" style="display: none;">

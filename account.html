@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Account Management - RoAssistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root {
             /* Dark theme variables */
@@ -493,7 +494,7 @@
     <div class="container">
         <div class="header">
             <button class="theme-toggle" onclick="toggleTheme()">
-                <span id="theme-icon">🌙</span>
+                <span id="theme-icon"><i class="fas fa-moon"></i></span>
             </button>
             <h1>Account Management</h1>
             <p>Manage your subscription, preferences, and account settings</p>
@@ -509,7 +510,7 @@
                 <!-- User Profile Card -->
                 <div class="account-card">
                     <h2 class="card-title">
-                        <span class="card-icon">👤</span>
+                        <span class="card-icon"><i class="fas fa-user"></i></span>
                         Profile Information
                     </h2>
                     <div class="info-grid">
@@ -572,7 +573,7 @@
                 <!-- Usage Statistics -->
                 <div class="account-card">
                     <h2 class="card-title">
-                        <span class="card-icon">📊</span>
+                        <span class="card-icon"><i class="fas fa-chart-bar"></i></span>
                         Usage Statistics
                     </h2>
                     <div class="usage-stats">
@@ -630,7 +631,7 @@
             <!-- Billing History Section -->
             <div class="account-card">
                 <h2 class="card-title">
-                    <span class="card-icon">💳</span>
+                    <span class="card-icon"><i class="fas fa-credit-card"></i></span>
                     Billing History
                 </h2>
                 <div id="billing-content">
@@ -769,7 +770,7 @@
 
         function applyTheme(theme) {
             document.documentElement.setAttribute('data-theme', theme);
-            document.getElementById('theme-icon').textContent = theme === 'dark' ? '☀️' : '🌙';
+            document.getElementById('theme-icon').innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
 
             if (document.getElementById('theme-select')) {
                 document.getElementById('theme-select').value = theme;
