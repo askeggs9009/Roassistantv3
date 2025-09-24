@@ -204,6 +204,25 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(e => e);
 
+// Session tracking for CCU
+const sessionHeartbeats = new Map();
+const activeSessions = new Map();
+
+// Get current concurrent users
+function getCurrentCCU() {
+    const now = Date.now();
+    const timeout = 60000;
+
+    for (const [sessionId, lastHeartbeat] of sessionHeartbeats.entries()) {
+        if (now - lastHeartbeat > timeout) {
+            sessionHeartbeats.delete(sessionId);
+            activeSessions.delete(sessionId);
+        }
+    }
+
+    return activeSessions.size;
+}
+
 // MongoDB Database
 import { connectToDatabase, DatabaseManager, User, PendingVerification } from './models/database.js';
 
@@ -1042,8 +1061,9 @@ app.post('/api/session/create', authenticateToken, async (req, res) => {
 app.get('/admin/user-activity', authenticateAdmin, async (req, res) => {
     try {
         const userEmail = req.user.email;
+        const currentUser = await DatabaseManager.findUserByEmail(userEmail);
 
-        if (!adminEmails.includes(userEmail)) {
+        if (!ADMIN_EMAILS.includes(userEmail) && !currentUser?.isAdmin) {
             return res.status(403).json({ error: 'Admin access required' });
         }
 
