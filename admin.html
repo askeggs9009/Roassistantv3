@@ -795,8 +795,8 @@
                 loadAllData(true);
             }, 30000);
 
-            // Real-time CCU update every 5 seconds
-            setInterval(loadCCU, 5000);
+            // Real-time CCU update every 10 seconds (reduced frequency)
+            setInterval(loadCCU, 10000);
         });
 
         // Check authentication
@@ -988,16 +988,16 @@
                     activityChart.data.labels = labels;
                     activityChart.data.datasets[0].data = users;
                     activityChart.data.datasets[1].data = messages;
-                    activityChart.update();
+                    activityChart.update('none');
                 }
 
                 if (data.usersByPlan && planChart) {
                     planChart.data.datasets[0].data = [
-                        data.usersByPlan.free,
-                        data.usersByPlan.pro,
-                        data.usersByPlan.enterprise
+                        data.usersByPlan.free || 0,
+                        data.usersByPlan.pro || 0,
+                        data.usersByPlan.enterprise || 0
                     ];
-                    planChart.update();
+                    planChart.update('none');
                 }
             } catch (error) {
                 console.error('Analytics error:', error);
