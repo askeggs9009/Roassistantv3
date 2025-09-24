@@ -717,6 +717,48 @@ function authenticateToken(req, res, next) {
     });
 }
 
+// Admin authentication middleware
+async function authenticateAdmin(req, res, next) {
+    try {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+
+        if (!token) {
+            return res.status(401).json({ error: 'Access token required' });
+        }
+
+        jwt.verify(token, JWT_SECRET, async (err, decoded) => {
+            if (err) {
+                return res.status(403).json({ error: 'Invalid or expired token' });
+            }
+
+            req.user = decoded;
+            const user = await DatabaseManager.findUserByEmail(decoded.email);
+
+            if (!user || (!user.isAdmin && !ADMIN_EMAILS.includes(user.email))) {
+                // Log unauthorized admin access attempt
+                await DatabaseManager.logAdminAction(
+                    decoded.id || 'unknown',
+                    decoded.email,
+                    'UNAUTHORIZED_ADMIN_ACCESS',
+                    { path: req.path, ip: req.ip }
+                );
+
+                return res.status(403).json({
+                    error: 'Admin access required',
+                    message: 'You do not have permission to access this resource'
+                });
+            }
+
+            req.admin = user;
+            next();
+        });
+    } catch (error) {
+        console.error('[AUTH] Admin authentication error:', error);
+        res.status(500).json({ error: 'Authentication error' });
+    }
+}
+
 // FIXED: Stripe Webhook Handler - Now properly handles subscription updates
 
 // FIXED: Enhanced subscription handling
@@ -912,11 +954,92 @@ app.get("/health", (req, res) => {
     });
 });
 
-// Admin endpoint to view reCAPTCHA risk scores
-app.get('/admin/user-activity', authenticateToken, async (req, res) => {
+// Session tracking endpoint
+app.post('/api/session/heartbeat', authenticateToken, async (req, res) => {
     try {
-        // Simple admin check - you might want to add proper admin role checking
-        const adminEmails = ['askeggs9009@gmail.com', 'askeggs9008@gmail.com']; // Add your admin emails here
+        const { sessionId } = req.body;
+        const userId = req.user.id;
+        const userEmail = req.user.email;
+
+        if (!sessionId) {
+            return res.status(400).json({ error: 'Session ID required' });
+        }
+
+        // Update session heartbeat
+        sessionHeartbeats.set(sessionId, Date.now());
+        activeSessions.set(sessionId, { userId, userEmail, lastActive: Date.now() });
+
+        // Update database session
+        await DatabaseManager.updateSession(sessionId, {
+            lastActivity: new Date(),
+            isActive: true
+        });
+
+        // Update user's lastActive
+        await DatabaseManager.updateUser(userEmail, {
+            lastActive: new Date()
+        });
+
+        res.json({
+            success: true,
+            ccu: getCurrentCCU()
+        });
+    } catch (error) {
+        console.error('[SESSION] Heartbeat error:', error);
+        res.status(500).json({ error: 'Failed to update session' });
+    }
+});
+
+// Create new session
+app.post('/api/session/create', authenticateToken, async (req, res) => {
+    try {
+        const { sessionId } = req.body;
+        const userId = req.user.id;
+        const userEmail = req.user.email;
+
+        if (!sessionId) {
+            return res.status(400).json({ error: 'Session ID required' });
+        }
+
+        // Create database session
+        await DatabaseManager.createSession({
+            userId,
+            userEmail,
+            sessionId,
+            ip: req.ip,
+            userAgent: req.headers['user-agent']
+        });
+
+        // Track in memory
+        activeSessions.set(sessionId, { userId, userEmail, lastActive: Date.now() });
+        sessionHeartbeats.set(sessionId, Date.now());
+
+        // Update user stats
+        await DatabaseManager.updateUser(userEmail, {
+            $inc: { sessionCount: 1 },
+            lastActive: new Date()
+        });
+
+        // Update analytics
+        const today = new Date();
+        await DatabaseManager.updateAnalytics(today, 'daily', {
+            totalSessions: 1,
+            activeUsers: 1
+        });
+
+        res.json({
+            success: true,
+            ccu: getCurrentCCU()
+        });
+    } catch (error) {
+        console.error('[SESSION] Create error:', error);
+        res.status(500).json({ error: 'Failed to create session' });
+    }
+});
+
+// Admin endpoint to view user activity (enhanced)
+app.get('/admin/user-activity', authenticateAdmin, async (req, res) => {
+    try {
         const userEmail = req.user.email;
 
         if (!adminEmails.includes(userEmail)) {
@@ -951,6 +1074,197 @@ app.get('/admin/user-activity', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('[ADMIN] Error fetching user activity:', error);
         res.status(500).json({ error: 'Failed to fetch user activity' });
+    }
+});
+
+// Admin analytics endpoints
+app.get('/admin/analytics/summary', authenticateAdmin, async (req, res) => {
+    try {
+        const { period = 'week' } = req.query;
+        const now = new Date();
+        const users = await DatabaseManager.getAllUsers();
+
+        // Calculate date ranges
+        const today = new Date(now.setHours(0, 0, 0, 0));
+        const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+        const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+        // Get users by time period
+        const todayUsers = users.filter(u => new Date(u.lastActive || u.lastLogin) >= today);
+        const weekUsers = users.filter(u => new Date(u.lastActive || u.lastLogin) >= weekAgo);
+        const monthUsers = users.filter(u => new Date(u.lastActive || u.lastLogin) >= monthAgo);
+
+        // Get analytics data
+        const weeklyAnalytics = await DatabaseManager.getAnalytics(weekAgo, today, 'daily');
+        const monthlyAnalytics = await DatabaseManager.getAnalytics(monthAgo, today, 'daily');
+
+        // Calculate stats
+        const stats = {
+            ccu: getCurrentCCU(),
+            today: {
+                activeUsers: todayUsers.length,
+                newUsers: users.filter(u => new Date(u.createdAt) >= today).length,
+                messages: weeklyAnalytics.reduce((sum, a) => sum + (a.totalMessages || 0), 0)
+            },
+            week: {
+                activeUsers: weekUsers.length,
+                newUsers: users.filter(u => new Date(u.createdAt) >= weekAgo).length,
+                totalSessions: weeklyAnalytics.reduce((sum, a) => sum + (a.totalSessions || 0), 0),
+                totalMessages: weeklyAnalytics.reduce((sum, a) => sum + (a.totalMessages || 0), 0),
+                avgSessionsPerDay: weeklyAnalytics.length > 0 ?
+                    Math.round(weeklyAnalytics.reduce((sum, a) => sum + (a.totalSessions || 0), 0) / weeklyAnalytics.length) : 0
+            },
+            month: {
+                activeUsers: monthUsers.length,
+                newUsers: users.filter(u => new Date(u.createdAt) >= monthAgo).length,
+                totalSessions: monthlyAnalytics.reduce((sum, a) => sum + (a.totalSessions || 0), 0),
+                totalMessages: monthlyAnalytics.reduce((sum, a) => sum + (a.totalMessages || 0), 0)
+            },
+            allTime: {
+                totalUsers: users.length,
+                verifiedUsers: users.filter(u => u.emailVerified).length,
+                totalMessages: users.reduce((sum, u) => sum + (u.totalMessages || 0), 0)
+            },
+            usersByPlan: {
+                free: users.filter(u => !u.subscription?.plan || u.subscription.plan === 'free').length,
+                pro: users.filter(u => u.subscription?.plan === 'pro').length,
+                enterprise: users.filter(u => u.subscription?.plan === 'enterprise').length
+            },
+            chartData: {
+                daily: weeklyAnalytics.map(a => ({
+                    date: a.date,
+                    users: a.activeUsers || 0,
+                    sessions: a.totalSessions || 0,
+                    messages: a.totalMessages || 0
+                }))
+            }
+        };
+
+        // Log admin access
+        await DatabaseManager.logAdminAction(
+            req.admin.id,
+            req.admin.email,
+            'VIEW_ANALYTICS',
+            { period, ip: req.ip }
+        );
+
+        res.json(stats);
+    } catch (error) {
+        console.error('[ADMIN] Error fetching analytics:', error);
+        res.status(500).json({ error: 'Failed to fetch analytics' });
+    }
+});
+
+// Admin chat logs endpoint
+app.get('/admin/chat-logs', authenticateAdmin, async (req, res) => {
+    try {
+        const { page = 1, limit = 50, userId, userEmail, startDate, endDate } = req.query;
+
+        // Build filter
+        const filter = {};
+        if (userId) filter.userId = userId;
+        if (userEmail) filter.userEmail = new RegExp(userEmail, 'i');
+        if (startDate || endDate) {
+            filter.timestamp = {};
+            if (startDate) filter.timestamp.$gte = new Date(startDate);
+            if (endDate) filter.timestamp.$lte = new Date(endDate);
+        }
+
+        const result = await DatabaseManager.getChatLogs(filter, {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            sort: { timestamp: -1 }
+        });
+
+        // Log admin access
+        await DatabaseManager.logAdminAction(
+            req.admin.id,
+            req.admin.email,
+            'VIEW_CHAT_LOGS',
+            { filter, page, limit, ip: req.ip }
+        );
+
+        res.json(result);
+    } catch (error) {
+        console.error('[ADMIN] Error fetching chat logs:', error);
+        res.status(500).json({ error: 'Failed to fetch chat logs' });
+    }
+});
+
+// Admin CCU endpoint
+app.get('/admin/analytics/ccu', authenticateAdmin, async (req, res) => {
+    try {
+        const activeSessions = await DatabaseManager.getActiveSessions();
+        const ccu = getCurrentCCU();
+
+        const sessionDetails = activeSessions.map(session => ({
+            userId: session.userId,
+            userEmail: session.userEmail,
+            sessionId: session.sessionId,
+            startTime: session.startTime,
+            lastActivity: session.lastActivity,
+            duration: Math.round((Date.now() - new Date(session.startTime).getTime()) / 60000) // minutes
+        }));
+
+        res.json({
+            currentCCU: ccu,
+            sessions: sessionDetails,
+            timestamp: new Date()
+        });
+    } catch (error) {
+        console.error('[ADMIN] Error fetching CCU:', error);
+        res.status(500).json({ error: 'Failed to fetch CCU data' });
+    }
+});
+
+// Admin user details endpoint
+app.get('/admin/user/:userId', authenticateAdmin, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const user = await DatabaseManager.findUserById(userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Get recent chat logs for this user
+        const recentChats = await DatabaseManager.getChatLogs(
+            { userId },
+            { page: 1, limit: 10 }
+        );
+
+        // Log admin access
+        await DatabaseManager.logAdminAction(
+            req.admin.id,
+            req.admin.email,
+            'VIEW_USER_DETAILS',
+            { targetUserId: userId, ip: req.ip }
+        );
+
+        res.json({
+            user: {
+                ...user.toObject(),
+                password: undefined // Remove password from response
+            },
+            recentChats: recentChats.logs
+        });
+    } catch (error) {
+        console.error('[ADMIN] Error fetching user details:', error);
+        res.status(500).json({ error: 'Failed to fetch user details' });
+    }
+});
+
+// Admin action logs endpoint
+app.get('/admin/logs', authenticateAdmin, async (req, res) => {
+    try {
+        const { limit = 100 } = req.query;
+        const logs = await DatabaseManager.getAdminLogs({}, parseInt(limit));
+
+        res.json(logs);
+    } catch (error) {
+        console.error('[ADMIN] Error fetching admin logs:', error);
+        res.status(500).json({ error: 'Failed to fetch admin logs' });
     }
 });
 
@@ -2321,6 +2635,39 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
         }
 
         const userIdentifier = getUserIdentifier(req);
+        const startTime = Date.now();
+
+        // Log chat to database
+        try {
+            const chatLogData = {
+                userId: isAuthenticated ? req.user.id : 'guest',
+                userEmail: isAuthenticated ? req.user.email : 'guest',
+                userName: isAuthenticated ? (await DatabaseManager.findUserByEmail(req.user.email))?.name || 'Unknown' : 'Guest User',
+                message: prompt,
+                response: reply,
+                model: model,
+                tokenCount: reply.length, // Approximate token count
+                responseTime: Date.now() - startTime,
+                timestamp: new Date(),
+                ip: req.ip,
+                userAgent: req.headers['user-agent'],
+                subscription: isAuthenticated ?
+                    (await DatabaseManager.findUserByEmail(req.user.email))?.subscription?.plan || 'free' :
+                    'guest'
+            };
+
+            await DatabaseManager.saveChatLog(chatLogData);
+
+            // Update analytics
+            const today = new Date();
+            await DatabaseManager.updateAnalytics(today, 'daily', {
+                totalMessages: 1
+            });
+        } catch (logError) {
+            console.error('[CHAT LOG] Failed to save chat log:', logError);
+            // Continue even if logging fails
+        }
+
         let responseData = {
             reply: reply,
             model: model,
@@ -2331,6 +2678,12 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             // Increment user usage for authenticated users
             const user = await DatabaseManager.findUserByEmail(req.user.email);
             incrementUserUsage(user);
+
+            // Update user's total messages count
+            await DatabaseManager.updateUser(req.user.email, {
+                $inc: { totalMessages: 1 },
+                lastActive: new Date()
+            });
 
             const subscription = getUserSubscription(user);
             responseData.subscription = {

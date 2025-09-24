@@ -3,8 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - reCAPTCHA Risk Scores</title>
+    <title>Admin Dashboard - RoAssistant</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Chart.js for analytics visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -17,58 +21,264 @@
             background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #21262d 100%);
             min-height: 100vh;
             color: #f0f6fc;
-            padding: 2rem;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
+            padding: 2rem;
         }
 
         .header {
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #30363d;
         }
 
         .header h1 {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
+            font-size: 2.5rem;
             background: linear-gradient(45deg, #58a6ff, #79c0ff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
 
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        .header-actions {
+            display: flex;
             gap: 1rem;
+            align-items: center;
+        }
+
+        .refresh-btn, .export-btn {
+            background: linear-gradient(45deg, #58a6ff, #1f6feb);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .refresh-btn:hover, .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(88, 166, 255, 0.4);
+        }
+
+        .last-updated {
+            color: #8b949e;
+            font-size: 0.9rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
             margin-bottom: 2rem;
         }
 
         .stat-card {
             background: rgba(33, 38, 45, 0.8);
             border: 1px solid #30363d;
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
         }
 
-        .stat-number {
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: #58a6ff;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-card.highlight {
+            background: linear-gradient(135deg, rgba(88, 166, 255, 0.1), rgba(31, 111, 235, 0.1));
+            border-color: #58a6ff;
+        }
+
+        .stat-icon {
             font-size: 2rem;
-            font-weight: bold;
-            color: #58a6ff;
+            margin-bottom: 0.5rem;
+            opacity: 0.8;
         }
 
         .stat-label {
             color: #8b949e;
-            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #58a6ff, #79c0ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .trend-up {
+            color: #3fb950;
+        }
+
+        .trend-down {
+            color: #f85149;
+        }
+
+        /* Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background: rgba(33, 38, 45, 0.8);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .chart-options {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chart-option {
+            padding: 0.25rem 0.75rem;
+            background: rgba(88, 166, 255, 0.1);
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #8b949e;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chart-option.active {
+            background: linear-gradient(45deg, #58a6ff, #1f6feb);
+            color: white;
+            border-color: transparent;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            cursor: pointer;
+            font-weight: 500;
+            position: relative;
+            transition: color 0.2s;
+        }
+
+        .tab:hover {
+            color: #58a6ff;
+        }
+
+        .tab.active {
+            color: #58a6ff;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(45deg, #58a6ff, #1f6feb);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Tables */
         .table-container {
             background: rgba(33, 38, 45, 0.8);
             border: 1px solid #30363d;
-            border-radius: 8px;
-            overflow-x: auto;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 1rem 1.5rem;
+            background: rgba(13, 17, 23, 0.8);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .search-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            color: #f0f6fc;
+            min-width: 250px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #58a6ff;
         }
 
         table {
@@ -76,135 +286,762 @@
             border-collapse: collapse;
         }
 
-        th, td {
-            text-align: left;
-            padding: 0.75rem;
-            border-bottom: 1px solid #30363d;
-        }
-
         th {
-            background: rgba(13, 17, 23, 0.8);
+            background: rgba(13, 17, 23, 0.5);
+            padding: 0.75rem;
+            text-align: left;
             font-weight: 600;
-            color: #f0f6fc;
+            color: #8b949e;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
+        td {
+            padding: 0.75rem;
+            border-top: 1px solid rgba(48, 54, 61, 0.3);
+        }
 
-        .loading {
-            text-align: center;
-            padding: 2rem;
+        tr:hover {
+            background: rgba(88, 166, 255, 0.05);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #58a6ff, #9d4edd);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 500;
+        }
+
+        .user-email {
+            font-size: 0.85rem;
             color: #8b949e;
         }
 
-        .error {
-            background: #f85149;
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-online {
+            background: rgba(63, 185, 80, 0.1);
+            color: #3fb950;
+            border: 1px solid rgba(63, 185, 80, 0.3);
+        }
+
+        .badge-offline {
+            background: rgba(139, 148, 158, 0.1);
+            color: #8b949e;
+            border: 1px solid rgba(139, 148, 158, 0.3);
+        }
+
+        .badge-pro {
+            background: linear-gradient(45deg, rgba(88, 166, 255, 0.1), rgba(31, 111, 235, 0.1));
+            color: #58a6ff;
+            border: 1px solid rgba(88, 166, 255, 0.3);
+        }
+
+        .badge-free {
+            background: rgba(139, 148, 158, 0.1);
+            color: #8b949e;
+            border: 1px solid rgba(139, 148, 158, 0.3);
+        }
+
+        .badge-admin {
+            background: linear-gradient(45deg, rgba(157, 78, 221, 0.1), rgba(124, 58, 237, 0.1));
+            color: #9d4edd;
+            border: 1px solid rgba(157, 78, 221, 0.3);
+        }
+
+        /* Chat Logs */
+        .chat-log {
+            background: rgba(13, 17, 23, 0.3);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .chat-log-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .chat-log-user {
+            font-weight: 600;
+            color: #58a6ff;
+        }
+
+        .chat-log-time {
+            color: #8b949e;
+            font-size: 0.85rem;
+        }
+
+        .chat-log-message {
+            background: rgba(88, 166, 255, 0.05);
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+
+        .chat-log-response {
+            background: rgba(139, 148, 158, 0.05);
+            padding: 0.75rem;
+            border-radius: 6px;
+        }
+
+        .chat-log-meta {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: #8b949e;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1.5rem;
+        }
+
+        .page-btn {
+            padding: 0.5rem 0.75rem;
+            background: rgba(88, 166, 255, 0.1);
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #8b949e;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover {
+            background: rgba(88, 166, 255, 0.2);
+            color: #58a6ff;
+        }
+
+        .page-btn.active {
+            background: linear-gradient(45deg, #58a6ff, #1f6feb);
             color: white;
+            border-color: transparent;
+        }
+
+        /* Loading and Error States */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #8b949e;
+        }
+
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+            font-size: 2rem;
+            color: #58a6ff;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: rgba(248, 81, 73, 0.1);
+            border: 1px solid rgba(248, 81, 73, 0.3);
+            color: #f85149;
             padding: 1rem;
             border-radius: 8px;
-            margin-bottom: 1rem;
+            margin: 1rem 0;
+            display: none;
         }
 
-        .login-prompt {
-            text-align: center;
-            padding: 2rem;
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
         }
 
-        .login-prompt a {
-            color: #58a6ff;
-            text-decoration: none;
-            font-weight: 600;
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .table-container {
+                overflow-x: auto;
+            }
+
+            .search-box {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .search-input {
+                width: 100%;
+            }
         }
 
-        .refresh-btn {
-            background: linear-gradient(45deg, #58a6ff, #1f6feb);
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            color: white;
-            cursor: pointer;
-            margin-bottom: 1rem;
+        /* Live indicator */
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            background: rgba(63, 185, 80, 0.1);
+            border: 1px solid rgba(63, 185, 80, 0.3);
+            border-radius: 20px;
+            color: #3fb950;
+            font-size: 0.85rem;
+            animation: pulse 2s infinite;
         }
 
-        .refresh-btn:hover {
-            opacity: 0.8;
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
 
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #3fb950;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
+        <!-- Header -->
         <div class="header">
-            <h1><i class="fas fa-users"></i> User Activity Dashboard</h1>
-            <p>Monitor user registrations and activity</p>
+            <h1>
+                <i class="fas fa-shield-alt"></i>
+                Admin Dashboard
+            </h1>
+            <div class="header-actions">
+                <span class="live-indicator">
+                    <span class="live-dot"></span>
+                    Live
+                </span>
+                <span class="last-updated">Last updated: <span id="lastUpdated">Never</span></span>
+                <button class="refresh-btn" onclick="refreshData()">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+                <button class="export-btn" onclick="exportData()">
+                    <i class="fas fa-download"></i>
+                    Export
+                </button>
+            </div>
         </div>
 
-        <div id="loginPrompt" class="login-prompt" style="display: none;">
-            <h2><i class="fas fa-shield-alt"></i> Authentication Required</h2>
-            <p>Please <a href="/login.html">log in</a> to access the admin dashboard.</p>
-        </div>
+        <!-- Error Alert -->
+        <div id="error" class="error"></div>
 
-        <div id="dashboard" style="display: none;">
-            <button class="refresh-btn" onclick="loadData()"><i class="fas fa-sync-alt"></i> Refresh Data</button>
-
-            <div class="stats" id="stats">
-                <!-- Stats will be populated here -->
+        <!-- Main Stats -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card highlight">
+                <i class="fas fa-users stat-icon"></i>
+                <div class="stat-label">Current CCU</div>
+                <div class="stat-number" id="ccuCount">-</div>
+                <div class="stat-trend trend-up" id="ccuTrend">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>Live</span>
+                </div>
             </div>
 
+            <div class="stat-card">
+                <i class="fas fa-user-clock stat-icon"></i>
+                <div class="stat-label">Today Active</div>
+                <div class="stat-number" id="todayActive">-</div>
+                <div class="stat-trend" id="todayTrend">
+                    <span>vs yesterday</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <i class="fas fa-calendar-week stat-icon"></i>
+                <div class="stat-label">Week Active</div>
+                <div class="stat-number" id="weekActive">-</div>
+                <div class="stat-trend" id="weekTrend">
+                    <span>vs last week</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <i class="fas fa-users-cog stat-icon"></i>
+                <div class="stat-label">Total Users</div>
+                <div class="stat-number" id="totalUsers">-</div>
+                <div class="stat-trend" id="totalTrend">
+                    <span>all time</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <i class="fas fa-comments stat-icon"></i>
+                <div class="stat-label">Messages Today</div>
+                <div class="stat-number" id="messagestoday">-</div>
+            </div>
+
+            <div class="stat-card">
+                <i class="fas fa-chart-pie stat-icon"></i>
+                <div class="stat-label">Pro Users</div>
+                <div class="stat-number" id="proUsers">-</div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">User Activity</h3>
+                    <div class="chart-options">
+                        <button class="chart-option active" onclick="updateChart('activity', 'week')">Week</button>
+                        <button class="chart-option" onclick="updateChart('activity', 'month')">Month</button>
+                    </div>
+                </div>
+                <canvas id="activityChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Users by Plan</h3>
+                </div>
+                <canvas id="planChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('users')">
+                <i class="fas fa-users"></i> Users
+            </button>
+            <button class="tab" onclick="showTab('chatlogs')">
+                <i class="fas fa-comments"></i> Chat Logs
+            </button>
+            <button class="tab" onclick="showTab('sessions')">
+                <i class="fas fa-clock"></i> Active Sessions
+            </button>
+            <button class="tab" onclick="showTab('adminlogs')">
+                <i class="fas fa-shield-alt"></i> Admin Logs
+            </button>
+        </div>
+
+        <!-- Tab Contents -->
+        <!-- Users Tab -->
+        <div id="users-tab" class="tab-content active">
             <div class="table-container">
+                <div class="table-header">
+                    <h3 class="table-title">User Activity</h3>
+                    <div class="search-box">
+                        <input type="text" class="search-input" id="userSearch" placeholder="Search users..." onkeyup="filterUsers()">
+                        <button class="refresh-btn" onclick="loadUserActivity()">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
                 <table>
                     <thead>
                         <tr>
                             <th>User</th>
-                            <th>Provider</th>
-                            <th>Email Verified</th>
-                            <th>Subscription</th>
-                            <th>Created At</th>
-                            <th>Last Activity</th>
+                            <th>Status</th>
+                            <th>Plan</th>
+                            <th>Messages</th>
+                            <th>Sessions</th>
+                            <th>Last Active</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="userTable">
-                        <!-- User data will be populated here -->
+                        <!-- Users will be populated here -->
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <div id="loading" class="loading">
-            <p><i class="fas fa-search"></i> Loading user activity data...</p>
+        <!-- Chat Logs Tab -->
+        <div id="chatlogs-tab" class="tab-content">
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 class="table-title">Chat Logs</h3>
+                    <div class="search-box">
+                        <input type="text" class="search-input" id="chatSearch" placeholder="Search messages..." onkeyup="filterChats()">
+                        <input type="date" class="search-input" id="chatDateFilter" onchange="filterChats()">
+                    </div>
+                </div>
+                <div id="chatLogsContainer">
+                    <!-- Chat logs will be populated here -->
+                </div>
+                <div class="pagination" id="chatPagination">
+                    <!-- Pagination will be populated here -->
+                </div>
+            </div>
         </div>
 
-        <div id="error" class="error" style="display: none;">
-            <!-- Error messages will appear here -->
+        <!-- Sessions Tab -->
+        <div id="sessions-tab" class="tab-content">
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 class="table-title">Active Sessions (<span id="sessionCount">0</span>)</h3>
+                    <button class="refresh-btn" onclick="loadSessions()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Session ID</th>
+                            <th>Started</th>
+                            <th>Duration</th>
+                            <th>Last Activity</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sessionTable">
+                        <!-- Sessions will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Admin Logs Tab -->
+        <div id="adminlogs-tab" class="tab-content">
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 class="table-title">Admin Activity Logs</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Admin</th>
+                            <th>Action</th>
+                            <th>Details</th>
+                            <th>Timestamp</th>
+                            <th>IP</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminLogTable">
+                        <!-- Admin logs will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="loading" style="display: none;">
+            <i class="fas fa-spinner loading-spinner"></i>
+            <p>Loading data...</p>
         </div>
     </div>
 
     <script>
         const API_BASE_URL = 'https://roassistantv3-production.up.railway.app';
+        let currentTab = 'users';
+        let activityChart = null;
+        let planChart = null;
+        let refreshInterval = null;
+        let chatLogsCurrentPage = 1;
 
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            initCharts();
+            loadAllData();
 
-        function formatDate(dateString) {
-            return new Date(dateString).toLocaleString();
+            // Auto-refresh every 30 seconds
+            refreshInterval = setInterval(() => {
+                loadAllData(true);
+            }, 30000);
+
+            // Real-time CCU update every 5 seconds
+            setInterval(loadCCU, 5000);
+        });
+
+        // Check authentication
+        async function checkAuth() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
         }
 
-        function showError(message) {
-            document.getElementById('error').style.display = 'block';
-            document.getElementById('error').textContent = message;
+        // Show loading state
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        // Hide loading state
+        function hideLoading() {
             document.getElementById('loading').style.display = 'none';
         }
 
-        function hideError() {
-            document.getElementById('error').style.display = 'none';
+        // Show error
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
         }
 
-        async function loadData() {
-            hideError();
-            document.getElementById('loading').style.display = 'block';
+        // Format date
+        function formatDate(dateString) {
+            if (!dateString) return 'Never';
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
 
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('loginPrompt').style.display = 'block';
-                return;
+            // Less than 1 minute
+            if (diff < 60000) return 'Just now';
+            // Less than 1 hour
+            if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
+            // Less than 1 day
+            if (diff < 86400000) return `${Math.floor(diff / 3600000)} hours ago`;
+            // Less than 1 week
+            if (diff < 604800000) return `${Math.floor(diff / 86400000)} days ago`;
+
+            return date.toLocaleDateString();
+        }
+
+        // Initialize charts
+        function initCharts() {
+            // Activity Chart
+            const activityCtx = document.getElementById('activityChart').getContext('2d');
+            activityChart = new Chart(activityCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Active Users',
+                        data: [],
+                        borderColor: '#58a6ff',
+                        backgroundColor: 'rgba(88, 166, 255, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Messages',
+                        data: [],
+                        borderColor: '#9d4edd',
+                        backgroundColor: 'rgba(157, 78, 221, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#f0f6fc'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: {
+                                color: 'rgba(48, 54, 61, 0.5)'
+                            },
+                            ticks: {
+                                color: '#8b949e'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(48, 54, 61, 0.5)'
+                            },
+                            ticks: {
+                                color: '#8b949e'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Plan Chart (Pie)
+            const planCtx = document.getElementById('planChart').getContext('2d');
+            planChart = new Chart(planCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Free', 'Pro', 'Enterprise'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: [
+                            'rgba(139, 148, 158, 0.8)',
+                            'rgba(88, 166, 255, 0.8)',
+                            'rgba(157, 78, 221, 0.8)'
+                        ],
+                        borderColor: [
+                            '#8b949e',
+                            '#58a6ff',
+                            '#9d4edd'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#f0f6fc'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load all data
+        async function loadAllData(silent = false) {
+            if (!silent) showLoading();
+
+            try {
+                await Promise.all([
+                    loadAnalytics(),
+                    loadUserActivity(),
+                    loadCCU()
+                ]);
+
+                document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showError('Failed to load dashboard data');
+            } finally {
+                if (!silent) hideLoading();
             }
+        }
+
+        // Load analytics summary
+        async function loadAnalytics() {
+            const token = localStorage.getItem('authToken');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/analytics/summary`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to load analytics');
+
+                const data = await response.json();
+
+                // Update stats cards
+                document.getElementById('todayActive').textContent = data.today.activeUsers || 0;
+                document.getElementById('weekActive').textContent = data.week.activeUsers || 0;
+                document.getElementById('totalUsers').textContent = data.allTime.totalUsers || 0;
+                document.getElementById('messagestoday').textContent = data.today.messages || 0;
+                document.getElementById('proUsers').textContent = data.usersByPlan.pro || 0;
+
+                // Update charts
+                if (data.chartData && activityChart) {
+                    const labels = data.chartData.daily.map(d =>
+                        new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' })
+                    );
+                    const users = data.chartData.daily.map(d => d.users);
+                    const messages = data.chartData.daily.map(d => d.messages);
+
+                    activityChart.data.labels = labels;
+                    activityChart.data.datasets[0].data = users;
+                    activityChart.data.datasets[1].data = messages;
+                    activityChart.update();
+                }
+
+                if (data.usersByPlan && planChart) {
+                    planChart.data.datasets[0].data = [
+                        data.usersByPlan.free,
+                        data.usersByPlan.pro,
+                        data.usersByPlan.enterprise
+                    ];
+                    planChart.update();
+                }
+            } catch (error) {
+                console.error('Analytics error:', error);
+            }
+        }
+
+        // Load CCU
+        async function loadCCU() {
+            const token = localStorage.getItem('authToken');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/analytics/ccu`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to load CCU');
+
+                const data = await response.json();
+
+                document.getElementById('ccuCount').textContent = data.currentCCU || 0;
+                document.getElementById('sessionCount').textContent = data.sessions?.length || 0;
+
+                // Update sessions table if on that tab
+                if (currentTab === 'sessions' && data.sessions) {
+                    const tbody = document.getElementById('sessionTable');
+                    tbody.innerHTML = data.sessions.map(session => `
+                        <tr>
+                            <td>${session.userEmail}</td>
+                            <td><code>${session.sessionId.substring(0, 8)}...</code></td>
+                            <td>${formatDate(session.startTime)}</td>
+                            <td>${session.duration} min</td>
+                            <td>${formatDate(session.lastActivity)}</td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('CCU error:', error);
+            }
+        }
+
+        // Load user activity
+        async function loadUserActivity() {
+            const token = localStorage.getItem('authToken');
 
             try {
                 const response = await fetch(`${API_BASE_URL}/admin/user-activity`, {
@@ -213,87 +1050,267 @@
                     }
                 });
 
-                if (response.status === 401) {
-                    // Token expired
-                    localStorage.removeItem('authToken');
-                    localStorage.removeItem('user');
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('loginPrompt').style.display = 'block';
-                    return;
-                }
-
-                if (response.status === 403) {
-                    showError('<i class="fas fa-times"></i> Admin access required. You are not authorized to view this data.');
-                    return;
-                }
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
+                if (!response.ok) throw new Error('Failed to load users');
 
                 const data = await response.json();
-                console.log('Admin dashboard data:', data); // Debug logging
-                displayData(data);
 
+                const tbody = document.getElementById('userTable');
+                tbody.innerHTML = data.userActivity.map(user => `
+                    <tr>
+                        <td>
+                            <div class="user-info">
+                                <div class="user-avatar">${user.name.charAt(0).toUpperCase()}</div>
+                                <div class="user-details">
+                                    <div class="user-name">${user.name}</div>
+                                    <div class="user-email">${user.email}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge ${user.isOnline ? 'badge-online' : 'badge-offline'}">
+                                ${user.isOnline ? 'Online' : 'Offline'}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge badge-${user.subscription}">
+                                ${user.subscription.toUpperCase()}
+                            </span>
+                            ${user.isAdmin ? '<span class="badge badge-admin">ADMIN</span>' : ''}
+                        </td>
+                        <td>${user.totalMessages || 0}</td>
+                        <td>${user.sessionCount || 0}</td>
+                        <td>${formatDate(user.lastActivity)}</td>
+                        <td>
+                            <button class="page-btn" onclick="viewUserDetails('${user.id}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
             } catch (error) {
-                console.error('Error loading data:', error);
-                showError(`Failed to load data: ${error.message}`);
+                console.error('User activity error:', error);
+                showError('Failed to load user activity');
             }
         }
 
-        function displayData(data) {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('dashboard').style.display = 'block';
+        // Load chat logs
+        async function loadChatLogs(page = 1) {
+            const token = localStorage.getItem('authToken');
+            chatLogsCurrentPage = page;
 
-            // Ensure data has expected structure
-            if (!data || !data.userActivity) {
-                showError('Invalid data received from server');
-                return;
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/chat-logs?page=${page}&limit=10`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to load chat logs');
+
+                const data = await response.json();
+
+                const container = document.getElementById('chatLogsContainer');
+                container.innerHTML = data.logs.map(log => `
+                    <div class="chat-log">
+                        <div class="chat-log-header">
+                            <div class="chat-log-user">${log.userName} (${log.userEmail})</div>
+                            <div class="chat-log-time">${formatDate(log.timestamp)}</div>
+                        </div>
+                        <div class="chat-log-message">
+                            <strong>User:</strong> ${log.message}
+                        </div>
+                        <div class="chat-log-response">
+                            <strong>AI:</strong> ${log.response.substring(0, 200)}${log.response.length > 200 ? '...' : ''}
+                        </div>
+                        <div class="chat-log-meta">
+                            <span><i class="fas fa-robot"></i> ${log.model}</span>
+                            <span><i class="fas fa-clock"></i> ${log.responseTime}ms</span>
+                            <span><i class="fas fa-gem"></i> ${log.subscription}</span>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Update pagination
+                updatePagination('chatPagination', data.pagination, loadChatLogs);
+            } catch (error) {
+                console.error('Chat logs error:', error);
             }
-
-            // Update stats
-            const statsHtml = `
-                <div class="stat-card">
-                    <div class="stat-number">${data.totalUsers || 0}</div>
-                    <div class="stat-label">Total Users</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${data.verifiedUsers || 0}</div>
-                    <div class="stat-label">Verified Users</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${data.userActivity.filter(u => u.provider === 'google').length}</div>
-                    <div class="stat-label">Google Users</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${data.userActivity.filter(u => u.provider === 'email').length}</div>
-                    <div class="stat-label">Email Users</div>
-                </div>
-            `;
-            document.getElementById('stats').innerHTML = statsHtml;
-
-            // Update table
-            const tableHtml = data.userActivity.map(user => `
-                <tr>
-                    <td>
-                        <strong>${user.name}</strong><br>
-                        <small style="color: #8b949e;">${user.email}</small>
-                    </td>
-                    <td>${user.provider === 'google' ? '<i class="fas fa-circle" style="color: #007bff;"></i> Google' : '<i class="fas fa-envelope"></i> Email'}</td>
-                    <td>${user.emailVerified ? '<i class="fas fa-check" style="color: #2ea043;"></i> Yes' : '<i class="fas fa-times" style="color: #f85149;"></i> No'}</td>
-                    <td>${user.subscription || 'free'}</td>
-                    <td>${user.createdAt ? formatDate(user.createdAt) : 'Unknown'}</td>
-                    <td>${user.lastActivity ? formatDate(user.lastActivity) : 'Never'}</td>
-                </tr>
-            `).join('');
-            document.getElementById('userTable').innerHTML = tableHtml;
         }
 
-        // Load data when page loads
-        window.addEventListener('load', loadData);
+        // Load admin logs
+        async function loadAdminLogs() {
+            const token = localStorage.getItem('authToken');
 
-        // Auto-refresh every 30 seconds
-        setInterval(loadData, 30000);
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/logs`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to load admin logs');
+
+                const logs = await response.json();
+
+                const tbody = document.getElementById('adminLogTable');
+                tbody.innerHTML = logs.map(log => `
+                    <tr>
+                        <td>${log.adminEmail}</td>
+                        <td>${log.action}</td>
+                        <td>${JSON.stringify(log.details || {}).substring(0, 50)}...</td>
+                        <td>${formatDate(log.timestamp)}</td>
+                        <td>${log.ip || 'N/A'}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Admin logs error:', error);
+            }
+        }
+
+        // Update pagination
+        function updatePagination(containerId, pagination, loadFunction) {
+            const container = document.getElementById(containerId);
+            const pages = [];
+
+            for (let i = 1; i <= pagination.pages; i++) {
+                pages.push(`
+                    <button class="page-btn ${i === pagination.page ? 'active' : ''}"
+                            onclick="${loadFunction.name}(${i})">
+                        ${i}
+                    </button>
+                `);
+            }
+
+            container.innerHTML = pages.join('');
+        }
+
+        // View user details
+        async function viewUserDetails(userId) {
+            const token = localStorage.getItem('authToken');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/user/${userId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to load user details');
+
+                const data = await response.json();
+                console.log('User details:', data);
+
+                // You can show this in a modal or expand the row
+                alert(`User: ${data.user.name}\nEmail: ${data.user.email}\nTotal Messages: ${data.user.totalMessages || 0}`);
+            } catch (error) {
+                console.error('User details error:', error);
+                showError('Failed to load user details');
+            }
+        }
+
+        // Show tab
+        function showTab(tabName) {
+            currentTab = tabName;
+
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+
+            // Load tab-specific data
+            switch(tabName) {
+                case 'chatlogs':
+                    loadChatLogs();
+                    break;
+                case 'sessions':
+                    loadCCU();
+                    break;
+                case 'adminlogs':
+                    loadAdminLogs();
+                    break;
+            }
+        }
+
+        // Filter users
+        function filterUsers() {
+            const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#userTable tr');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        }
+
+        // Filter chats
+        function filterChats() {
+            // This would need to call the API with filters
+            const searchTerm = document.getElementById('chatSearch').value;
+            const dateFilter = document.getElementById('chatDateFilter').value;
+
+            // For now, just reload with filters
+            console.log('Filtering chats:', { searchTerm, dateFilter });
+        }
+
+        // Refresh data
+        function refreshData() {
+            loadAllData();
+        }
+
+        // Export data
+        async function exportData() {
+            const token = localStorage.getItem('authToken');
+
+            try {
+                // Fetch all data
+                const [analytics, users, chatLogs] = await Promise.all([
+                    fetch(`${API_BASE_URL}/admin/analytics/summary`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }).then(r => r.json()),
+                    fetch(`${API_BASE_URL}/admin/user-activity`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }).then(r => r.json()),
+                    fetch(`${API_BASE_URL}/admin/chat-logs?limit=100`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }).then(r => r.json())
+                ]);
+
+                const exportData = {
+                    exportDate: new Date().toISOString(),
+                    analytics,
+                    users: users.userActivity,
+                    chatLogs: chatLogs.logs
+                };
+
+                // Create and download JSON file
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `admin-export-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Export error:', error);
+                showError('Failed to export data');
+            }
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        });
     </script>
 </body>
 </html>

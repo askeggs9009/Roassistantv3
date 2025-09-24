@@ -87,6 +87,22 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
+    lastActive: {
+        type: Date,
+        default: Date.now
+    },
+    isAdmin: {
+        type: Boolean,
+        default: false
+    },
+    sessionCount: {
+        type: Number,
+        default: 0
+    },
+    totalMessages: {
+        type: Number,
+        default: 0
+    },
     recaptchaScores: [{
         score: Number,
         action: String,
@@ -200,9 +216,187 @@ const pendingVerificationSchema = new mongoose.Schema({
 // Email already has unique: true, only need expires index
 pendingVerificationSchema.index({ expires: 1 });
 
+// Analytics Schema
+const analyticsSchema = new mongoose.Schema({
+    date: {
+        type: Date,
+        required: true,
+        index: true
+    },
+    type: {
+        type: String,
+        enum: ['daily', 'weekly', 'monthly'],
+        required: true
+    },
+    activeUsers: {
+        type: Number,
+        default: 0
+    },
+    newUsers: {
+        type: Number,
+        default: 0
+    },
+    totalSessions: {
+        type: Number,
+        default: 0
+    },
+    totalMessages: {
+        type: Number,
+        default: 0
+    },
+    averageSessionDuration: {
+        type: Number, // in minutes
+        default: 0
+    },
+    usersByPlan: {
+        free: { type: Number, default: 0 },
+        pro: { type: Number, default: 0 },
+        enterprise: { type: Number, default: 0 }
+    },
+    popularModels: [{
+        model: String,
+        count: Number
+    }],
+    peakConcurrentUsers: {
+        type: Number,
+        default: 0
+    }
+}, {
+    timestamps: true
+});
+
+// Chat Log Schema
+const chatLogSchema = new mongoose.Schema({
+    userId: {
+        type: String,
+        required: true,
+        index: true
+    },
+    userEmail: {
+        type: String,
+        required: true,
+        index: true
+    },
+    userName: {
+        type: String,
+        required: true
+    },
+    message: {
+        type: String,
+        required: true
+    },
+    response: {
+        type: String,
+        required: true
+    },
+    model: {
+        type: String,
+        required: true
+    },
+    tokenCount: {
+        type: Number,
+        default: 0
+    },
+    responseTime: {
+        type: Number, // in milliseconds
+        default: 0
+    },
+    timestamp: {
+        type: Date,
+        default: Date.now,
+        index: true
+    },
+    ip: String,
+    userAgent: String,
+    error: String,
+    subscription: {
+        type: String,
+        default: 'free'
+    }
+}, {
+    timestamps: true
+});
+
+// Session Schema for tracking active users
+const sessionSchema = new mongoose.Schema({
+    userId: {
+        type: String,
+        required: true,
+        index: true
+    },
+    userEmail: {
+        type: String,
+        required: true
+    },
+    sessionId: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    startTime: {
+        type: Date,
+        default: Date.now
+    },
+    lastActivity: {
+        type: Date,
+        default: Date.now
+    },
+    endTime: Date,
+    isActive: {
+        type: Boolean,
+        default: true,
+        index: true
+    },
+    ip: String,
+    userAgent: String,
+    pageViews: [{
+        page: String,
+        timestamp: Date
+    }]
+}, {
+    timestamps: true
+});
+
+// Admin Activity Log Schema
+const adminLogSchema = new mongoose.Schema({
+    adminId: {
+        type: String,
+        required: true
+    },
+    adminEmail: {
+        type: String,
+        required: true
+    },
+    action: {
+        type: String,
+        required: true
+    },
+    details: mongoose.Schema.Types.Mixed,
+    targetUser: String,
+    ip: String,
+    timestamp: {
+        type: Date,
+        default: Date.now
+    }
+}, {
+    timestamps: true
+});
+
+// Indexes for faster queries
+analyticsSchema.index({ date: 1, type: 1 }, { unique: true });
+chatLogSchema.index({ timestamp: -1 });
+chatLogSchema.index({ userEmail: 1, timestamp: -1 });
+sessionSchema.index({ lastActivity: 1 });
+sessionSchema.index({ userId: 1, isActive: 1 });
+adminLogSchema.index({ timestamp: -1 });
+
 // Create models
 export const User = mongoose.model('User', userSchema);
 export const PendingVerification = mongoose.model('PendingVerification', pendingVerificationSchema);
+export const Analytics = mongoose.model('Analytics', analyticsSchema);
+export const ChatLog = mongoose.model('ChatLog', chatLogSchema);
+export const Session = mongoose.model('Session', sessionSchema);
+export const AdminLog = mongoose.model('AdminLog', adminLogSchema);
 
 // Database helper functions
 export class DatabaseManager {
@@ -305,6 +499,163 @@ export class DatabaseManager {
         } catch (error) {
             console.error('[DATABASE] Error getting user count:', error);
             return 0;
+        }
+    }
+
+    // Analytics methods
+    static async updateAnalytics(date, type, updates) {
+        try {
+            const startOfDay = new Date(date);
+            startOfDay.setHours(0, 0, 0, 0);
+
+            return await Analytics.findOneAndUpdate(
+                { date: startOfDay, type },
+                { $inc: updates },
+                { new: true, upsert: true }
+            );
+        } catch (error) {
+            console.error('[DATABASE] Error updating analytics:', error);
+            throw error;
+        }
+    }
+
+    static async getAnalytics(startDate, endDate, type = 'daily') {
+        try {
+            return await Analytics.find({
+                date: { $gte: startDate, $lte: endDate },
+                type
+            }).sort({ date: 1 });
+        } catch (error) {
+            console.error('[DATABASE] Error getting analytics:', error);
+            throw error;
+        }
+    }
+
+    // Chat log methods
+    static async saveChatLog(logData) {
+        try {
+            const log = new ChatLog(logData);
+            await log.save();
+            return log;
+        } catch (error) {
+            console.error('[DATABASE] Error saving chat log:', error);
+            throw error;
+        }
+    }
+
+    static async getChatLogs(filter = {}, options = {}) {
+        try {
+            const { page = 1, limit = 50, sort = { timestamp: -1 } } = options;
+            const skip = (page - 1) * limit;
+
+            const logs = await ChatLog.find(filter)
+                .sort(sort)
+                .limit(limit)
+                .skip(skip);
+
+            const total = await ChatLog.countDocuments(filter);
+
+            return {
+                logs,
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    pages: Math.ceil(total / limit)
+                }
+            };
+        } catch (error) {
+            console.error('[DATABASE] Error getting chat logs:', error);
+            throw error;
+        }
+    }
+
+    // Session methods
+    static async createSession(sessionData) {
+        try {
+            const session = new Session(sessionData);
+            await session.save();
+            return session;
+        } catch (error) {
+            console.error('[DATABASE] Error creating session:', error);
+            throw error;
+        }
+    }
+
+    static async updateSession(sessionId, updates) {
+        try {
+            return await Session.findOneAndUpdate(
+                { sessionId },
+                updates,
+                { new: true }
+            );
+        } catch (error) {
+            console.error('[DATABASE] Error updating session:', error);
+            throw error;
+        }
+    }
+
+    static async getActiveSessions() {
+        try {
+            // Sessions active in the last 5 minutes
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+            return await Session.find({
+                isActive: true,
+                lastActivity: { $gte: fiveMinutesAgo }
+            });
+        } catch (error) {
+            console.error('[DATABASE] Error getting active sessions:', error);
+            throw error;
+        }
+    }
+
+    static async endInactiveSessions() {
+        try {
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+            return await Session.updateMany(
+                {
+                    isActive: true,
+                    lastActivity: { $lt: fiveMinutesAgo }
+                },
+                {
+                    $set: {
+                        isActive: false,
+                        endTime: new Date()
+                    }
+                }
+            );
+        } catch (error) {
+            console.error('[DATABASE] Error ending inactive sessions:', error);
+            throw error;
+        }
+    }
+
+    // Admin log methods
+    static async logAdminAction(adminId, adminEmail, action, details) {
+        try {
+            const log = new AdminLog({
+                adminId,
+                adminEmail,
+                action,
+                details,
+                timestamp: new Date()
+            });
+            await log.save();
+            return log;
+        } catch (error) {
+            console.error('[DATABASE] Error logging admin action:', error);
+            throw error;
+        }
+    }
+
+    static async getAdminLogs(filter = {}, limit = 100) {
+        try {
+            return await AdminLog.find(filter)
+                .sort({ timestamp: -1 })
+                .limit(limit);
+        } catch (error) {
+            console.error('[DATABASE] Error getting admin logs:', error);
+            throw error;
         }
     }
 }
