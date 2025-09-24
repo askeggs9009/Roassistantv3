@@ -202,6 +202,7 @@ const anthropic = new Anthropic({
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(e => e);
 
 // MongoDB Database
 import { connectToDatabase, DatabaseManager, User, PendingVerification } from './models/database.js';
