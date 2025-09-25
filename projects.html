@@ -8,8 +8,16 @@
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/sidebar.css">
     <link rel="stylesheet" href="styles/chat.css">
+    <link rel="stylesheet" href="styles/projects.css">
     <link rel="stylesheet" href="styles/responsive.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Prism.js for code highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-lua.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
 
     <!-- AdSense Integration -->
     <link rel="stylesheet" href="styles/ads.css">
@@ -18,442 +26,9 @@
     <!-- Google AdSense Verification Code -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7434697703458325"
             crossorigin="anonymous"></script>
-
-    <style>
-        /* Subscription Status Styles */
-        .subscription-status {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 0.5rem 1rem;
-            background: rgba(33, 38, 45, 0.6);
-            border: 1px solid #30363d;
-            border-radius: 8px;
-            margin-right: 1rem;
-        }
-
-        .plan-badge {
-            background: linear-gradient(45deg, #58a6ff, #1f6feb);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .plan-badge.free {
-            background: linear-gradient(45deg, #8b949e, #6e7681);
-        }
-
-        .plan-badge.pro {
-            background: linear-gradient(45deg, #58a6ff, #1f6feb);
-        }
-
-        .plan-badge.enterprise {
-            background: linear-gradient(45deg, #9d4edd, #7c3aed);
-        }
-
-        /* Projects Page Styles */
-        .project-card {
-            background: rgba(33, 38, 45, 0.8);
-            border: 1px solid #30363d;
-            border-radius: 8px;
-            padding: 1.5rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        
-        .project-card:hover {
-            border-color: #58a6ff;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(88, 166, 255, 0.15);
-        }
-        
-        .project-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1rem;
-        }
-        
-        .project-icon {
-            width: 2.5rem;
-            height: 2.5rem;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #58a6ff, #a5b4fc);
-            font-size: 1.25rem;
-        }
-        
-        .project-content h3 {
-            color: #f0f6fc;
-            margin: 0 0 0.5rem 0;
-            font-size: 1.125rem;
-        }
-        
-        .project-description {
-            color: #8b949e;
-            font-size: 0.875rem;
-            margin: 0 0 1rem 0;
-        }
-        
-        .project-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 1rem;
-            border-top: 1px solid #21262d;
-        }
-        
-        .project-type {
-            background: rgba(88, 166, 255, 0.15);
-            color: #58a6ff;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.75rem;
-        }
-        
-        .project-updated {
-            color: #6e7681;
-            font-size: 0.75rem;
-        }
-        
-        .project-menu-btn {
-            background: none;
-            border: none;
-            color: #6e7681;
-            cursor: pointer;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
-        
-        .project-card:hover .project-menu-btn {
-            opacity: 1;
-        }
-        
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-        }
-        
-        .modal-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 8px;
-            padding: 2rem;
-            width: 90%;
-            max-width: 480px;
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-        
-        .modal-title {
-            color: #f0f6fc;
-            margin: 0;
-            font-size: 1.25rem;
-        }
-        
-        .modal-close {
-            background: none;
-            border: none;
-            color: #6e7681;
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-        
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        
-        .form-label {
-            display: block;
-            color: #f0f6fc;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
-        
-        .form-input {
-            width: 100%;
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 0.75rem;
-            color: #f0f6fc;
-            font-size: 0.875rem;
-            box-sizing: border-box;
-        }
-        
-        .form-input:focus {
-            outline: none;
-            border-color: #58a6ff;
-        }
-        
-        .form-textarea {
-            min-height: 80px;
-            resize: vertical;
-        }
-        
-        .modal-actions {
-            display: flex;
-            gap: 0.75rem;
-            justify-content: flex-end;
-            margin-top: 1.5rem;
-        }
-        
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.875rem;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        
-        .btn-primary {
-            background: #238636;
-            color: white;
-        }
-        
-        .btn-secondary {
-            background: transparent;
-            color: #8b949e;
-            border: 1px solid #30363d;
-        }
-        
-        /* Project Context Styles */
-        .project-files-info {
-            background: rgba(88, 166, 255, 0.1);
-            border: 1px solid rgba(88, 166, 255, 0.2);
-            border-radius: 8px;
-            padding: 1rem;
-            margin-top: 1rem;
-            font-size: 0.9rem;
-        }
-        
-        .welcome-content a {
-            color: #58a6ff;
-            text-decoration: none;
-        }
-        
-        .welcome-content a:hover {
-            text-decoration: underline;
-        }
-
-        .usage-counter {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #8b949e;
-            font-size: 0.85rem;
-        }
-
-        .usage-bar {
-            width: 100px;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .usage-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #58a6ff, #1f6feb);
-            transition: width 0.3s ease;
-            border-radius: 3px;
-        }
-
-        .usage-fill.warning {
-            background: linear-gradient(90deg, #d4ac0d, #f39c12);
-        }
-
-        .usage-fill.danger {
-            background: linear-gradient(90deg, #f85149, #da3633);
-        }
-
-        .upgrade-prompt {
-            display: none;
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            background: linear-gradient(135deg, #161b22, #21262d);
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            padding: 1.5rem;
-            max-width: 350px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            animation: slideInUp 0.3s ease;
-        }
-
-        @keyframes slideInUp {
-            from {
-                transform: translateY(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .upgrade-prompt-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .upgrade-prompt-title {
-            font-weight: 600;
-            color: #f0f6fc;
-        }
-
-        .upgrade-prompt-close {
-            background: none;
-            border: none;
-            color: #8b949e;
-            cursor: pointer;
-            font-size: 1.5rem;
-            line-height: 1;
-        }
-
-        .upgrade-prompt-message {
-            color: #8b949e;
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-            line-height: 1.4;
-        }
-
-        .upgrade-prompt-buttons {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .upgrade-btn {
-            flex: 1;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            border: none;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 0.85rem;
-        }
-
-        .upgrade-btn.primary {
-            background: linear-gradient(45deg, #238636, #2ea043);
-            color: white;
-        }
-
-        .upgrade-btn.primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(46, 160, 67, 0.4);
-        }
-
-        .upgrade-btn.secondary {
-            background: transparent;
-            border: 1px solid #30363d;
-            color: #8b949e;
-        }
-
-        .upgrade-btn.secondary:hover {
-            border-color: #58a6ff;
-            color: #58a6ff;
-        }
-
-        .model-locked {
-            position: relative;
-        }
-
-        .model-locked::after {
-            content: '🔒';
-            position: absolute;
-            right: 35px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 0.8rem;
-        }
-
-        .usage-warning {
-            background: rgba(212, 172, 13, 0.1);
-            border: 1px solid rgba(212, 172, 13, 0.3);
-            border-radius: 8px;
-            padding: 0.75rem;
-            margin: 1rem;
-            color: #d4ac0d;
-            font-size: 0.85rem;
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .usage-limit-reached {
-            background: rgba(248, 81, 73, 0.1);
-            border: 1px solid rgba(248, 81, 73, 0.3);
-            border-radius: 8px;
-            padding: 1rem;
-            margin: 1rem;
-            color: #f85149;
-            text-align: center;
-            display: none;
-        }
-
-        /* FIXED: Account switch notification */
-        .account-switch-notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(45deg, #58a6ff, #1f6feb);
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(88, 166, 255, 0.4);
-            z-index: 1000;
-            opacity: 0;
-            transform: translateX(100%);
-            transition: all 0.3s ease;
-        }
-
-        .account-switch-notification.show {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    </style>
 </head>
 
 <body>
-    <!-- FIXED: Account Switch Notification -->
-    <div class="account-switch-notification" id="accountSwitchNotification">
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span>🔄</span>
-            <span>Account switched! Loading your data...</span>
-        </div>
-    </div>
-
     <!-- Sidebar Overlay for Mobile -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
@@ -469,7 +44,6 @@
             New chat
         </button>
 
-
         <div class="sidebar-nav">
             <!-- Main Navigation -->
             <div class="nav-section">
@@ -481,7 +55,7 @@
                     <span class="nav-icon"><i class="fas fa-folder"></i></span>
                     Projects
                 </div>
-                <div class="nav-item" onclick="setActiveNav(this, 'scripts')">
+                <div class="nav-item" onclick="window.location.href='/scripts.html'">
                     <span class="nav-icon"><i class="fas fa-wrench"></i></span>
                     Scripts
                 </div>
@@ -502,41 +76,25 @@
 
         <div class="sidebar-footer">
             <div class="user-profile" id="userProfile">
-                <!-- Default Sign In button - will be replaced by JavaScript -->
+                <!-- User profile will be populated by JavaScript -->
                 <div class="user-avatar"><i class="fas fa-user"></i></div>
                 <div class="user-info">
                     <div class="user-name">Guest User</div>
-                    <div class="user-plan">Free Plan - <span style="color: #58a6ff; cursor: pointer;" onclick="window.location.href='/login.html'">Sign In for More</span></div>
+                    <div class="user-plan">Free Plan</div>
                 </div>
-                <button onclick="window.location.href='/login.html'" style="background: #238636; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
-                    Sign In
-                </button>
             </div>
         </div>
     </div>
 
     <!-- Main Content -->
     <div class="main-content">
-        <!-- Header -->
+        <!-- Main Header -->
         <div class="main-header">
             <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleSidebar()">
                 ☰
             </button>
-            <div class="header-title" id="chatTitle">Projects</div>
-            
-            <!-- Search Bar -->
-            <div style="flex: 1; max-width: 400px; margin: 0 1rem;">
-                <input type="text" id="projectSearchBar" placeholder="🔍 Search projects..." style="
-                    width: 100%;
-                    padding: 0.5rem 1rem;
-                    background: rgba(33, 38, 45, 0.8);
-                    border: 1px solid #30363d;
-                    border-radius: 6px;
-                    color: #f0f6fc;
-                    font-size: 0.875rem;
-                " onkeyup="searchProjects(this.value)">
-            </div>
-            
+            <div class="header-title">Projects & Artifacts</div>
+
             <!-- Subscription Status -->
             <div class="subscription-status" id="subscriptionStatus" style="display: none;">
                 <div class="plan-badge" id="planBadge">Free</div>
@@ -547,63 +105,137 @@
                     </div>
                 </div>
             </div>
-            
-            <button class="new-project-btn" onclick="openNewProjectModal()" style="background: #238636; border: none; border-radius: 6px; color: white; padding: 0.5rem 1rem; cursor: pointer;">
-                ➕ New Project
-            </button>
         </div>
 
-        <!-- Usage Warning -->
-        <div id="usageWarning" class="usage-warning">
-            ⚠️ You're approaching your daily message limit. Consider upgrading for unlimited access!
-        </div>
-
-        <!-- Usage Limit Reached -->
-        <div id="usageLimitReached" class="usage-limit-reached">
-            🚫 Daily message limit reached. <a href="/pricing.html" style="color: #58a6ff;">Upgrade now</a> for unlimited messages!
-        </div>
-
-        <!-- Header Banner Ad -->
-        <div id="headerBannerAd" class="ad-container banner-ad">
-            <div class="ad-label">Advertisement</div>
-        </div>
-
-        <!-- Chat Area -->
-        <div class="chat-area">
-            <div class="messages-container" id="messagesContainer">
-                <!-- Projects Screen -->
-                <div class="welcome-screen" id="projectsScreen">
-                    <div class="welcome-icon"><i class="fas fa-folder"></i></div>
-                    <h1 class="welcome-title">Your Projects</h1>
-                    <p class="welcome-subtitle">Organize your Roblox development work</p>
-                    
-                    <!-- Projects Grid -->
-                    <div id="projectsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin: 2rem 0;">
-                        <!-- Projects will be populated by JavaScript -->
+        <!-- Projects Container - Claude-inspired split view -->
+        <div class="projects-container">
+            <!-- Projects List Panel -->
+            <div class="projects-list-panel" id="projectsListPanel">
+                <div class="projects-list-header">
+                    <div class="projects-list-title">
+                        <i class="fas fa-folder"></i>
+                        <span>Projects</span>
                     </div>
-                    
-                    <!-- Empty State -->
-                    <div id="emptyState" style="display: none; text-align: center; padding: 2rem;">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">📋</div>
-                        <h3 style="color: #f0f6fc; margin: 0 0 0.5rem 0;">Create Your First Project</h3>
-                        <p style="color: #8b949e; margin: 0 0 2rem 0;">Start organizing your Roblox development work</p>
-                        <button onclick="openNewProjectModal()" style="background: #238636; border: none; border-radius: 6px; color: white; padding: 0.75rem 1.5rem; cursor: pointer; font-size: 1rem;">
-                            ➕ Create Project
-                        </button>
-                    </div>
+                    <button class="toggle-panel-btn" onclick="toggleProjectsPanel()" title="Toggle Panel">
+                        <i class="fas fa-chevron-left" id="toggleIcon"></i>
+                    </button>
+                </div>
+
+                <div class="search-container">
+                    <input type="text"
+                           class="project-search-input"
+                           id="projectSearchInput"
+                           placeholder="Search projects..."
+                           onkeyup="searchProjects(this.value)">
+                </div>
+
+                <div class="projects-list-content" id="projectsList">
+                    <!-- Project items will be populated here -->
+                </div>
+
+                <div style="padding: 0.5rem;">
+                    <button class="artifact-action-btn primary" onclick="openNewProjectModal()" style="width: 100%;">
+                        <i class="fas fa-plus"></i>
+                        New Project
+                    </button>
                 </div>
             </div>
 
-        </div>
+            <!-- Artifacts Panel -->
+            <div class="artifacts-panel" id="artifactsPanel">
+                <div id="projectView" style="display: none;">
+                    <div class="artifacts-header">
+                        <div class="artifacts-title" id="currentProjectName">Select a project</div>
+                        <div class="artifacts-actions">
+                            <button class="artifact-action-btn" onclick="openUploadModal()">
+                                <i class="fas fa-upload"></i>
+                                Upload
+                            </button>
+                            <button class="artifact-action-btn" onclick="createNewArtifact()">
+                                <i class="fas fa-file-plus"></i>
+                                New Artifact
+                            </button>
+                            <button class="artifact-action-btn" onclick="openProjectChat()">
+                                <i class="fas fa-comments"></i>
+                                Chat
+                            </button>
+                        </div>
+                    </div>
 
-        <!-- Footer Ad -->
-        <div id="footerAd" class="ad-container footer-ad">
-            <div class="ad-label">Advertisement</div>
+                    <div class="artifact-tabs">
+                        <button class="artifact-tab active" onclick="switchArtifactTab('all', this)">
+                            <i class="fas fa-th"></i>
+                            All
+                            <span class="artifact-tab-count" id="allCount">0</span>
+                        </button>
+                        <button class="artifact-tab" onclick="switchArtifactTab('code', this)">
+                            <i class="fas fa-code"></i>
+                            Code
+                            <span class="artifact-tab-count" id="codeCount">0</span>
+                        </button>
+                        <button class="artifact-tab" onclick="switchArtifactTab('document', this)">
+                            <i class="fas fa-file-alt"></i>
+                            Documents
+                            <span class="artifact-tab-count" id="documentCount">0</span>
+                        </button>
+                        <button class="artifact-tab" onclick="switchArtifactTab('image', this)">
+                            <i class="fas fa-image"></i>
+                            Images
+                            <span class="artifact-tab-count" id="imageCount">0</span>
+                        </button>
+                        <button class="artifact-tab" onclick="switchArtifactTab('data', this)">
+                            <i class="fas fa-database"></i>
+                            Data
+                            <span class="artifact-tab-count" id="dataCount">0</span>
+                        </button>
+                    </div>
+
+                    <div class="artifacts-content" id="artifactsContent">
+                        <!-- Drop Zone -->
+                        <div class="drop-zone" id="dropZone" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                            <div class="drop-zone-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <div class="drop-zone-text">Drag and drop files here</div>
+                            <div class="drop-zone-hint">or click the Upload button above</div>
+                        </div>
+
+                        <!-- Artifacts Grid -->
+                        <div class="artifacts-grid" id="artifactsGrid">
+                            <!-- Artifact cards will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty State - No Project Selected -->
+                <div id="noProjectSelected" class="artifacts-empty-state">
+                    <div class="empty-state-icon">📁</div>
+                    <h2 class="empty-state-title">Select a Project</h2>
+                    <p class="empty-state-description">
+                        Choose a project from the list to view and manage its artifacts
+                    </p>
+                    <button class="artifact-action-btn primary" onclick="openNewProjectModal()">
+                        <i class="fas fa-folder-plus"></i>
+                        Create New Project
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Artifact Detail View -->
+    <div class="artifact-detail-view" id="artifactDetailView">
+        <div class="artifact-detail-header">
+            <h2 class="artifact-detail-title" id="artifactDetailTitle">Artifact Details</h2>
+            <button class="close-detail-btn" onclick="closeArtifactDetail()">×</button>
+        </div>
+        <div class="artifact-detail-content" id="artifactDetailContent">
+            <!-- Artifact content will be displayed here -->
         </div>
     </div>
 
     <!-- New Project Modal -->
-    <div class="modal" id="newProjectModal">
+    <div class="modal" id="newProjectModal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">Create New Project</h2>
@@ -621,9 +253,9 @@
                 <div class="form-group">
                     <label class="form-label" for="projectType">Project Type</label>
                     <select id="projectType" class="form-input">
-                        <option value="game"><i class="fas fa-gamepad"></i> Game</option>
-                        <option value="script"><i class="fas fa-wrench"></i> Script Collection</option>
-                        <option value="gui"><i class="fas fa-desktop"></i> GUI Design</option>
+                        <option value="game">🎮 Game</option>
+                        <option value="script">🔧 Script Collection</option>
+                        <option value="gui">💻 GUI Design</option>
                         <option value="system">⚙️ Game System</option>
                         <option value="other">📋 Other</option>
                     </select>
@@ -636,159 +268,228 @@
         </div>
     </div>
 
-    <!-- Upgrade Prompt -->
-    <div class="upgrade-prompt" id="upgradePrompt">
-        <div class="upgrade-prompt-header">
-            <div class="upgrade-prompt-title">🚀 Unlock More Power</div>
-            <button class="upgrade-prompt-close" onclick="closeUpgradePrompt()">×</button>
-        </div>
-        <div class="upgrade-prompt-message" id="upgradePromptMessage">
-            You've used 8 of your 10 daily messages. Upgrade to Pro for 500 messages per day!
-        </div>
-        <div class="upgrade-prompt-buttons">
-            <button class="upgrade-btn primary" onclick="window.location.href='/pricing.html'">
-                View Plans
-            </button>
-            <button class="upgrade-btn secondary" onclick="closeUpgradePrompt()">
-                Maybe Later
-            </button>
+    <!-- New Artifact Modal -->
+    <div class="modal" id="newArtifactModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Create New Artifact</h2>
+                <button class="modal-close" onclick="closeNewArtifactModal()">×</button>
+            </div>
+            <form onsubmit="saveNewArtifact(event)">
+                <div class="form-group">
+                    <label class="form-label" for="artifactName">Artifact Name</label>
+                    <input type="text" id="artifactName" class="form-input" placeholder="main.lua" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="artifactType">Type</label>
+                    <select id="artifactType" class="form-input" onchange="updateArtifactTemplate()">
+                        <option value="code">Code</option>
+                        <option value="document">Document</option>
+                        <option value="data">Data (JSON)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="artifactContent">Content</label>
+                    <textarea id="artifactContent" class="form-input form-textarea" style="min-height: 200px; font-family: monospace;" placeholder="Enter your content here..." required></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeNewArtifactModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Artifact</button>
+                </div>
+            </form>
         </div>
     </div>
 
+    <!-- Upload Modal -->
+    <div class="modal" id="uploadModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Upload Files</h2>
+                <button class="modal-close" onclick="closeUploadModal()">×</button>
+            </div>
+            <div class="form-group">
+                <input type="file" id="fileInput" multiple accept="*/*" style="display: none;" onchange="handleFileSelect(event)">
+                <div class="drop-zone" onclick="document.getElementById('fileInput').click()" style="cursor: pointer;">
+                    <div class="drop-zone-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="drop-zone-text">Click to select files</div>
+                    <div class="drop-zone-hint">or drag and drop them here</div>
+                </div>
+                <div id="fileList" style="margin-top: 1rem;"></div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeUploadModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="uploadFiles()">Upload</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Styles -->
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideInUp 0.3s ease;
+        }
+
+        @keyframes slideInUp {
+            from {
+                transform: translate(-50%, -40%);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, -50%);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            color: #f0f6fc;
+            margin: 0;
+            font-size: 1.25rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #8b949e;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 6px;
+        }
+
+        .modal-close:hover {
+            background: rgba(248, 81, 73, 0.1);
+            color: #f85149;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            color: #f0f6fc;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-input {
+            width: 100%;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 0.75rem;
+            color: #f0f6fc;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #238636, #2ea043);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(46, 160, 67, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #8b949e;
+            border: 1px solid #30363d;
+        }
+
+        .btn-secondary:hover {
+            border-color: #58a6ff;
+            color: #58a6ff;
+            background: rgba(88, 166, 255, 0.05);
+        }
+    </style>
+
     <script>
-        // DYNAMIC API CONFIGURATION - Updated for production deployment
+        // Dynamic API Configuration
         const getApiBaseUrl = () => {
-            // Check if we're running on localhost (development)
             if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                 return 'http://localhost:3000';
             }
-            
-            // For production, point to Railway backend
             return 'https://roassistantv3-production.up.railway.app';
         };
 
         const API_BASE_URL = getApiBaseUrl();
         console.log(`[CONFIG] Using API Base URL: ${API_BASE_URL}`);
 
-        // FIXED: Global variables with proper user isolation
-        let currentChatId = null;
-        let isLoggedIn = false;
-        let authToken = null;
-        let currentUser = null;
-        let selectedModel = 'gpt-4o-mini';
-        let currentView = 'chats';
-        let attachedFiles = [];
+        // Global Variables
+        let currentProjectId = null;
+        let currentArtifactFilter = 'all';
+        let selectedFiles = [];
 
-        // FIXED: User-specific data storage
-        let userChats = [];
-        let userScripts = [];
-
-        // Subscription management
-        let userSubscription = {
-            plan: 'free',
-            limits: {
-                daily_messages: 10,
-                models: ['gpt-4o-mini']
-            },
-            usage: {
-                daily_messages: 0,
-                daily_limit: 10
-            }
-        };
-
-        // Message counter for ad insertion
-        let messageCount = 0;
-        const AD_FREQUENCY = 5; // Show ad every 5 messages
-
-        // FIXED: Account switching functionality
-        class AccountManager {
-            constructor() {
-                this.lastKnownUser = null;
-                this.initializeWatcher();
-            }
-
-            initializeWatcher() {
-                // Watch for auth token changes
-                const originalSetItem = localStorage.setItem;
-                const originalRemoveItem = localStorage.removeItem;
-                
-                localStorage.setItem = (key, value) => {
-                    if (key === 'authToken' || key === 'user') {
-                        setTimeout(() => this.checkForAccountSwitch(), 100);
-                    }
-                    return originalSetItem.call(localStorage, key, value);
-                };
-                
-                localStorage.removeItem = (key) => {
-                    if (key === 'authToken' || key === 'user') {
-                        setTimeout(() => this.checkForAccountSwitch(), 100);
-                    }
-                    return originalRemoveItem.call(localStorage, key);
-                };
-            }
-
-            checkForAccountSwitch() {
-                const currentToken = localStorage.getItem('authToken');
-                const currentUserData = localStorage.getItem('user');
-                
-                let currentUserId = null;
-                if (currentUserData) {
-                    try {
-                        const user = JSON.parse(currentUserData);
-                        currentUserId = user.id || user.email;
-                    } catch (error) {
-                        console.error('Error parsing user data:', error);
-                    }
-                }
-
-                // Check if user has switched
-                if (this.lastKnownUser !== currentUserId) {
-                    console.log('[ACCOUNT] User switch detected:', this.lastKnownUser, '->', currentUserId);
-                    this.handleAccountSwitch(currentUserId);
-                    this.lastKnownUser = currentUserId;
-                }
-            }
-        }
-
-        // Check premium status
-        function checkPremiumStatus() {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            if (user.premium || user.plan === 'premium') {
-                document.body.classList.add('premium-user');
-                console.log('[AdSense] Premium user detected - ads hidden');
-            }
-        }
-
-        // Initialize app when DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing app...');
-            initApp();
-            
-            // Check subscription status and refresh periodically
-            checkSubscriptionStatus();
-            setInterval(checkSubscriptionStatus, 60000); // Refresh every minute
-            
-            // Check premium status on load
-            checkPremiumStatus();
-        });
-
-        // Check for project parameter in URL
-        function checkProjectParameter() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const projectId = urlParams.get('project');
-            
-            if (projectId) {
-                // Load project context if needed
-                console.log('Loading project context:', projectId);
-                // You can implement project-specific logic here
-            }
-        }
-
-        // Project Management System
+        // Enhanced Project Manager with Artifacts
         class ProjectManager {
             constructor() {
                 this.projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
-                // Migrate old projects to include artifacts if they don't have them
+                // Ensure all projects have artifacts array
                 this.projects = this.projects.map(project => {
                     if (!project.artifacts) {
                         project.artifacts = [];
@@ -806,8 +507,7 @@
                     type,
                     created: Date.now(),
                     updated: Date.now(),
-                    files: [],
-                    artifacts: [] // Store uploaded files and text content
+                    artifacts: []
                 };
                 this.projects.push(project);
                 this.saveProjects();
@@ -821,119 +521,671 @@
             deleteProject(projectId) {
                 this.projects = this.projects.filter(p => p.id !== projectId);
                 this.saveProjects();
+                if (currentProjectId === projectId) {
+                    currentProjectId = null;
+                    showNoProjectSelected();
+                }
             }
 
-            openProject(projectId) {
-                window.location.href = `/project-chat.html?project=${projectId}`;
+            getProject(projectId) {
+                return this.projects.find(p => p.id === projectId);
             }
 
-            getProjectIcon(type) {
-                const icons = {
-                    'game': '<i class="fas fa-gamepad"></i>',
-                    'script': '<i class="fas fa-wrench"></i>',
-                    'gui': '<i class="fas fa-desktop"></i>',
-                    'system': '⚙️',
-                    'other': '📋'
-                };
-                return icons[type] || '📋';
-            }
-
-            addArtifact(projectId, artifact) {
-                const project = this.projects.find(p => p.id === projectId);
+            updateProject(projectId, updates) {
+                const project = this.getProject(projectId);
                 if (project) {
-                    if (!project.artifacts) {
-                        project.artifacts = [];
-                    }
-                    project.artifacts.push(artifact);
+                    Object.assign(project, updates);
                     project.updated = Date.now();
                     this.saveProjects();
                 }
             }
 
-            removeArtifact(projectId, artifactId) {
-                const project = this.projects.find(p => p.id === projectId);
-                if (project && project.artifacts) {
+            addArtifact(projectId, artifact) {
+                const project = this.getProject(projectId);
+                if (project) {
+                    artifact.id = 'artifact_' + Date.now();
+                    artifact.created = Date.now();
+                    artifact.version = 1;
+                    artifact.versions = [{
+                        version: 1,
+                        content: artifact.content,
+                        created: Date.now()
+                    }];
+                    project.artifacts.push(artifact);
+                    project.updated = Date.now();
+                    this.saveProjects();
+                    return artifact;
+                }
+                return null;
+            }
+
+            updateArtifact(projectId, artifactId, updates) {
+                const project = this.getProject(projectId);
+                if (project) {
+                    const artifact = project.artifacts.find(a => a.id === artifactId);
+                    if (artifact) {
+                        if (updates.content && updates.content !== artifact.content) {
+                            // Create new version
+                            artifact.version++;
+                            artifact.versions.push({
+                                version: artifact.version,
+                                content: updates.content,
+                                created: Date.now()
+                            });
+                        }
+                        Object.assign(artifact, updates);
+                        artifact.updated = Date.now();
+                        project.updated = Date.now();
+                        this.saveProjects();
+                    }
+                }
+            }
+
+            deleteArtifact(projectId, artifactId) {
+                const project = this.getProject(projectId);
+                if (project) {
                     project.artifacts = project.artifacts.filter(a => a.id !== artifactId);
                     project.updated = Date.now();
                     this.saveProjects();
                 }
             }
+
+            getProjectIcon(type) {
+                const icons = {
+                    'game': '🎮',
+                    'script': '🔧',
+                    'gui': '💻',
+                    'system': '⚙️',
+                    'other': '📋'
+                };
+                return icons[type] || '📋';
+            }
         }
 
         const projectManager = new ProjectManager();
 
-        // Render projects
-        function renderProjects(searchQuery = '') {
-            const grid = document.getElementById('projectsGrid');
-            const emptyState = document.getElementById('emptyState');
-            
-            // Filter projects based on search query
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            renderProjectsList();
+            showNoProjectSelected();
+
+            // Check for project parameter in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectId = urlParams.get('project');
+            if (projectId && projectManager.getProject(projectId)) {
+                selectProject(projectId);
+            }
+        });
+
+        // Check authentication
+        function checkAuth() {
+            const authToken = localStorage.getItem('authToken');
+            const user = localStorage.getItem('user');
+
+            if (authToken && user) {
+                try {
+                    const userData = JSON.parse(user);
+                    showLoggedInUser(userData);
+                } catch (error) {
+                    console.error('Error parsing user data:', error);
+                    showGuestUser();
+                }
+            } else {
+                showGuestUser();
+            }
+        }
+
+        // Show logged in user
+        function showLoggedInUser(userData) {
+            const userProfile = document.getElementById('userProfile');
+            if (userProfile) {
+                const planText = userData.subscription?.plan || 'free';
+                const planDisplay = planText.charAt(0).toUpperCase() + planText.slice(1);
+
+                userProfile.innerHTML = `
+                    <div class="user-avatar">${(userData.name || userData.email || 'U').charAt(0).toUpperCase()}</div>
+                    <div class="user-info">
+                        <div class="user-name">${userData.name || userData.email || 'User'}</div>
+                        <div class="user-plan">${planDisplay} Plan</div>
+                    </div>
+                `;
+            }
+        }
+
+        // Show guest user
+        function showGuestUser() {
+            const userProfile = document.getElementById('userProfile');
+            if (userProfile) {
+                userProfile.innerHTML = `
+                    <div class="user-avatar"><i class="fas fa-user"></i></div>
+                    <div class="user-info">
+                        <div class="user-name">Guest User</div>
+                        <div class="user-plan">Free Plan</div>
+                    </div>
+                `;
+            }
+        }
+
+        // Toggle projects panel
+        function toggleProjectsPanel() {
+            const panel = document.getElementById('projectsListPanel');
+            const icon = document.getElementById('toggleIcon');
+            panel.classList.toggle('collapsed');
+            icon.classList.toggle('fa-chevron-left');
+            icon.classList.toggle('fa-chevron-right');
+        }
+
+        // Render projects list
+        function renderProjectsList(searchQuery = '') {
+            const container = document.getElementById('projectsList');
+
             let filteredProjects = projectManager.projects;
             if (searchQuery) {
                 const query = searchQuery.toLowerCase();
-                filteredProjects = projectManager.projects.filter(project => 
-                    project.name.toLowerCase().includes(query) || 
-                    (project.description && project.description.toLowerCase().includes(query)) ||
-                    project.type.toLowerCase().includes(query)
+                filteredProjects = projectManager.projects.filter(project =>
+                    project.name.toLowerCase().includes(query) ||
+                    (project.description && project.description.toLowerCase().includes(query))
                 );
             }
-            
+
+            // Sort by updated date (most recent first)
+            filteredProjects.sort((a, b) => b.updated - a.updated);
+
             if (filteredProjects.length === 0) {
-                grid.innerHTML = '';
-                if (projectManager.projects.length === 0) {
-                    emptyState.style.display = 'block';
-                    emptyState.innerHTML = `
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">📋</div>
-                        <h3 style="color: #f0f6fc; margin: 0 0 0.5rem 0;">Create Your First Project</h3>
-                        <p style="color: #8b949e; margin: 0 0 2rem 0;">Start organizing your Roblox development work</p>
-                        <button onclick="openNewProjectModal()" style="background: #238636; border: none; border-radius: 6px; color: white; padding: 0.75rem 1.5rem; cursor: pointer; font-size: 1rem;">
-                            ➕ Create Project
-                        </button>
-                    `;
-                } else {
-                    emptyState.style.display = 'block';
-                    emptyState.innerHTML = `
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
-                        <h3 style="color: #f0f6fc; margin: 0 0 0.5rem 0;">No projects found</h3>
-                        <p style="color: #8b949e; margin: 0 0 2rem 0;">Try searching with different keywords</p>
-                    `;
-                }
+                container.innerHTML = `
+                    <div style="padding: 1rem; text-align: center; color: #8b949e;">
+                        ${projectManager.projects.length === 0 ? 'No projects yet' : 'No matching projects'}
+                    </div>
+                `;
                 return;
             }
-            
-            emptyState.style.display = 'none';
-            
-            grid.innerHTML = filteredProjects.map(project => {
-                const artifactCount = project.artifacts ? project.artifacts.length : 0;
+
+            container.innerHTML = filteredProjects.map(project => {
+                const artifactCount = project.artifacts?.length || 0;
+                const isActive = project.id === currentProjectId;
                 return `
-                <div class="project-card" onclick="projectManager.openProject('${project.id}')">
-                    <div class="project-header">
-                        <div class="project-icon">${projectManager.getProjectIcon(project.type)}</div>
-                        <button class="project-menu-btn" onclick="event.stopPropagation(); deleteProject('${project.id}')" title="Delete">×</button>
-                    </div>
-                    <div class="project-content">
-                        <h3>${project.name}</h3>
-                        <p class="project-description">${project.description || 'No description'}</p>
-                        ${artifactCount > 0 ? `
-                            <div style="margin: 0.5rem 0; color: #58a6ff; font-size: 0.85rem;">
-                                📎 ${artifactCount} artifact${artifactCount !== 1 ? 's' : ''}
+                    <div class="project-item ${isActive ? 'active' : ''}" onclick="selectProject('${project.id}')">
+                        <div class="project-item-icon">
+                            ${projectManager.getProjectIcon(project.type)}
+                        </div>
+                        <div class="project-item-details">
+                            <div class="project-item-name">${project.name}</div>
+                            <div class="project-item-meta">
+                                ${artifactCount > 0 ? `
+                                    <span class="artifact-count">
+                                        <i class="fas fa-paperclip"></i>
+                                        ${artifactCount}
+                                    </span>
+                                ` : ''}
+                                <span>${formatDate(project.updated)}</span>
                             </div>
-                        ` : ''}
-                        <div class="project-meta">
-                            <div class="project-type">${project.type}</div>
-                            <div class="project-updated">${formatDate(project.updated)}</div>
                         </div>
                     </div>
-                </div>
-            `}).join('');
+                `;
+            }).join('');
         }
 
-        // Search projects function
+        // Search projects
         function searchProjects(query) {
-            renderProjects(query);
+            renderProjectsList(query);
         }
 
-        // Modal functions
+        // Select a project
+        function selectProject(projectId) {
+            currentProjectId = projectId;
+            const project = projectManager.getProject(projectId);
+
+            if (!project) {
+                showNoProjectSelected();
+                return;
+            }
+
+            // Update UI
+            document.getElementById('noProjectSelected').style.display = 'none';
+            document.getElementById('projectView').style.display = 'block';
+            document.getElementById('currentProjectName').textContent = project.name;
+
+            // Update active state in list
+            renderProjectsList(document.getElementById('projectSearchInput').value);
+
+            // Load artifacts
+            renderArtifacts();
+        }
+
+        // Show no project selected
+        function showNoProjectSelected() {
+            document.getElementById('noProjectSelected').style.display = 'flex';
+            document.getElementById('projectView').style.display = 'none';
+        }
+
+        // Render artifacts
+        function renderArtifacts() {
+            if (!currentProjectId) return;
+
+            const project = projectManager.getProject(currentProjectId);
+            if (!project) return;
+
+            let artifacts = project.artifacts || [];
+
+            // Filter by type if needed
+            if (currentArtifactFilter !== 'all') {
+                artifacts = artifacts.filter(a => a.type === currentArtifactFilter);
+            }
+
+            // Update counts
+            const allCount = project.artifacts?.length || 0;
+            const codeCount = project.artifacts?.filter(a => a.type === 'code').length || 0;
+            const documentCount = project.artifacts?.filter(a => a.type === 'document').length || 0;
+            const imageCount = project.artifacts?.filter(a => a.type === 'image').length || 0;
+            const dataCount = project.artifacts?.filter(a => a.type === 'data').length || 0;
+
+            document.getElementById('allCount').textContent = allCount;
+            document.getElementById('codeCount').textContent = codeCount;
+            document.getElementById('documentCount').textContent = documentCount;
+            document.getElementById('imageCount').textContent = imageCount;
+            document.getElementById('dataCount').textContent = dataCount;
+
+            const grid = document.getElementById('artifactsGrid');
+
+            if (artifacts.length === 0) {
+                grid.innerHTML = '';
+                document.getElementById('dropZone').style.display = 'block';
+            } else {
+                document.getElementById('dropZone').style.display = 'none';
+                grid.innerHTML = artifacts.map(artifact => {
+                    const icon = getArtifactIcon(artifact.type);
+                    const preview = getArtifactPreview(artifact);
+                    return `
+                        <div class="artifact-card" onclick="openArtifactDetail('${artifact.id}')">
+                            <div class="artifact-card-header">
+                                <div class="artifact-type-icon ${artifact.type}">
+                                    ${icon}
+                                </div>
+                                <div class="artifact-card-menu">
+                                    <button class="artifact-menu-btn" onclick="event.stopPropagation(); deleteArtifact('${artifact.id}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="artifact-card-title">${artifact.name}</div>
+                            ${preview ? `<div class="artifact-card-preview">${preview}</div>` : ''}
+                            <div class="artifact-card-footer">
+                                <span class="artifact-version">
+                                    <i class="fas fa-code-branch"></i>
+                                    v${artifact.version || 1}
+                                </span>
+                                <span class="artifact-size">${formatFileSize(artifact.size || artifact.content?.length || 0)}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Switch artifact tab
+        function switchArtifactTab(filter, tabElement) {
+            currentArtifactFilter = filter;
+
+            // Update active tab
+            document.querySelectorAll('.artifact-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            tabElement.classList.add('active');
+
+            // Re-render artifacts
+            renderArtifacts();
+        }
+
+        // Get artifact icon
+        function getArtifactIcon(type) {
+            const icons = {
+                'code': '<i class="fas fa-code"></i>',
+                'document': '<i class="fas fa-file-alt"></i>',
+                'image': '<i class="fas fa-image"></i>',
+                'data': '<i class="fas fa-database"></i>'
+            };
+            return icons[type] || '<i class="fas fa-file"></i>';
+        }
+
+        // Get artifact preview
+        function getArtifactPreview(artifact) {
+            if (artifact.type === 'code' || artifact.type === 'document' || artifact.type === 'data') {
+                return (artifact.content || '').substring(0, 200);
+            }
+            return null;
+        }
+
+        // Open artifact detail
+        function openArtifactDetail(artifactId) {
+            const project = projectManager.getProject(currentProjectId);
+            const artifact = project.artifacts.find(a => a.id === artifactId);
+
+            if (!artifact) return;
+
+            const detailView = document.getElementById('artifactDetailView');
+            const titleEl = document.getElementById('artifactDetailTitle');
+            const contentEl = document.getElementById('artifactDetailContent');
+
+            titleEl.textContent = artifact.name;
+
+            // Display content based on type
+            if (artifact.type === 'code') {
+                const language = getLanguageFromExtension(artifact.name);
+                contentEl.innerHTML = `
+                    <div class="code-view">
+                        <div class="code-header">
+                            <span class="code-language">${language}</span>
+                            <div class="code-actions">
+                                <button class="code-action-btn" onclick="copyArtifactContent('${artifactId}')">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                                <button class="code-action-btn" onclick="downloadArtifact('${artifactId}')">
+                                    <i class="fas fa-download"></i> Download
+                                </button>
+                            </div>
+                        </div>
+                        <pre class="code-content"><code class="language-${language}">${escapeHtml(artifact.content || '')}</code></pre>
+                    </div>
+                `;
+                // Highlight code if Prism is available
+                if (typeof Prism !== 'undefined') {
+                    Prism.highlightAll();
+                }
+            } else if (artifact.type === 'document') {
+                contentEl.innerHTML = `
+                    <div style="padding: 1.5rem;">
+                        <div class="code-actions" style="margin-bottom: 1rem;">
+                            <button class="code-action-btn" onclick="copyArtifactContent('${artifactId}')">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                            <button class="code-action-btn" onclick="downloadArtifact('${artifactId}')">
+                                <i class="fas fa-download"></i> Download
+                            </button>
+                        </div>
+                        <div style="white-space: pre-wrap; font-family: inherit; line-height: 1.6;">
+                            ${escapeHtml(artifact.content || '')}
+                        </div>
+                    </div>
+                `;
+            } else if (artifact.type === 'image') {
+                contentEl.innerHTML = `
+                    <div style="padding: 1.5rem; text-align: center;">
+                        <img src="${artifact.content}" style="max-width: 100%; border-radius: 8px;">
+                        <div class="code-actions" style="margin-top: 1rem;">
+                            <button class="code-action-btn" onclick="downloadArtifact('${artifactId}')">
+                                <i class="fas fa-download"></i> Download
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (artifact.type === 'data') {
+                contentEl.innerHTML = `
+                    <div class="code-view">
+                        <div class="code-header">
+                            <span class="code-language">JSON</span>
+                            <div class="code-actions">
+                                <button class="code-action-btn" onclick="copyArtifactContent('${artifactId}')">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                                <button class="code-action-btn" onclick="downloadArtifact('${artifactId}')">
+                                    <i class="fas fa-download"></i> Download
+                                </button>
+                            </div>
+                        </div>
+                        <pre class="code-content"><code class="language-json">${escapeHtml(artifact.content || '')}</code></pre>
+                    </div>
+                `;
+                if (typeof Prism !== 'undefined') {
+                    Prism.highlightAll();
+                }
+            }
+
+            detailView.classList.add('open');
+        }
+
+        // Close artifact detail
+        function closeArtifactDetail() {
+            document.getElementById('artifactDetailView').classList.remove('open');
+        }
+
+        // Copy artifact content
+        function copyArtifactContent(artifactId) {
+            const project = projectManager.getProject(currentProjectId);
+            const artifact = project.artifacts.find(a => a.id === artifactId);
+
+            if (artifact && artifact.content) {
+                navigator.clipboard.writeText(artifact.content).then(() => {
+                    showNotification('Copied to clipboard!');
+                });
+            }
+        }
+
+        // Download artifact
+        function downloadArtifact(artifactId) {
+            const project = projectManager.getProject(currentProjectId);
+            const artifact = project.artifacts.find(a => a.id === artifactId);
+
+            if (!artifact) return;
+
+            if (artifact.type === 'image') {
+                // For images, create a link and trigger download
+                const a = document.createElement('a');
+                a.href = artifact.content;
+                a.download = artifact.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } else {
+                // For text-based content
+                const blob = new Blob([artifact.content || ''], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = artifact.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        // Delete artifact
+        function deleteArtifact(artifactId) {
+            if (confirm('Are you sure you want to delete this artifact?')) {
+                projectManager.deleteArtifact(currentProjectId, artifactId);
+                renderArtifacts();
+                showNotification('Artifact deleted');
+            }
+        }
+
+        // Create new artifact
+        function createNewArtifact() {
+            if (!currentProjectId) {
+                showNotification('Please select a project first');
+                return;
+            }
+            document.getElementById('newArtifactModal').style.display = 'block';
+            document.getElementById('artifactName').focus();
+        }
+
+        // Close new artifact modal
+        function closeNewArtifactModal() {
+            document.getElementById('newArtifactModal').style.display = 'none';
+            document.getElementById('artifactName').value = '';
+            document.getElementById('artifactContent').value = '';
+            document.getElementById('artifactType').value = 'code';
+        }
+
+        // Save new artifact
+        function saveNewArtifact(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('artifactName').value.trim();
+            const content = document.getElementById('artifactContent').value;
+            const type = document.getElementById('artifactType').value;
+
+            if (!name || !content) return;
+
+            const artifact = {
+                name,
+                content,
+                type,
+                size: content.length
+            };
+
+            projectManager.addArtifact(currentProjectId, artifact);
+            closeNewArtifactModal();
+            renderArtifacts();
+            showNotification('Artifact created successfully');
+        }
+
+        // Update artifact template
+        function updateArtifactTemplate() {
+            const type = document.getElementById('artifactType').value;
+            const contentField = document.getElementById('artifactContent');
+
+            const templates = {
+                'code': '-- Example Lua script\nlocal function main()\n    print("Hello, World!")\nend\n\nmain()',
+                'document': '# Documentation\n\n## Overview\nDescribe your project here...\n\n## Features\n- Feature 1\n- Feature 2\n\n## Usage\nExplain how to use your project...',
+                'data': '{\n  "name": "Example",\n  "version": "1.0.0",\n  "data": [\n    \n  ]\n}'
+            };
+
+            if (contentField.value === '' || contentField.value === templates.code || contentField.value === templates.document || contentField.value === templates.data) {
+                contentField.value = templates[type] || '';
+            }
+        }
+
+        // Open upload modal
+        function openUploadModal() {
+            if (!currentProjectId) {
+                showNotification('Please select a project first');
+                return;
+            }
+            selectedFiles = [];
+            document.getElementById('uploadModal').style.display = 'block';
+            document.getElementById('fileList').innerHTML = '';
+        }
+
+        // Close upload modal
+        function closeUploadModal() {
+            document.getElementById('uploadModal').style.display = 'none';
+            selectedFiles = [];
+            document.getElementById('fileInput').value = '';
+        }
+
+        // Handle file select
+        function handleFileSelect(event) {
+            selectedFiles = Array.from(event.target.files);
+            updateFileList();
+        }
+
+        // Update file list
+        function updateFileList() {
+            const fileList = document.getElementById('fileList');
+            if (selectedFiles.length === 0) {
+                fileList.innerHTML = '';
+                return;
+            }
+
+            fileList.innerHTML = '<div style="color: #8b949e; margin-bottom: 0.5rem;">Selected files:</div>' +
+                selectedFiles.map(file => `
+                    <div style="padding: 0.5rem; background: rgba(88, 166, 255, 0.1); border-radius: 6px; margin-bottom: 0.25rem;">
+                        ${file.name} (${formatFileSize(file.size)})
+                    </div>
+                `).join('');
+        }
+
+        // Upload files
+        function uploadFiles() {
+            if (selectedFiles.length === 0) {
+                showNotification('Please select files to upload');
+                return;
+            }
+
+            selectedFiles.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const type = getFileType(file.name);
+                    const artifact = {
+                        name: file.name,
+                        content: e.target.result,
+                        type: type,
+                        size: file.size
+                    };
+                    projectManager.addArtifact(currentProjectId, artifact);
+                };
+
+                if (file.type.startsWith('image/')) {
+                    reader.readAsDataURL(file);
+                } else {
+                    reader.readAsText(file);
+                }
+            });
+
+            setTimeout(() => {
+                closeUploadModal();
+                renderArtifacts();
+                showNotification(`${selectedFiles.length} file(s) uploaded successfully`);
+            }, 500);
+        }
+
+        // Handle drag over
+        function handleDragOver(event) {
+            event.preventDefault();
+            document.getElementById('dropZone').classList.add('active');
+        }
+
+        // Handle drag leave
+        function handleDragLeave(event) {
+            event.preventDefault();
+            document.getElementById('dropZone').classList.remove('active');
+        }
+
+        // Handle drop
+        function handleDrop(event) {
+            event.preventDefault();
+            document.getElementById('dropZone').classList.remove('active');
+
+            if (!currentProjectId) {
+                showNotification('Please select a project first');
+                return;
+            }
+
+            const files = Array.from(event.dataTransfer.files);
+            if (files.length === 0) return;
+
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const type = getFileType(file.name);
+                    const artifact = {
+                        name: file.name,
+                        content: e.target.result,
+                        type: type,
+                        size: file.size
+                    };
+                    projectManager.addArtifact(currentProjectId, artifact);
+                    renderArtifacts();
+                };
+
+                if (file.type.startsWith('image/')) {
+                    reader.readAsDataURL(file);
+                } else {
+                    reader.readAsText(file);
+                }
+            });
+
+            showNotification(`${files.length} file(s) uploaded successfully`);
+        }
+
+        // Open project chat
+        function openProjectChat() {
+            if (!currentProjectId) return;
+            window.location.href = `/project-chat.html?project=${currentProjectId}`;
+        }
+
+        // Project modal functions
         function openNewProjectModal() {
             document.getElementById('newProjectModal').style.display = 'block';
             document.getElementById('projectName').focus();
@@ -951,197 +1203,141 @@
             const name = document.getElementById('projectName').value.trim();
             const description = document.getElementById('projectDescription').value.trim();
             const type = document.getElementById('projectType').value;
-            
+
             if (!name) return;
-            
+
             const project = projectManager.createProject(name, description, type);
             closeNewProjectModal();
-            renderProjects();
-            
-            // Auto-open the new project
-            setTimeout(() => projectManager.openProject(project.id), 300);
+            renderProjectsList();
+            selectProject(project.id);
+            showNotification('Project created successfully');
         }
 
-        function deleteProject(projectId) {
-            const project = projectManager.projects.find(p => p.id === projectId);
-            if (!project) return;
-            
-            if (confirm(`Delete "${project.name}"?\n\nThis cannot be undone.`)) {
-                projectManager.deleteProject(projectId);
-                renderProjects();
-            }
+        // Helper functions
+        function getFileType(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const codeExtensions = ['lua', 'js', 'ts', 'py', 'java', 'cpp', 'c', 'h', 'css', 'html', 'xml', 'sh'];
+            const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'bmp', 'ico'];
+            const dataExtensions = ['json', 'yaml', 'yml', 'xml', 'csv'];
+
+            if (codeExtensions.includes(ext)) return 'code';
+            if (imageExtensions.includes(ext)) return 'image';
+            if (dataExtensions.includes(ext)) return 'data';
+            return 'document';
+        }
+
+        function getLanguageFromExtension(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const langMap = {
+                'lua': 'lua',
+                'js': 'javascript',
+                'ts': 'typescript',
+                'py': 'python',
+                'java': 'java',
+                'cpp': 'cpp',
+                'c': 'c',
+                'h': 'c',
+                'css': 'css',
+                'html': 'html',
+                'xml': 'xml',
+                'json': 'json',
+                'sh': 'bash'
+            };
+            return langMap[ext] || 'plaintext';
         }
 
         function formatDate(timestamp) {
             const now = Date.now();
             const diff = now - timestamp;
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            
+
             if (days === 0) return 'Today';
             if (days === 1) return 'Yesterday';
             if (days < 7) return `${days} days ago`;
             return new Date(timestamp).toLocaleDateString();
         }
 
-        // Check premium status on auth changes
-        document.addEventListener('authStatusChanged', checkPremiumStatus);
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
 
-        // Authentication and User Profile Functions
-        function checkAuth() {
-            console.log('Checking auth...');
-            authToken = localStorage.getItem('authToken');
-            const user = localStorage.getItem('user');
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
 
-            if (authToken && user) {
-                try {
-                    const userData = JSON.parse(user);
-                    currentUser = userData;
-                    showLoggedInUser(userData);
-                    isLoggedIn = true;
-                } catch (error) {
-                    console.error('Error parsing user data:', error);
-                    showGuestUser();
-                    isLoggedIn = false;
-                    currentUser = null;
-                }
-            } else {
-                showGuestUser();
-                isLoggedIn = false;
-                currentUser = null;
-            }
-            updateModelSelector();
+        function showNotification(message) {
+            // Simple notification - you can enhance this
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                bottom: 2rem;
+                right: 2rem;
+                background: linear-gradient(45deg, #238636, #2ea043);
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                z-index: 1000;
+                animation: slideInUp 0.3s ease;
+            `;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
         }
 
         // Modal event listeners
         document.addEventListener('click', function(event) {
-            const modal = document.getElementById('newProjectModal');
-            if (event.target === modal) {
-                closeNewProjectModal();
-            }
+            const modals = ['newProjectModal', 'newArtifactModal', 'uploadModal'];
+            modals.forEach(modalId => {
+                const modal = document.getElementById(modalId);
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
         });
 
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
+                closeArtifactDetail();
                 closeNewProjectModal();
+                closeNewArtifactModal();
+                closeUploadModal();
             }
         });
 
-        // Show logged in user profile
-        function showLoggedInUser(userData) {
-            const userProfile = document.getElementById('userProfile');
-            if (userProfile) {
-                const planText = userData.subscription?.plan || 'free';
-                const planDisplay = planText.charAt(0).toUpperCase() + planText.slice(1);
-                
-                userProfile.innerHTML = `
-                    <div class="user-avatar">${(userData.name || userData.email || 'U').charAt(0).toUpperCase()}</div>
-                    <div class="user-info">
-                        <div class="user-name">${userData.name || userData.email || 'User'}</div>
-                        <div class="user-plan">${planDisplay} Plan</div>
-                    </div>
-                    <button onclick="logout()" style="background: #f85149; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
-                        Logout
-                    </button>
-                `;
-            }
+        // Sidebar functions (from main app)
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('show');
         }
 
-        // Show guest user profile
-        function showGuestUser() {
-            console.log('[AUTH] Showing guest user profile...');
-            const userProfile = document.getElementById('userProfile');
-            if (userProfile) {
-                userProfile.innerHTML = `
-                    <div class="user-avatar"><i class="fas fa-user"></i></div>
-                    <div class="user-info">
-                        <div class="user-name">Guest User</div>
-                        <div class="user-plan">Free Plan - <span style="color: #58a6ff; cursor: pointer;" onclick="window.location.href='/login.html'">Sign In for More</span></div>
-                    </div>
-                    <button onclick="window.location.href='/login.html'" style="background: #238636; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
-                        Sign In
-                    </button>
-                `;
-                console.log('[AUTH] Guest user profile updated successfully');
-            } else {
-                console.error('[AUTH] Could not find userProfile element!');
-            }
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
         }
 
-        // Logout function
-        function logout() {
-            if (window.authManager) {
-                window.authManager.logout();
-            } else {
-                // Fallback if authManager isn't loaded
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('user');
-
-                // Reset state variables
-                isLoggedIn = false;
-                authToken = null;
-                currentUser = null;
-
-                // Show guest user interface
-                showGuestUser();
-                updateModelSelector();
-            }
-        }
-
-        // Update model selector for auth status
-        function updateModelSelector() {
-            const modelSelector = document.getElementById('modelSelector');
-            if (modelSelector) {
-                const options = modelSelector.querySelectorAll('option');
-                
-                options.forEach(option => {
-                    if (option.value !== 'gpt-4o-mini') {
-                        option.disabled = !isLoggedIn;
-                        if (!isLoggedIn && !option.textContent.includes('Sign in required')) {
-                            option.textContent += ' - Sign in required';
-                        } else if (isLoggedIn && option.textContent.includes(' - Sign in required')) {
-                            option.textContent = option.textContent.replace(' - Sign in required', '');
-                        }
-                    }
-                });
-            }
-        }
-
-        // Initialize app
-        function initApp() {
-            console.log('Initializing app...');
-            checkAuth();
-            renderProjects();
-        }
-
-        // Check subscription status (stub for now)
-        function checkSubscriptionStatus() {
-            // This function would normally check subscription status from server
-            console.log('Checking subscription status...');
+        function startNewChat() {
+            window.location.href = '/index.html';
         }
     </script>
 
-    <!-- Load JavaScript modules -->
+    <!-- Load auth module -->
     <script src="js/auth.js"></script>
-    <script src="js/chat.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/scripts.js"></script>
-    <script src="js/app.js"></script>
-
-    <!-- Initialize the application -->
-    <script>
-        // Initialize app when DOM is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            const app = new App();
-            app.init();
-        });
-    </script>
-
-    <!-- Content Ad Template for Chat -->
-    <template id="chatContentAdTemplate">
-        <div class="ad-container content-ad chat-content-ad" style="margin: 2rem auto;">
-            <div class="ad-label">Advertisement</div>
-        </div>
-    </template>
-
 </body>
 </html>
