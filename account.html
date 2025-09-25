@@ -1022,7 +1022,6 @@
 
                 if (response.ok) {
                     currentPreferences = data.preferences;
-                    showNotification('Preferences updated successfully');
                 } else {
                     showNotification(data.error || 'Failed to update preferences', 'error');
                 }
