@@ -273,6 +273,264 @@
             opacity: 1;
             transform: translateX(0);
         }
+
+        /* Attachment Dropdown Styles */
+        .attach-dropdown {
+            position: absolute;
+            bottom: 45px;
+            left: 0;
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            min-width: 160px;
+        }
+
+        .attach-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            border-radius: 6px;
+            margin: 0.25rem;
+        }
+
+        .attach-option:hover {
+            background: rgba(88, 166, 255, 0.1);
+        }
+
+        .attach-option i {
+            width: 16px;
+            color: #8b949e;
+        }
+
+        .attach-option span {
+            color: #f0f6fc;
+            font-size: 0.9rem;
+        }
+
+        /* Modal Styles */
+        .attachment-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            position: relative;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 1.5rem 0;
+            margin-bottom: 1rem;
+        }
+
+        .modal-header h3 {
+            color: #f0f6fc;
+            margin: 0;
+            font-size: 1.25rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #8b949e;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(248, 81, 73, 0.1);
+            color: #f85149;
+        }
+
+        .modal-body {
+            padding: 0 1.5rem 1rem;
+        }
+
+        .modal-body label {
+            display: block;
+            color: #f0f6fc;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .text-input {
+            width: 100%;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 0.75rem;
+            color: #f0f6fc;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.1);
+        }
+
+        .text-textarea {
+            width: 100%;
+            min-height: 120px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 0.75rem;
+            color: #f0f6fc;
+            font-size: 0.9rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            resize: vertical;
+        }
+
+        .text-textarea:focus {
+            outline: none;
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.1);
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #238636, #2ea043);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(46, 160, 67, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #8b949e;
+            border: 1px solid #30363d;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(88, 166, 255, 0.1);
+            border-color: #58a6ff;
+            color: #58a6ff;
+        }
+
+        /* Image Options */
+        .image-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .image-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1.5rem 1rem;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .image-option:hover {
+            background: rgba(88, 166, 255, 0.1);
+            border-color: #58a6ff;
+        }
+
+        .image-option i {
+            font-size: 1.5rem;
+            color: #58a6ff;
+        }
+
+        .image-option span {
+            color: #f0f6fc;
+            font-size: 0.9rem;
+        }
+
+        .paste-area {
+            background: #0d1117;
+            border: 2px dashed #30363d;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            color: #8b949e;
+            cursor: text;
+            transition: all 0.2s ease;
+        }
+
+        .paste-area:focus {
+            border-color: #58a6ff;
+            outline: none;
+        }
+
+        .paste-area:hover {
+            border-color: #58a6ff;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .image-options {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 1rem;
+            }
+        }
     </style>
 </head>
 
@@ -408,9 +666,25 @@
                         
                         <!-- Input row -->
                         <div class="input-row">
-                            <button class="attach-button" id="attachButton" onclick="openFileDialog()" title="Add file or image">
+                            <button class="attach-button" id="attachButton" onclick="toggleAttachMenu()" title="Add content">
                                 <span><i class="fas fa-paperclip"></i></span>
                             </button>
+
+                            <!-- Attachment Options Dropdown -->
+                            <div class="attach-dropdown" id="attachDropdown" style="display: none;">
+                                <div class="attach-option" onclick="openFileDialog()">
+                                    <i class="fas fa-file"></i>
+                                    <span>Upload File</span>
+                                </div>
+                                <div class="attach-option" onclick="openTextModal()">
+                                    <i class="fas fa-edit"></i>
+                                    <span>Add Text</span>
+                                </div>
+                                <div class="attach-option" onclick="openImageModal()">
+                                    <i class="fas fa-image"></i>
+                                    <span>Add Image</span>
+                                </div>
+                            </div>
                             <button class="model-button" id="modelButton" onclick="toggleModelSelector()" title="Select AI Model">
                                 <span><i class="fas fa-sliders-h"></i></span>
                             </button>
@@ -439,7 +713,78 @@
                     </div>
                 </div>
                 <input type="file" id="fileInput" accept="image/*,.txt,.lua,.luau,.js,.json,.md" style="display: none;" onchange="handleFileSelect(event)" multiple>
-                
+
+                <!-- Text Content Modal -->
+                <div id="textModal" class="attachment-modal" style="display: none;">
+                    <div class="modal-overlay" onclick="closeTextModal()"></div>
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Add Text Content</h3>
+                            <button class="modal-close" onclick="closeTextModal()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <label for="textTitle">Title (optional):</label>
+                            <input type="text" id="textTitle" placeholder="e.g., Code snippet, Notes, etc." class="text-input">
+
+                            <label for="textContent">Content:</label>
+                            <textarea id="textContent" placeholder="Paste or type your content here..." class="text-textarea"></textarea>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="closeTextModal()">Cancel</button>
+                            <button class="btn btn-primary" onclick="addTextContent()">Add Content</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image Modal -->
+                <div id="imageModal" class="attachment-modal" style="display: none;">
+                    <div class="modal-overlay" onclick="closeImageModal()"></div>
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Add Image</h3>
+                            <button class="modal-close" onclick="closeImageModal()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="image-options">
+                                <div class="image-option" onclick="document.getElementById('imageFileInput').click()">
+                                    <i class="fas fa-upload"></i>
+                                    <span>Upload Image</span>
+                                </div>
+                                <div class="image-option" onclick="showImageUrlInput()">
+                                    <i class="fas fa-link"></i>
+                                    <span>Image URL</span>
+                                </div>
+                                <div class="image-option" onclick="showImagePasteArea()">
+                                    <i class="fas fa-clipboard"></i>
+                                    <span>Paste Image</span>
+                                </div>
+                            </div>
+
+                            <input type="file" id="imageFileInput" accept="image/*" style="display: none;" onchange="handleImageFileSelect(event)">
+
+                            <div id="imageUrlInput" style="display: none;">
+                                <label for="imageUrl">Image URL:</label>
+                                <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg" class="text-input">
+                                <button class="btn btn-primary" onclick="addImageFromUrl()">Add Image</button>
+                            </div>
+
+                            <div id="imagePasteArea" style="display: none;">
+                                <p>Press Ctrl+V to paste an image from clipboard</p>
+                                <div class="paste-area" id="pasteArea" contenteditable="true">Click here and paste (Ctrl+V)</div>
+                            </div>
+
+                            <div id="imagePreview" style="display: none;">
+                                <img id="previewImg" style="max-width: 100%; max-height: 200px; border-radius: 8px;">
+                                <p id="imageName"></p>
+                                <button class="btn btn-primary" onclick="addImageContent()">Add Image</button>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="closeImageModal()">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Drag & Drop Overlay -->
                 <div class="drag-overlay" id="dragOverlay" style="display: none;">
                     <div class="drag-content">
@@ -765,6 +1110,224 @@
             // This function would normally check subscription status from server
             console.log('Checking subscription status...');
         }
+
+        // Enhanced attachment functionality
+        function toggleAttachMenu() {
+            const dropdown = document.getElementById('attachDropdown');
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Text content modal functions
+        function openTextModal() {
+            document.getElementById('attachDropdown').style.display = 'none';
+            document.getElementById('textModal').style.display = 'flex';
+            document.getElementById('textTitle').focus();
+        }
+
+        function closeTextModal() {
+            document.getElementById('textModal').style.display = 'none';
+            document.getElementById('textTitle').value = '';
+            document.getElementById('textContent').value = '';
+        }
+
+        function addTextContent() {
+            const title = document.getElementById('textTitle').value.trim();
+            const content = document.getElementById('textContent').value.trim();
+
+            if (!content) {
+                alert('Please enter some content');
+                return;
+            }
+
+            // Create a text "file" attachment
+            const textFile = new Blob([content], { type: 'text/plain' });
+            const fileName = title || 'text-content.txt';
+
+            // Create a File object from the blob
+            const file = new File([textFile], fileName, { type: 'text/plain' });
+
+            // Add to attached files
+            if (!window.chatManager.attachedFiles) {
+                window.chatManager.attachedFiles = [];
+            }
+            window.chatManager.attachedFiles.push(file);
+
+            // Show in file attachments
+            showFileAttachment(file, window.chatManager.attachedFiles.length - 1);
+
+            closeTextModal();
+        }
+
+        // Image modal functions
+        function openImageModal() {
+            document.getElementById('attachDropdown').style.display = 'none';
+            document.getElementById('imageModal').style.display = 'flex';
+            resetImageModal();
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').style.display = 'none';
+            resetImageModal();
+        }
+
+        function resetImageModal() {
+            document.getElementById('imageUrlInput').style.display = 'none';
+            document.getElementById('imagePasteArea').style.display = 'none';
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('imageUrl').value = '';
+        }
+
+        function showImageUrlInput() {
+            resetImageModal();
+            document.getElementById('imageUrlInput').style.display = 'block';
+            document.getElementById('imageUrl').focus();
+        }
+
+        function showImagePasteArea() {
+            resetImageModal();
+            document.getElementById('imagePasteArea').style.display = 'block';
+
+            const pasteArea = document.getElementById('pasteArea');
+            pasteArea.focus();
+
+            // Add paste event listener
+            pasteArea.addEventListener('paste', handleImagePaste, { once: true });
+        }
+
+        function handleImagePaste(event) {
+            event.preventDefault();
+            const items = event.clipboardData.items;
+
+            for (let item of items) {
+                if (item.type.indexOf('image') !== -1) {
+                    const blob = item.getAsFile();
+                    if (blob) {
+                        showImagePreview(blob, 'pasted-image.png');
+                        return;
+                    }
+                }
+            }
+
+            alert('No image found in clipboard. Please copy an image first.');
+        }
+
+        function addImageFromUrl() {
+            const url = document.getElementById('imageUrl').value.trim();
+            if (!url) {
+                alert('Please enter a valid image URL');
+                return;
+            }
+
+            // Validate URL format
+            try {
+                new URL(url);
+            } catch {
+                alert('Please enter a valid URL');
+                return;
+            }
+
+            // Show preview
+            const img = document.getElementById('previewImg');
+            img.src = url;
+            img.onload = () => {
+                document.getElementById('imageName').textContent = url.split('/').pop() || 'image-from-url';
+                document.getElementById('imageUrlInput').style.display = 'none';
+                document.getElementById('imagePreview').style.display = 'block';
+
+                // Store the URL for later use
+                img.dataset.imageUrl = url;
+            };
+            img.onerror = () => {
+                alert('Failed to load image from URL. Please check the URL and try again.');
+            };
+        }
+
+        function handleImageFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                showImagePreview(file, file.name);
+            }
+        }
+
+        function showImagePreview(file, name) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = document.getElementById('previewImg');
+                img.src = e.target.result;
+                img.dataset.imageFile = ''; // Mark as file
+                document.getElementById('imageName').textContent = name;
+                document.getElementById('imagePreview').style.display = 'block';
+
+                // Store the file for later use
+                img.dataset.imageBlob = file;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function addImageContent() {
+            const img = document.getElementById('previewImg');
+            const imageName = document.getElementById('imageName').textContent;
+
+            if (img.dataset.imageUrl) {
+                // Handle URL image - create a text file with the URL
+                const urlContent = `Image URL: ${img.dataset.imageUrl}`;
+                const textFile = new Blob([urlContent], { type: 'text/plain' });
+                const file = new File([textFile], `${imageName}-url.txt`, { type: 'text/plain' });
+
+                if (!window.chatManager.attachedFiles) {
+                    window.chatManager.attachedFiles = [];
+                }
+                window.chatManager.attachedFiles.push(file);
+                showFileAttachment(file, window.chatManager.attachedFiles.length - 1);
+            } else if (img.dataset.imageBlob) {
+                // Handle file image
+                const file = img.dataset.imageBlob;
+
+                if (!window.chatManager.attachedFiles) {
+                    window.chatManager.attachedFiles = [];
+                }
+                window.chatManager.attachedFiles.push(file);
+                showFileAttachment(file, window.chatManager.attachedFiles.length - 1);
+            }
+
+            closeImageModal();
+        }
+
+        function showFileAttachment(file, index) {
+            const fileAttachments = document.getElementById('fileAttachments');
+
+            // Create file preview
+            const filePreview = document.createElement('div');
+            filePreview.className = 'file-attachment';
+            filePreview.innerHTML = `
+                <div class="file-info">
+                    <span class="file-name">${file.name}</span>
+                    <span class="file-size">${formatFileSize(file.size)}</span>
+                </div>
+                <button class="remove-file" onclick="removeFile(${index})">×</button>
+            `;
+
+            fileAttachments.appendChild(filePreview);
+            fileAttachments.style.display = 'block';
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            const attachButton = document.getElementById('attachButton');
+            const attachDropdown = document.getElementById('attachDropdown');
+
+            if (!attachButton.contains(event.target) && !attachDropdown.contains(event.target)) {
+                attachDropdown.style.display = 'none';
+            }
+        });
+
+        // Close modals with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeTextModal();
+                closeImageModal();
+            }
+        });
     </script>
 
     <!-- Load JavaScript modules -->
