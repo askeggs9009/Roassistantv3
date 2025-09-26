@@ -351,8 +351,8 @@
             </div>
             
             <select class="model-selector" id="modelSelector">
-                <option value="claude-sonnet-4">Claude Sonnet 4</option>
-                <option value="claude-opus-4">Claude Opus 4 (Premium)</option>
+                <option value="claude-sonnet-4">RoCode Core 3</option>
+                <option value="claude-opus-4">RoCode Nexus 3 (Premium)</option>
             </select>
         </div>
 
@@ -698,9 +698,9 @@
                     if (option.value === 'claude-opus-4') {
                         option.disabled = !isLoggedIn;
                         if (!isLoggedIn && !option.textContent.includes('Sign in required')) {
-                            option.textContent = 'Claude Opus 4 (Premium) - Sign in required';
+                            option.textContent = 'RoCode Nexus 3 (Premium) - Sign in required';
                         } else if (isLoggedIn) {
-                            option.textContent = 'Claude Opus 4 (Premium)';
+                            option.textContent = 'RoCode Nexus 3 (Premium)';
                         }
                     }
                 });

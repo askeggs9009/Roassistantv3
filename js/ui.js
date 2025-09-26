@@ -25,7 +25,7 @@ class UIManager {
         modelSelector.addEventListener('change', function() {
             if (this.value === 'claude-opus-4' && (!window.authManager || !window.authManager.isLoggedIn)) {
                 this.value = uiManager.selectedModel;
-                alert('Please sign in to access Claude Opus 4');
+                alert('Please sign in to access RoCode Nexus 3');
                 return;
             }
             uiManager.selectedModel = this.value;
