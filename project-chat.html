@@ -1327,7 +1327,11 @@
 
                     // Show estimation
                     tokenEstimation.style.display = 'flex';
-                    tokenEstimationText.textContent = `~${data.estimation.estimatedTotal.toLocaleString()} tokens`;
+
+                    // Format display based on confidence level
+                    const confidenceSymbol = data.estimation.confidence === 'high' ? '' :
+                                            data.estimation.confidence === 'medium' ? '≈' : '~';
+                    tokenEstimationText.textContent = `${confidenceSymbol}${data.estimation.estimatedTotal.toLocaleString()} tokens`;
 
                     // Reset classes
                     tokenEstimation.classList.remove('warning', 'error');

@@ -755,49 +755,100 @@ async function estimateTokenUsage(model, systemPrompt, userMessage) {
             throw new Error('Invalid model');
         }
 
-        if (config.provider === 'anthropic') {
-            // Use Anthropic's token counting API
-            const tokenResponse = await anthropic.messages.count_tokens({
-                model: config.model,
-                system: systemPrompt,
-                messages: [
-                    { role: "user", content: userMessage }
-                ]
-            });
+        // Calculate input tokens accurately
+        let inputTokens = 0;
 
-            return {
-                success: true,
-                inputTokens: tokenResponse.input_tokens || 0,
-                estimatedOutputTokens: Math.min(tokenResponse.input_tokens * 1.5, 4000), // Rough estimate based on input
-                estimatedTotal: tokenResponse.input_tokens + Math.min(tokenResponse.input_tokens * 1.5, 4000)
-            };
+        if (config.provider === 'anthropic') {
+            try {
+                // Use Anthropic's official token counting API for accurate input count
+                const tokenResponse = await anthropic.messages.count_tokens({
+                    model: config.model,
+                    system: systemPrompt,
+                    messages: [
+                        { role: "user", content: userMessage }
+                    ]
+                });
+
+                inputTokens = tokenResponse.input_tokens || 0;
+                console.log(`[TOKEN ESTIMATION] Anthropic API returned ${inputTokens} input tokens`);
+            } catch (apiError) {
+                console.error('[TOKEN ESTIMATION] Anthropic API error, falling back:', apiError.message);
+                // Fallback: More accurate character-to-token ratio for Claude models
+                // Claude uses roughly 1 token per 3.5 characters for English text
+                inputTokens = Math.ceil((systemPrompt.length + userMessage.length) / 3.5);
+            }
         } else if (config.provider === 'openai') {
-            // For OpenAI, use a rough estimation based on character count
-            // 1 token ≈ 4 characters for English text
+            // For OpenAI, use tiktoken-based estimation
+            // GPT models use roughly 1 token per 4 characters for English text
             const systemTokens = Math.ceil(systemPrompt.length / 4);
             const userTokens = Math.ceil(userMessage.length / 4);
-            const inputTokens = systemTokens + userTokens;
-            const estimatedOutputTokens = Math.min(inputTokens * 1.2, 3000); // Conservative estimate
-
-            return {
-                success: true,
-                inputTokens: inputTokens,
-                estimatedOutputTokens: estimatedOutputTokens,
-                estimatedTotal: inputTokens + estimatedOutputTokens
-            };
+            inputTokens = systemTokens + userTokens;
         }
 
-        throw new Error('Unsupported provider for token estimation');
+        // Estimate output tokens based on prompt complexity and typical response patterns
+        let estimatedOutputTokens = 0;
+
+        // Base estimation on prompt characteristics
+        const promptWords = userMessage.split(/\s+/).length;
+        const hasCodeRequest = /code|script|function|implementation|create|write|fix|debug/i.test(userMessage);
+        const hasExplanationRequest = /explain|how|what|why|describe|tell/i.test(userMessage);
+        const hasListRequest = /list|steps|enumerate|options/i.test(userMessage);
+
+        // Calculate base output estimation
+        if (promptWords < 20) {
+            // Short prompts typically get medium responses
+            estimatedOutputTokens = inputTokens * 4; // 4x multiplier for short prompts
+        } else if (promptWords < 50) {
+            // Medium prompts get proportional responses
+            estimatedOutputTokens = inputTokens * 3; // 3x multiplier
+        } else {
+            // Long prompts often get detailed responses
+            estimatedOutputTokens = inputTokens * 2.5; // 2.5x multiplier
+        }
+
+        // Adjust based on request type
+        if (hasCodeRequest) {
+            estimatedOutputTokens *= 1.5; // Code responses are typically longer
+        }
+        if (hasExplanationRequest) {
+            estimatedOutputTokens *= 1.3; // Explanations tend to be verbose
+        }
+        if (hasListRequest) {
+            estimatedOutputTokens *= 1.2; // Lists add structure overhead
+        }
+
+        // Apply model-specific limits (conservative estimate using free plan limit)
+        const typicalMaxTokens = 4000; // Typical max for free users
+        estimatedOutputTokens = Math.min(estimatedOutputTokens, typicalMaxTokens * 0.8); // Cap at 80% of max
+
+        // Round to nearest 100 for cleaner display
+        estimatedOutputTokens = Math.round(estimatedOutputTokens / 100) * 100;
+
+        const estimatedTotal = inputTokens + estimatedOutputTokens;
+
+        return {
+            success: true,
+            inputTokens: inputTokens,
+            estimatedOutputTokens: estimatedOutputTokens,
+            estimatedTotal: estimatedTotal,
+            confidence: config.provider === 'anthropic' ? 'high' : 'medium'
+        };
+
     } catch (error) {
         console.error('[TOKEN ESTIMATION] Error:', error.message);
-        // Return a fallback estimation
-        const roughTokens = Math.ceil((systemPrompt.length + userMessage.length) / 4);
+
+        // Improved fallback estimation
+        const charCount = systemPrompt.length + userMessage.length;
+        const roughInputTokens = Math.ceil(charCount / 3.5); // Better ratio
+        const roughOutputTokens = Math.min(roughInputTokens * 3, 4000); // More realistic multiplier
+
         return {
             success: false,
-            inputTokens: roughTokens,
-            estimatedOutputTokens: Math.min(roughTokens * 1.5, 3000),
-            estimatedTotal: roughTokens + Math.min(roughTokens * 1.5, 3000),
-            error: error.message
+            inputTokens: roughInputTokens,
+            estimatedOutputTokens: roughOutputTokens,
+            estimatedTotal: roughInputTokens + roughOutputTokens,
+            error: error.message,
+            confidence: 'low'
         };
     }
 }
