@@ -2967,7 +2967,6 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             }
 
             // Track Nexus usage for free users
-            const subscription = getUserSubscription(user);
             if (subscription.plan === 'free' && model === 'claude-4-opus') {
                 incrementSpecialUsage(user, model);
             }
@@ -2987,12 +2986,24 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             const currentTokenUsage = dailyTokenUsage.get(tokenUsageKey) || 0;
             dailyTokenUsage.set(tokenUsageKey, currentTokenUsage + totalTokens);
 
-            const subscription = getUserSubscription(user);
             responseData.subscription = {
                 plan: subscription.plan,
                 usage: subscription.usage,
                 limits: subscription.limits
             };
+
+            // Add nexusUsage for free users with RoCode Nexus 3
+            if (subscription.plan === 'free' && model === 'claude-4-opus') {
+                const today = new Date().toISOString().split('T')[0];
+                const nexusUsageKey = `nexus_${user.id}_${today}`;
+                // Get updated usage after increment
+                const currentNexusUsage = dailyOpusUsage.get(nexusUsageKey) || 0;
+
+                responseData.usageInfo = {
+                    nexusUsage: currentNexusUsage,
+                    nexusLimit: 3
+                };
+            }
         } else {
             const limitCheck = checkUsageLimit(userIdentifier, model);
             responseData.usageInfo = {
@@ -3006,23 +3017,6 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             };
         }
 
-        // Add nexusUsage for free users with RoCode Nexus 3 (after increment)
-        if (isAuthenticated) {
-            const user = await DatabaseManager.findUserByEmail(req.user.email);
-            const userSubscription = getUserSubscription(user);
-
-            if (userSubscription.plan === 'free' && model === 'claude-4-opus') {
-                const today = new Date().toISOString().split('T')[0];
-                const nexusUsageKey = `nexus_${user.id}_${today}`;
-                // Get updated usage after increment
-                const currentNexusUsage = dailyOpusUsage.get(nexusUsageKey) || 0;
-
-                responseData.usageInfo = {
-                    nexusUsage: currentNexusUsage,
-                    nexusLimit: 3
-                };
-            }
-        }
 
         res.json(responseData);
     } catch (error) {
