@@ -1037,17 +1037,37 @@
             // Clear previous options
             subtypeSelect.innerHTML = '';
 
+            // Add default option
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Select a specialization';
+            subtypeSelect.appendChild(defaultOption);
+
             // Add options based on work type
             let options = [];
             if (workType === 'gui-design') {
                 options = [
-                    { value: 'gui-only', text: 'GUI Only' },
-                    { value: 'gui-and-scripting', text: 'GUI and Scripting' }
+                    { value: 'ui-layout-builder', text: 'UI Layout Builder - Auto-arrange buttons, frames, text' },
+                    { value: 'hud-designer', text: 'HUD Designer - Health bars, counters, cooldowns' },
+                    { value: 'inventory-ui-creator', text: 'Inventory UI Creator - Grid/slot UIs' },
+                    { value: 'shop-currency-ui', text: 'Shop/Currency UI Builder - Shop menus, Robux prompts' },
+                    { value: 'leaderboard-stats', text: 'Leaderboard/Stats Designer - Scoreboards, counters' },
+                    { value: 'dialog-quest-ui', text: 'Dialog/Quest UI Maker - Popup boxes, quest menus' },
+                    { value: 'mobile-ui-fixer', text: 'Mobile-Friendly UI Fixer - Phone/tablet scaling' },
+                    { value: 'gui-and-scripting', text: 'GUI and Scripting Combined' }
                 ];
             } else if (workType === 'scripting') {
                 options = [
-                    { value: 'scripting-only', text: 'Scripting Only' },
-                    { value: 'scripting-and-gui', text: 'Scripting and GUI' }
+                    { value: 'data-save-system', text: 'Data Save System - Datastore saving/loading' },
+                    { value: 'npc-ai-behavior', text: 'NPC AI Behavior - Wandering, following, attacking NPCs' },
+                    { value: 'combat-weapon-systems', text: 'Combat/Weapon Systems - Melee, guns, abilities' },
+                    { value: 'currency-economy', text: 'Currency & Economy - Leaderstats, cash, coins' },
+                    { value: 'teleport-systems', text: 'Teleport Systems - Portals, checkpoints' },
+                    { value: 'quest-progression', text: 'Quest/Progression - Quests, achievements, unlocks' },
+                    { value: 'gamepass-products', text: 'Gamepass/Products - Purchase scripts integration' },
+                    { value: 'admin-commands', text: 'Admin Commands - Ban/kick/teleport permissions' },
+                    { value: 'animation-systems', text: 'Animation Systems - Tool swings, emotes, cutscenes' },
+                    { value: 'scripting-and-gui', text: 'Scripting and GUI Combined' }
                 ];
             }
 
