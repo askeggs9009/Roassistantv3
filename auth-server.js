@@ -564,6 +564,22 @@ function checkAuthenticatedUserLimits(user, subscription, model) {
         }
     }
 
+    // Check RoCode Nexus 3 specific limits for free users
+    if (model === 'claude-4-opus' && subscription.plan === 'free') {
+        const nexusUsageKey = `nexus_${user.id}_${today}`;
+        const currentNexusUsage = dailyOpusUsage.get(nexusUsageKey) || 0;
+        const nexusLimit = 3; // Free users get 3 Nexus uses per day
+
+        if (currentNexusUsage >= nexusLimit) {
+            return {
+                allowed: false,
+                error: `Daily RoCode Nexus 3 limit reached (${nexusLimit}). Upgrade to Pro for unlimited access.`,
+                upgradeUrl: '/pricing.html',
+                resetTime: 'Tomorrow at midnight'
+            };
+        }
+    }
+
     return { allowed: true };
 }
 
