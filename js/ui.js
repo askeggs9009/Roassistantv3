@@ -23,11 +23,6 @@ class UIManager {
         });
 
         modelSelector.addEventListener('change', function() {
-            if (this.value === 'rocode-studio' && (!window.authManager || !window.authManager.isLoggedIn)) {
-                this.value = uiManager.selectedModel;
-                alert('Please sign in and upgrade to Enterprise to access RoCode Studio');
-                return;
-            }
             uiManager.selectedModel = this.value;
         });
     }

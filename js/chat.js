@@ -414,7 +414,11 @@ class ChatManager {
 
     // Update usage display
     updateUsageDisplay(usageInfo) {
-        // Implementation for updating usage counters
+        // Update Nexus usage counter for free users
+        if (usageInfo && usageInfo.nexusUsage !== undefined) {
+            this.updateNexusCounter(usageInfo.nexusUsage, usageInfo.nexusLimit || 3);
+        }
+
         console.log('Usage info:', usageInfo);
     }
 
@@ -422,6 +426,35 @@ class ChatManager {
     updateSubscriptionDisplay(subscription) {
         // Implementation for updating subscription info
         console.log('Subscription info:', subscription);
+    }
+
+    // Update Nexus usage counter
+    updateNexusCounter(used, limit) {
+        const nexusCounter = document.getElementById('nexusUsageCounter');
+        if (nexusCounter) {
+            nexusCounter.textContent = `${used}/${limit}`;
+
+            // Show upgrade modal if limit reached
+            if (used >= limit) {
+                this.showUpgradeModal();
+            }
+        }
+    }
+
+    // Show upgrade modal
+    showUpgradeModal() {
+        const modal = document.getElementById('nexusUpgradeModal');
+        if (modal) {
+            modal.style.display = 'block';
+        }
+    }
+
+    // Close upgrade modal
+    closeUpgradeModal() {
+        const modal = document.getElementById('nexusUpgradeModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
     }
 
     // Display token usage for the current response
@@ -1149,6 +1182,7 @@ window.chatManager = new ChatManager();
 // Global functions for HTML onclick handlers
 window.sendMessage = () => window.chatManager.sendMessage();
 window.startNewChat = () => window.chatManager.startNewChat();
+window.closeUpgradeModal = () => window.chatManager.closeUpgradeModal();
 
 // Handle Enter key in message input
 document.addEventListener('DOMContentLoaded', function() {

@@ -504,15 +504,10 @@
                                 <div class="model-dropdown-header">Select Model</div>
                                 <div class="model-option" data-model="claude-4-sonnet" onclick="selectModel('claude-4-sonnet')">
                                     <div class="model-name">RoCode 3</div>
-                                    <div class="model-badge">Free: 10/day</div>
                                 </div>
                                 <div class="model-option premium" data-model="claude-4-opus" onclick="selectModel('claude-4-opus')">
                                     <div class="model-name">RoCode Nexus 3</div>
-                                    <div class="model-badge">Pro+</div>
-                                </div>
-                                <div class="model-option premium" data-model="rocode-studio" onclick="selectModel('rocode-studio')">
-                                    <div class="model-name">RoCode Studio</div>
-                                    <div class="model-badge">Enterprise: 50/day</div>
+                                    <div class="model-badge" id="nexusUsageCounter">0/3</div>
                                 </div>
                             </div>
                             <textarea 
@@ -1097,12 +1092,6 @@
 
         // Select a model
         function selectModel(model) {
-            // Check if user needs to be logged in for Opus 4
-            if (model === 'rocode-studio' && !isLoggedIn) {
-                alert('Please sign in and upgrade to Enterprise to access RoCode Studio');
-                return;
-            }
-
             const newModel = model;
             console.log('Model changed to:', newModel);
 
@@ -1117,8 +1106,7 @@
                 startNewChat();
 
                 // Show a message indicating the model change
-                const modelName = model === 'claude-4-opus' ? 'RoCode Nexus 3' :
-                                 model === 'rocode-studio' ? 'RoCode Studio' : 'RoCode 3';
+                const modelName = model === 'claude-4-opus' ? 'RoCode Nexus 3' : 'RoCode 3';
                 addMessage('system', `🔄 Switched to ${modelName}. Starting a new conversation.`);
             }
 
@@ -1131,8 +1119,7 @@
             const modelButton = document.getElementById('modelButton');
             if (modelButton) {
                 // Update title to show current model
-                const modelName = selectedModel === 'claude-4-opus' ? 'RoCode Nexus 3' :
-                                 selectedModel === 'rocode-studio' ? 'RoCode Studio' : 'RoCode 3';
+                const modelName = selectedModel === 'claude-4-opus' ? 'RoCode Nexus 3' : 'RoCode 3';
                 modelButton.title = `Current Model: ${modelName}`;
             }
         }
@@ -1448,6 +1435,42 @@
             color: #f85149;
         }
     </style>
+
+    <!-- Nexus Upgrade Modal -->
+    <div id="nexusUpgradeModal" class="nexus-upgrade-modal" style="display: none;">
+        <div class="nexus-upgrade-content">
+            <div class="nexus-upgrade-header">
+                <h2>Daily limit reached</h2>
+                <button class="nexus-close" onclick="closeUpgradeModal()">&times;</button>
+            </div>
+            <div class="nexus-upgrade-body">
+                <p>You've reached your daily limit for RoCode Nexus 3.</p>
+                <div class="nexus-benefits">
+                    <div class="benefit-item">
+                        <span class="checkmark">✓</span>
+                        <span>200 messages per day</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="checkmark">✓</span>
+                        <span>All AI models</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="checkmark">✓</span>
+                        <span>Priority support</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="checkmark">✓</span>
+                        <span>Advanced project features</span>
+                    </div>
+                </div>
+                <div class="nexus-upgrade-footer">
+                    <button class="nexus-upgrade-btn" onclick="window.location.href='pricing.html'">
+                        Upgrade to Pro
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>

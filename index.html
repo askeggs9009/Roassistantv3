@@ -119,6 +119,76 @@
             background: linear-gradient(90deg, #f85149, #da3633);
         }
 
+        /* Upgrade Modal Styles */
+        .upgrade-modal {
+            max-width: 500px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+        }
+
+        .upgrade-modal .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .upgrade-badge {
+            background: linear-gradient(135deg, #58a6ff, #1f6feb);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .upgrade-modal h2 {
+            color: #f0f6fc;
+            margin: 0 0 1rem 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .limit-message {
+            color: #8b949e;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .benefits-list {
+            margin: 1.5rem 0;
+        }
+
+        .benefit-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            color: #c9d1d9;
+        }
+
+        .benefit-item i {
+            color: #3fb950;
+            font-size: 0.875rem;
+            margin-top: 0.125rem;
+        }
+
+        .usage-note {
+            color: #6e7681;
+            font-size: 0.75rem;
+            font-style: italic;
+            margin-top: 1rem;
+        }
+
+        .model-badge {
+            color: #8b949e;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+        }
+
         .upgrade-prompt {
             display: none;
             position: fixed;
@@ -693,15 +763,10 @@
                                 <div class="model-dropdown-header">Select Model</div>
                                 <div class="model-option" data-model="claude-4-sonnet" onclick="selectModel('claude-4-sonnet')">
                                     <div class="model-name">RoCode 3</div>
-                                    <div class="model-badge">Free: 10/day</div>
                                 </div>
                                 <div class="model-option premium" data-model="claude-4-opus" onclick="selectModel('claude-4-opus')">
                                     <div class="model-name">RoCode Nexus 3</div>
-                                    <div class="model-badge">Pro+</div>
-                                </div>
-                                <div class="model-option premium" data-model="rocode-studio" onclick="selectModel('rocode-studio')">
-                                    <div class="model-name">RoCode Studio</div>
-                                    <div class="model-badge">Enterprise: 50/day</div>
+                                    <div class="model-badge" id="nexusUsageCounter">0/3</div>
                                 </div>
                             </div>
                             <textarea 
@@ -795,6 +860,52 @@
                         <div class="drag-icon"><i class="fas fa-folder-open"></i></div>
                         <div class="drag-text">Drop files here to upload</div>
                         <div class="drag-subtext">Images, code files, and documents</div>
+                    </div>
+                </div>
+
+                <!-- Nexus Limit Upgrade Popup -->
+                <div id="nexusUpgradeModal" class="modal" style="display: none;">
+                    <div class="modal-content upgrade-modal">
+                        <div class="modal-header">
+                            <div class="upgrade-badge">Upgrade</div>
+                            <button class="close-btn" onclick="closeUpgradeModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <h2>More Nexus with Pro and Enterprise plans</h2>
+                            <p class="limit-message">Free plans only get 3 RoCode Nexus 3 messages per day. Try again tomorrow, or upgrade now to get:</p>
+
+                            <div class="benefits-list">
+                                <div class="benefit-item">
+                                    <i class="fas fa-check"></i>
+                                    <span>More RoCode Nexus 3 usage*</span>
+                                </div>
+                                <div class="benefit-item">
+                                    <i class="fas fa-check"></i>
+                                    <span>Access to unlimited Projects to organize chats</span>
+                                </div>
+                                <div class="benefit-item">
+                                    <i class="fas fa-check"></i>
+                                    <span>Priority support and faster responses</span>
+                                </div>
+                                <div class="benefit-item">
+                                    <i class="fas fa-check"></i>
+                                    <span>Extended context for complex work</span>
+                                </div>
+                                <div class="benefit-item">
+                                    <i class="fas fa-check"></i>
+                                    <span>Advanced Roblox development features</span>
+                                </div>
+                                <div class="benefit-item">
+                                    <i class="fas fa-check"></i>
+                                    <span>Access to RoCode Studio (Enterprise)</span>
+                                </div>
+                            </div>
+
+                            <p class="usage-note">*Usage limits apply</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-primary" onclick="window.location.href='/pricing.html'">See plans</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1052,12 +1163,6 @@
 
         // Select a model
         function selectModel(model) {
-            // Check if user needs to be logged in for Opus 4
-            if (model === 'rocode-studio' && !isLoggedIn) {
-                alert('Please sign in and upgrade to Enterprise to access RoCode Studio');
-                return;
-            }
-
             const newModel = model;
             console.log('Model changed to:', newModel);
 
@@ -1072,8 +1177,7 @@
                 startNewChat();
 
                 // Show a message indicating the model change
-                const modelName = model === 'claude-4-opus' ? 'RoCode Nexus 3' :
-                                 model === 'rocode-studio' ? 'RoCode Studio' : 'RoCode 3';
+                const modelName = model === 'claude-4-opus' ? 'RoCode Nexus 3' : 'RoCode 3';
                 addMessage('system', `<i class="fas fa-sync-alt"></i> Switched to ${modelName}. Starting a new conversation.`);
             }
 
@@ -1086,8 +1190,7 @@
             const modelButton = document.getElementById('modelButton');
             if (modelButton) {
                 // Update title to show current model
-                const modelName = selectedModel === 'claude-4-opus' ? 'RoCode Nexus 3' :
-                                 selectedModel === 'rocode-studio' ? 'RoCode Studio' : 'RoCode 3';
+                const modelName = selectedModel === 'claude-4-opus' ? 'RoCode Nexus 3' : 'RoCode 3';
                 modelButton.title = `Current Model: ${modelName}`;
             }
         }
