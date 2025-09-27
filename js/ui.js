@@ -1,7 +1,7 @@
 // UI Management Module
 class UIManager {
     constructor() {
-        this.selectedModel = 'claude-sonnet-4';
+        this.selectedModel = 'claude-4-sonnet';
         this.currentView = 'chats';
     }
 
@@ -23,9 +23,9 @@ class UIManager {
         });
 
         modelSelector.addEventListener('change', function() {
-            if (this.value === 'claude-opus-4' && (!window.authManager || !window.authManager.isLoggedIn)) {
+            if (this.value === 'rocode-studio' && (!window.authManager || !window.authManager.isLoggedIn)) {
                 this.value = uiManager.selectedModel;
-                alert('Please sign in to access RoCode Nexus 3');
+                alert('Please sign in and upgrade to Enterprise to access RoCode Studio');
                 return;
             }
             uiManager.selectedModel = this.value;

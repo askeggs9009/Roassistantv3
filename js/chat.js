@@ -66,7 +66,7 @@ class ChatManager {
             // Prepare request body
             const requestBody = {
                 prompt: message,
-                model: this.getSelectedModel() || 'claude-sonnet-4'
+                model: this.getSelectedModel() || 'claude-4-sonnet'
             };
 
             // Add project context if available
@@ -101,12 +101,17 @@ class ChatManager {
             
             if (response.ok) {
                 this.addMessage('assistant', data.reply);
-                
+
+                // Show token usage for this response
+                if (data.tokenUsage) {
+                    this.displayTokenUsage(data.tokenUsage);
+                }
+
                 // Update usage info if provided
                 if (data.usageInfo) {
                     this.updateUsageDisplay(data.usageInfo);
                 }
-                
+
                 // Update subscription info if provided
                 if (data.subscription) {
                     this.updateSubscriptionDisplay(data.subscription);
@@ -404,7 +409,7 @@ class ChatManager {
     // Get selected model
     getSelectedModel() {
         const modelSelect = document.getElementById('modelSelector');
-        return modelSelect ? modelSelect.value : 'claude-sonnet-4';
+        return modelSelect ? modelSelect.value : 'claude-4-sonnet';
     }
 
     // Update usage display
@@ -417,6 +422,203 @@ class ChatManager {
     updateSubscriptionDisplay(subscription) {
         // Implementation for updating subscription info
         console.log('Subscription info:', subscription);
+    }
+
+    // Display token usage for the current response
+    displayTokenUsage(tokenUsage) {
+        const messagesContainer = document.getElementById('messagesContainer');
+        if (!messagesContainer || !tokenUsage) return;
+
+        // Create token usage indicator
+        const tokenDiv = document.createElement('div');
+        tokenDiv.className = 'token-usage-indicator';
+        tokenDiv.innerHTML = `
+            <div class="token-info">
+                <span class="token-label">Tokens Used:</span>
+                <span class="token-count">
+                    <span class="input-tokens" title="Input tokens">${tokenUsage.inputTokens || 0}</span>
+                    <span class="token-separator">→</span>
+                    <span class="output-tokens" title="Output tokens">${tokenUsage.outputTokens || 0}</span>
+                    <span class="total-tokens" title="Total tokens">(${tokenUsage.totalTokens || 0} total)</span>
+                </span>
+            </div>
+        `;
+
+        // Add CSS styles if not already present
+        if (!document.getElementById('tokenUsageStyles')) {
+            const style = document.createElement('style');
+            style.id = 'tokenUsageStyles';
+            style.textContent = `
+                .token-usage-indicator {
+                    margin: 10px 20px;
+                    padding: 8px 12px;
+                    background: rgba(255, 255, 255, 0.05);
+                    border-radius: 6px;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    font-size: 12px;
+                    color: #999;
+                }
+                .token-info {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+                .token-label {
+                    font-weight: 500;
+                    color: #aaa;
+                }
+                .token-count {
+                    display: flex;
+                    align-items: center;
+                    gap: 5px;
+                }
+                .input-tokens {
+                    color: #4CAF50;
+                    font-weight: 600;
+                }
+                .output-tokens {
+                    color: #2196F3;
+                    font-weight: 600;
+                }
+                .token-separator {
+                    color: #666;
+                }
+                .total-tokens {
+                    color: #999;
+                    margin-left: 5px;
+                    font-size: 11px;
+                }
+                .token-usage-dashboard {
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    background: rgba(0, 0, 0, 0.9);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    border-radius: 8px;
+                    padding: 15px;
+                    min-width: 200px;
+                    z-index: 1000;
+                    backdrop-filter: blur(10px);
+                }
+                .token-usage-dashboard h4 {
+                    margin: 0 0 10px 0;
+                    color: #fff;
+                    font-size: 14px;
+                }
+                .token-stat {
+                    display: flex;
+                    justify-content: space-between;
+                    margin: 5px 0;
+                    font-size: 12px;
+                }
+                .token-stat-label {
+                    color: #aaa;
+                }
+                .token-stat-value {
+                    color: #fff;
+                    font-weight: 600;
+                }
+                .token-progress {
+                    width: 100%;
+                    height: 4px;
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 2px;
+                    margin-top: 10px;
+                    overflow: hidden;
+                }
+                .token-progress-fill {
+                    height: 100%;
+                    background: linear-gradient(90deg, #4CAF50, #2196F3);
+                    border-radius: 2px;
+                    transition: width 0.3s ease;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        messagesContainer.appendChild(tokenDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        // Update global token counter if exists
+        this.updateGlobalTokenCounter();
+    }
+
+    // Update global token counter
+    async updateGlobalTokenCounter() {
+        try {
+            const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+            if (!token) return;
+
+            const response = await fetch(`${this.API_BASE_URL}/api/token-usage`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.displayTokenDashboard(data);
+            }
+        } catch (error) {
+            console.error('Error fetching token usage:', error);
+        }
+    }
+
+    // Display token usage dashboard
+    displayTokenDashboard(data) {
+        let dashboard = document.getElementById('tokenUsageDashboard');
+
+        if (!dashboard) {
+            dashboard = document.createElement('div');
+            dashboard.id = 'tokenUsageDashboard';
+            dashboard.className = 'token-usage-dashboard';
+            document.body.appendChild(dashboard);
+        }
+
+        const usage = data.usage;
+        const percentage = usage.percentage || 0;
+        const dailyLimit = usage.dailyLimit === -1 ? '∞' : usage.dailyLimit.toLocaleString();
+
+        dashboard.innerHTML = `
+            <h4>Token Usage Today</h4>
+            <div class="token-stat">
+                <span class="token-stat-label">Daily Usage:</span>
+                <span class="token-stat-value">${usage.daily.toLocaleString()} / ${dailyLimit}</span>
+            </div>
+            <div class="token-stat">
+                <span class="token-stat-label">Total All-Time:</span>
+                <span class="token-stat-value">${usage.total.toLocaleString()}</span>
+            </div>
+            ${usage.dailyLimit !== -1 ? `
+                <div class="token-progress">
+                    <div class="token-progress-fill" style="width: ${Math.min(percentage, 100)}%"></div>
+                </div>
+                <div class="token-stat" style="margin-top: 5px;">
+                    <span class="token-stat-label">Remaining:</span>
+                    <span class="token-stat-value">${Math.max(0, usage.dailyLimit - usage.daily).toLocaleString()}</span>
+                </div>
+            ` : ''}
+            ${data.costEstimate ? `
+                <div class="token-stat" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <span class="token-stat-label">Est. Cost Today:</span>
+                    <span class="token-stat-value">$${data.costEstimate.daily.estimated}</span>
+                </div>
+            ` : ''}
+        `;
+
+        // Auto-hide dashboard after 10 seconds, show again on hover
+        setTimeout(() => {
+            dashboard.style.opacity = '0.3';
+        }, 10000);
+
+        dashboard.onmouseenter = () => {
+            dashboard.style.opacity = '1';
+        };
+
+        dashboard.onmouseleave = () => {
+            dashboard.style.opacity = '0.3';
+        };
     }
 
     // Clear attached files

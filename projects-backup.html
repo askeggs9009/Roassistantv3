@@ -351,8 +351,9 @@
             </div>
             
             <select class="model-selector" id="modelSelector">
-                <option value="claude-sonnet-4">RoCode Core 3</option>
-                <option value="claude-opus-4">RoCode Nexus 3 (Premium)</option>
+                <option value="claude-4-sonnet" selected>RoCode 3 (Free - 10/day, Pro - 200/day)</option>
+                <option value="claude-4-opus">RoCode Nexus 3 (Pro - 200/day, Enterprise - 1000/day)</option>
+                <option value="rocode-studio">RoCode Studio (Enterprise - 50/day)</option>
             </select>
         </div>
 
@@ -695,7 +696,7 @@
                 const options = modelSelector.querySelectorAll('option');
                 
                 options.forEach(option => {
-                    if (option.value === 'claude-opus-4') {
+                    if (option.value === 'claude-4-opus') {
                         option.disabled = !isLoggedIn;
                         if (!isLoggedIn && !option.textContent.includes('Sign in required')) {
                             option.textContent = 'RoCode Nexus 3 (Premium) - Sign in required';

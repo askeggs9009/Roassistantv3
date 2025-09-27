@@ -691,13 +691,17 @@
                             <!-- Model Selector Dropdown -->
                             <div class="model-dropdown" id="modelDropdown" style="display: none;">
                                 <div class="model-dropdown-header">Select Model</div>
-                                <div class="model-option" data-model="claude-sonnet-4" onclick="selectModel('claude-sonnet-4')">
-                                    <div class="model-name">RoCode Core 3</div>
-                                    <div class="model-badge">Free</div>
+                                <div class="model-option" data-model="claude-4-sonnet" onclick="selectModel('claude-4-sonnet')">
+                                    <div class="model-name">RoCode 3</div>
+                                    <div class="model-badge">Free: 10/day</div>
                                 </div>
-                                <div class="model-option premium" data-model="claude-opus-4" onclick="selectModel('claude-opus-4')">
+                                <div class="model-option premium" data-model="claude-4-opus" onclick="selectModel('claude-4-opus')">
                                     <div class="model-name">RoCode Nexus 3</div>
-                                    <div class="model-badge">Premium</div>
+                                    <div class="model-badge">Pro+</div>
+                                </div>
+                                <div class="model-option premium" data-model="rocode-studio" onclick="selectModel('rocode-studio')">
+                                    <div class="model-name">RoCode Studio</div>
+                                    <div class="model-badge">Enterprise: 50/day</div>
                                 </div>
                             </div>
                             <textarea 
@@ -841,7 +845,7 @@
         let isLoggedIn = false;
         let authToken = null;
         let currentUser = null;
-        let selectedModel = 'claude-sonnet-4';
+        let selectedModel = 'claude-4-sonnet';
         let currentView = 'chats';
         let attachedFiles = [];
 
@@ -1049,8 +1053,8 @@
         // Select a model
         function selectModel(model) {
             // Check if user needs to be logged in for Opus 4
-            if (model === 'claude-opus-4' && !isLoggedIn) {
-                alert('Please sign in to access RoCode Nexus 3');
+            if (model === 'rocode-studio' && !isLoggedIn) {
+                alert('Please sign in and upgrade to Enterprise to access RoCode Studio');
                 return;
             }
 
@@ -1068,7 +1072,8 @@
                 startNewChat();
 
                 // Show a message indicating the model change
-                const modelName = model === 'claude-opus-4' ? 'RoCode Nexus 3' : 'RoCode Core 3';
+                const modelName = model === 'claude-4-opus' ? 'RoCode Nexus 3' :
+                                 model === 'rocode-studio' ? 'RoCode Studio' : 'RoCode 3';
                 addMessage('system', `<i class="fas fa-sync-alt"></i> Switched to ${modelName}. Starting a new conversation.`);
             }
 
@@ -1081,7 +1086,8 @@
             const modelButton = document.getElementById('modelButton');
             if (modelButton) {
                 // Update title to show current model
-                const modelName = selectedModel === 'claude-opus-4' ? 'RoCode Nexus 3' : 'RoCode Core 3';
+                const modelName = selectedModel === 'claude-4-opus' ? 'RoCode Nexus 3' :
+                                 selectedModel === 'rocode-studio' ? 'RoCode Studio' : 'RoCode 3';
                 modelButton.title = `Current Model: ${modelName}`;
             }
         }

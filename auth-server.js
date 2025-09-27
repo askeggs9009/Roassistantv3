@@ -239,7 +239,7 @@ const SUBSCRIPTION_PLANS = {
         name: 'Free',
         limits: {
             daily_messages: 10,
-            models: ['gpt-4.1'],
+            models: ['claude-4-sonnet'],  // Free: Only RoCode 3, limited
             max_file_size: 1048576, // 1MB
             scripts_storage: 5,
             projects: 0,
@@ -250,12 +250,13 @@ const SUBSCRIPTION_PLANS = {
     pro: {
         name: 'Pro',
         limits: {
-            daily_messages: 500,
-            models: ['gpt-4o-mini', 'gpt-4.1', 'claude-3-haiku'],
+            daily_messages: 200,  // Pro: 200 messages/day = ~$4-6 cost for 70%+ profit
+            models: ['claude-4-sonnet', 'claude-4-opus'],
             max_file_size: 10485760, // 10MB
             scripts_storage: -1, // unlimited
             projects: 5,
-            support: 'email'
+            support: 'email',
+            daily_tokens: 150000  // ~150k tokens/day = $3-4.50 cost
         },
         stripe_price_ids: {
             monthly: process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
@@ -266,12 +267,14 @@ const SUBSCRIPTION_PLANS = {
     enterprise: {
         name: 'Enterprise',
         limits: {
-            daily_messages: -1, // unlimited
-            models: ['gpt-4o-mini', 'gpt-4.1', 'gpt-5', 'claude-3-haiku', 'claude-3-sonnet', 'claude-3-opus'],
+            daily_messages: 1000,  // Enterprise: 1000 messages/day = ~$15-20 cost for 60%+ profit
+            models: ['claude-4-sonnet', 'claude-4-opus', 'rocode-studio'],
             max_file_size: 52428800, // 50MB
             scripts_storage: -1, // unlimited
             projects: -1, // unlimited
-            support: 'priority'
+            support: 'priority',
+            daily_tokens: 600000,  // ~600k tokens/day = $12-18 cost
+            daily_studio: 50  // RoCode Studio: 50 messages/day = $10-15 cost
         },
         stripe_price_ids: {
             monthly: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID,
@@ -285,6 +288,8 @@ const SUBSCRIPTION_PLANS = {
 const userUsage = new Map();
 const guestUsage = new Map();
 const dailyUsage = new Map();
+const dailyTokenUsage = new Map();  // Track daily token usage
+const dailyOpusUsage = new Map();  // Track daily Opus usage for free users
 const pendingVerifications = new Map();
 
 async function getUserPlan(userId) {
@@ -298,7 +303,9 @@ async function getUserPlan(userId) {
 // Reset daily usage at midnight
 function resetDailyUsage() {
     dailyUsage.clear();
-    console.log('[USAGE] Daily usage reset');
+    dailyTokenUsage.clear();
+    dailyOpusUsage.clear();
+    console.log('[USAGE] Daily usage, token counts, and Opus usage reset');
 }
 
 // Schedule daily reset (runs at midnight)
@@ -365,23 +372,35 @@ const USAGE_LIMITS = {
         cost: 3.00,
         description: "Premium AI model"
     },
-    "claude-3-haiku": {
-        dailyLimit: 5,
-        hourlyLimit: 2,
-        cost: 1.50,
-        description: "Fast Claude model"
+    "claude-3-5-haiku": {
+        dailyLimit: 10,
+        hourlyLimit: 5,
+        cost: 0.25,
+        description: "Fast and efficient Claude 3.5 model"
     },
-    "claude-3-sonnet": {
-        dailyLimit: 3,
-        hourlyLimit: 1,
-        cost: 2.50,
-        description: "Balanced Claude model"
+    "claude-3-7-sonnet": {
+        dailyLimit: 8,
+        hourlyLimit: 3,
+        cost: 3.00,
+        description: "Advanced Claude 3.7 model with extended thinking"
     },
-    "claude-3-opus": {
-        dailyLimit: 2,
+    "claude-4-sonnet": {
+        dailyLimit: 10,  // Free users: 10 per day
+        hourlyLimit: 3,
+        cost: 3.00,
+        description: "RoCode 3 - Intelligent Roblox development assistant"
+    },
+    "claude-4-opus": {
+        dailyLimit: 3,  // Free users: none, Pro: handled by subscription
         hourlyLimit: 1,
-        cost: 4.00,
-        description: "Most capable Claude model"
+        cost: 15.00,
+        description: "RoCode Nexus 3 - Most capable Roblox development assistant"
+    },
+    "rocode-studio": {
+        dailyLimit: 1,  // Enterprise only
+        hourlyLimit: 1,
+        cost: 25.00,
+        description: "RoCode Studio - Most advanced AI development assistant"
     }
 };
 
@@ -465,16 +484,82 @@ function canUserSendMessage(user) {
     return { allowed: true };
 }
 
+// Legacy function - kept for compatibility but not used
+
 // Increment user's daily usage
 function incrementUserUsage(user) {
     if (!user) return;
-    
+
     const today = new Date().toISOString().split('T')[0];
     const usageKey = `${user.id}_${today}`;
     const currentUsage = dailyUsage.get(usageKey) || 0;
     dailyUsage.set(usageKey, currentUsage + 1);
-    
+
     console.log(`[USAGE] User ${user.email} usage: ${currentUsage + 1}`);
+}
+
+// Increment free user's Opus usage (now used for Studio tracking too)
+function incrementSpecialUsage(user, model) {
+    if (!user) return;
+
+    const today = new Date().toISOString().split('T')[0];
+
+    if (model === 'rocode-studio') {
+        const studioKey = `studio_${user.id}_${today}`;
+        const currentStudioUsage = dailyOpusUsage.get(studioKey) || 0;
+        dailyOpusUsage.set(studioKey, currentStudioUsage + 1);
+        console.log(`[ROCODE STUDIO] User ${user.email} RoCode Studio usage: ${currentStudioUsage + 1}`);
+    }
+}
+
+// Check if authenticated user's usage is within limits
+function checkAuthenticatedUserLimits(user, subscription, model) {
+    if (!user) return { allowed: false, error: 'User not found' };
+
+    const today = new Date().toISOString().split('T')[0];
+    const usageKey = `${user.id}_${today}`;
+    const currentUsage = dailyUsage.get(usageKey) || 0;
+
+    // Check daily message limit
+    if (currentUsage >= subscription.limits.daily_messages) {
+        return {
+            allowed: false,
+            error: `Daily message limit reached (${subscription.limits.daily_messages}). Resets at midnight.`,
+            upgradeUrl: subscription.plan === 'free' ? '/pricing.html' : null,
+            resetTime: 'Tomorrow at midnight'
+        };
+    }
+
+    // Check token limits if defined
+    if (subscription.limits.daily_tokens) {
+        const tokenUsageKey = `tokens_${user.id}_${today}`;
+        const currentTokenUsage = dailyTokenUsage.get(tokenUsageKey) || 0;
+
+        if (currentTokenUsage >= subscription.limits.daily_tokens) {
+            return {
+                allowed: false,
+                error: `Daily token limit reached (${subscription.limits.daily_tokens.toLocaleString()}). Resets at midnight.`,
+                upgradeUrl: subscription.plan !== 'enterprise' ? '/pricing.html' : null,
+                resetTime: 'Tomorrow at midnight'
+            };
+        }
+    }
+
+    // Check RoCode Studio specific limits
+    if (model === 'rocode-studio' && subscription.limits.daily_studio) {
+        const studioUsageKey = `studio_${user.id}_${today}`;
+        const currentStudioUsage = dailyOpusUsage.get(studioUsageKey) || 0;
+
+        if (currentStudioUsage >= subscription.limits.daily_studio) {
+            return {
+                allowed: false,
+                error: `Daily RoCode Studio limit reached (${subscription.limits.daily_studio}). Resets at midnight.`,
+                resetTime: 'Tomorrow at midnight'
+            };
+        }
+    }
+
+    return { allowed: true };
 }
 
 function checkUsageLimit(userIdentifier, model) {
@@ -578,18 +663,28 @@ const MODEL_CONFIGS = {
         requiresPlan: 'enterprise',
         provider: 'openai'
     },
-    "claude-3-haiku": {
-        model: "claude-3-haiku-20240307",
+    "claude-3-5-haiku": {
+        model: "claude-3-5-haiku-20241022",
+        requiresPlan: 'free',
+        provider: 'anthropic'
+    },
+    "claude-3-7-sonnet": {
+        model: "claude-3-7-sonnet-20250219",
         requiresPlan: 'pro',
         provider: 'anthropic'
     },
-    "claude-3-sonnet": {
-        model: "claude-3-sonnet-20240229",
-        requiresPlan: 'enterprise',
+    "claude-4-sonnet": {
+        model: "claude-sonnet-4-20250514",
+        requiresPlan: 'free',
         provider: 'anthropic'
     },
-    "claude-3-opus": {
-        model: "claude-3-opus-20240229",
+    "claude-4-opus": {
+        model: "claude-opus-4-20250514",
+        requiresPlan: 'pro',  // Pro and Enterprise only
+        provider: 'anthropic'
+    },
+    "rocode-studio": {
+        model: "claude-opus-4-1-20250805",
         requiresPlan: 'enterprise',
         provider: 'anthropic'
     }
@@ -598,12 +693,16 @@ const MODEL_CONFIGS = {
 function getSystemPrompt(modelName) {
     let modelIdentity = '';
 
-    if (modelName.startsWith('claude-3-haiku')) {
-        modelIdentity = 'I am Claude 3 Haiku, Anthropic\'s fast and efficient AI model.';
-    } else if (modelName.startsWith('claude-3-sonnet')) {
-        modelIdentity = 'I am Claude 3 Sonnet, Anthropic\'s balanced AI model.';
-    } else if (modelName.startsWith('claude-3-opus')) {
-        modelIdentity = 'I am Claude 3 Opus, Anthropic\'s most capable AI model.';
+    if (modelName.startsWith('claude-3-5-haiku')) {
+        modelIdentity = 'I am Claude 3.5 Haiku, Anthropic\'s fast and efficient AI model.';
+    } else if (modelName.startsWith('claude-3-7-sonnet')) {
+        modelIdentity = 'I am Claude 3.7 Sonnet, Anthropic\'s advanced AI model with extended thinking capabilities.';
+    } else if (modelName.startsWith('claude-4-sonnet')) {
+        modelIdentity = 'I am RoCode 3, your intelligent Roblox development assistant powered by Claude 4 Sonnet.';
+    } else if (modelName.startsWith('claude-4-opus')) {
+        modelIdentity = 'I am RoCode Nexus 3, your most capable Roblox development assistant powered by Claude 4 Opus.';
+    } else if (modelName.startsWith('rocode-studio')) {
+        modelIdentity = 'I am RoCode Studio, powered by Claude 4.1 Opus - the most advanced AI development assistant for Roblox creators.';
     } else if (modelName === 'gpt-4o-mini') {
         modelIdentity = 'I am GPT-4o mini, OpenAI\'s efficient language model.';
     } else if (modelName === 'gpt-4.1' || modelName === 'gpt-4') {
@@ -1465,13 +1564,26 @@ app.get("/api/user-subscription", authenticateToken, async (req, res) => {
         const usageKey = `${user.id}_${today}`;
         const usage = dailyUsage.get(usageKey) || 0;
         
+        // Get token usage
+        const tokenUsageKey = `tokens_${user.id}_${today}`;
+        const tokenUsage = dailyTokenUsage.get(tokenUsageKey) || 0;
+
+        // Get Studio usage for enterprise users
+        const studioUsageKey = `studio_${user.id}_${today}`;
+        const studioUsage = dailyOpusUsage.get(studioUsageKey) || 0;
+
         res.json({
             plan: subscription.plan,
             status: subscription.status,
             limits: plan.limits,
             usage: {
                 daily_messages: usage,
-                daily_limit: plan.limits.daily_messages
+                daily_limit: plan.limits.daily_messages,
+                daily_tokens: tokenUsage,
+                daily_token_limit: plan.limits.daily_tokens || -1,
+                total_tokens: user.totalTokens || 0,
+                daily_studio: studioUsage,
+                daily_studio_limit: plan.limits.daily_studio || 0
             },
             currentPeriodEnd: subscription.currentPeriodEnd,
             cancelAtPeriodEnd: subscription.cancelAtPeriodEnd
@@ -1481,6 +1593,112 @@ app.get("/api/user-subscription", authenticateToken, async (req, res) => {
         res.status(500).json({ error: 'Failed to get subscription status' });
     }
 });
+
+// Get detailed token usage statistics
+app.get("/api/token-usage", authenticateToken, async (req, res) => {
+    try {
+        const user = await DatabaseManager.findUserByEmail(req.user.email);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const today = new Date().toISOString().split('T')[0];
+        const tokenUsageKey = `tokens_${user.id}_${today}`;
+        const dailyTokens = dailyTokenUsage.get(tokenUsageKey) || 0;
+
+        // Get recent chat logs to calculate token usage by model
+        const recentChats = await DatabaseManager.getChatLogs(
+            { userEmail: user.email },
+            { page: 1, limit: 100 }
+        );
+
+        // Calculate token usage by model for today
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const tokensByModel = {};
+        let todayTotalTokens = 0;
+
+        if (recentChats && recentChats.logs) {
+            recentChats.logs.forEach(chat => {
+                if (new Date(chat.timestamp) >= todayStart) {
+                    const model = chat.model || 'unknown';
+                    if (!tokensByModel[model]) {
+                        tokensByModel[model] = {
+                            count: 0,
+                            inputTokens: 0,
+                            outputTokens: 0,
+                            totalTokens: 0
+                        };
+                    }
+                    tokensByModel[model].count++;
+                    tokensByModel[model].inputTokens += chat.inputTokens || 0;
+                    tokensByModel[model].outputTokens += chat.outputTokens || 0;
+                    tokensByModel[model].totalTokens += chat.tokenCount || 0;
+                    todayTotalTokens += chat.tokenCount || 0;
+                }
+            });
+        }
+
+        // Get subscription plan token limits (if any)
+        const subscription = user.subscription || { plan: 'free' };
+        const plan = SUBSCRIPTION_PLANS[subscription.plan] || SUBSCRIPTION_PLANS.free;
+
+        // You can define token limits per plan if needed
+        const tokenLimits = {
+            free: 10000,      // 10k tokens per day
+            pro: 100000,      // 100k tokens per day
+            enterprise: -1    // Unlimited
+        };
+
+        const dailyTokenLimit = tokenLimits[subscription.plan] || tokenLimits.free;
+
+        res.json({
+            usage: {
+                daily: dailyTokens,
+                dailyByModel: tokensByModel,
+                total: user.totalTokens || 0,
+                dailyLimit: dailyTokenLimit,
+                percentage: dailyTokenLimit === -1 ? 0 : Math.round((dailyTokens / dailyTokenLimit) * 100)
+            },
+            subscription: {
+                plan: subscription.plan,
+                status: subscription.status
+            },
+            costEstimate: {
+                daily: calculateTokenCost(dailyTokens, subscription.plan),
+                total: calculateTokenCost(user.totalTokens || 0, subscription.plan)
+            }
+        });
+    } catch (error) {
+        console.error('[ERROR] Failed to get token usage:', error);
+        res.status(500).json({ error: 'Failed to get token usage statistics' });
+    }
+});
+
+// Helper function to calculate estimated cost
+function calculateTokenCost(tokens, plan) {
+    // Rough cost estimates per 1M tokens (you can adjust these)
+    const costPerMillion = {
+        'gpt-4': 30.00,
+        'gpt-3.5-turbo': 1.50,
+        'claude-3-5-haiku': 0.25,
+        'claude-3-7-sonnet': 3.00,
+        'claude-4-sonnet': 5.00,
+        'claude-4-opus': 15.00,
+        'rocode-studio': 25.00
+    };
+
+    // For simplicity, using an average cost
+    const avgCostPerMillion = 5.00;
+    const cost = (tokens / 1000000) * avgCostPerMillion;
+
+    return {
+        estimated: cost.toFixed(4),
+        currency: 'USD',
+        note: plan === 'enterprise' ? 'Included in plan' : 'Estimated cost'
+    };
+}
 
 // Manual Subscription Verification and Sync
 app.post("/api/verify-subscription", authenticateToken, async (req, res) => {
@@ -2615,6 +2833,17 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
                     upgradeUrl: "/pricing.html"
                 });
             }
+
+            // Check comprehensive usage limits
+            const limitCheck = checkAuthenticatedUserLimits(user, subscription, model);
+            if (!limitCheck.allowed) {
+                return res.status(403).json({
+                    error: limitCheck.error,
+                    upgradeUrl: limitCheck.upgradeUrl || "/pricing.html",
+                    resetTime: limitCheck.resetTime,
+                    subscription: subscription
+                });
+            }
         }
 
         const config = MODEL_CONFIGS[model];
@@ -2629,6 +2858,10 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
         console.log(`[DEBUG] Model: ${model}, Provider: ${config.provider}`);
         console.log(`[DEBUG] System prompt starts with: ${systemPrompt.substring(0, 100)}...`);
 
+        let inputTokens = 0;
+        let outputTokens = 0;
+        let totalTokens = 0;
+
         if (config.provider === 'anthropic') {
             // Use Claude/Anthropic API
             response = await anthropic.messages.create({
@@ -2641,6 +2874,14 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
                 ]
             });
             reply = response.content[0].text;
+
+            // Extract token usage from Anthropic response
+            if (response.usage) {
+                inputTokens = response.usage.input_tokens || 0;
+                outputTokens = response.usage.output_tokens || 0;
+                totalTokens = inputTokens + outputTokens;
+                console.log(`[TOKENS] Anthropic - Input: ${inputTokens}, Output: ${outputTokens}, Total: ${totalTokens}`);
+            }
         } else {
             // Use OpenAI API
             response = await openai.chat.completions.create({
@@ -2653,6 +2894,14 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
                 temperature: 0.7
             });
             reply = response.choices[0].message.content;
+
+            // Extract token usage from OpenAI response
+            if (response.usage) {
+                inputTokens = response.usage.prompt_tokens || 0;
+                outputTokens = response.usage.completion_tokens || 0;
+                totalTokens = response.usage.total_tokens || 0;
+                console.log(`[TOKENS] OpenAI - Input: ${inputTokens}, Output: ${outputTokens}, Total: ${totalTokens}`);
+            }
         }
 
         const userIdentifier = getUserIdentifier(req);
@@ -2667,7 +2916,9 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
                 message: prompt,
                 response: reply,
                 model: model,
-                tokenCount: reply.length, // Approximate token count
+                tokenCount: totalTokens || Math.ceil(reply.length / 4), // Use actual tokens or approximate
+                inputTokens: inputTokens,
+                outputTokens: outputTokens,
                 responseTime: Date.now() - startTime,
                 timestamp: new Date(),
                 ip: req.ip,
@@ -2692,7 +2943,12 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
         let responseData = {
             reply: reply,
             model: model,
-            provider: config.provider
+            provider: config.provider,
+            tokenUsage: {
+                inputTokens: inputTokens,
+                outputTokens: outputTokens,
+                totalTokens: totalTokens
+            }
         };
 
         if (isAuthenticated) {
@@ -2700,11 +2956,25 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             const user = await DatabaseManager.findUserByEmail(req.user.email);
             incrementUserUsage(user);
 
-            // Update user's total messages count
+            // Increment special usage for specific models
+            if (model === 'rocode-studio') {
+                incrementSpecialUsage(user, model);
+            }
+
+            // Update user's total messages and token count
             await DatabaseManager.updateUser(req.user.email, {
-                $inc: { totalMessages: 1 },
+                $inc: {
+                    totalMessages: 1,
+                    totalTokens: totalTokens
+                },
                 lastActive: new Date()
             });
+
+            // Track daily token usage
+            const today = new Date().toISOString().split('T')[0];
+            const tokenUsageKey = `tokens_${user.id}_${today}`;
+            const currentTokenUsage = dailyTokenUsage.get(tokenUsageKey) || 0;
+            dailyTokenUsage.set(tokenUsageKey, currentTokenUsage + totalTokens);
 
             const subscription = getUserSubscription(user);
             responseData.subscription = {

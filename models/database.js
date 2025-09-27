@@ -103,6 +103,10 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    totalTokens: {
+        type: Number,
+        default: 0
+    },
     recaptchaScores: [{
         score: Number,
         action: String,
@@ -294,6 +298,14 @@ const chatLogSchema = new mongoose.Schema({
         required: true
     },
     tokenCount: {
+        type: Number,
+        default: 0
+    },
+    inputTokens: {
+        type: Number,
+        default: 0
+    },
+    outputTokens: {
         type: Number,
         default: 0
     },
