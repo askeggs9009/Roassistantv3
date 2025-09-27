@@ -2959,6 +2959,7 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
         if (isAuthenticated) {
             // Increment user usage for authenticated users
             const user = await DatabaseManager.findUserByEmail(req.user.email);
+            const subscription = getUserSubscription(user);
             incrementUserUsage(user);
 
             // Increment special usage for specific models
