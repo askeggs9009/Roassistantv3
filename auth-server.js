@@ -2865,6 +2865,16 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
                     subscription: subscription
                 });
             }
+
+            // Increment special usage BEFORE API call for authenticated users
+            if (model === 'rocode-studio') {
+                incrementSpecialUsage(user, model);
+            }
+
+            // Track Nexus usage for free users BEFORE API call
+            if (subscription.plan === 'free' && model === 'claude-4-opus') {
+                incrementSpecialUsage(user, model);
+            }
         }
 
         const config = MODEL_CONFIGS[model];
@@ -2978,15 +2988,8 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             const subscription = getUserSubscription(user);
             incrementUserUsage(user);
 
-            // Increment special usage for specific models
-            if (model === 'rocode-studio') {
-                incrementSpecialUsage(user, model);
-            }
-
-            // Track Nexus usage for free users
-            if (subscription.plan === 'free' && model === 'claude-4-opus') {
-                incrementSpecialUsage(user, model);
-            }
+            // Note: Special usage (studio/nexus) is now incremented BEFORE API call
+            // to ensure proper limit enforcement
 
             // Update user's total messages and token count
             await DatabaseManager.updateUser(req.user.email, {
