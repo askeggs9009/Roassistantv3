@@ -3009,9 +3009,9 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
         // Add nexusUsage for free users with RoCode Nexus 3 (after increment)
         if (isAuthenticated) {
             const user = await DatabaseManager.findUserByEmail(req.user.email);
-            const subscription = getUserSubscription(user);
+            const userSubscription = getUserSubscription(user);
 
-            if (subscription.plan === 'free' && model === 'claude-4-opus') {
+            if (userSubscription.plan === 'free' && model === 'claude-4-opus') {
                 const today = new Date().toISOString().split('T')[0];
                 const nexusUsageKey = `nexus_${user.id}_${today}`;
                 // Get updated usage after increment
