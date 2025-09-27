@@ -776,6 +776,13 @@
                                 <span class="model-usage" id="currentModelUsage" style="display: none;">0/3</span>
                             </div>
 
+                            <!-- Token Estimation Display -->
+                            <div class="token-estimation" id="tokenEstimation" style="display: none;">
+                                <span class="token-icon">🔢</span>
+                                <span class="token-text" id="tokenEstimationText">~0 tokens</span>
+                                <span class="token-warning" id="tokenWarning" style="display: none;">⚠️ Exceeds daily limit</span>
+                            </div>
+
                             <textarea
                                 class="input-area"
                                 id="messageInput"
@@ -1512,7 +1519,100 @@
             // Initialize model button and indicator
             updateModelButton();
             updateModelIndicator();
+
+            // Setup token estimation for message input
+            setupTokenEstimation();
         });
+
+        // Token estimation functionality
+        let estimationTimeout;
+        let lastEstimation = null;
+
+        function setupTokenEstimation() {
+            const messageInput = document.getElementById('messageInput');
+            if (messageInput) {
+                messageInput.addEventListener('input', debounceTokenEstimation);
+                messageInput.addEventListener('keyup', debounceTokenEstimation);
+            }
+        }
+
+        function debounceTokenEstimation() {
+            clearTimeout(estimationTimeout);
+            estimationTimeout = setTimeout(() => {
+                updateTokenEstimation();
+            }, 500); // Wait 500ms after user stops typing
+        }
+
+        async function updateTokenEstimation() {
+            const messageInput = document.getElementById('messageInput');
+            const tokenEstimation = document.getElementById('tokenEstimation');
+            const tokenEstimationText = document.getElementById('tokenEstimationText');
+            const tokenWarning = document.getElementById('tokenWarning');
+
+            if (!messageInput || !tokenEstimation) return;
+
+            const prompt = messageInput.value.trim();
+
+            if (prompt.length === 0) {
+                tokenEstimation.style.display = 'none';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/estimate-tokens`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': authToken ? `Bearer ${authToken}` : ''
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        model: selectedModel
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    lastEstimation = data.estimation;
+
+                    // Show estimation
+                    tokenEstimation.style.display = 'flex';
+                    tokenEstimationText.textContent = `~${data.estimation.estimatedTotal.toLocaleString()} tokens`;
+
+                    // Reset classes
+                    tokenEstimation.classList.remove('warning', 'error');
+                    tokenWarning.style.display = 'none';
+
+                    // Check for warnings if user is authenticated and has limits
+                    if (data.userContext && data.userContext.wouldExceedLimit) {
+                        tokenEstimation.classList.add('error');
+                        tokenWarning.style.display = 'inline';
+                        tokenWarning.textContent = '⚠️ Exceeds daily limit';
+                    } else if (data.userContext && data.userContext.remainingTokens < data.estimation.estimatedTotal * 2) {
+                        tokenEstimation.classList.add('warning');
+                    }
+
+                } else {
+                    console.error('Token estimation failed:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Token estimation error:', error);
+            }
+        }
+
+        // Update the chat manager to show estimation results
+        if (window.chatManager) {
+            const originalUpdateUsageDisplay = window.chatManager.updateUsageDisplay;
+            window.chatManager.updateUsageDisplay = function(usageInfo) {
+                originalUpdateUsageDisplay.call(this, usageInfo);
+
+                // Log estimation accuracy if available
+                if (usageInfo && usageInfo.tokenEstimation && lastEstimation) {
+                    console.log(`[TOKEN ESTIMATION] Accuracy: ${usageInfo.tokenEstimation.actualAccuracy}% (estimated: ${lastEstimation.estimatedTotal}, actual: ${usageInfo.tokenUsage.totalTokens})`);
+                }
+            };
+        }
+
     </script>
 
     <!-- Content Ad Template for Chat -->

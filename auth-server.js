@@ -747,6 +747,61 @@ When providing code, always use proper Luau syntax and follow Roblox scripting b
 Be helpful, clear, and provide working examples when possible.`;
 }
 
+// Token estimation function using Anthropic's count_tokens API
+async function estimateTokenUsage(model, systemPrompt, userMessage) {
+    try {
+        const config = MODEL_CONFIGS[model];
+        if (!config) {
+            throw new Error('Invalid model');
+        }
+
+        if (config.provider === 'anthropic') {
+            // Use Anthropic's token counting API
+            const tokenResponse = await anthropic.messages.count_tokens({
+                model: config.model,
+                system: systemPrompt,
+                messages: [
+                    { role: "user", content: userMessage }
+                ]
+            });
+
+            return {
+                success: true,
+                inputTokens: tokenResponse.input_tokens || 0,
+                estimatedOutputTokens: Math.min(tokenResponse.input_tokens * 1.5, 4000), // Rough estimate based on input
+                estimatedTotal: tokenResponse.input_tokens + Math.min(tokenResponse.input_tokens * 1.5, 4000)
+            };
+        } else if (config.provider === 'openai') {
+            // For OpenAI, use a rough estimation based on character count
+            // 1 token ≈ 4 characters for English text
+            const systemTokens = Math.ceil(systemPrompt.length / 4);
+            const userTokens = Math.ceil(userMessage.length / 4);
+            const inputTokens = systemTokens + userTokens;
+            const estimatedOutputTokens = Math.min(inputTokens * 1.2, 3000); // Conservative estimate
+
+            return {
+                success: true,
+                inputTokens: inputTokens,
+                estimatedOutputTokens: estimatedOutputTokens,
+                estimatedTotal: inputTokens + estimatedOutputTokens
+            };
+        }
+
+        throw new Error('Unsupported provider for token estimation');
+    } catch (error) {
+        console.error('[TOKEN ESTIMATION] Error:', error.message);
+        // Return a fallback estimation
+        const roughTokens = Math.ceil((systemPrompt.length + userMessage.length) / 4);
+        return {
+            success: false,
+            inputTokens: roughTokens,
+            estimatedOutputTokens: Math.min(roughTokens * 1.5, 3000),
+            estimatedTotal: roughTokens + Math.min(roughTokens * 1.5, 3000),
+            error: error.message
+        };
+    }
+}
+
 async function checkUsageLimits(req, res, next) {
     const userIdentifier = getUserIdentifier(req);
     const isAuthenticated = req.user !== null;
@@ -2275,6 +2330,54 @@ app.get("/api/subscription-plans", (req, res) => {
     res.json(SUBSCRIPTION_PLANS);
 });
 
+// Token estimation endpoint for real-time frontend estimation
+app.post("/api/estimate-tokens", optionalAuthenticateToken, async (req, res) => {
+    try {
+        const { prompt, model } = req.body;
+
+        if (!prompt || !model) {
+            return res.status(400).json({ error: 'Prompt and model are required' });
+        }
+
+        const systemPrompt = getSystemPrompt(model);
+        const estimation = await estimateTokenUsage(model, systemPrompt, prompt);
+
+        let responseData = {
+            success: true,
+            estimation: estimation
+        };
+
+        // Add user-specific context if authenticated
+        if (req.user) {
+            const user = await DatabaseManager.findUserByEmail(req.user.email);
+            const subscription = getUserSubscription(user);
+
+            if (subscription.limits.daily_tokens) {
+                const today = new Date().toISOString().split('T')[0];
+                const tokenUsageKey = `tokens_${user.id}_${today}`;
+                const currentTokenUsage = dailyTokenUsage.get(tokenUsageKey) || 0;
+                const remaining = subscription.limits.daily_tokens - currentTokenUsage;
+
+                responseData.userContext = {
+                    dailyTokensUsed: currentTokenUsage,
+                    dailyTokenLimit: subscription.limits.daily_tokens,
+                    remainingTokens: remaining,
+                    wouldExceedLimit: (currentTokenUsage + estimation.estimatedTotal) > subscription.limits.daily_tokens
+                };
+            }
+        }
+
+        res.json(responseData);
+    } catch (error) {
+        console.error('[TOKEN ESTIMATION API] Error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to estimate tokens',
+            details: error.message
+        });
+    }
+});
+
 // FIXED: Enhanced signup with proper email verification
 app.post("/auth/signup", async (req, res) => {
     console.log('[SIGNUP] Endpoint hit, processing request...');
@@ -2893,6 +2996,37 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
         console.log(`[DEBUG] Model: ${model}, Provider: ${config.provider}`);
         console.log(`[DEBUG] System prompt starts with: ${systemPrompt.substring(0, 100)}...`);
 
+        // Estimate token usage before making the API call
+        const tokenEstimation = await estimateTokenUsage(model, systemPrompt, prompt);
+        console.log(`[TOKEN ESTIMATION] Input: ${tokenEstimation.inputTokens}, Estimated Output: ${tokenEstimation.estimatedOutputTokens}, Total: ${tokenEstimation.estimatedTotal}`);
+
+        // Check if estimated usage would exceed daily token limits for authenticated users
+        if (isAuthenticated) {
+            const user = await DatabaseManager.findUserByEmail(req.user.email);
+            const subscription = getUserSubscription(user);
+
+            if (subscription.limits.daily_tokens) {
+                const today = new Date().toISOString().split('T')[0];
+                const tokenUsageKey = `tokens_${user.id}_${today}`;
+                const currentTokenUsage = dailyTokenUsage.get(tokenUsageKey) || 0;
+
+                // Check if estimated total would exceed daily limit
+                if (currentTokenUsage + tokenEstimation.estimatedTotal > subscription.limits.daily_tokens) {
+                    const remaining = subscription.limits.daily_tokens - currentTokenUsage;
+                    return res.status(403).json({
+                        error: `This request would exceed your daily token limit. You have ${remaining.toLocaleString()} tokens remaining today.`,
+                        tokenEstimation: {
+                            estimated: tokenEstimation.estimatedTotal,
+                            remaining: remaining,
+                            dailyLimit: subscription.limits.daily_tokens
+                        },
+                        upgradeUrl: subscription.plan !== 'enterprise' ? '/pricing.html' : null,
+                        resetTime: 'Tomorrow at midnight'
+                    });
+                }
+            }
+        }
+
         let inputTokens = 0;
         let outputTokens = 0;
         let totalTokens = 0;
@@ -2999,6 +3133,12 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
                 inputTokens: inputTokens,
                 outputTokens: outputTokens,
                 totalTokens: totalTokens
+            },
+            tokenEstimation: {
+                estimatedInput: tokenEstimation.inputTokens,
+                estimatedOutput: tokenEstimation.estimatedOutputTokens,
+                estimatedTotal: tokenEstimation.estimatedTotal,
+                actualAccuracy: totalTokens ? Math.round((tokenEstimation.estimatedTotal / totalTokens) * 100) : null
             }
         };
 

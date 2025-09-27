@@ -369,6 +369,49 @@
     text-align: center;
 }
 
+/* Token Estimation Display */
+.token-estimation {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.75rem;
+    background: rgba(13, 17, 23, 0.6);
+    border: 1px solid rgba(134, 239, 172, 0.3);
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: #86efac;
+    font-weight: 500;
+    flex-shrink: 0;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.token-estimation.warning {
+    border-color: rgba(251, 191, 36, 0.5);
+    background: rgba(251, 191, 36, 0.1);
+    color: #fbbf24;
+}
+
+.token-estimation.error {
+    border-color: rgba(248, 113, 113, 0.5);
+    background: rgba(248, 113, 113, 0.1);
+    color: #f87171;
+}
+
+.token-icon {
+    font-size: 0.9rem;
+}
+
+.token-text {
+    font-weight: 600;
+}
+
+.token-warning {
+    color: #f87171;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
 .send-button {
     background: linear-gradient(135deg, #58a6ff, #1f6feb);
     border: none;
