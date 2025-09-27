@@ -417,6 +417,12 @@ class ChatManager {
         // Update Nexus usage counter for free users
         if (usageInfo && usageInfo.nexusUsage !== undefined) {
             this.updateNexusCounter(usageInfo.nexusUsage, usageInfo.nexusLimit || 3);
+            // Store globally for model indicator
+            window.currentNexusUsage = usageInfo.nexusUsage;
+            // Update model indicator
+            if (typeof updateModelIndicator === 'function') {
+                updateModelIndicator();
+            }
         }
 
         console.log('Usage info:', usageInfo);

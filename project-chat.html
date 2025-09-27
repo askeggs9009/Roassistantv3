@@ -510,9 +510,16 @@
                                     <div class="model-badge" id="nexusUsageCounter">0/3</div>
                                 </div>
                             </div>
-                            <textarea 
-                                class="input-area" 
-                                id="messageInput" 
+
+                            <!-- Model Indicator -->
+                            <div class="model-indicator" id="modelIndicator">
+                                <span class="model-name" id="currentModelName">RoCode 3</span>
+                                <span class="model-usage" id="currentModelUsage" style="display: none;">0/3</span>
+                            </div>
+
+                            <textarea
+                                class="input-area"
+                                id="messageInput"
                                 placeholder="Ask questions about your project, request code reviews, or get help with specific features..."
                                 rows="1"
                             ></textarea>
@@ -1102,6 +1109,9 @@
                 // Update button icon to show current model
                 updateModelButton();
 
+                // Update model indicator
+                updateModelIndicator();
+
                 // Start a new chat when model changes
                 startNewChat();
 
@@ -1121,6 +1131,35 @@
                 // Update title to show current model
                 const modelName = selectedModel === 'claude-4-opus' ? 'RoCode Nexus 3' : 'RoCode 3';
                 modelButton.title = `Current Model: ${modelName}`;
+            }
+        }
+
+        // Update model indicator next to send button
+        function updateModelIndicator() {
+            const modelNameElement = document.getElementById('currentModelName');
+            const modelUsageElement = document.getElementById('currentModelUsage');
+
+            if (modelNameElement) {
+                const modelName = selectedModel === 'claude-4-opus' ? 'RoCode Nexus 3' : 'RoCode 3';
+                modelNameElement.textContent = modelName;
+            }
+
+            if (modelUsageElement) {
+                // Show usage counter only for free users with Nexus
+                if (selectedModel === 'claude-4-opus' && isLoggedIn && currentUser) {
+                    // Check if user is on free plan
+                    const userSubscription = currentUser.subscription || { plan: 'free' };
+                    if (userSubscription.plan === 'free') {
+                        modelUsageElement.style.display = 'inline';
+                        // Get current usage from server response or default to 0
+                        const currentUsage = window.currentNexusUsage || 0;
+                        modelUsageElement.textContent = `${currentUsage}/3`;
+                    } else {
+                        modelUsageElement.style.display = 'none';
+                    }
+                } else {
+                    modelUsageElement.style.display = 'none';
+                }
             }
         }
 
@@ -1216,8 +1255,9 @@
                 }
             });
 
-            // Initialize model button
+            // Initialize model button and indicator
             updateModelButton();
+            updateModelIndicator();
         });
     </script>
 
