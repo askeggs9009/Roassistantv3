@@ -2846,7 +2846,11 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             const user = await DatabaseManager.findUserByEmail(req.user.email);
             const subscription = getUserSubscription(user);
 
-            if (!subscription.limits.models.includes(model)) {
+            // Special case: Free users get limited access to claude-4-opus (RoCode Nexus 3)
+            const hasModelAccess = subscription.limits.models.includes(model) ||
+                                 (model === 'claude-4-opus' && subscription.plan === 'free');
+
+            if (!hasModelAccess) {
                 return res.status(403).json({
                     error: `Model ${model} requires a higher subscription plan.`,
                     availableModels: subscription.limits.models,
