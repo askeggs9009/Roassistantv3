@@ -978,16 +978,31 @@
             }
         }
 
-        // Initialize app when DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing project chat...');
+        // Initialize app when DOM and all scripts are loaded
+        window.addEventListener('load', function() {
+            console.log('All scripts loaded, initializing project chat...');
             loadProjectFromUrl();
-            initApp();
-            
+
+            // Ensure authManager is available
+            if (window.authManager) {
+                // Let authManager handle authentication
+                window.authManager.checkAuth();
+
+                // Sync local variables with authManager
+                authToken = window.authManager.authToken;
+                isLoggedIn = window.authManager.isLoggedIn;
+                currentUser = window.authManager.currentUser;
+
+                updateModelSelector();
+            } else {
+                // Fallback initialization
+                initApp();
+            }
+
             // Check subscription status and refresh periodically
             checkSubscriptionStatus();
             setInterval(checkSubscriptionStatus, 60000); // Refresh every minute
-            
+
             // Check premium status on load
             checkPremiumStatus();
         });
@@ -1010,105 +1025,64 @@
         // Authentication and User Profile Functions
         function checkAuth() {
             console.log('Checking auth...');
-            authToken = localStorage.getItem('authToken');
-            const user = localStorage.getItem('user');
+            // Let authManager handle authentication
+            if (window.authManager) {
+                window.authManager.checkAuth();
+                authToken = window.authManager.authToken;
+                isLoggedIn = window.authManager.isLoggedIn;
+                currentUser = window.authManager.currentUser;
+            } else {
+                // Fallback if authManager isn't loaded
+                authToken = localStorage.getItem('authToken');
+                const user = localStorage.getItem('user');
 
-            if (authToken && user) {
-                try {
-                    const userData = JSON.parse(user);
-                    currentUser = userData;
-                    showLoggedInUser(userData);
-                    isLoggedIn = true;
-                } catch (error) {
-                    console.error('Error parsing user data:', error);
+                if (authToken && user) {
+                    try {
+                        const userData = JSON.parse(user);
+                        currentUser = userData;
+                        showLoggedInUser(userData);
+                        isLoggedIn = true;
+                    } catch (error) {
+                        console.error('Error parsing user data:', error);
+                        showGuestUser();
+                        isLoggedIn = false;
+                        currentUser = null;
+                    }
+                } else {
                     showGuestUser();
                     isLoggedIn = false;
                     currentUser = null;
                 }
-            } else {
-                showGuestUser();
-                isLoggedIn = false;
-                currentUser = null;
             }
             updateModelSelector();
         }
 
-        // Show logged in user profile
+        // Delegate authentication functions to authManager
         function showLoggedInUser(userData) {
-            // Use authManager's showLoggedInUser for consistent dropdown functionality
-            if (window.authManager) {
-                window.authManager.showLoggedInUser(userData);
-            } else {
-                // Fallback implementation if authManager isn't loaded yet
-                const userProfile = document.getElementById('userProfile');
-                if (userProfile) {
-                    const planText = userData.subscription?.plan || 'free';
-                    const planDisplay = planText.charAt(0).toUpperCase() + planText.slice(1);
-
-                    userProfile.innerHTML = `
-                        <div class="user-avatar">${(userData.name || userData.email || 'U').charAt(0).toUpperCase()}</div>
-                        <div class="user-info">
-                            <div class="user-name">${userData.name || userData.email || 'User'}</div>
-                            <div class="user-plan">${planDisplay} Plan</div>
-                        </div>
-                        <button onclick="logout()" style="background: #f85149; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
-                            Logout
-                        </button>
-                    `;
-                }
+            // Always use authManager's implementation
+            if (!window.authManager) {
+                console.error('[AUTH] authManager not initialized yet');
+                return;
             }
+            window.authManager.showLoggedInUser(userData);
         }
 
-        // Show guest user profile
         function showGuestUser() {
-            console.log('[AUTH] Showing guest user profile...');
-            // Use authManager's showGuestUser for consistent dropdown functionality
-            if (window.authManager) {
-                window.authManager.showGuestUser();
-            } else {
-                // Fallback implementation if authManager isn't loaded yet
-                const userProfile = document.getElementById('userProfile');
-                if (userProfile) {
-                    userProfile.innerHTML = `
-                        <div class="user-avatar">👤</div>
-                        <div class="user-info">
-                            <div class="user-name">Guest User</div>
-                            <div class="user-plan">Free Plan - <span style="color: #58a6ff; cursor: pointer;" onclick="window.location.href='/login.html'">Sign In for More</span></div>
-                        </div>
-                        <button onclick="window.location.href='/login.html'" style="background: #238636; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
-                            Sign In
-                        </button>
-                    `;
-                    console.log('[AUTH] Guest user profile updated successfully');
-                } else {
-                    console.error('[AUTH] Could not find userProfile element!');
-                }
+            // Always use authManager's implementation
+            if (!window.authManager) {
+                console.error('[AUTH] authManager not initialized yet');
+                return;
             }
+            window.authManager.showGuestUser();
         }
 
-        // Logout function
         function logout() {
-            // Use authManager's logout for consistency
-            if (window.authManager) {
-                window.authManager.logout();
-            } else {
-                // Fallback implementation
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('user');
-
-                isLoggedIn = false;
-                authToken = null;
-                currentUser = null;
-
-                showGuestUser();
-                updateModelSelector();
-
-                // Switch to available model for guests
-                if (selectedModel === 'claude-opus-4') {
-                    selectedModel = 'claude-sonnet-4';
-                    updateModelButton();
-                }
+            // Always use authManager's implementation
+            if (!window.authManager) {
+                console.error('[AUTH] authManager not initialized yet');
+                return;
             }
+            window.authManager.logout();
         }
 
         // Toggle model selector dropdown
@@ -1172,7 +1146,10 @@
         // Initialize app
         function initApp() {
             console.log('Initializing project chat app...');
-            checkAuth();
+            // Wait for authManager to be ready
+            setTimeout(() => {
+                checkAuth();
+            }, 100);
         }
 
         // Check subscription status (stub for now)
@@ -1218,8 +1195,8 @@
     <script>
         // Initialize app when DOM is ready
         document.addEventListener('DOMContentLoaded', function() {
-            const app = new App();
-            app.init();
+            // Let authManager initialize from auth.js
+            // The App() initialization happens in app.js automatically
 
             // Add click outside listener for model dropdown
             document.addEventListener('click', function(e) {
