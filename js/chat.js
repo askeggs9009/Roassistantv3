@@ -408,8 +408,8 @@ class ChatManager {
 
     // Get selected model
     getSelectedModel() {
-        const modelSelect = document.getElementById('modelSelector');
-        return modelSelect ? modelSelect.value : 'claude-4-sonnet';
+        // Use the global selectedModel variable from the page
+        return window.selectedModel || 'claude-4-sonnet';
     }
 
     // Update usage display

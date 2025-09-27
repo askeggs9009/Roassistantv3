@@ -964,6 +964,7 @@
         let authToken = null;
         let currentUser = null;
         let selectedModel = 'claude-4-sonnet';
+        window.selectedModel = selectedModel;
         let currentView = 'chats';
         let attachedFiles = [];
 
@@ -1176,6 +1177,7 @@
             // If the model actually changed, start a new chat
             if (newModel !== selectedModel) {
                 selectedModel = newModel;
+                window.selectedModel = selectedModel;
 
                 // Update button icon to show current model
                 updateModelButton();
@@ -1188,7 +1190,9 @@
 
                 // Show a message indicating the model change
                 const modelName = model === 'claude-4-opus' ? 'RoCode Nexus 3' : 'RoCode 3';
-                addMessage('system', `<i class="fas fa-sync-alt"></i> Switched to ${modelName}. Starting a new conversation.`);
+                if (window.chatManager) {
+                    window.chatManager.addMessage('system', `<i class="fas fa-sync-alt"></i> Switched to ${modelName}. Starting a new conversation.`);
+                }
             }
 
             // Hide dropdown
