@@ -2897,11 +2897,27 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
         let outputTokens = 0;
         let totalTokens = 0;
 
+        // Determine max tokens per response based on subscription plan
+        const getMaxTokensForPlan = (isAuth, subscription) => {
+            if (!isAuth) return 1500; // Guests get limited tokens
+
+            const plan = subscription?.plan || 'free';
+            switch (plan) {
+                case 'free': return 4000;      // Free users get more tokens per response
+                case 'pro': return 8000;       // Pro users get higher limits
+                case 'enterprise': return 12000; // Enterprise gets maximum
+                default: return 2000;
+            }
+        };
+
+        const maxTokens = getMaxTokensForPlan(isAuthenticated, isAuthenticated ? getUserSubscription(await DatabaseManager.findUserByEmail(req.user.email)) : null);
+        console.log(`[DEBUG] Max tokens for response: ${maxTokens}`);
+
         if (config.provider === 'anthropic') {
             // Use Claude/Anthropic API
             response = await anthropic.messages.create({
                 model: config.model,
-                max_tokens: 2000,
+                max_tokens: maxTokens,
                 temperature: 0.7,
                 system: systemPrompt,
                 messages: [
@@ -2925,7 +2941,7 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
                     { role: "system", content: systemPrompt },
                     { role: "user", content: prompt }
                 ],
-                max_tokens: 2000,
+                max_tokens: maxTokens,
                 temperature: 0.7
             });
             reply = response.choices[0].message.content;
