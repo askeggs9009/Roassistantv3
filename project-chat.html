@@ -1035,61 +1035,79 @@
 
         // Show logged in user profile
         function showLoggedInUser(userData) {
-            const userProfile = document.getElementById('userProfile');
-            if (userProfile) {
-                const planText = userData.subscription?.plan || 'free';
-                const planDisplay = planText.charAt(0).toUpperCase() + planText.slice(1);
-                
-                userProfile.innerHTML = `
-                    <div class="user-avatar">${(userData.name || userData.email || 'U').charAt(0).toUpperCase()}</div>
-                    <div class="user-info">
-                        <div class="user-name">${userData.name || userData.email || 'User'}</div>
-                        <div class="user-plan">${planDisplay} Plan</div>
-                    </div>
-                    <button onclick="logout()" style="background: #f85149; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
-                        Logout
-                    </button>
-                `;
+            // Use authManager's showLoggedInUser for consistent dropdown functionality
+            if (window.authManager) {
+                window.authManager.showLoggedInUser(userData);
+            } else {
+                // Fallback implementation if authManager isn't loaded yet
+                const userProfile = document.getElementById('userProfile');
+                if (userProfile) {
+                    const planText = userData.subscription?.plan || 'free';
+                    const planDisplay = planText.charAt(0).toUpperCase() + planText.slice(1);
+
+                    userProfile.innerHTML = `
+                        <div class="user-avatar">${(userData.name || userData.email || 'U').charAt(0).toUpperCase()}</div>
+                        <div class="user-info">
+                            <div class="user-name">${userData.name || userData.email || 'User'}</div>
+                            <div class="user-plan">${planDisplay} Plan</div>
+                        </div>
+                        <button onclick="logout()" style="background: #f85149; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
+                            Logout
+                        </button>
+                    `;
+                }
             }
         }
 
         // Show guest user profile
         function showGuestUser() {
             console.log('[AUTH] Showing guest user profile...');
-            const userProfile = document.getElementById('userProfile');
-            if (userProfile) {
-                userProfile.innerHTML = `
-                    <div class="user-avatar">👤</div>
-                    <div class="user-info">
-                        <div class="user-name">Guest User</div>
-                        <div class="user-plan">Free Plan - <span style="color: #58a6ff; cursor: pointer;" onclick="window.location.href='/login.html'">Sign In for More</span></div>
-                    </div>
-                    <button onclick="window.location.href='/login.html'" style="background: #238636; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
-                        Sign In
-                    </button>
-                `;
-                console.log('[AUTH] Guest user profile updated successfully');
+            // Use authManager's showGuestUser for consistent dropdown functionality
+            if (window.authManager) {
+                window.authManager.showGuestUser();
             } else {
-                console.error('[AUTH] Could not find userProfile element!');
+                // Fallback implementation if authManager isn't loaded yet
+                const userProfile = document.getElementById('userProfile');
+                if (userProfile) {
+                    userProfile.innerHTML = `
+                        <div class="user-avatar">👤</div>
+                        <div class="user-info">
+                            <div class="user-name">Guest User</div>
+                            <div class="user-plan">Free Plan - <span style="color: #58a6ff; cursor: pointer;" onclick="window.location.href='/login.html'">Sign In for More</span></div>
+                        </div>
+                        <button onclick="window.location.href='/login.html'" style="background: #238636; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
+                            Sign In
+                        </button>
+                    `;
+                    console.log('[AUTH] Guest user profile updated successfully');
+                } else {
+                    console.error('[AUTH] Could not find userProfile element!');
+                }
             }
         }
 
         // Logout function
         function logout() {
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('user');
-            
-            isLoggedIn = false;
-            authToken = null;
-            currentUser = null;
-            
-            showGuestUser();
-            updateModelSelector();
-            
-            // Switch to available model for guests
-            if (selectedModel === 'claude-opus-4') {
-                selectedModel = 'claude-sonnet-4';
-                updateModelButton();
+            // Use authManager's logout for consistency
+            if (window.authManager) {
+                window.authManager.logout();
+            } else {
+                // Fallback implementation
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('user');
+
+                isLoggedIn = false;
+                authToken = null;
+                currentUser = null;
+
+                showGuestUser();
+                updateModelSelector();
+
+                // Switch to available model for guests
+                if (selectedModel === 'claude-opus-4') {
+                    selectedModel = 'claude-sonnet-4';
+                    updateModelButton();
+                }
             }
         }
 
@@ -1211,6 +1229,19 @@
                 if (modelDropdown && modelButton) {
                     if (!modelButton.contains(e.target) && !modelDropdown.contains(e.target)) {
                         modelDropdown.style.display = 'none';
+                    }
+                }
+
+                // Close user dropdown when clicking outside
+                const userDropdownMenu = document.getElementById('userDropdownMenu');
+                const userDropdownTrigger = document.querySelector('.user-dropdown-trigger');
+                if (userDropdownMenu && userDropdownTrigger) {
+                    if (!userDropdownTrigger.contains(e.target) && !userDropdownMenu.contains(e.target)) {
+                        userDropdownMenu.style.display = 'none';
+                        const svg = userDropdownTrigger.querySelector('svg');
+                        if (svg) {
+                            userDropdownTrigger.classList.remove('dropdown-open');
+                        }
                     }
                 }
             });
