@@ -612,6 +612,21 @@
                             </select>
                         </div>
                         <div class="info-row">
+                            <span class="info-label">Best describe your work:</span>
+                            <select id="work-type-select" onchange="handleWorkTypeChange()">
+                                <option value="">Select an option</option>
+                                <option value="gui-design">GUI Design</option>
+                                <option value="scripting">Scripting</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="info-row" id="work-subtype-row" style="display: none;">
+                            <span class="info-label">Specialization:</span>
+                            <select id="work-subtype-select" onchange="updatePreferences()">
+                                <!-- Options will be populated dynamically -->
+                            </select>
+                        </div>
+                        <div class="info-row">
                             <span class="info-label">Notifications:</span>
                             <label class="switch">
                                 <input type="checkbox" id="notifications-toggle" onchange="updatePreferences()">
@@ -907,6 +922,16 @@
 
             document.getElementById('notifications-toggle').checked = preferences.notifications;
             document.getElementById('email-notifications-toggle').checked = preferences.emailNotifications;
+
+            // Update work type preferences
+            if (preferences.workType) {
+                document.getElementById('work-type-select').value = preferences.workType;
+                handleWorkTypeChange(false); // Don't save when loading
+
+                if (preferences.workSubtype) {
+                    document.getElementById('work-subtype-select').value = preferences.workSubtype;
+                }
+            }
         }
 
         async function loadBillingHistory() {
@@ -998,14 +1023,63 @@
             }
         }
 
+        function handleWorkTypeChange(shouldSave = true) {
+            const workType = document.getElementById('work-type-select').value;
+            const subtypeRow = document.getElementById('work-subtype-row');
+            const subtypeSelect = document.getElementById('work-subtype-select');
+
+            if (!workType || workType === 'other') {
+                subtypeRow.style.display = 'none';
+                if (shouldSave) updatePreferences();
+                return;
+            }
+
+            // Clear previous options
+            subtypeSelect.innerHTML = '';
+
+            // Add options based on work type
+            let options = [];
+            if (workType === 'gui-design') {
+                options = [
+                    { value: 'gui-only', text: 'GUI Only' },
+                    { value: 'gui-and-scripting', text: 'GUI and Scripting' }
+                ];
+            } else if (workType === 'scripting') {
+                options = [
+                    { value: 'scripting-only', text: 'Scripting Only' },
+                    { value: 'scripting-and-gui', text: 'Scripting and GUI' }
+                ];
+            }
+
+            // Add options to select
+            options.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.textContent = opt.text;
+                subtypeSelect.appendChild(option);
+            });
+
+            subtypeRow.style.display = 'flex';
+
+            if (shouldSave) {
+                updatePreferences();
+            }
+        }
+
         async function updatePreferences(overrides = {}) {
             try {
                 const token = localStorage.getItem('authToken');
+
+                const workType = document.getElementById('work-type-select').value;
+                const workSubtype = workType && workType !== 'other' ?
+                    document.getElementById('work-subtype-select').value : null;
 
                 const preferences = {
                     theme: document.getElementById('theme-select').value,
                     notifications: document.getElementById('notifications-toggle').checked,
                     emailNotifications: document.getElementById('email-notifications-toggle').checked,
+                    workType: workType,
+                    workSubtype: workSubtype,
                     ...overrides
                 };
 

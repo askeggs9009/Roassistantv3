@@ -4,7 +4,14 @@
       "Bash(then echo \"$file\")",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(awk:*)",
+      "Bash(for:*)",
+      "Bash(do grep -q \"favicon\\|rel=\"\"icon\"\"\" \"$file\")",
+      "Bash(echo \"$file\")",
+      "Bash(done)",
+      "Bash(mv:*)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []
