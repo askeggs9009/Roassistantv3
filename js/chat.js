@@ -225,8 +225,7 @@ class ChatManager {
         `;
 
         messagesContainer.appendChild(messageElement);
-        // Always scroll to show the start of new message
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        // No auto-scrolling when AI starts typing
 
         return messageElement;
     }
@@ -239,14 +238,7 @@ class ChatManager {
             const formattedContent = this.formatAssistantMessage(content);
             // Add blinking cursor at the end
             messageElement.innerHTML = formattedContent + '<span class="streaming-cursor">|</span>';
-
-            // Only auto-scroll if user is near the bottom
-            const messagesContainer = document.getElementById('messagesContainer');
-            const isUserNearBottom = (messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight) < 100;
-
-            if (isUserNearBottom) {
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            }
+            // No auto-scrolling during AI streaming
         }
     }
 
@@ -280,7 +272,7 @@ class ChatManager {
         `;
 
         messagesContainer.appendChild(thinkingDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        // No auto-scrolling when showing AI thinking
     }
 
     // Hide AI thinking animation
@@ -318,15 +310,7 @@ class ChatManager {
 
                 // Format and display the current text with cursor
                 container.innerHTML = this.formatAssistantMessage(currentText) + '<span class="typewriter-cursor">|</span>';
-
-                // Only scroll if user is near the bottom
-                const messagesContainer = document.getElementById('messagesContainer');
-                if (messagesContainer) {
-                    const isUserNearBottom = (messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight) < 100;
-                    if (isUserNearBottom) {
-                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                    }
-                }
+                // No auto-scrolling during typewriter effect
 
                 // Continue streaming with slight randomness (reduced for faster effect)
                 setTimeout(streamNextWord, baseDelay + Math.random() * 10);
@@ -335,15 +319,7 @@ class ChatManager {
                 container.innerHTML = this.formatAssistantMessage(text);
 
                 console.log('[Typewriter] Effect completed');
-
-                // Final scroll only if user is near bottom
-                const messagesContainer = document.getElementById('messagesContainer');
-                if (messagesContainer) {
-                    const isUserNearBottom = (messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight) < 100;
-                    if (isUserNearBottom) {
-                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                    }
-                }
+                // No auto-scrolling after typewriter completes
 
                 // Call completion callback
                 if (onComplete) {
@@ -714,7 +690,7 @@ class ChatManager {
         }
 
         messagesContainer.appendChild(tokenDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        // No auto-scrolling for token usage display
 
         // Update global token counter if exists
         this.updateGlobalTokenCounter();
@@ -1249,7 +1225,7 @@ class ChatManager {
         `;
 
         messagesContainer.appendChild(messageDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        // No auto-scrolling when AI message starts
 
         // Start typewriter effect
         this.typewriterEffect(messageDiv, content, () => {
@@ -1316,7 +1292,11 @@ class ChatManager {
         }
 
         messagesContainer.appendChild(messageDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        // Only auto-scroll for user messages
+        if (type === 'user') {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
     }
 }
 
