@@ -8,53 +8,6 @@ class ChatManager {
         this.API_BASE_URL = 'https://www.roassistant.me';
         this.currentProject = null;
         this.projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
-        this.isAIResponding = false;
-        this.scrollLocked = false;
-        this.setupScrollLock();
-    }
-
-    // Setup aggressive scroll lock during AI responses
-    setupScrollLock() {
-        setTimeout(() => {
-            const messagesContainer = document.getElementById('messagesContainer');
-            if (messagesContainer) {
-                // Store original scroll event to prevent interference
-                let lockedScrollTop = null;
-
-                const scrollHandler = (e) => {
-                    if (this.scrollLocked && lockedScrollTop !== null) {
-                        // Immediately restore to locked position
-                        messagesContainer.scrollTop = lockedScrollTop;
-                        e.preventDefault();
-                        e.stopPropagation();
-                    }
-                };
-
-                messagesContainer.addEventListener('scroll', scrollHandler, { passive: false });
-
-                // Also prevent wheel events during lock
-                const wheelHandler = (e) => {
-                    if (this.scrollLocked) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                    }
-                };
-
-                messagesContainer.addEventListener('wheel', wheelHandler, { passive: false });
-                messagesContainer.addEventListener('touchmove', wheelHandler, { passive: false });
-
-                // Store reference for locking/unlocking
-                this.lockScrollPosition = () => {
-                    lockedScrollTop = messagesContainer.scrollTop;
-                    this.scrollLocked = true;
-                };
-
-                this.unlockScrollPosition = () => {
-                    this.scrollLocked = false;
-                    lockedScrollTop = null;
-                };
-            }
-        }, 1000);
     }
 
     // Send message functionality
@@ -255,10 +208,7 @@ class ChatManager {
             if (partialMessage) {
                 partialMessage.remove();
             }
-            // Unlock scroll on error
-            if (this.unlockScrollPosition) {
-                this.unlockScrollPosition();
-            }
+            // No scroll manipulation on error
         }
     }
 
@@ -276,11 +226,7 @@ class ChatManager {
         `;
 
         messagesContainer.appendChild(messageElement);
-
-        // Lock scroll position when AI starts responding
-        if (this.lockScrollPosition) {
-            this.lockScrollPosition();
-        }
+        // Allow free scrolling - no auto-scroll to bottom when AI starts
 
         return messageElement;
     }
@@ -293,7 +239,7 @@ class ChatManager {
             const formattedContent = this.formatAssistantMessage(content);
             // Add blinking cursor at the end
             messageElement.innerHTML = formattedContent + '<span class="streaming-cursor">|</span>';
-            // Scroll lock prevents any unwanted scrolling
+            // No auto-scrolling - user can freely scroll while AI types
         }
     }
 
@@ -308,11 +254,7 @@ class ChatManager {
                 </div>
             `;
         }
-
-        // Unlock scroll when AI finishes responding
-        if (this.unlockScrollPosition) {
-            this.unlockScrollPosition();
-        }
+        // No scroll manipulation when AI finishes
     }
 
     // Show AI thinking animation
@@ -1355,10 +1297,6 @@ class ChatManager {
 
         // Only auto-scroll for user messages
         if (type === 'user') {
-            // Unlock scroll temporarily for user message
-            if (this.unlockScrollPosition) {
-                this.unlockScrollPosition();
-            }
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
     }
