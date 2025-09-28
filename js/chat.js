@@ -220,8 +220,7 @@ class ChatManager {
 
         messageElement.innerHTML = `
             <div class="message-content">
-                <div class="message-text" id="streaming-${messageId}"></div>
-                <span class="streaming-cursor">|</span>
+                <div class="message-text" id="streaming-${messageId}"><span class="streaming-cursor">|</span></div>
             </div>
         `;
 
@@ -231,11 +230,14 @@ class ChatManager {
         return messageElement;
     }
 
-    // Update streaming message content
+    // Update streaming message content with real-time formatting
     updateStreamingMessage(messageId, content) {
         const messageElement = document.getElementById(`streaming-${messageId}`);
         if (messageElement) {
-            messageElement.textContent = content;
+            // Apply formatting in real-time as content streams
+            const formattedContent = this.formatAssistantMessage(content);
+            // Add blinking cursor at the end
+            messageElement.innerHTML = formattedContent + '<span class="streaming-cursor">|</span>';
             // Auto-scroll to bottom
             const messagesContainer = document.getElementById('messagesContainer');
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
