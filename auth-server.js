@@ -797,36 +797,34 @@ async function estimateTokenUsage(model, systemPrompt, userMessage) {
 
         // Base estimation on prompt characteristics
         const promptWords = userMessage.split(/\s+/).length;
-        const hasCodeRequest = /code|script|function|implementation|create|write|fix|debug/i.test(userMessage);
+        const hasCodeRequest = /code|script|function|implementation|create|write|fix|debug|make|build|develop|program|luau|roblox|game|gui|tool|system|module/i.test(userMessage);
         const hasExplanationRequest = /explain|how|what|why|describe|tell/i.test(userMessage);
         const hasListRequest = /list|steps|enumerate|options/i.test(userMessage);
         const isGreeting = /^(hi|hello|hey|good morning|good afternoon|good evening)\.?$/i.test(userMessage.trim());
         const isSimpleQuestion = promptWords <= 3 && /\?$/.test(userMessage.trim());
 
-        // Calculate base output estimation with better accuracy for different prompt types
+        // Calculate base output estimation based on ACTUAL usage patterns from logs
         if (isGreeting) {
-            // Greetings get long introductory responses from RoCode assistants
-            estimatedOutputTokens = 150; // Based on your actual usage: ~149 output tokens
+            // Greetings: actual ~149 output tokens
+            estimatedOutputTokens = 150;
+        } else if (hasCodeRequest) {
+            // Code requests: actual 2000-4000+ output tokens (massive scripts)
+            estimatedOutputTokens = 3000; // Conservative estimate based on your 3137 actual
         } else if (isSimpleQuestion) {
             // Simple questions get medium responses
-            estimatedOutputTokens = 100;
+            estimatedOutputTokens = 200;
         } else if (promptWords < 5) {
             // Very short prompts often get comprehensive responses
-            estimatedOutputTokens = 120;
+            estimatedOutputTokens = 300;
         } else if (promptWords < 20) {
             // Short prompts typically get medium responses
-            estimatedOutputTokens = inputTokens * 8; // Increased multiplier based on real usage
+            estimatedOutputTokens = 500;
         } else if (promptWords < 50) {
-            // Medium prompts get proportional responses
-            estimatedOutputTokens = inputTokens * 6; // Increased multiplier
+            // Medium prompts get detailed responses
+            estimatedOutputTokens = 1000;
         } else {
-            // Long prompts often get detailed responses
-            estimatedOutputTokens = inputTokens * 4; // Increased multiplier
-        }
-
-        // Adjust based on request type
-        if (hasCodeRequest) {
-            estimatedOutputTokens *= 1.5; // Code responses are typically longer
+            // Long prompts get very detailed responses
+            estimatedOutputTokens = 2000;
         }
         if (hasExplanationRequest) {
             estimatedOutputTokens *= 1.3; // Explanations tend to be verbose
@@ -2415,9 +2413,19 @@ app.post("/api/test-token-counting", async (req, res) => {
         const userMessageTokens = Math.ceil(message.length / 3.5);
         const systemPromptTokens = Math.ceil(systemPrompt.length / 3.5);
 
-        // Estimate output tokens for total prediction
+        // Estimate output tokens for total prediction using same logic as main estimation
         const isGreeting = /^(hi|hello|hey|good morning|good afternoon|good evening)\.?$/i.test(message.trim());
-        const estimatedOutputTokens = isGreeting ? 150 : userMessageTokens * 8;
+        const hasCodeRequest = /code|script|function|implementation|create|write|fix|debug|make|build|develop|program|luau|roblox|game|gui|tool|system|module/i.test(message);
+
+        let estimatedOutputTokens;
+        if (isGreeting) {
+            estimatedOutputTokens = 150;
+        } else if (hasCodeRequest) {
+            estimatedOutputTokens = 3000; // Based on actual 3137 token usage for complex scripts
+        } else {
+            estimatedOutputTokens = 500; // Default for other requests
+        }
+
         const estimatedTotal = userMessageTokens + estimatedOutputTokens;
 
         res.json({
