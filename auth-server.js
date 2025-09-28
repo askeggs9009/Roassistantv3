@@ -759,30 +759,24 @@ async function estimateTokenUsage(model, systemPrompt, userMessage) {
         let inputTokens = 0;
 
         if (config.provider === 'anthropic') {
-            // Use character-based estimation for Anthropic models
-            // Since system prompts are cached, only count user message tokens
-            // Claude uses roughly 1 token per 3.5 characters for English text
-            inputTokens = Math.ceil(userMessage.length / 3.5);
-            console.log(`[TOKEN ESTIMATION] User message estimated: ${inputTokens} tokens (system prompt cached)`);
-
-            // Optional: Try count_tokens API if available (newer SDK versions)
             try {
-                if (typeof anthropic.messages.count_tokens === 'function') {
-                    const userTokenResponse = await anthropic.messages.count_tokens({
-                        model: config.model,
-                        messages: [
-                            { role: "user", content: userMessage }
-                        ]
-                    });
+                // Use Anthropic's official count_tokens API for exact input token count
+                const tokenResponse = await anthropic.messages.count_tokens({
+                    model: config.model,
+                    system: systemPrompt,
+                    messages: [
+                        { role: "user", content: userMessage }
+                    ]
+                });
 
-                    if (userTokenResponse && userTokenResponse.input_tokens) {
-                        inputTokens = userTokenResponse.input_tokens;
-                        console.log(`[TOKEN ESTIMATION] API count confirmed: ${inputTokens} tokens`);
-                    }
-                }
+                inputTokens = tokenResponse.input_tokens || 0;
+                console.log(`[TOKEN ESTIMATION] Exact input tokens from Anthropic API: ${inputTokens}`);
+
             } catch (apiError) {
-                // Silently fall back to character estimation - this is expected with older SDK
-                console.log(`[TOKEN ESTIMATION] API count unavailable, using character estimation: ${inputTokens} tokens`);
+                console.error('[TOKEN ESTIMATION] Anthropic count_tokens API error:', apiError.message);
+                // Fallback to character-based estimation
+                inputTokens = Math.ceil((systemPrompt.length + userMessage.length) / 3.5);
+                console.log(`[TOKEN ESTIMATION] Using fallback character estimation: ${inputTokens} tokens`);
             }
         } else if (config.provider === 'openai') {
             // For OpenAI, use tiktoken-based estimation
@@ -2409,11 +2403,28 @@ app.post("/api/test-token-counting", async (req, res) => {
         const testModel = model || 'claude-opus-4-1-20250805';
         const systemPrompt = "You are a helpful assistant";
 
-        // Character-based estimation
-        const userMessageTokens = Math.ceil(message.length / 3.5);
-        const systemPromptTokens = Math.ceil(systemPrompt.length / 3.5);
+        // Use Anthropic's exact token counting
+        let inputTokens = 0;
+        let apiSuccess = false;
 
-        // Estimate output tokens for total prediction using same logic as main estimation
+        try {
+            const tokenResponse = await anthropic.messages.count_tokens({
+                model: testModel,
+                system: systemPrompt,
+                messages: [
+                    { role: "user", content: message }
+                ]
+            });
+
+            inputTokens = tokenResponse.input_tokens || 0;
+            apiSuccess = true;
+        } catch (apiError) {
+            // Fallback to character estimation
+            inputTokens = Math.ceil((systemPrompt.length + message.length) / 3.5);
+            console.log('[TOKEN TEST] API unavailable, using character estimation');
+        }
+
+        // Estimate output tokens using same logic as main estimation
         const isGreeting = /^(hi|hello|hey|good morning|good afternoon|good evening)\.?$/i.test(message.trim());
         const hasCodeRequest = /code|script|function|implementation|create|write|fix|debug|make|build|develop|program|luau|roblox|game|gui|tool|system|module/i.test(message);
 
@@ -2426,21 +2437,21 @@ app.post("/api/test-token-counting", async (req, res) => {
             estimatedOutputTokens = 500; // Default for other requests
         }
 
-        const estimatedTotal = userMessageTokens + estimatedOutputTokens;
+        const estimatedTotal = inputTokens + estimatedOutputTokens;
 
         res.json({
             success: true,
             model: testModel,
             message: message,
             breakdown: {
-                input_tokens: userMessageTokens,
+                input_tokens: inputTokens,
                 estimated_output_tokens: estimatedOutputTokens,
                 estimated_total: estimatedTotal
             },
-            system_prompt_tokens: systemPromptTokens,
-            note: "Estimation includes both input and output tokens. System prompt cached.",
-            calculation: "~1 token per 3.5 characters for Claude models",
-            greeting_detected: isGreeting
+            api_method: apiSuccess ? "Anthropic count_tokens API" : "Character estimation fallback",
+            note: "Input tokens from official Anthropic API, output estimated from usage patterns",
+            greeting_detected: isGreeting,
+            code_request_detected: hasCodeRequest
         });
 
     } catch (error) {
