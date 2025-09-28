@@ -800,17 +800,28 @@ async function estimateTokenUsage(model, systemPrompt, userMessage) {
         const hasCodeRequest = /code|script|function|implementation|create|write|fix|debug/i.test(userMessage);
         const hasExplanationRequest = /explain|how|what|why|describe|tell/i.test(userMessage);
         const hasListRequest = /list|steps|enumerate|options/i.test(userMessage);
+        const isGreeting = /^(hi|hello|hey|good morning|good afternoon|good evening)\.?$/i.test(userMessage.trim());
+        const isSimpleQuestion = promptWords <= 3 && /\?$/.test(userMessage.trim());
 
-        // Calculate base output estimation
-        if (promptWords < 20) {
+        // Calculate base output estimation with better accuracy for different prompt types
+        if (isGreeting) {
+            // Greetings get long introductory responses from RoCode assistants
+            estimatedOutputTokens = 150; // Based on your actual usage: ~149 output tokens
+        } else if (isSimpleQuestion) {
+            // Simple questions get medium responses
+            estimatedOutputTokens = 100;
+        } else if (promptWords < 5) {
+            // Very short prompts often get comprehensive responses
+            estimatedOutputTokens = 120;
+        } else if (promptWords < 20) {
             // Short prompts typically get medium responses
-            estimatedOutputTokens = inputTokens * 4; // 4x multiplier for short prompts
+            estimatedOutputTokens = inputTokens * 8; // Increased multiplier based on real usage
         } else if (promptWords < 50) {
             // Medium prompts get proportional responses
-            estimatedOutputTokens = inputTokens * 3; // 3x multiplier
+            estimatedOutputTokens = inputTokens * 6; // Increased multiplier
         } else {
             // Long prompts often get detailed responses
-            estimatedOutputTokens = inputTokens * 2.5; // 2.5x multiplier
+            estimatedOutputTokens = inputTokens * 4; // Increased multiplier
         }
 
         // Adjust based on request type
@@ -2403,18 +2414,25 @@ app.post("/api/test-token-counting", async (req, res) => {
         // Character-based estimation
         const userMessageTokens = Math.ceil(message.length / 3.5);
         const systemPromptTokens = Math.ceil(systemPrompt.length / 3.5);
-        const totalWithoutCaching = userMessageTokens + systemPromptTokens;
+
+        // Estimate output tokens for total prediction
+        const isGreeting = /^(hi|hello|hey|good morning|good afternoon|good evening)\.?$/i.test(message.trim());
+        const estimatedOutputTokens = isGreeting ? 150 : userMessageTokens * 8;
+        const estimatedTotal = userMessageTokens + estimatedOutputTokens;
 
         res.json({
             success: true,
             model: testModel,
             message: message,
-            user_message_tokens: userMessageTokens,
+            breakdown: {
+                input_tokens: userMessageTokens,
+                estimated_output_tokens: estimatedOutputTokens,
+                estimated_total: estimatedTotal
+            },
             system_prompt_tokens: systemPromptTokens,
-            total_without_caching: totalWithoutCaching,
-            estimated_with_caching: userMessageTokens,
-            note: "With prompt caching, system prompt tokens are free after first use",
-            calculation: "~1 token per 3.5 characters for Claude models"
+            note: "Estimation includes both input and output tokens. System prompt cached.",
+            calculation: "~1 token per 3.5 characters for Claude models",
+            greeting_detected: isGreeting
         });
 
     } catch (error) {
