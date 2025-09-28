@@ -84,40 +84,15 @@ class ChatManager {
                 requestBody.prompt = message + contextMessage;
             }
 
-            // Show AI thinking animation
-            this.showAiThinking();
+            // Check if streaming is enabled
+            const streamingEnabled = window.streamingEnabled || false;
 
-            // Send to API
-            const response = await fetch(`${this.API_BASE_URL}/ask`, {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify(requestBody)
-            });
-
-            const data = await response.json();
-
-            // Hide AI thinking animation
-            this.hideAiThinking();
-            
-            if (response.ok) {
-                this.addMessage('assistant', data.reply);
-
-                // Show token usage for this response
-                if (data.tokenUsage) {
-                    this.displayTokenUsage(data.tokenUsage);
-                }
-
-                // Update usage info if provided
-                if (data.usageInfo) {
-                    this.updateUsageDisplay(data.usageInfo);
-                }
-
-                // Update subscription info if provided
-                if (data.subscription) {
-                    this.updateSubscriptionDisplay(data.subscription);
-                }
+            if (streamingEnabled) {
+                // Use streaming endpoint
+                this.handleStreamingResponse(requestBody, headers);
             } else {
-                this.addMessage('error', data.error || 'An error occurred while processing your request.');
+                // Use regular endpoint
+                await this.handleRegularResponse(requestBody, headers);
             }
 
         } catch (error) {
@@ -128,6 +103,155 @@ class ChatManager {
             this.isLoading = false;
             this.updateSendButton(false);
             this.clearAttachedFiles();
+        }
+    }
+
+    // Handle regular non-streaming response
+    async handleRegularResponse(requestBody, headers) {
+        // Show AI thinking animation
+        this.showAiThinking();
+
+        // Send to API
+        const response = await fetch(`${this.API_BASE_URL}/ask`, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(requestBody)
+        });
+
+        const data = await response.json();
+
+        // Hide AI thinking animation
+        this.hideAiThinking();
+
+        if (response.ok) {
+            this.addMessage('assistant', data.reply);
+
+            // Show token usage for this response
+            if (data.tokenUsage) {
+                this.displayTokenUsage(data.tokenUsage);
+            }
+
+            // Update usage info if provided
+            if (data.usageInfo) {
+                this.updateUsageDisplay(data.usageInfo);
+            }
+
+            // Update subscription info if provided
+            if (data.subscription) {
+                this.updateSubscriptionDisplay(data.subscription);
+            }
+        } else {
+            this.addMessage('error', data.error || 'An error occurred while processing your request.');
+        }
+    }
+
+    // Handle streaming response
+    async handleStreamingResponse(requestBody, headers) {
+        // Create message container for streaming response
+        const messageId = Date.now();
+        const messageContainer = this.createStreamingMessage(messageId);
+
+        try {
+            const response = await fetch(`${this.API_BASE_URL}/ask-stream`, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                this.addMessage('error', errorData.error || 'An error occurred while processing your request.');
+                return;
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let fullResponse = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const data = JSON.parse(line.slice(6));
+
+                            if (data.type === 'chunk') {
+                                fullResponse += data.text;
+                                this.updateStreamingMessage(messageId, fullResponse);
+                            } else if (data.type === 'complete') {
+                                // Show token usage
+                                if (data.tokenUsage) {
+                                    this.displayTokenUsage(data.tokenUsage);
+                                }
+                                // Finalize the message with proper formatting
+                                this.finalizeStreamingMessage(messageId, data.fullResponse);
+                            } else if (data.type === 'error') {
+                                this.addMessage('error', data.error);
+                                return;
+                            }
+                        } catch (e) {
+                            console.error('Error parsing streaming data:', e);
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Streaming error:', error);
+            this.addMessage('error', 'Network error during streaming. Please try again.');
+            // Clean up partial message
+            const partialMessage = document.querySelector(`[data-message-id="${messageId}"]`);
+            if (partialMessage) {
+                partialMessage.remove();
+            }
+        }
+    }
+
+    // Create a streaming message container
+    createStreamingMessage(messageId) {
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message-container assistant';
+        messageElement.setAttribute('data-message-id', messageId);
+
+        messageElement.innerHTML = `
+            <div class="message-content">
+                <div class="message-text" id="streaming-${messageId}"></div>
+                <span class="streaming-cursor">|</span>
+            </div>
+        `;
+
+        messagesContainer.appendChild(messageElement);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        return messageElement;
+    }
+
+    // Update streaming message content
+    updateStreamingMessage(messageId, content) {
+        const messageElement = document.getElementById(`streaming-${messageId}`);
+        if (messageElement) {
+            messageElement.textContent = content;
+            // Auto-scroll to bottom
+            const messagesContainer = document.getElementById('messagesContainer');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    }
+
+    // Finalize streaming message with proper formatting
+    finalizeStreamingMessage(messageId, content) {
+        const messageContainer = document.querySelector(`[data-message-id="${messageId}"]`);
+        if (messageContainer) {
+            // Remove streaming cursor and apply proper formatting
+            messageContainer.innerHTML = `
+                <div class="message-content">
+                    <div class="message-text">${this.formatAssistantMessage(content)}</div>
+                </div>
+            `;
         }
     }
 

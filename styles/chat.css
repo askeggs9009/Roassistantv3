@@ -255,6 +255,54 @@
     transform: scale(0.95);
 }
 
+/* Streaming Toggle */
+.streaming-toggle {
+    background: transparent;
+    border: none;
+    color: #8b949e;
+    padding: 0.5rem;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.streaming-toggle:hover {
+    background: rgba(88, 166, 255, 0.1);
+    color: #58a6ff;
+    transform: scale(1.1);
+}
+
+.streaming-toggle.active {
+    background: rgba(88, 166, 255, 0.2);
+    color: #58a6ff;
+}
+
+.streaming-toggle.active #streamingIcon {
+    animation: lightning 1.5s infinite;
+}
+
+@keyframes lightning {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* Streaming Cursor */
+.streaming-cursor {
+    animation: blink 1s infinite;
+    color: #58a6ff;
+    font-weight: bold;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
 /* Model Dropdown */
 .model-dropdown {
     position: absolute;

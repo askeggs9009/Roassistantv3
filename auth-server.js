@@ -760,10 +760,16 @@ async function estimateTokenUsage(model, systemPrompt, userMessage) {
 
         if (config.provider === 'anthropic') {
             try {
-                // Use Anthropic's official token counting API for accurate input count
+                // Use Anthropic's official token counting API for accurate input count with caching
                 const tokenResponse = await anthropic.messages.count_tokens({
                     model: config.model,
-                    system: systemPrompt,
+                    system: [
+                        {
+                            type: "text",
+                            text: systemPrompt,
+                            cache_control: { type: "ephemeral" }
+                        }
+                    ],
                     messages: [
                         { role: "user", content: userMessage }
                     ]
@@ -2990,6 +2996,194 @@ app.get("/usage-limits", optionalAuthenticateToken, (req, res) => {
     });
 });
 
+// Streaming endpoint for real-time responses
+app.post("/ask-stream", optionalAuthenticateToken, checkUsageLimits, async (req, res) => {
+    try {
+        const { prompt, model = "gpt-4.1" } = req.body;
+        const isAuthenticated = req.user !== null;
+
+        // Check if authenticated user can use this model
+        if (isAuthenticated) {
+            const user = await DatabaseManager.findUserByEmail(req.user.email);
+            const subscription = getUserSubscription(user);
+
+            // Special case: Free users get limited access to claude-4-opus (RoCode Nexus 3)
+            const hasModelAccess = subscription.limits.models.includes(model) ||
+                                 (model === 'claude-4-opus' && subscription.plan === 'free');
+
+            if (!hasModelAccess) {
+                return res.status(403).json({
+                    error: `Model ${model} requires a higher subscription plan.`,
+                    availableModels: subscription.limits.models,
+                    subscription: subscription,
+                    upgradeUrl: "/pricing.html"
+                });
+            }
+
+            // Check comprehensive usage limits
+            const limitCheck = checkAuthenticatedUserLimits(user, subscription, model);
+            if (!limitCheck.allowed) {
+                return res.status(403).json({
+                    error: limitCheck.error,
+                    upgradeUrl: limitCheck.upgradeUrl || "/pricing.html",
+                    resetTime: limitCheck.resetTime,
+                    subscription: subscription
+                });
+            }
+
+            // Increment special usage BEFORE API call for authenticated users
+            if (model === 'rocode-studio') {
+                incrementSpecialUsage(user, model);
+            }
+
+            // Track Nexus usage for free users BEFORE API call
+            if (subscription.plan === 'free' && model === 'claude-4-opus') {
+                incrementSpecialUsage(user, model);
+            }
+        }
+
+        const config = MODEL_CONFIGS[model];
+        if (!config) {
+            return res.status(400).json({ error: "Invalid model selected" });
+        }
+
+        const systemPrompt = getSystemPrompt(model);
+
+        // Set up SSE headers
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+
+        // Determine max tokens per response based on subscription plan
+        const getMaxTokensForPlan = (isAuth, subscription) => {
+            if (!isAuth) return 1500; // Guests get limited tokens
+
+            const plan = subscription?.plan || 'free';
+            switch (plan) {
+                case 'free': return 4000;      // Free users get more tokens per response
+                case 'pro': return 8000;       // Pro users get higher limits
+                case 'enterprise': return 12000; // Enterprise gets maximum
+                default: return 2000;
+            }
+        };
+
+        const maxTokens = getMaxTokensForPlan(isAuthenticated, isAuthenticated ? getUserSubscription(await DatabaseManager.findUserByEmail(req.user.email)) : null);
+
+        let fullResponse = '';
+        let inputTokens = 0;
+        let outputTokens = 0;
+
+        if (config.provider === 'anthropic') {
+            // Use Claude streaming API with prompt caching
+            const stream = await anthropic.messages.create({
+                model: config.model,
+                max_tokens: maxTokens,
+                temperature: 0.7,
+                system: [
+                    {
+                        type: "text",
+                        text: systemPrompt,
+                        cache_control: { type: "ephemeral" }
+                    }
+                ],
+                messages: [
+                    { role: "user", content: prompt }
+                ],
+                stream: true
+            });
+
+            for await (const chunk of stream) {
+                if (chunk.type === 'content_block_delta') {
+                    const text = chunk.delta.text;
+                    if (text) {
+                        fullResponse += text;
+                        res.write(`data: ${JSON.stringify({ text: text, type: 'chunk' })}\n\n`);
+                    }
+                } else if (chunk.type === 'message_start') {
+                    if (chunk.message.usage) {
+                        inputTokens = chunk.message.usage.input_tokens || 0;
+                    }
+                } else if (chunk.type === 'message_delta') {
+                    if (chunk.usage) {
+                        outputTokens = chunk.usage.output_tokens || 0;
+                    }
+                }
+            }
+        } else {
+            // For OpenAI, implement streaming
+            const response = await openai.chat.completions.create({
+                model: config.model,
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: prompt }
+                ],
+                max_tokens: maxTokens,
+                temperature: 0.7,
+                stream: true
+            });
+
+            for await (const chunk of response) {
+                const text = chunk.choices[0]?.delta?.content || '';
+                if (text) {
+                    fullResponse += text;
+                    res.write(`data: ${JSON.stringify({ text: text, type: 'chunk' })}\n\n`);
+                }
+            }
+        }
+
+        // Send completion event with metadata
+        const totalTokens = inputTokens + outputTokens;
+        res.write(`data: ${JSON.stringify({
+            type: 'complete',
+            fullResponse: fullResponse,
+            tokenUsage: {
+                inputTokens: inputTokens,
+                outputTokens: outputTokens,
+                totalTokens: totalTokens
+            },
+            model: model,
+            provider: config.provider
+        })}\n\n`);
+
+        // Log chat to database
+        const userIdentifier = getUserIdentifier(req);
+        const startTime = Date.now();
+
+        try {
+            const chatLogData = {
+                userId: isAuthenticated ? req.user.id : 'guest',
+                userEmail: isAuthenticated ? req.user.email : 'guest',
+                userName: isAuthenticated ? (await DatabaseManager.findUserByEmail(req.user.email))?.name || 'Unknown' : 'Guest User',
+                message: prompt,
+                response: fullResponse,
+                model: model,
+                tokenCount: totalTokens || Math.ceil(fullResponse.length / 4),
+                inputTokens: inputTokens,
+                outputTokens: outputTokens,
+                responseTime: Date.now() - startTime,
+                timestamp: new Date(),
+                ip: req.ip,
+                userAgent: req.headers['user-agent'],
+                subscription: isAuthenticated ?
+                    (await DatabaseManager.findUserByEmail(req.user.email))?.subscription?.plan || 'free' :
+                    'guest'
+            };
+
+            await DatabaseManager.saveChatLog(chatLogData);
+        } catch (logError) {
+            console.error('[CHAT LOG] Failed to save chat log:', logError);
+        }
+
+        res.end();
+
+    } catch (error) {
+        console.error("[ERROR] Streaming Error:", error);
+        res.write(`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`);
+        res.end();
+    }
+});
+
 app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) => {
     try {
         const { prompt, model = "gpt-4.1" } = req.body;
@@ -3099,12 +3293,18 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
         console.log(`[DEBUG] Max tokens for response: ${maxTokens}`);
 
         if (config.provider === 'anthropic') {
-            // Use Claude/Anthropic API
+            // Use Claude/Anthropic API with prompt caching
             response = await anthropic.messages.create({
                 model: config.model,
                 max_tokens: maxTokens,
                 temperature: 0.7,
-                system: systemPrompt,
+                system: [
+                    {
+                        type: "text",
+                        text: systemPrompt,
+                        cache_control: { type: "ephemeral" }
+                    }
+                ],
                 messages: [
                     { role: "user", content: prompt }
                 ]

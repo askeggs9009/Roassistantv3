@@ -499,6 +499,9 @@
                             <button class="model-button" id="modelButton" onclick="toggleModelSelector()" title="Select AI Model">
                                 <span><i class="fas fa-robot"></i></span>
                             </button>
+                            <button class="streaming-toggle" id="streamingToggle" onclick="toggleStreaming()" title="Toggle Real-time Streaming">
+                                <span><i class="fas fa-bolt" id="streamingIcon"></i></span>
+                            </button>
                             <!-- Model Selector Dropdown -->
                             <div class="model-dropdown" id="modelDropdown" style="display: none;">
                                 <div class="model-dropdown-header">Select Model</div>
@@ -1103,6 +1106,26 @@
         function toggleModelSelector() {
             const dropdown = document.getElementById('modelDropdown');
             dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Streaming functionality
+        let streamingEnabled = false;
+
+        function toggleStreaming() {
+            streamingEnabled = !streamingEnabled;
+            window.streamingEnabled = streamingEnabled; // Make it available globally
+            const toggle = document.getElementById('streamingToggle');
+            const icon = document.getElementById('streamingIcon');
+
+            if (streamingEnabled) {
+                toggle.classList.add('active');
+                icon.className = 'fas fa-bolt';
+                toggle.title = 'Streaming Enabled - Real-time responses';
+            } else {
+                toggle.classList.remove('active');
+                icon.className = 'fas fa-bolt';
+                toggle.title = 'Streaming Disabled - Standard responses';
+            }
         }
 
         // Select a model
