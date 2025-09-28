@@ -83,28 +83,30 @@
 
         .scripts-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1rem;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.25rem;
             margin-top: 2rem;
         }
 
         .script-card {
-            background: rgba(13, 17, 23, 0.8);
-            border: 1px solid rgba(48, 54, 61, 0.6);
-            border-radius: 8px;
-            padding: 1rem;
-            transition: all 0.2s ease;
+            background: rgba(13, 17, 23, 0.95);
+            border: 1px solid rgba(48, 54, 61, 0.8);
+            border-radius: 12px;
+            padding: 1.25rem;
+            transition: all 0.3s ease;
             cursor: pointer;
             position: relative;
             display: flex;
             flex-direction: column;
-            min-height: 120px;
+            min-height: 140px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
 
         .script-card:hover {
-            border-color: rgba(88, 166, 255, 0.6);
-            background: rgba(21, 32, 43, 0.8);
-            transform: translateY(-1px);
+            border-color: rgba(88, 166, 255, 0.8);
+            background: rgba(21, 32, 43, 0.95);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
         }
 
         .script-card-header {
@@ -115,16 +117,17 @@
         }
 
         .script-icon {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 6px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 16px;
             color: white;
             flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
         }
 
         .script-info {
@@ -134,10 +137,10 @@
 
         .script-title {
             color: #f0f6fc;
-            font-size: 0.95rem;
+            font-size: 1rem;
             font-weight: 600;
-            margin: 0 0 0.25rem 0;
-            line-height: 1.3;
+            margin: 0 0 0.35rem 0;
+            line-height: 1.4;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -145,25 +148,27 @@
 
         .script-subtitle {
             color: #8b949e;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             margin: 0;
+            line-height: 1.3;
             overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
         }
 
         .script-preview {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(48, 54, 61, 0.5);
-            border-radius: 4px;
-            padding: 0.5rem;
-            margin: 0.75rem 0;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(48, 54, 61, 0.7);
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin: 1rem 0;
             font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             color: #e6edf3;
-            line-height: 1.3;
+            line-height: 1.4;
             overflow: hidden;
-            max-height: 60px;
+            max-height: 80px;
             position: relative;
         }
 
@@ -173,8 +178,8 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 20px;
-            background: linear-gradient(transparent, rgba(0, 0, 0, 0.3));
+            height: 25px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.4));
             pointer-events: none;
         }
 
@@ -343,12 +348,16 @@
             background: #0d1117;
             border: 1px solid #21262d;
             border-radius: 8px;
-            padding: 1rem;
+            padding: 1.25rem;
             overflow-x: auto;
             font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
-            font-size: 0.85rem;
-            line-height: 1.5;
+            font-size: 0.9rem;
+            line-height: 1.6;
             color: #e6edf3;
+            max-height: 70vh;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
 
         .script-panel-overlay {
@@ -739,7 +748,10 @@
                 document.getElementById('scriptPanelTitle').textContent = script.title;
                 document.getElementById('scriptPanelSubtitle').textContent =
                     `From: ${script.chatTitle || 'Unknown Chat'} • Created ${this.getTimeAgo(new Date(script.createdAt))}`;
-                document.getElementById('scriptPanelCode').textContent = script.content;
+
+                // Apply syntax highlighting to code
+                const codeElement = document.getElementById('scriptPanelCode');
+                codeElement.innerHTML = this.highlightLuaCode(script.content);
 
                 // Show panel and overlay
                 const panel = document.getElementById('scriptPanel');
@@ -754,6 +766,40 @@
                 panel.classList.add('open');
                 overlay.classList.add('active');
                 scriptsPage.classList.add('with-panel');
+            }
+
+            highlightLuaCode(code) {
+                // Basic Lua/Luau syntax highlighting
+                let highlighted = this.escapeHtml(code);
+
+                // Keywords
+                const keywords = ['local', 'function', 'end', 'if', 'then', 'else', 'elseif', 'while', 'do', 'for', 'in', 'repeat', 'until', 'break', 'return', 'and', 'or', 'not', 'true', 'false', 'nil'];
+                keywords.forEach(keyword => {
+                    const regex = new RegExp(`\\b${keyword}\\b`, 'g');
+                    highlighted = highlighted.replace(regex, `<span style="color: #ff7b72;">${keyword}</span>`);
+                });
+
+                // Roblox specific keywords
+                const robloxKeywords = ['game', 'workspace', 'script', 'wait', 'spawn', 'coroutine', 'Instance', 'Vector3', 'CFrame', 'UDim2', 'Color3', 'BrickColor', 'Part', 'RemoteEvent', 'RemoteFunction', 'UserInputService', 'TweenService', 'RunService', 'Players', 'Debris'];
+                robloxKeywords.forEach(keyword => {
+                    const regex = new RegExp(`\\b${keyword}\\b`, 'g');
+                    highlighted = highlighted.replace(regex, `<span style="color: #79c0ff;">${keyword}</span>`);
+                });
+
+                // Strings
+                highlighted = highlighted.replace(/"([^"\\\\]|\\\\.)*"/g, '<span style="color: #a5d6ff;">"$1"</span>');
+                highlighted = highlighted.replace(/'([^'\\\\]|\\\\.)*'/g, '<span style="color: #a5d6ff;">\'$1\'</span>');
+
+                // Comments
+                highlighted = highlighted.replace(/--.*$/gm, '<span style="color: #8b949e;">$&</span>');
+
+                // Numbers
+                highlighted = highlighted.replace(/\\b\\d+(\\.\\d+)?\\b/g, '<span style="color: #79c0ff;">$&</span>');
+
+                // Functions
+                highlighted = highlighted.replace(/\\b([a-zA-Z_][a-zA-Z0-9_]*)(\\s*\\()/g, '<span style="color: #d2a8ff;">$1</span>$2');
+
+                return highlighted;
             }
 
             closeScriptPanel() {
@@ -799,14 +845,31 @@
                     const originalHTML = button.innerHTML;
                     button.innerHTML = '<i class="fas fa-check"></i> Copied!';
                     button.style.background = '#2ea043';
+                    button.style.transform = 'scale(0.95)';
 
                     setTimeout(() => {
                         button.innerHTML = originalHTML;
                         button.style.background = '#238636';
+                        button.style.transform = 'scale(1)';
                     }, 2000);
                 }).catch(err => {
                     console.error('Failed to copy script:', err);
-                    alert('Failed to copy script to clipboard');
+                    // Create a styled notification instead of alert
+                    const notification = document.createElement('div');
+                    notification.style.cssText = `
+                        position: fixed; top: 20px; right: 20px; z-index: 10000;
+                        background: #da3633; color: white; padding: 1rem 1.5rem;
+                        border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                        font-size: 0.9rem; opacity: 0; transition: opacity 0.3s;
+                    `;
+                    notification.textContent = 'Failed to copy script to clipboard';
+                    document.body.appendChild(notification);
+
+                    requestAnimationFrame(() => notification.style.opacity = '1');
+                    setTimeout(() => {
+                        notification.style.opacity = '0';
+                        setTimeout(() => notification.remove(), 300);
+                    }, 3000);
                 });
             }
 
