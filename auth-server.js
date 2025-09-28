@@ -760,28 +760,24 @@ async function estimateTokenUsage(model, systemPrompt, userMessage) {
 
         if (config.provider === 'anthropic') {
             try {
-                // Use Anthropic's official token counting API for accurate input count with caching
+                // Use Anthropic's official token counting API - simplified format per docs
                 const tokenResponse = await anthropic.messages.count_tokens({
                     model: config.model,
-                    system: [
-                        {
-                            type: "text",
-                            text: systemPrompt,
-                            cache_control: { type: "ephemeral" }
-                        }
-                    ],
+                    system: systemPrompt,
                     messages: [
                         { role: "user", content: userMessage }
                     ]
                 });
 
                 inputTokens = tokenResponse.input_tokens || 0;
-                console.log(`[TOKEN ESTIMATION] Anthropic API returned ${inputTokens} input tokens`);
+                console.log(`[TOKEN ESTIMATION] Anthropic API returned ${inputTokens} input tokens for model ${config.model}`);
             } catch (apiError) {
                 console.error('[TOKEN ESTIMATION] Anthropic API error, falling back:', apiError.message);
+                console.error('[TOKEN ESTIMATION] Model:', config.model, 'Error details:', apiError);
                 // Fallback: More accurate character-to-token ratio for Claude models
                 // Claude uses roughly 1 token per 3.5 characters for English text
                 inputTokens = Math.ceil((systemPrompt.length + userMessage.length) / 3.5);
+                console.log(`[TOKEN ESTIMATION] Using fallback estimation: ${inputTokens} tokens`);
             }
         } else if (config.provider === 'openai') {
             // For OpenAI, use tiktoken-based estimation
@@ -2385,6 +2381,44 @@ app.get("/api/debug-subscription/:email", async (req, res) => {
 // Get available subscription plans
 app.get("/api/subscription-plans", (req, res) => {
     res.json(SUBSCRIPTION_PLANS);
+});
+
+// Test endpoint for token counting - follows official Anthropic docs exactly
+app.post("/api/test-token-counting", async (req, res) => {
+    try {
+        const { message, model } = req.body;
+
+        if (!message) {
+            return res.status(400).json({ error: 'Message is required' });
+        }
+
+        // Default to a Claude model if none specified
+        const testModel = model || 'claude-opus-4-1-20250805';
+
+        // Test the official Anthropic token counting API format
+        const response = await anthropic.messages.count_tokens({
+            model: testModel,
+            system: "You are a helpful assistant",
+            messages: [
+                { role: "user", content: message }
+            ]
+        });
+
+        res.json({
+            success: true,
+            model: testModel,
+            input_tokens: response.input_tokens,
+            message: message,
+            system_prompt: "You are a helpful assistant"
+        });
+
+    } catch (error) {
+        console.error('[TOKEN TEST] Error:', error);
+        res.status(500).json({
+            error: error.message,
+            model_attempted: req.body.model || 'claude-opus-4-1-20250805'
+        });
+    }
 });
 
 // Token estimation endpoint for real-time frontend estimation
