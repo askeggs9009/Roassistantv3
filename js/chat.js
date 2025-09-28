@@ -8,6 +8,32 @@ class ChatManager {
         this.API_BASE_URL = 'https://www.roassistant.me';
         this.currentProject = null;
         this.projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
+        this.userHasScrolled = false;
+        this.setupScrollDetection();
+    }
+
+    // Detect when user manually scrolls
+    setupScrollDetection() {
+        setTimeout(() => {
+            const messagesContainer = document.getElementById('messagesContainer');
+            if (messagesContainer) {
+                let scrollTimeout;
+                messagesContainer.addEventListener('scroll', () => {
+                    // Clear existing timeout
+                    clearTimeout(scrollTimeout);
+
+                    // Check if user is not at bottom
+                    const isAtBottom = (messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight) < 5;
+                    this.userHasScrolled = !isAtBottom;
+
+                    // Reset flag after scrolling stops for 1 second
+                    scrollTimeout = setTimeout(() => {
+                        const isStillAtBottom = (messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight) < 5;
+                        this.userHasScrolled = !isStillAtBottom;
+                    }, 1000);
+                });
+            }
+        }, 1000);
     }
 
     // Send message functionality
@@ -234,11 +260,21 @@ class ChatManager {
     updateStreamingMessage(messageId, content) {
         const messageElement = document.getElementById(`streaming-${messageId}`);
         if (messageElement) {
+            const messagesContainer = document.getElementById('messagesContainer');
+
+            // Save current scroll position before update
+            const savedScrollTop = messagesContainer.scrollTop;
+            const wasScrolled = this.userHasScrolled;
+
             // Apply formatting in real-time as content streams
             const formattedContent = this.formatAssistantMessage(content);
             // Add blinking cursor at the end
             messageElement.innerHTML = formattedContent + '<span class="streaming-cursor">|</span>';
-            // No auto-scrolling during AI streaming
+
+            // Restore scroll position if user had scrolled up
+            if (wasScrolled && messagesContainer) {
+                messagesContainer.scrollTop = savedScrollTop;
+            }
         }
     }
 
@@ -1296,6 +1332,8 @@ class ChatManager {
         // Only auto-scroll for user messages
         if (type === 'user') {
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            // Reset scroll flag when user sends a message
+            this.userHasScrolled = false;
         }
     }
 }
