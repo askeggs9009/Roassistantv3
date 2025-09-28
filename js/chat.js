@@ -225,6 +225,7 @@ class ChatManager {
         `;
 
         messagesContainer.appendChild(messageElement);
+        // Always scroll to show the start of new message
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
         return messageElement;
@@ -238,9 +239,14 @@ class ChatManager {
             const formattedContent = this.formatAssistantMessage(content);
             // Add blinking cursor at the end
             messageElement.innerHTML = formattedContent + '<span class="streaming-cursor">|</span>';
-            // Auto-scroll to bottom
+
+            // Only auto-scroll if user is near the bottom
             const messagesContainer = document.getElementById('messagesContainer');
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            const isUserNearBottom = (messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight) < 100;
+
+            if (isUserNearBottom) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
         }
     }
 
@@ -313,10 +319,13 @@ class ChatManager {
                 // Format and display the current text with cursor
                 container.innerHTML = this.formatAssistantMessage(currentText) + '<span class="typewriter-cursor">|</span>';
 
-                // Scroll to keep message visible
+                // Only scroll if user is near the bottom
                 const messagesContainer = document.getElementById('messagesContainer');
                 if (messagesContainer) {
-                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    const isUserNearBottom = (messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight) < 100;
+                    if (isUserNearBottom) {
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    }
                 }
 
                 // Continue streaming with slight randomness (reduced for faster effect)
@@ -327,10 +336,13 @@ class ChatManager {
 
                 console.log('[Typewriter] Effect completed');
 
-                // Final scroll
+                // Final scroll only if user is near bottom
                 const messagesContainer = document.getElementById('messagesContainer');
                 if (messagesContainer) {
-                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    const isUserNearBottom = (messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight) < 100;
+                    if (isUserNearBottom) {
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    }
                 }
 
                 // Call completion callback
