@@ -8,30 +8,51 @@ class ChatManager {
         this.API_BASE_URL = 'https://www.roassistant.me';
         this.currentProject = null;
         this.projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
-        this.userHasScrolled = false;
-        this.setupScrollDetection();
+        this.isAIResponding = false;
+        this.scrollLocked = false;
+        this.setupScrollLock();
     }
 
-    // Detect when user manually scrolls
-    setupScrollDetection() {
+    // Setup aggressive scroll lock during AI responses
+    setupScrollLock() {
         setTimeout(() => {
             const messagesContainer = document.getElementById('messagesContainer');
             if (messagesContainer) {
-                let scrollTimeout;
-                messagesContainer.addEventListener('scroll', () => {
-                    // Clear existing timeout
-                    clearTimeout(scrollTimeout);
+                // Store original scroll event to prevent interference
+                let lockedScrollTop = null;
 
-                    // Check if user is not at bottom
-                    const isAtBottom = (messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight) < 5;
-                    this.userHasScrolled = !isAtBottom;
+                const scrollHandler = (e) => {
+                    if (this.scrollLocked && lockedScrollTop !== null) {
+                        // Immediately restore to locked position
+                        messagesContainer.scrollTop = lockedScrollTop;
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                };
 
-                    // Reset flag after scrolling stops for 1 second
-                    scrollTimeout = setTimeout(() => {
-                        const isStillAtBottom = (messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight) < 5;
-                        this.userHasScrolled = !isStillAtBottom;
-                    }, 1000);
-                });
+                messagesContainer.addEventListener('scroll', scrollHandler, { passive: false });
+
+                // Also prevent wheel events during lock
+                const wheelHandler = (e) => {
+                    if (this.scrollLocked) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                };
+
+                messagesContainer.addEventListener('wheel', wheelHandler, { passive: false });
+                messagesContainer.addEventListener('touchmove', wheelHandler, { passive: false });
+
+                // Store reference for locking/unlocking
+                this.lockScrollPosition = () => {
+                    lockedScrollTop = messagesContainer.scrollTop;
+                    this.scrollLocked = true;
+                };
+
+                this.unlockScrollPosition = () => {
+                    this.scrollLocked = false;
+                    lockedScrollTop = null;
+                };
             }
         }, 1000);
     }
@@ -234,6 +255,10 @@ class ChatManager {
             if (partialMessage) {
                 partialMessage.remove();
             }
+            // Unlock scroll on error
+            if (this.unlockScrollPosition) {
+                this.unlockScrollPosition();
+            }
         }
     }
 
@@ -251,7 +276,11 @@ class ChatManager {
         `;
 
         messagesContainer.appendChild(messageElement);
-        // No auto-scrolling when AI starts typing
+
+        // Lock scroll position when AI starts responding
+        if (this.lockScrollPosition) {
+            this.lockScrollPosition();
+        }
 
         return messageElement;
     }
@@ -260,21 +289,11 @@ class ChatManager {
     updateStreamingMessage(messageId, content) {
         const messageElement = document.getElementById(`streaming-${messageId}`);
         if (messageElement) {
-            const messagesContainer = document.getElementById('messagesContainer');
-
-            // Save current scroll position before update
-            const savedScrollTop = messagesContainer.scrollTop;
-            const wasScrolled = this.userHasScrolled;
-
             // Apply formatting in real-time as content streams
             const formattedContent = this.formatAssistantMessage(content);
             // Add blinking cursor at the end
             messageElement.innerHTML = formattedContent + '<span class="streaming-cursor">|</span>';
-
-            // Restore scroll position if user had scrolled up
-            if (wasScrolled && messagesContainer) {
-                messagesContainer.scrollTop = savedScrollTop;
-            }
+            // Scroll lock prevents any unwanted scrolling
         }
     }
 
@@ -288,6 +307,11 @@ class ChatManager {
                     <div class="message-text">${this.formatAssistantMessage(content)}</div>
                 </div>
             `;
+        }
+
+        // Unlock scroll when AI finishes responding
+        if (this.unlockScrollPosition) {
+            this.unlockScrollPosition();
         }
     }
 
@@ -1331,9 +1355,11 @@ class ChatManager {
 
         // Only auto-scroll for user messages
         if (type === 'user') {
+            // Unlock scroll temporarily for user message
+            if (this.unlockScrollPosition) {
+                this.unlockScrollPosition();
+            }
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            // Reset scroll flag when user sends a message
-            this.userHasScrolled = false;
         }
     }
 }
