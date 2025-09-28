@@ -760,24 +760,25 @@ async function estimateTokenUsage(model, systemPrompt, userMessage) {
 
         if (config.provider === 'anthropic') {
             try {
-                // Use Anthropic's official token counting API - simplified format per docs
-                const tokenResponse = await anthropic.messages.count_tokens({
+                // Count user message tokens only since system prompt is cached
+                const userTokenResponse = await anthropic.messages.count_tokens({
                     model: config.model,
-                    system: systemPrompt,
                     messages: [
                         { role: "user", content: userMessage }
                     ]
                 });
 
-                inputTokens = tokenResponse.input_tokens || 0;
-                console.log(`[TOKEN ESTIMATION] Anthropic API returned ${inputTokens} input tokens for model ${config.model}`);
+                // For cached system prompts, we only count user input tokens
+                // The cached system prompt tokens are essentially "free" after first use
+                inputTokens = userTokenResponse.input_tokens || 0;
+                console.log(`[TOKEN ESTIMATION] User message tokens: ${inputTokens} (system prompt cached)`);
+
             } catch (apiError) {
                 console.error('[TOKEN ESTIMATION] Anthropic API error, falling back:', apiError.message);
                 console.error('[TOKEN ESTIMATION] Model:', config.model, 'Error details:', apiError);
-                // Fallback: More accurate character-to-token ratio for Claude models
-                // Claude uses roughly 1 token per 3.5 characters for English text
-                inputTokens = Math.ceil((systemPrompt.length + userMessage.length) / 3.5);
-                console.log(`[TOKEN ESTIMATION] Using fallback estimation: ${inputTokens} tokens`);
+                // Fallback: Only count user message tokens
+                inputTokens = Math.ceil(userMessage.length / 3.5);
+                console.log(`[TOKEN ESTIMATION] Using fallback estimation: ${inputTokens} tokens (user message only)`);
             }
         } else if (config.provider === 'openai') {
             // For OpenAI, use tiktoken-based estimation
@@ -2394,11 +2395,20 @@ app.post("/api/test-token-counting", async (req, res) => {
 
         // Default to a Claude model if none specified
         const testModel = model || 'claude-opus-4-1-20250805';
+        const systemPrompt = "You are a helpful assistant";
 
-        // Test the official Anthropic token counting API format
-        const response = await anthropic.messages.count_tokens({
+        // Test with system prompt (traditional way)
+        const withSystemResponse = await anthropic.messages.count_tokens({
             model: testModel,
-            system: "You are a helpful assistant",
+            system: systemPrompt,
+            messages: [
+                { role: "user", content: message }
+            ]
+        });
+
+        // Test without system prompt (cached way)
+        const withoutSystemResponse = await anthropic.messages.count_tokens({
+            model: testModel,
             messages: [
                 { role: "user", content: message }
             ]
@@ -2407,9 +2417,11 @@ app.post("/api/test-token-counting", async (req, res) => {
         res.json({
             success: true,
             model: testModel,
-            input_tokens: response.input_tokens,
             message: message,
-            system_prompt: "You are a helpful assistant"
+            with_system_prompt: withSystemResponse.input_tokens,
+            without_system_prompt: withoutSystemResponse.input_tokens,
+            system_prompt_tokens: withSystemResponse.input_tokens - withoutSystemResponse.input_tokens,
+            note: "With caching, we only count user message tokens after first use"
         });
 
     } catch (error) {
