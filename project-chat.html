@@ -11,13 +11,6 @@
     <link rel="stylesheet" href="styles/responsive.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <!-- AdSense Integration -->
-    <link rel="stylesheet" href="styles/ads.css">
-    <script src="js/adsense.js"></script>
-
-    <!-- Google AdSense Verification Code -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7434697703458325"
-            crossorigin="anonymous"></script>
 
     <style>
         /* Subscription Status Styles */
@@ -437,10 +430,6 @@
             </div>
         </div>
 
-        <!-- Header Banner Ad -->
-        <div id="headerBannerAd" class="ad-container banner-ad">
-            <div class="ad-label">Advertisement</div>
-        </div>
 
         <!-- Chat Area -->
         <div class="chat-area">
@@ -549,10 +538,6 @@
             </div>
         </div>
 
-        <!-- Footer Ad -->
-        <div id="footerAd" class="ad-container footer-ad">
-            <div class="ad-label">Advertisement</div>
-        </div>
     </div>
 
     <!-- Upgrade Prompt -->
@@ -983,14 +968,6 @@
             }
         }
 
-        // Check premium status
-        function checkPremiumStatus() {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            if (user.premium || user.plan === 'premium') {
-                document.body.classList.add('premium-user');
-                console.log('[AdSense] Premium user detected - ads hidden');
-            }
-        }
 
         // Initialize app when DOM and all scripts are loaded
         window.addEventListener('load', function() {
@@ -1016,9 +993,6 @@
             // Check subscription status and refresh periodically
             checkSubscriptionStatus();
             setInterval(checkSubscriptionStatus, 60000); // Refresh every minute
-
-            // Check premium status on load
-            checkPremiumStatus();
         });
 
         // Check for project parameter in URL
@@ -1033,8 +1007,6 @@
             }
         }
 
-        // Check premium status on auth changes
-        document.addEventListener('authStatusChanged', checkPremiumStatus);
 
         // Authentication and User Profile Functions
         function checkAuth() {
@@ -1373,12 +1345,6 @@
 
     </script>
 
-    <!-- Content Ad Template for Chat -->
-    <template id="chatContentAdTemplate">
-        <div class="ad-container content-ad chat-content-ad" style="margin: 2rem auto;">
-            <div class="ad-label">Advertisement</div>
-        </div>
-    </template>
 
     <!-- Artifacts Modal -->
     <div class="modal" id="artifactsModal" style="display: none;">

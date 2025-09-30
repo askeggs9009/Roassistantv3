@@ -11,7 +11,8 @@
       "Bash(echo \"$file\")",
       "Bash(done)",
       "Bash(mv:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []
