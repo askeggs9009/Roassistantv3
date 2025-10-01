@@ -14,9 +14,12 @@ class ChatManager {
     async sendMessage() {
         const messageInput = document.getElementById('messageInput');
         const message = messageInput.value.trim();
-        
+
         if (!message && this.attachedFiles.length === 0) return;
-        if (this.isLoading) return;
+        if (this.isLoading) {
+            console.log('Message blocked: AI is still typing');
+            return;
+        }
 
         try {
             this.isLoading = true;
@@ -171,6 +174,9 @@ class ChatManager {
                 } else {
                     this.addMessage('error', errorData.error || 'An error occurred while processing your request.');
                 }
+                // Re-enable input on error
+                this.isLoading = false;
+                this.updateSendButton(false);
                 return;
             }
 
@@ -204,8 +210,14 @@ class ChatManager {
                                 }
                                 // Finalize the message with proper formatting
                                 this.finalizeStreamingMessage(messageId, data.fullResponse);
+                                // Re-enable input when streaming is complete
+                                this.isLoading = false;
+                                this.updateSendButton(false);
                             } else if (data.type === 'error') {
                                 this.addMessage('error', data.error);
+                                // Re-enable input on error
+                                this.isLoading = false;
+                                this.updateSendButton(false);
                                 return;
                             }
                         } catch (e) {
@@ -222,7 +234,9 @@ class ChatManager {
             if (partialMessage) {
                 partialMessage.remove();
             }
-            // No scroll manipulation on error
+            // Re-enable input on error
+            this.isLoading = false;
+            this.updateSendButton(false);
         }
     }
 
@@ -525,14 +539,24 @@ class ChatManager {
     // Update send button state
     updateSendButton(loading) {
         const sendButton = document.getElementById('sendButton');
+        const messageInput = document.getElementById('messageInput');
+
         if (!sendButton) return;
-        
+
         if (loading) {
             sendButton.innerHTML = '<i class="loading-spinner"></i>';
             sendButton.disabled = true;
+            if (messageInput) {
+                messageInput.disabled = true;
+                messageInput.placeholder = 'Please wait for the AI to finish typing...';
+            }
         } else {
             sendButton.innerHTML = '<svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>';
             sendButton.disabled = false;
+            if (messageInput) {
+                messageInput.disabled = false;
+                messageInput.placeholder = 'Ask questions about your project, request code reviews, or get help with specific features...';
+            }
         }
     }
 
