@@ -539,24 +539,15 @@ class ChatManager {
     // Update send button state
     updateSendButton(loading) {
         const sendButton = document.getElementById('sendButton');
-        const messageInput = document.getElementById('messageInput');
 
         if (!sendButton) return;
 
         if (loading) {
             sendButton.innerHTML = '<i class="loading-spinner"></i>';
             sendButton.disabled = true;
-            if (messageInput) {
-                messageInput.disabled = true;
-                messageInput.placeholder = 'Please wait for the AI to finish typing...';
-            }
         } else {
             sendButton.innerHTML = '<svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>';
             sendButton.disabled = false;
-            if (messageInput) {
-                messageInput.disabled = false;
-                messageInput.placeholder = 'Ask questions about your project, request code reviews, or get help with specific features...';
-            }
         }
     }
 
