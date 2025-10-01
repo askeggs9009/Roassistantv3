@@ -570,10 +570,8 @@ class ChatManager {
         if (nexusCounter) {
             nexusCounter.textContent = `${used}/${limit}`;
 
-            // Show upgrade modal if limit reached
-            if (used >= limit) {
-                this.showUpgradeModal();
-            }
+            // Don't auto-show popup - only show when user tries to use Nexus
+            // The popup will be triggered by sendMessage() when they hit the limit
         }
     }
 

@@ -1205,6 +1205,24 @@
             const newModel = model;
             console.log('Model changed to:', newModel);
 
+            // Check if trying to select Nexus when limit is reached
+            if (newModel === 'claude-4-opus') {
+                const nexusCounter = document.getElementById('nexusUsageCounter');
+                if (nexusCounter) {
+                    const counterText = nexusCounter.textContent;
+                    const [used, limit] = counterText.split('/').map(Number);
+                    if (used >= limit) {
+                        // Show upgrade popup instead of switching
+                        if (window.chatManager) {
+                            window.chatManager.showNexusUpgradePopup();
+                        }
+                        // Hide dropdown
+                        document.getElementById('modelDropdown').style.display = 'none';
+                        return; // Don't switch to the model
+                    }
+                }
+            }
+
             // Update selected state in dropdown
             document.querySelectorAll('.model-option').forEach(option => {
                 option.classList.remove('selected');
