@@ -869,6 +869,33 @@ class ChatManager {
         if (this.messages.length === 0) {
             this.showWelcomeMessage();
         }
+
+        // Fetch current Nexus usage for authenticated users
+        this.fetchNexusUsage();
+    }
+
+    // Fetch current Nexus usage from server
+    async fetchNexusUsage() {
+        try {
+            const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+            if (!token) return; // Only for authenticated users
+
+            const response = await fetch(`${this.API_BASE_URL}/api/nexus-usage`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.nexusUsage !== undefined) {
+                    this.updateNexusCounter(data.nexusUsage, data.nexusLimit || 3);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching Nexus usage:', error);
+        }
     }
 
     // Display saved messages

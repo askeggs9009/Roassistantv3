@@ -3602,14 +3602,43 @@ app.get("/models", optionalAuthenticateToken, async (req, res) => {
         return modelInfo;
     });
     
-    res.json({ 
+    res.json({
         models,
         isAuthenticated,
         availableModels,
-        message: isAuthenticated ? 
-            "Access based on your subscription plan" : 
+        message: isAuthenticated ?
+            "Access based on your subscription plan" :
             "Sign up for access to more models"
     });
+});
+
+// API endpoint to get current Nexus usage
+app.get("/api/nexus-usage", authenticateToken, async (req, res) => {
+    try {
+        const user = await DatabaseManager.findUserByEmail(req.user.email);
+        const subscription = getUserSubscription(user);
+
+        // Only return Nexus usage for free users
+        if (subscription.plan === 'free') {
+            const today = new Date().toISOString().split('T')[0];
+            const nexusUsageKey = `nexus_${user.id}_${today}`;
+            const currentNexusUsage = dailyOpusUsage.get(nexusUsageKey) || 0;
+
+            res.json({
+                nexusUsage: currentNexusUsage,
+                nexusLimit: 3
+            });
+        } else {
+            // Pro and Enterprise users don't have Nexus limits
+            res.json({
+                nexusUsage: 0,
+                nexusLimit: -1 // -1 indicates unlimited
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching Nexus usage:', error);
+        res.status(500).json({ error: 'Failed to fetch Nexus usage' });
+    }
 });
 
 // Clean up expired data periodically
