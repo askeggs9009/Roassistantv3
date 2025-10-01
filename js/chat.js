@@ -141,7 +141,12 @@ class ChatManager {
                 this.updateSubscriptionDisplay(data.subscription);
             }
         } else {
-            this.addMessage('error', data.error || 'An error occurred while processing your request.');
+            // Check if this is a limit error that should show the upgrade popup
+            if (data.upgradeUrl && data.error && data.error.includes('Nexus')) {
+                this.showNexusUpgradePopup();
+            } else {
+                this.addMessage('error', data.error || 'An error occurred while processing your request.');
+            }
         }
     }
 
@@ -160,7 +165,12 @@ class ChatManager {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                this.addMessage('error', errorData.error || 'An error occurred while processing your request.');
+                // Check if this is a limit error that should show the upgrade popup
+                if (errorData.upgradeUrl && errorData.error && errorData.error.includes('Nexus')) {
+                    this.showNexusUpgradePopup();
+                } else {
+                    this.addMessage('error', errorData.error || 'An error occurred while processing your request.');
+                }
                 return;
             }
 
@@ -563,12 +573,17 @@ class ChatManager {
         }
     }
 
-    // Show upgrade modal
-    showUpgradeModal() {
+    // Show Nexus upgrade popup (centered on screen)
+    showNexusUpgradePopup() {
         const modal = document.getElementById('nexusUpgradeModal');
         if (modal) {
-            modal.style.display = 'block';
+            modal.style.display = 'flex';
         }
+    }
+
+    // Show upgrade modal (legacy - for counter)
+    showUpgradeModal() {
+        this.showNexusUpgradePopup();
     }
 
     // Close upgrade modal

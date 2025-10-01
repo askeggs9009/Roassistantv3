@@ -112,50 +112,107 @@
             background: linear-gradient(90deg, #f85149, #da3633);
         }
 
-        /* Upgrade Modal Styles */
-        .upgrade-modal {
-            max-width: 500px;
+        /* Nexus Upgrade Popup Styles - Centered on Screen */
+        .nexus-upgrade-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nexus-popup-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+        }
+
+        .nexus-popup-content {
+            position: relative;
             background: #0d1117;
             border: 1px solid #30363d;
-            border-radius: 12px;
+            border-radius: 16px;
+            padding: 2.5rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+            animation: popupFadeIn 0.3s ease;
+            text-align: center;
         }
 
-        .upgrade-modal .modal-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid #30363d;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        @keyframes popupFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
-        .upgrade-badge {
-            background: linear-gradient(135deg, #58a6ff, #1f6feb);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .upgrade-modal h2 {
-            color: #f0f6fc;
-            margin: 0 0 1rem 0;
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-
-        .limit-message {
+        .nexus-popup-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
             color: #8b949e;
-            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nexus-popup-close:hover {
+            background: rgba(248, 81, 73, 0.1);
+            color: #f85149;
+        }
+
+        .nexus-popup-title {
+            color: #f0f6fc;
+            margin: 0 0 0.5rem 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #58a6ff, #1f6feb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nexus-popup-price {
+            color: #8b949e;
+            font-size: 1.1rem;
+            margin: 0 0 1.5rem 0;
+        }
+
+        .nexus-popup-message {
+            color: #c9d1d9;
+            margin-bottom: 2rem;
             line-height: 1.5;
+            font-size: 0.95rem;
         }
 
-        .benefits-list {
+        .nexus-benefits-list {
             margin: 1.5rem 0;
+            text-align: left;
         }
 
-        .benefit-item {
+        .nexus-benefit-item {
             display: flex;
             align-items: flex-start;
             gap: 0.75rem;
@@ -163,17 +220,56 @@
             color: #c9d1d9;
         }
 
-        .benefit-item i {
+        .nexus-benefit-item i {
             color: #3fb950;
             font-size: 0.875rem;
             margin-top: 0.125rem;
         }
 
-        .usage-note {
+        .nexus-usage-note {
             color: #6e7681;
             font-size: 0.75rem;
             font-style: italic;
-            margin-top: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .nexus-popup-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .nexus-btn {
+            flex: 1;
+            padding: 0.875rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .nexus-btn-primary {
+            background: linear-gradient(45deg, #238636, #2ea043);
+            color: white;
+        }
+
+        .nexus-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(46, 160, 67, 0.5);
+        }
+
+        .nexus-btn-secondary {
+            background: transparent;
+            border: 1px solid #30363d;
+            color: #8b949e;
+        }
+
+        .nexus-btn-secondary:hover {
+            background: rgba(88, 166, 255, 0.1);
+            border-color: #58a6ff;
+            color: #58a6ff;
         }
 
         .model-badge {
@@ -865,47 +961,46 @@
                 </div>
 
                 <!-- Nexus Limit Upgrade Popup -->
-                <div id="nexusUpgradeModal" class="modal" style="display: none;">
-                    <div class="modal-content upgrade-modal">
-                        <div class="modal-header">
-                            <div class="upgrade-badge">Upgrade</div>
-                            <button class="close-btn" onclick="closeUpgradeModal()">&times;</button>
-                        </div>
-                        <div class="modal-body">
-                            <h2>More Nexus with Pro and Enterprise plans</h2>
-                            <p class="limit-message">Free plans only get 3 RoCode Nexus 3 messages per day. Try again tomorrow, or upgrade now to get:</p>
+                <div id="nexusUpgradeModal" class="nexus-upgrade-popup" style="display: none;">
+                    <div class="nexus-popup-overlay" onclick="closeUpgradeModal()"></div>
+                    <div class="nexus-popup-content">
+                        <button class="nexus-popup-close" onclick="closeUpgradeModal()">&times;</button>
+                        <h1 class="nexus-popup-title">RoAssistant Pro</h1>
+                        <p class="nexus-popup-price">$10/month</p>
+                        <p class="nexus-popup-message">Daily RoCode Nexus 3 limit reached (3). Upgrade to Pro for unlimited access.</p>
 
-                            <div class="benefits-list">
-                                <div class="benefit-item">
-                                    <i class="fas fa-check"></i>
-                                    <span>More RoCode Nexus 3 usage*</span>
-                                </div>
-                                <div class="benefit-item">
-                                    <i class="fas fa-check"></i>
-                                    <span>Access to unlimited Projects to organize chats</span>
-                                </div>
-                                <div class="benefit-item">
-                                    <i class="fas fa-check"></i>
-                                    <span>Priority support and faster responses</span>
-                                </div>
-                                <div class="benefit-item">
-                                    <i class="fas fa-check"></i>
-                                    <span>Extended context for complex work</span>
-                                </div>
-                                <div class="benefit-item">
-                                    <i class="fas fa-check"></i>
-                                    <span>Advanced Roblox development features</span>
-                                </div>
-                                <div class="benefit-item">
-                                    <i class="fas fa-check"></i>
-                                    <span>Access to RoCode Studio (Enterprise)</span>
-                                </div>
+                        <div class="nexus-benefits-list">
+                            <div class="nexus-benefit-item">
+                                <i class="fas fa-check"></i>
+                                <span>More RoCode Nexus 3 usage*</span>
                             </div>
-
-                            <p class="usage-note">*Usage limits apply</p>
+                            <div class="nexus-benefit-item">
+                                <i class="fas fa-check"></i>
+                                <span>Access to unlimited Projects to organize chats</span>
+                            </div>
+                            <div class="nexus-benefit-item">
+                                <i class="fas fa-check"></i>
+                                <span>Priority support and faster responses</span>
+                            </div>
+                            <div class="nexus-benefit-item">
+                                <i class="fas fa-check"></i>
+                                <span>Extended context for complex work</span>
+                            </div>
+                            <div class="nexus-benefit-item">
+                                <i class="fas fa-check"></i>
+                                <span>Advanced Roblox development features</span>
+                            </div>
+                            <div class="nexus-benefit-item">
+                                <i class="fas fa-check"></i>
+                                <span>Access to RoCode Studio (Enterprise)</span>
+                            </div>
                         </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-primary" onclick="window.location.href='/pricing.html'">See plans</button>
+
+                        <p class="nexus-usage-note">*Usage limits apply</p>
+
+                        <div class="nexus-popup-buttons">
+                            <button class="nexus-btn nexus-btn-secondary" onclick="closeUpgradeModal(); selectModel('claude-4-sonnet');">Switch to RoCode 3</button>
+                            <button class="nexus-btn nexus-btn-primary" onclick="window.location.href='/pricing.html'">Buy</button>
                         </div>
                     </div>
                 </div>
