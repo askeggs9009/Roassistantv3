@@ -326,6 +326,22 @@
     cursor: not-allowed;
 }
 
+.model-option .model-check {
+    color: #3fb950;
+    font-size: 0.9rem;
+    display: none;
+}
+
+.model-option.selected .model-check {
+    display: block;
+}
+
+.model-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .model-name {
     color: #e1e4e8;
     font-size: 0.9rem;
@@ -348,38 +364,6 @@
 
 .model-option.disabled .model-badge {
     background: linear-gradient(45deg, #6e7681, #484f58);
-}
-
-/* Model Indicator */
-.model-indicator {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    background: rgba(13, 17, 23, 0.8);
-    border: 1px solid rgba(88, 166, 255, 0.3);
-    border-radius: 8px;
-    font-size: 0.85rem;
-    color: #e1e4e8;
-    font-weight: 500;
-    flex-shrink: 0;
-    backdrop-filter: blur(10px);
-}
-
-.model-indicator .model-name {
-    color: #58a6ff;
-    font-weight: 600;
-}
-
-.model-indicator .model-usage {
-    background: linear-gradient(45deg, #9d4edd, #7c3aed);
-    color: white;
-    padding: 0.2rem 0.5rem;
-    border-radius: 12px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    min-width: 2rem;
-    text-align: center;
 }
 
 /* Token Estimation Display */

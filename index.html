@@ -750,19 +750,17 @@
                             <!-- Model Selector Dropdown -->
                             <div class="model-dropdown" id="modelDropdown" style="display: none;">
                                 <div class="model-dropdown-header">Select Model</div>
-                                <div class="model-option" data-model="claude-4-sonnet" onclick="selectModel('claude-4-sonnet')">
+                                <div class="model-option selected" data-model="claude-4-sonnet" onclick="selectModel('claude-4-sonnet')">
                                     <div class="model-name">RoCode 3</div>
+                                    <i class="fas fa-check model-check"></i>
                                 </div>
                                 <div class="model-option premium" data-model="claude-4-opus" onclick="selectModel('claude-4-opus')">
                                     <div class="model-name">RoCode Nexus 3</div>
-                                    <div class="model-badge" id="nexusUsageCounter">0/3</div>
+                                    <div class="model-right">
+                                        <div class="model-badge" id="nexusUsageCounter">0/3</div>
+                                        <i class="fas fa-check model-check" style="display: none;"></i>
+                                    </div>
                                 </div>
-                            </div>
-
-                            <!-- Model Indicator -->
-                            <div class="model-indicator" id="modelIndicator">
-                                <span class="model-name" id="currentModelName">RoCode 3</span>
-                                <span class="model-usage" id="currentModelUsage" style="display: none;">0/3</span>
                             </div>
 
                             <!-- Token Estimation Display -->
@@ -1154,6 +1152,24 @@
             const newModel = model;
             console.log('Model changed to:', newModel);
 
+            // Update selected state in dropdown
+            document.querySelectorAll('.model-option').forEach(option => {
+                option.classList.remove('selected');
+                const check = option.querySelector('.model-check');
+                if (check) {
+                    check.style.display = 'none';
+                }
+            });
+
+            const selectedOption = document.querySelector(`.model-option[data-model="${model}"]`);
+            if (selectedOption) {
+                selectedOption.classList.add('selected');
+                const check = selectedOption.querySelector('.model-check');
+                if (check) {
+                    check.style.display = 'block';
+                }
+            }
+
             // If the model actually changed, start a new chat
             if (newModel !== selectedModel) {
                 selectedModel = newModel;
@@ -1161,9 +1177,6 @@
 
                 // Update button icon to show current model
                 updateModelButton();
-
-                // Update model indicator
-                updateModelIndicator();
 
                 // Start a new chat when model changes
                 startNewChat();
@@ -1189,34 +1202,6 @@
             }
         }
 
-        // Update model indicator next to send button
-        function updateModelIndicator() {
-            const modelNameElement = document.getElementById('currentModelName');
-            const modelUsageElement = document.getElementById('currentModelUsage');
-
-            if (modelNameElement) {
-                const modelName = selectedModel === 'claude-4-opus' ? 'RoCode Nexus 3' : 'RoCode 3';
-                modelNameElement.textContent = modelName;
-            }
-
-            if (modelUsageElement) {
-                // Show usage counter only for free users with Nexus
-                if (selectedModel === 'claude-4-opus' && isLoggedIn && currentUser) {
-                    // Check if user is on free plan
-                    const userSubscription = currentUser.subscription || { plan: 'free' };
-                    if (userSubscription.plan === 'free') {
-                        modelUsageElement.style.display = 'inline';
-                        // Get current usage from server response or default to 0
-                        const currentUsage = window.currentNexusUsage || 0;
-                        modelUsageElement.textContent = `${currentUsage}/3`;
-                    } else {
-                        modelUsageElement.style.display = 'none';
-                    }
-                } else {
-                    modelUsageElement.style.display = 'none';
-                }
-            }
-        }
 
         // Update model selector for auth status
         function updateModelSelector() {
@@ -1489,9 +1474,8 @@
                 }
             });
 
-            // Initialize model button and indicator
+            // Initialize model button
             updateModelButton();
-            updateModelIndicator();
 
             // Setup token estimation for message input
             setupTokenEstimation();
