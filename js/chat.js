@@ -91,8 +91,8 @@ class ChatManager {
             const streamingEnabled = window.streamingEnabled || false;
 
             if (streamingEnabled) {
-                // Use streaming endpoint
-                this.handleStreamingResponse(requestBody, headers);
+                // Use streaming endpoint (don't await - it handles its own state)
+                await this.handleStreamingResponse(requestBody, headers);
             } else {
                 // Use regular endpoint
                 await this.handleRegularResponse(requestBody, headers);
@@ -102,11 +102,12 @@ class ChatManager {
             console.error('Error sending message:', error);
             this.hideAiThinking(); // Hide thinking animation on error
             this.addMessage('error', 'Network error. Please check your connection and try again.');
-        } finally {
             this.isLoading = false;
             this.updateSendButton(false);
-            this.clearAttachedFiles();
         }
+
+        // Clear attached files (but don't reset loading state here for streaming)
+        this.clearAttachedFiles();
     }
 
     // Handle regular non-streaming response
@@ -151,6 +152,10 @@ class ChatManager {
                 this.addMessage('error', data.error || 'An error occurred while processing your request.');
             }
         }
+
+        // Re-enable input after regular response completes
+        this.isLoading = false;
+        this.updateSendButton(false);
     }
 
     // Handle streaming response
