@@ -198,6 +198,10 @@ class ChatManager {
                                 if (data.tokenUsage) {
                                     this.displayTokenUsage(data.tokenUsage);
                                 }
+                                // Update usage info if provided
+                                if (data.usageInfo) {
+                                    this.updateUsageDisplay(data.usageInfo);
+                                }
                                 // Finalize the message with proper formatting
                                 this.finalizeStreamingMessage(messageId, data.fullResponse);
                             } else if (data.type === 'error') {

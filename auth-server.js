@@ -3210,7 +3210,9 @@ app.post("/ask-stream", optionalAuthenticateToken, checkUsageLimits, async (req,
 
         // Send completion event with metadata
         const totalTokens = inputTokens + outputTokens;
-        res.write(`data: ${JSON.stringify({
+
+        // Prepare completion data
+        const completionData = {
             type: 'complete',
             fullResponse: fullResponse,
             tokenUsage: {
@@ -3220,7 +3222,26 @@ app.post("/ask-stream", optionalAuthenticateToken, checkUsageLimits, async (req,
             },
             model: model,
             provider: config.provider
-        })}\n\n`);
+        };
+
+        // Add nexusUsage for free users (always include, regardless of current model)
+        if (isAuthenticated) {
+            const user = await DatabaseManager.findUserByEmail(req.user.email);
+            const subscription = getUserSubscription(user);
+
+            if (subscription.plan === 'free') {
+                const today = new Date().toISOString().split('T')[0];
+                const nexusUsageKey = `nexus_${user.id}_${today}`;
+                const currentNexusUsage = dailyOpusUsage.get(nexusUsageKey) || 0;
+
+                completionData.usageInfo = {
+                    nexusUsage: currentNexusUsage,
+                    nexusLimit: 3
+                };
+            }
+        }
+
+        res.write(`data: ${JSON.stringify(completionData)}\n\n`);
 
         // Log chat to database
         const userIdentifier = getUserIdentifier(req);
@@ -3499,11 +3520,11 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
                 limits: subscription.limits
             };
 
-            // Add nexusUsage for free users with RoCode Nexus 3
-            if (subscription.plan === 'free' && model === 'claude-4-opus') {
+            // Add nexusUsage for free users (always include, regardless of current model)
+            if (subscription.plan === 'free') {
                 const today = new Date().toISOString().split('T')[0];
                 const nexusUsageKey = `nexus_${user.id}_${today}`;
-                // Get updated usage after increment
+                // Get current usage (incremented if using Opus, just current value otherwise)
                 const currentNexusUsage = dailyOpusUsage.get(nexusUsageKey) || 0;
 
                 responseData.usageInfo = {
