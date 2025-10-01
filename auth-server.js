@@ -705,7 +705,7 @@ const MODEL_CONFIGS = {
         provider: 'anthropic'
     },
     "rocode-studio": {
-        model: "claude-opus-4-1-20250805",
+        model: "claude-sonnet-4-5-20250929",
         requiresPlan: 'enterprise',
         provider: 'anthropic'
     }
@@ -2400,7 +2400,7 @@ app.post("/api/test-token-counting", async (req, res) => {
             return res.status(400).json({ error: 'Message is required' });
         }
 
-        const testModel = model || 'claude-opus-4-1-20250805';
+        const testModel = model || 'claude-sonnet-4-5-20250929';
         const systemPrompt = "You are a helpful assistant";
 
         // Use Anthropic's exact token counting
@@ -2458,7 +2458,7 @@ app.post("/api/test-token-counting", async (req, res) => {
         console.error('[TOKEN TEST] Error:', error);
         res.status(500).json({
             error: error.message,
-            model_attempted: req.body.model || 'claude-opus-4-1-20250805'
+            model_attempted: req.body.model || 'claude-sonnet-4-5-20250929'
         });
     }
 });
