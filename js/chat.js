@@ -4,6 +4,7 @@ class ChatManager {
         this.messages = [];
         this.attachedFiles = [];
         this.isLoading = false;
+        this.lastUserMessage = ''; // Store last user message for context-aware code summaries
         // Use the backend API URL
         this.API_BASE_URL = 'https://www.roassistant.me';
         this.currentProject = null;
@@ -27,6 +28,9 @@ class ChatManager {
 
             // Check if this is the first user message in a new chat
             const isFirstMessage = this.messages.length === 0;
+
+            // Store last user message for context-aware code summaries
+            this.lastUserMessage = message;
 
             // Add user message to chat
             this.addMessage('user', message);
@@ -498,38 +502,105 @@ class ChatManager {
         this.saveChatHistory();
     }
 
-    // Generate a brief summary for code block (max 3 words)
-    generateCodeSummary(code, language) {
-        const lower = code.toLowerCase();
+    // Generate a brief summary for code block based on user question and code content
+    generateCodeSummary(code, language, userQuestion = '') {
+        const codeLower = code.toLowerCase();
+        const questionLower = userQuestion.toLowerCase();
 
-        // Check for common patterns and keywords
-        if (lower.includes('http') || lower.includes('fetch') || lower.includes('request')) {
-            return 'API Request Handler';
-        } else if (lower.includes('button') && lower.includes('click')) {
-            return 'Button Click Handler';
-        } else if (lower.includes('datastore') || lower.includes('data store')) {
-            return 'DataStore Management';
-        } else if (lower.includes('remote') && lower.includes('event')) {
+        // Extract key terms from user question
+        const extractKeyTerms = (question) => {
+            // Remove common words and extract meaningful terms
+            const commonWords = ['create', 'make', 'write', 'add', 'build', 'script', 'code', 'for', 'that', 'can', 'will', 'the', 'a', 'an', 'in', 'to', 'with', 'my', 'me', 'please', 'help', 'need', 'want', 'how'];
+            const words = question.split(/\s+/)
+                .filter(w => w.length > 3 && !commonWords.includes(w))
+                .map(w => w.replace(/[^a-z0-9]/g, ''));
+            return words.slice(0, 3);
+        };
+
+        const keyTerms = extractKeyTerms(questionLower);
+
+        // First, try to match based on user's question context
+        if (questionLower) {
+            // Check if question mentions specific Roblox features
+            if ((questionLower.includes('shop') || questionLower.includes('store') || questionLower.includes('buy')) &&
+                (codeLower.includes('shop') || codeLower.includes('purchase') || codeLower.includes('buy'))) {
+                return 'Shop System';
+            } else if ((questionLower.includes('datastore') || questionLower.includes('data')) &&
+                       (codeLower.includes('datastore') || codeLower.includes('data'))) {
+                return 'DataStore System';
+            } else if ((questionLower.includes('leaderstats') || questionLower.includes('leaderboard')) &&
+                       codeLower.includes('leaderstats')) {
+                return 'Leaderboard System';
+            } else if ((questionLower.includes('weapon') || questionLower.includes('gun') || questionLower.includes('damage')) &&
+                       codeLower.includes('damage')) {
+                return 'Damage System';
+            } else if ((questionLower.includes('animation') || questionLower.includes('tween') || questionLower.includes('animate')) &&
+                       (codeLower.includes('tween') || codeLower.includes('animation'))) {
+                return 'Animation System';
+            } else if ((questionLower.includes('spawn') || questionLower.includes('respawn')) &&
+                       codeLower.includes('spawn')) {
+                return 'Spawn System';
+            } else if ((questionLower.includes('ui') || questionLower.includes('gui') || questionLower.includes('button') || questionLower.includes('menu')) &&
+                       (codeLower.includes('gui') || codeLower.includes('frame') || codeLower.includes('button'))) {
+                return 'UI System';
+            } else if ((questionLower.includes('tool') || questionLower.includes('item') || questionLower.includes('equip')) &&
+                       codeLower.includes('tool')) {
+                return 'Tool System';
+            } else if ((questionLower.includes('remote') || questionLower.includes('event')) &&
+                       (codeLower.includes('remote') && codeLower.includes('event'))) {
+                return 'Remote Event System';
+            } else if ((questionLower.includes('player') || questionLower.includes('join')) &&
+                       codeLower.includes('player')) {
+                return 'Player System';
+            }
+
+            // Try to extract meaningful noun phrases from question
+            if (keyTerms.length > 0) {
+                // Capitalize first letter of each term
+                const summary = keyTerms.slice(0, 2).map(term =>
+                    term.charAt(0).toUpperCase() + term.slice(1)
+                ).join(' ');
+
+                // Add "System" or "Handler" suffix if appropriate
+                if (summary && !summary.includes('System') && !summary.includes('Handler')) {
+                    if (codeLower.includes('function') || codeLower.includes('event')) {
+                        return summary + ' Handler';
+                    } else {
+                        return summary + ' System';
+                    }
+                }
+                return summary || 'Code System';
+            }
+        }
+
+        // Fallback to code pattern detection
+        if (codeLower.includes('http') || codeLower.includes('fetch') || codeLower.includes('request')) {
+            return 'API Handler';
+        } else if (codeLower.includes('button') && codeLower.includes('click')) {
+            return 'Button Handler';
+        } else if (codeLower.includes('datastore') || codeLower.includes('data store')) {
+            return 'DataStore System';
+        } else if (codeLower.includes('remote') && codeLower.includes('event')) {
             return 'Remote Event Handler';
-        } else if (lower.includes('tween') || lower.includes('animation')) {
+        } else if (codeLower.includes('tween') || codeLower.includes('animation')) {
             return 'Animation System';
-        } else if (lower.includes('player') && lower.includes('join')) {
-            return 'Player Join Handler';
-        } else if (lower.includes('gui') || lower.includes('frame') || lower.includes('textbutton')) {
+        } else if (codeLower.includes('player') && codeLower.includes('join')) {
+            return 'Player Handler';
+        } else if (codeLower.includes('gui') || codeLower.includes('frame') || codeLower.includes('textbutton')) {
             return 'UI Component';
-        } else if (lower.includes('tool') || lower.includes('equipped')) {
+        } else if (codeLower.includes('tool') || codeLower.includes('equipped')) {
             return 'Tool System';
-        } else if (lower.includes('part') && (lower.includes('touch') || lower.includes('collision'))) {
+        } else if (codeLower.includes('part') && (codeLower.includes('touch') || codeLower.includes('collision'))) {
             return 'Collision Handler';
-        } else if (lower.includes('leaderstats')) {
+        } else if (codeLower.includes('leaderstats')) {
             return 'Leaderboard System';
-        } else if (lower.includes('spawn')) {
+        } else if (codeLower.includes('spawn')) {
             return 'Spawn Handler';
-        } else if (lower.includes('damage')) {
+        } else if (codeLower.includes('damage')) {
             return 'Damage System';
-        } else if (lower.includes('shop') || lower.includes('purchase')) {
+        } else if (codeLower.includes('shop') || codeLower.includes('purchase')) {
             return 'Shop System';
-        } else if (lower.includes('function') || lower.includes('def ') || lower.includes('const ')) {
+        } else if (codeLower.includes('function') || codeLower.includes('def ') || codeLower.includes('const ')) {
             // Extract first function name
             const funcMatch = code.match(/(?:function|def|const)\s+(\w+)/);
             if (funcMatch && funcMatch[1]) {
@@ -540,7 +611,7 @@ class ChatManager {
             }
         }
 
-        // Fallback to language type
+        // Final fallback to language type
         return `${language.charAt(0).toUpperCase() + language.slice(1)} Code`;
     }
 
@@ -561,8 +632,8 @@ class ChatManager {
             const contentHash = this.hashCode(trimmedCode);
             const blockId = `code-${contentHash}-${codeBlockIndex++}`;
 
-            // Generate a brief summary for the code
-            const codeSummary = this.generateCodeSummary(trimmedCode, langLabel);
+            // Generate a brief summary for the code using user's question for context
+            const codeSummary = this.generateCodeSummary(trimmedCode, langLabel, this.lastUserMessage || '');
 
             // Store code block for panel display
             codeBlocks.push({
@@ -1152,6 +1223,12 @@ class ChatManager {
         this.messages.forEach(msg => {
             this.displayMessage(msg.type, msg.content);
         });
+
+        // Restore last user message for context-aware code summaries
+        const lastUserMsg = [...this.messages].reverse().find(msg => msg.type === 'user');
+        if (lastUserMsg) {
+            this.lastUserMessage = lastUserMsg.content;
+        }
     }
 
     // Save chat history
