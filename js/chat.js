@@ -1200,6 +1200,13 @@ class ChatManager {
 
     // Load chat history
     loadChatHistory() {
+        // Protect project chat pages from having their messages cleared
+        const isProjectPage = window.location.pathname.includes('project-chat.html');
+        if (isProjectPage && this.messages.length > 0) {
+            console.log('[ChatManager] Skipping loadChatHistory on project page with existing messages');
+            return;
+        }
+
         // Reset sidebar title when loading chats
         const sidebarTitle = document.querySelector('.sidebar-header h3');
         if (sidebarTitle) {
@@ -1286,11 +1293,18 @@ class ChatManager {
 
     // Display saved messages
     displaySavedMessages() {
-        console.log('[ChatManager] ⚠️ CLEARING MESSAGES - displaySavedMessages() called');
+        console.log('[ChatManager] ⚠️ displaySavedMessages() called');
         console.trace('[ChatManager] displaySavedMessages() stack trace');
 
         const messagesContainer = document.getElementById('messagesContainer');
         if (!messagesContainer) return;
+
+        // Check if we're on a project page with active messages
+        const isProjectPage = window.location.pathname.includes('project-chat.html');
+        if (isProjectPage && messagesContainer.children.length > 1) {
+            console.log('[ChatManager] Skipping message reload on project page with active messages');
+            return;
+        }
 
         console.log('[ChatManager] Clearing messagesContainer innerHTML in displaySavedMessages');
         messagesContainer.innerHTML = '';
@@ -1697,6 +1711,13 @@ class ChatManager {
         if (!messagesContainer) {
             console.error('[ChatManager] messagesContainer not found!');
             return;
+        }
+
+        // Hide welcome screen if it exists when displaying a message
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        if (welcomeScreen) {
+            welcomeScreen.style.display = 'none';
+            console.log('[ChatManager] Welcome screen hidden');
         }
 
         const messageDiv = document.createElement('div');
