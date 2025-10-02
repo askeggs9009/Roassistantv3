@@ -1182,9 +1182,9 @@ class ChatManager {
         }
 
         // Show welcome message if no messages
-        if (this.messages.length === 0) {
-            this.showWelcomeMessage();
-        }
+        // if (this.messages.length === 0) {
+        //     this.showWelcomeMessage();
+        // }
 
         // Fetch current Nexus usage for authenticated users
         this.fetchNexusUsage();
@@ -1312,7 +1312,7 @@ class ChatManager {
         this.loadProjectContext();
 
         // Show welcome message
-        this.showWelcomeMessage();
+        // this.showWelcomeMessage();
 
         // Update recent chats display
         this.updateRecentChats();
@@ -1537,9 +1537,9 @@ class ChatManager {
             this.displaySavedMessages();
 
             // Show welcome message if no messages
-            if (this.messages.length === 0) {
-                this.showWelcomeMessage();
-            }
+            // if (this.messages.length === 0) {
+            //     this.showWelcomeMessage();
+            // }
 
             // Update recent chats display
             this.updateRecentChats();
