@@ -966,23 +966,8 @@
                     window.chatManager.currentProject = currentProject;
                     console.log('Project synced to ChatManager:', currentProject.name);
                 }
-            }, 100);
-
-            // Ensure authManager is available
-            if (window.authManager) {
-                // Let authManager handle authentication
-                window.authManager.checkAuth();
-
-                // Sync local variables with authManager
-                authToken = window.authManager.authToken;
-                isLoggedIn = window.authManager.isLoggedIn;
-                currentUser = window.authManager.currentUser;
-
                 updateModelSelector();
-            } else {
-                // Fallback initialization
-                initApp();
-            }
+            }, 100);
 
             // Check subscription status and refresh periodically
             checkSubscriptionStatus();
@@ -1002,40 +987,6 @@
         }
 
 
-        // Authentication and User Profile Functions
-        function checkAuth() {
-            console.log('Checking auth...');
-            // Let authManager handle authentication
-            if (window.authManager) {
-                window.authManager.checkAuth();
-                authToken = window.authManager.authToken;
-                isLoggedIn = window.authManager.isLoggedIn;
-                currentUser = window.authManager.currentUser;
-            } else {
-                // Fallback if authManager isn't loaded
-                authToken = localStorage.getItem('authToken');
-                const user = localStorage.getItem('user');
-
-                if (authToken && user) {
-                    try {
-                        const userData = JSON.parse(user);
-                        currentUser = userData;
-                        showLoggedInUser(userData);
-                        isLoggedIn = true;
-                    } catch (error) {
-                        console.error('Error parsing user data:', error);
-                        showGuestUser();
-                        isLoggedIn = false;
-                        currentUser = null;
-                    }
-                } else {
-                    showGuestUser();
-                    isLoggedIn = false;
-                    currentUser = null;
-                }
-            }
-            updateModelSelector();
-        }
 
         // Delegate authentication functions to authManager
         function showLoggedInUser(userData) {
@@ -1173,14 +1124,6 @@
             updateModelButton();
         }
 
-        // Initialize app
-        function initApp() {
-            console.log('Initializing project chat app...');
-            // Wait for authManager to be ready
-            setTimeout(() => {
-                checkAuth();
-            }, 100);
-        }
 
         // Check subscription status (stub for now)
         function checkSubscriptionStatus() {
@@ -1219,7 +1162,7 @@
     <script src="js/chat.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/scripts.js"></script>
-    <!-- app.js is NOT loaded on project pages - it calls loadChatHistory() which clears project messages -->
+    <script src="js/app.js"></script>
 
     <!-- Initialize the application -->
     <script>
