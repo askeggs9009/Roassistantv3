@@ -558,12 +558,7 @@ class ChatManager {
     addMessage(type, content) {
         console.log('[ChatManager] addMessage called:', type, content.substring(0, 50));
 
-        // Ensure welcome screen is removed when adding any message
-        const welcomeScreen = document.getElementById('welcomeScreen');
-        if (welcomeScreen && welcomeScreen.parentNode) {
-            welcomeScreen.remove();
-            console.log('[ChatManager] Welcome screen removed when adding message');
-        }
+        // No welcome screen to remove anymore
 
         // Use typewriter effect for assistant messages, regular display for others
         if (type === 'assistant') {
@@ -1211,10 +1206,10 @@ class ChatManager {
         // Protect project chat pages from having their messages cleared
         const isProjectPage = window.location.pathname.includes('project-chat.html');
 
-        // Check for existing real messages (not just welcome screen)
+        // Check for existing messages
         const messagesContainer = document.getElementById('messagesContainer');
         const hasRealMessages = messagesContainer && Array.from(messagesContainer.children).some(child =>
-            child.classList.contains('message') && !child.id.includes('welcome')
+            child.classList.contains('message')
         );
 
         if (isProjectPage && (this.messages.length > 0 || hasRealMessages)) {
@@ -1316,10 +1311,10 @@ class ChatManager {
         const messagesContainer = document.getElementById('messagesContainer');
         if (!messagesContainer) return;
 
-        // Check if we're on a project page with active messages (excluding welcome screen)
+        // Check if we're on a project page with active messages
         const isProjectPage = window.location.pathname.includes('project-chat.html');
         const hasRealMessages = Array.from(messagesContainer.children).some(child =>
-            child.classList.contains('message') && !child.id.includes('welcome')
+            child.classList.contains('message')
         );
 
         if (isProjectPage && hasRealMessages) {
@@ -1734,12 +1729,7 @@ class ChatManager {
             return;
         }
 
-        // Remove welcome screen completely when displaying a message
-        const welcomeScreen = document.getElementById('welcomeScreen');
-        if (welcomeScreen && welcomeScreen.parentNode) {
-            welcomeScreen.remove();
-            console.log('[ChatManager] Welcome screen removed from DOM');
-        }
+        // No welcome screen to handle anymore
 
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${type}`;
