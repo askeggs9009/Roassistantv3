@@ -22,8 +22,13 @@ class App {
                 console.error('[App] authManager not found!');
             }
 
-            if (window.chatManager) {
+            // Only load chat history on non-project pages
+            // Project pages maintain their own chat state
+            const isProjectPage = window.location.pathname.includes('project-chat.html');
+            if (window.chatManager && !isProjectPage) {
                 window.chatManager.loadChatHistory();
+            } else if (isProjectPage) {
+                console.log('[App] On project page - skipping loadChatHistory()');
             }
             if (window.uiManager) {
                 window.uiManager.setupEventListeners();
