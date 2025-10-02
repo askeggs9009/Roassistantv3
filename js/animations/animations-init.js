@@ -7,7 +7,7 @@
 class AnimationsController {
     constructor() {
         this.config = {
-            particles: true,
+            dotGrid: true,
             clickSpark: true,
             cursorTrail: true,
             blurText: true,
@@ -15,7 +15,7 @@ class AnimationsController {
         };
 
         this.instances = {
-            particles: null,
+            dotGrid: null,
             clickSpark: null,
             cursorTrail: null,
             blurText: null,
@@ -42,13 +42,18 @@ class AnimationsController {
     }
 
     _initAnimations() {
-        console.log('🎨 Initializing ReactBits-inspired animations...');
+        console.log('🎨 Initializing Liquid Glass + DotGrid animations...');
+
+        // Check for GSAP availability (required for DotGrid)
+        if (typeof gsap === 'undefined') {
+            console.warn('⚠️  GSAP not loaded. DotGrid physics will not work.');
+        }
 
         // All animations are auto-initialized by their respective files
         // Store references to the global instances
-        if (this.config.particles && window.particlesBackground) {
-            this.instances.particles = window.particlesBackground;
-            console.log('✅ Particles background loaded');
+        if (this.config.dotGrid && window.dotGridBackground) {
+            this.instances.dotGrid = window.dotGridBackground;
+            console.log('✅ DotGrid background loaded (2px dots with physics)');
         }
 
         if (this.config.clickSpark && window.clickSpark) {
@@ -199,13 +204,14 @@ if (typeof module !== 'undefined' && module.exports) {
 console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
-║   🎨 ReactBits-Inspired Animations Loaded                 ║
+║   🎨 Liquid Glass Theme + DotGrid Loaded                  ║
 ║                                                           ║
-║   ✨ Particles Background                                 ║
+║   ✨ Interactive DotGrid (2px dots with GSAP physics)     ║
 ║   ⚡ Click Spark Effect                                   ║
 ║   🌊 Cursor Trail                                         ║
 ║   📝 Blur Text Animation                                  ║
 ║   🎯 Micro-Interactions                                   ║
+║   🔮 Glassmorphism UI Components                          ║
 ║                                                           ║
 ║   Ready to enhance your AI assistant! 🚀                 ║
 ║                                                           ║
