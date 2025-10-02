@@ -184,6 +184,30 @@ app.post('/webhook/stripe', express.raw({type: 'application/json'}), handleStrip
 app.post('/stripe/webhook', express.raw({type: 'application/json'}), handleStripeWebhook);
 
 app.use(express.json());
+
+// URL canonicalization middleware - force HTTPS and www
+app.use((req, res, next) => {
+    const host = req.get('host');
+    const protocol = req.get('x-forwarded-proto') || req.protocol;
+
+    // Force HTTPS
+    if (protocol !== 'https') {
+        return res.redirect(301, `https://${host}${req.url}`);
+    }
+
+    // Force www subdomain
+    if (host === 'roassistant.me') {
+        return res.redirect(301, `https://www.roassistant.me${req.url}`);
+    }
+
+    // Redirect /index.html to /
+    if (req.path === '/index.html') {
+        return res.redirect(301, '/');
+    }
+
+    next();
+});
+
 app.use(express.static(__dirname));
 
 // Trust proxy for accurate IP detection

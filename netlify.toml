@@ -1,6 +1,33 @@
 [build]
   publish = "."
 
+# Force HTTPS
+[[redirects]]
+  from = "http://roassistant.me/*"
+  to = "https://www.roassistant.me/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "http://www.roassistant.me/*"
+  to = "https://www.roassistant.me/:splat"
+  status = 301
+  force = true
+
+# Force www
+[[redirects]]
+  from = "https://roassistant.me/*"
+  to = "https://www.roassistant.me/:splat"
+  status = 301
+  force = true
+
+# Redirect index.html to root
+[[redirects]]
+  from = "/index.html"
+  to = "/"
+  status = 301
+
+# SPA fallback (must be last)
 [[redirects]]
   from = "/*"
   to = "/index.html"
