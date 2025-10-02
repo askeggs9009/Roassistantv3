@@ -489,20 +489,20 @@ class ChatManager {
 
     // Format assistant messages with enhanced markdown support
     formatAssistantMessage(content, skipPanel = false) {
-        // Generate unique ID for code blocks in this message
-        const messageId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        let codeBlockIndex = 0;
-
         // Store code blocks for the panel
         const codeBlocks = [];
+        let codeBlockIndex = 0;
 
         // Code blocks as clickable boxes (like Claude's artifacts)
         content = content.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, language, code) => {
-            const blockId = `${messageId}_code_${codeBlockIndex++}`;
             const trimmedCode = code.trim();
             const escapedCode = this.escapeHtml(trimmedCode);
             const langLabel = language || 'lua';
             const lineCount = trimmedCode.split('\n').length;
+
+            // Create content-based hash for consistent IDs
+            const contentHash = this.hashCode(trimmedCode);
+            const blockId = `code_${contentHash}_${codeBlockIndex++}`;
 
             // Store code block for panel display
             codeBlocks.push({
@@ -650,6 +650,17 @@ class ChatManager {
                 console.error('Failed to copy code:', err);
             });
         }
+    }
+
+    // Generate hash code from string for consistent IDs
+    hashCode(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+        return Math.abs(hash).toString(36);
     }
 
     // Escape HTML to prevent XSS
