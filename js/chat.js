@@ -107,12 +107,30 @@ class ChatManager {
                     });
                 } else if (searchMode === 'keyword' && this.currentProject.artifacts && this.currentProject.artifacts.length > 0) {
                     // Simple keyword matching
-                    const keywords = message.toLowerCase().split(/\s+/).filter(word => word.length > 3);
+                    const messageLower = message.toLowerCase();
+                    const keywords = messageLower.split(/\s+/).filter(word => word.length > 3);
                     console.log('[ChatManager] Keywords for search:', keywords);
-                    const relevantArtifacts = this.currentProject.artifacts.filter(artifact => {
-                        const artifactText = (artifact.name + ' ' + (artifact.content || '')).toLowerCase();
-                        return keywords.some(keyword => artifactText.includes(keyword));
-                    });
+
+                    // Check if user is asking about artifacts in general
+                    const askingAboutArtifacts = messageLower.includes('artifact') ||
+                                                messageLower.includes('script') ||
+                                                messageLower.includes('file') ||
+                                                messageLower.includes('read my') ||
+                                                messageLower.includes('show me');
+
+                    let relevantArtifacts;
+                    if (askingAboutArtifacts && (messageLower.includes('all') || messageLower.includes('every'))) {
+                        // User wants to see all artifacts
+                        console.log('[ChatManager] User asking about all artifacts');
+                        relevantArtifacts = this.currentProject.artifacts;
+                    } else {
+                        // Keyword matching
+                        relevantArtifacts = this.currentProject.artifacts.filter(artifact => {
+                            const artifactText = (artifact.name + ' ' + (artifact.content || '')).toLowerCase();
+                            return keywords.some(keyword => artifactText.includes(keyword)) ||
+                                   (askingAboutArtifacts && keywords.length === 0);
+                        });
+                    }
 
                     console.log('[ChatManager] Found relevant artifacts:', relevantArtifacts.length);
                     if (relevantArtifacts.length > 0) {
