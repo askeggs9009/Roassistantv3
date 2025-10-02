@@ -325,25 +325,45 @@ class DotGridBackground {
                 const dsq = dx * dx + dy * dy;
 
                 let style = this.baseColor;
+                let scale = 1;
+                let glowIntensity = 0;
+
                 if (dsq <= proxSq) {
                     const dist = Math.sqrt(dsq);
                     const t = 1 - dist / this.proximity;
+
+                    // Enhanced color transition with more vibrant interpolation
                     const r = Math.round(this.baseRgb.r + (this.activeRgb.r - this.baseRgb.r) * t);
                     const g = Math.round(this.baseRgb.g + (this.activeRgb.g - this.baseRgb.g) * t);
                     const b = Math.round(this.baseRgb.b + (this.activeRgb.b - this.baseRgb.b) * t);
                     style = `rgb(${r},${g},${b})`;
+
+                    // Scale dots based on proximity (up to 4x size when very close)
+                    scale = 1 + (t * t * 3); // Quadratic easing for more dramatic effect
+
+                    // Glow intensity (0 to 1)
+                    glowIntensity = t * t; // Quadratic for smoother glow
                 }
 
                 this.ctx.save();
                 this.ctx.translate(ox, oy);
+
+                // Add glow effect for nearby dots
+                if (glowIntensity > 0) {
+                    this.ctx.shadowBlur = 15 * glowIntensity;
+                    this.ctx.shadowColor = style;
+                }
+
                 this.ctx.fillStyle = style;
 
+                // Draw dot with scale
                 if (this.circlePath) {
+                    this.ctx.scale(scale, scale);
                     this.ctx.fill(this.circlePath);
                 } else {
                     // Fallback if Path2D not supported
                     this.ctx.beginPath();
-                    this.ctx.arc(0, 0, this.dotSize / 2, 0, Math.PI * 2);
+                    this.ctx.arc(0, 0, (this.dotSize / 2) * scale, 0, Math.PI * 2);
                     this.ctx.fill();
                 }
 
@@ -389,7 +409,7 @@ if (typeof gsap !== 'undefined') {
         gap: 32,
         baseColor: '#5227FF',    // Purple base
         activeColor: '#58a6ff',  // Blue active (matches AI theme)
-        proximity: 120,
+        proximity: 180,          // Increased from 120 for larger hover effect area
         speedTrigger: 100,
         shockRadius: 250,
         shockStrength: 5,
