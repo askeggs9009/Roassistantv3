@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReactBits Animations Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+            background-attachment: fixed;
+            color: #f0f6fc;
+            min-height: 100vh;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #58a6ff, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #8b949e;
+            margin-bottom: 3rem;
+            font-size: 1.2rem;
+        }
+
+        .demo-section {
+            background: rgba(13, 17, 23, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .demo-section h2 {
+            color: #58a6ff;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .demo-section p {
+            color: #8b949e;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .demo-content {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 2rem;
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button {
+            background: linear-gradient(135deg, #58a6ff, #1f6feb);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(88, 166, 255, 0.3);
+        }
+
+        .text-demo {
+            font-size: 1.5rem;
+            text-align: center;
+            line-height: 1.8;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .control-button {
+            background: rgba(88, 166, 255, 0.1);
+            border: 1px solid #58a6ff;
+            color: #58a6ff;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .control-button:hover {
+            background: rgba(88, 166, 255, 0.2);
+        }
+
+        .control-button.active {
+            background: #58a6ff;
+            color: white;
+        }
+
+        .instructions {
+            background: rgba(124, 58, 237, 0.1);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(88, 166, 255, 0.1);
+            border: 1px solid rgba(88, 166, 255, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #58a6ff;
+        }
+
+        .stat-label {
+            color: #8b949e;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-demo">ReactBits Animations Demo</h1>
+        <p class="subtitle">Hover, click, and explore the animations!</p>
+
+        <!-- Particles Demo -->
+        <div class="demo-section">
+            <h2>✨ Floating Particles Background</h2>
+            <p>Move your mouse around to interact with the particles. Watch them move away from your cursor!</p>
+            <div class="demo-content">
+                <div style="text-align: center;">
+                    <p style="color: #58a6ff; font-size: 1.2rem; margin-bottom: 1rem;">
+                        The particles are floating all around you! 🌟
+                    </p>
+                    <p style="color: #8b949e;">Move your mouse to see them react</p>
+                </div>
+            </div>
+            <div class="instructions">
+                💡 <strong>Tip:</strong> The particles connect with lines when they're close to each other.
+                Notice the depth effect - closer particles appear brighter!
+            </div>
+        </div>
+
+        <!-- Click Spark Demo -->
+        <div class="demo-section">
+            <h2>⚡ Click Spark Effect</h2>
+            <p>Click anywhere on the page to see sparks fly!</p>
+            <div class="demo-content">
+                <button onclick="alert('Did you see the sparks? ✨')">
+                    Click Me for Sparks!
+                </button>
+            </div>
+            <div class="instructions">
+                💡 <strong>Tip:</strong> Try clicking rapidly in different places to create a fireworks effect!
+            </div>
+        </div>
+
+        <!-- Cursor Trail Demo -->
+        <div class="demo-section">
+            <h2>🌊 Cursor Trail</h2>
+            <p>Look at your cursor - it now has a beautiful trailing effect!</p>
+            <div class="demo-content">
+                <div style="text-align: center;">
+                    <p style="font-size: 1.2rem; margin-bottom: 1rem;">Move your mouse in circles</p>
+                    <p style="font-size: 3rem;">🖱️</p>
+                    <p style="color: #8b949e; margin-top: 1rem;">Watch the smooth blob trail follow!</p>
+                </div>
+            </div>
+            <div class="instructions">
+                💡 <strong>Tip:</strong> The trail has 3 layers with different sizes and opacities for a smooth effect.
+            </div>
+        </div>
+
+        <!-- Blur Text Demo -->
+        <div class="demo-section">
+            <h2>📝 Blur Text Animation</h2>
+            <p>Scroll down to see text blur in smoothly, or click the button to see it again!</p>
+            <div class="demo-content">
+                <p class="text-demo blur-text-demo">
+                    This text animates in with a beautiful blur effect
+                </p>
+            </div>
+            <div class="controls">
+                <button class="control-button" onclick="resetBlurText()">Replay Animation</button>
+            </div>
+            <div class="instructions">
+                💡 <strong>Tip:</strong> This is perfect for AI message responses!
+            </div>
+        </div>
+
+        <!-- Micro-Interactions Demo -->
+        <div class="demo-section">
+            <h2>🎯 Micro-Interactions</h2>
+            <p>Hover and click these buttons to see subtle enhancements!</p>
+            <div class="demo-content">
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+                    <button>Ripple Effect</button>
+                    <button>Hover Glow</button>
+                    <button>Click Me!</button>
+                </div>
+            </div>
+            <div class="instructions">
+                💡 <strong>Tip:</strong> Notice the ripple when you click and the glow when you hover!
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Animations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">~40KB</div>
+                <div class="stat-label">Total Size</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">60 FPS</div>
+                <div class="stat-label">Performance</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">100%</div>
+                <div class="stat-label">Vanilla JS</div>
+            </div>
+        </div>
+
+        <div class="demo-section" style="margin-top: 3rem; text-align: center;">
+            <h2>🎉 Ready to Use!</h2>
+            <p>All these animations are now active on your AI assistant.</p>
+            <p>Check the <code>ANIMATIONS-GUIDE.md</code> for customization options.</p>
+            <div style="margin-top: 1.5rem;">
+                <button onclick="window.location.href='index.html'" style="font-size: 1.1rem; padding: 1.2rem 2.5rem;">
+                    Go to AI Assistant →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Animations -->
+    <script src="js/animations/particles-background.js"></script>
+    <script src="js/animations/click-spark.js"></script>
+    <script src="js/animations/cursor-trail.js"></script>
+    <script src="js/animations/blur-text.js"></script>
+    <script src="js/animations/micro-interactions.js"></script>
+    <script src="js/animations/animations-init.js"></script>
+
+    <script>
+        // Animate the blur text demo on load
+        window.addEventListener('load', () => {
+            const blurTextDemo = document.querySelector('.blur-text-demo');
+            if (blurTextDemo && window.blurTextAnimator) {
+                window.blurTextAnimator.animate(blurTextDemo, {
+                    delay: 50,
+                    duration: 0.6,
+                    animateBy: 'words',
+                    direction: 'bottom',
+                    once: false
+                });
+            }
+        });
+
+        function resetBlurText() {
+            const blurTextDemo = document.querySelector('.blur-text-demo');
+            const originalText = 'This text animates in with a beautiful blur effect';
+
+            // Reset
+            blurTextDemo.textContent = originalText;
+
+            // Re-animate
+            setTimeout(() => {
+                window.blurTextAnimator.animate(blurTextDemo, {
+                    delay: 40,
+                    duration: 0.5,
+                    animateBy: 'words',
+                    direction: 'bottom',
+                    once: false
+                });
+            }, 100);
+        }
+    </script>
+</body>
+</html>
