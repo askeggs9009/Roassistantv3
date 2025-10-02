@@ -614,16 +614,32 @@
         const AD_FREQUENCY = 5; // Show ad every 5 messages
 
         // Project chat specific functions
+
+        // Global sendMessage wrapper
+        function sendMessage() {
+            if (window.chatManager) {
+                window.chatManager.sendMessage();
+            } else {
+                console.error('ChatManager not initialized');
+            }
+        }
+
         function loadProjectFromUrl() {
             const urlParams = new URLSearchParams(window.location.search);
             currentProjectId = urlParams.get('project');
-            
+
             if (currentProjectId) {
                 const projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
                 currentProject = projects.find(p => p.id === currentProjectId);
-                
+
                 if (currentProject) {
                     updateProjectHeader();
+
+                    // Set project in chat manager
+                    if (window.chatManager) {
+                        window.chatManager.currentProject = currentProject;
+                        console.log('Project loaded in ChatManager:', currentProject.name);
+                    }
                 } else {
                     // Project not found, redirect to projects page
                     window.location.href = 'projects.html';
@@ -979,6 +995,14 @@
         window.addEventListener('load', function() {
             console.log('All scripts loaded, initializing project chat...');
             loadProjectFromUrl();
+
+            // Ensure project is set in chatManager after all scripts load
+            setTimeout(() => {
+                if (window.chatManager && currentProject) {
+                    window.chatManager.currentProject = currentProject;
+                    console.log('Project synced to ChatManager:', currentProject.name);
+                }
+            }, 100);
 
             // Ensure authManager is available
             if (window.authManager) {

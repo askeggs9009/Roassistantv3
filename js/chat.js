@@ -78,7 +78,9 @@ class ChatManager {
 
             // Add project context if available
             if (this.currentProject) {
+                console.log('[ChatManager] Current project:', this.currentProject);
                 const searchMode = this.currentProject.searchMode || 'keyword';
+                console.log('[ChatManager] Search mode:', searchMode);
                 let contextMessage = `\n\n[Project: ${this.currentProject.name}`;
 
                 if (this.currentProject.description) {
@@ -92,8 +94,10 @@ class ChatManager {
 
                 // Add artifacts based on search mode
                 if (searchMode === 'full' && this.currentProject.artifacts && this.currentProject.artifacts.length > 0) {
+                    console.log('[ChatManager] Including ALL artifacts:', this.currentProject.artifacts.length);
                     contextMessage += '\n\nProject Artifacts:';
                     this.currentProject.artifacts.forEach(artifact => {
+                        console.log('[ChatManager] Adding artifact:', artifact.name, 'Type:', artifact.type, 'Content length:', artifact.content ? artifact.content.length : 0);
                         contextMessage += `\n\n--- ${artifact.name} (${artifact.type}) ---\n`;
                         if (artifact.type === 'text') {
                             contextMessage += artifact.content;
@@ -104,14 +108,17 @@ class ChatManager {
                 } else if (searchMode === 'keyword' && this.currentProject.artifacts && this.currentProject.artifacts.length > 0) {
                     // Simple keyword matching
                     const keywords = message.toLowerCase().split(/\s+/).filter(word => word.length > 3);
+                    console.log('[ChatManager] Keywords for search:', keywords);
                     const relevantArtifacts = this.currentProject.artifacts.filter(artifact => {
                         const artifactText = (artifact.name + ' ' + (artifact.content || '')).toLowerCase();
                         return keywords.some(keyword => artifactText.includes(keyword));
                     });
 
+                    console.log('[ChatManager] Found relevant artifacts:', relevantArtifacts.length);
                     if (relevantArtifacts.length > 0) {
                         contextMessage += '\n\nRelevant Artifacts:';
                         relevantArtifacts.forEach(artifact => {
+                            console.log('[ChatManager] Adding relevant artifact:', artifact.name, 'Content length:', artifact.content ? artifact.content.length : 0);
                             contextMessage += `\n\n--- ${artifact.name} (${artifact.type}) ---\n`;
                             if (artifact.type === 'text') {
                                 contextMessage += artifact.content;
@@ -123,6 +130,7 @@ class ChatManager {
                 }
 
                 contextMessage += ']';
+                console.log('[ChatManager] Final context message length:', contextMessage.length);
                 requestBody.prompt = message + contextMessage;
 
                 requestBody.projectContext = {
