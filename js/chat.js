@@ -453,12 +453,23 @@ class ChatManager {
         const messageId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         let codeBlockIndex = 0;
 
+        // Store code blocks for the panel
+        const codeBlocks = [];
+
         // Code blocks with copy button
         content = content.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, language, code) => {
             const blockId = `${messageId}_code_${codeBlockIndex++}`;
             const trimmedCode = code.trim();
             const escapedCode = this.escapeHtml(trimmedCode);
             const langLabel = language || 'lua';
+
+            // Store code block for panel display
+            codeBlocks.push({
+                id: blockId,
+                language: langLabel,
+                code: trimmedCode,
+                escapedCode: escapedCode
+            });
 
             return `
                 <div class="code-block-container">
@@ -475,6 +486,13 @@ class ChatManager {
                 </div>
             `;
         });
+
+        // Show code panel if code blocks were found
+        if (codeBlocks.length > 0) {
+            setTimeout(() => {
+                this.showCodePanel(codeBlocks);
+            }, 300);
+        }
 
         // Headers (must be at line start)
         content = content.replace(/^### (.+)$/gm, '<h3 class="md-h3">$1</h3>');
@@ -511,6 +529,45 @@ class ChatManager {
         content = content.replace(/\n/g, '<br>');
 
         return content;
+    }
+
+    // Show code panel with code blocks
+    showCodePanel(codeBlocks) {
+        const codePanel = document.getElementById('codePanel');
+        const codePanelContent = document.getElementById('codePanelContent');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        if (!codePanel || !codePanelContent) return;
+
+        // Clear previous content
+        codePanelContent.innerHTML = '';
+
+        // Add code blocks to panel
+        codeBlocks.forEach(block => {
+            const blockHtml = `
+                <div class="code-block-container" style="animation: slideInRight 0.5s ease;">
+                    <div class="code-block-header">
+                        <span class="code-language">${block.language}</span>
+                        <button class="copy-code-btn" onclick="window.chatManager.copyCode('${block.id}_panel')" title="Copy code">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                            </svg>
+                            <span class="copy-text">Copy</span>
+                        </button>
+                    </div>
+                    <pre class="code-block ${block.language}"><code id="${block.id}_panel">${block.escapedCode}</code></pre>
+                </div>
+            `;
+            codePanelContent.innerHTML += blockHtml;
+        });
+
+        // Show panel with animation
+        setTimeout(() => {
+            codePanel.classList.add('active');
+            if (sidebar) sidebar.classList.add('hidden');
+            if (mainContent) mainContent.classList.add('code-panel-active');
+        }, 100);
     }
 
     // Copy code to clipboard

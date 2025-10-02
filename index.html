@@ -772,8 +772,24 @@
         </div>
     </div>
 
+    <!-- Code Panel Overlay -->
+    <div class="code-panel-overlay" id="codePanel">
+        <div class="code-panel-header">
+            <div class="code-panel-title">
+                <i class="fas fa-code"></i>
+                <span>Code Output</span>
+            </div>
+            <button class="code-panel-close" onclick="closeCodePanel()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="code-panel-content" id="codePanelContent">
+            <!-- Code blocks will be displayed here -->
+        </div>
+    </div>
+
     <!-- Main Content -->
-    <div class="main-content">
+    <div class="main-content" id="mainContent">
         <!-- Header -->
         <div class="main-header">
             <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleSidebar()">
@@ -1516,8 +1532,29 @@
             if (event.key === 'Escape') {
                 closeTextModal();
                 closeImageModal();
+                closeCodePanel();
             }
         });
+
+        // Close code panel function
+        function closeCodePanel() {
+            const codePanel = document.getElementById('codePanel');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+
+            if (codePanel) {
+                codePanel.classList.remove('active');
+            }
+            if (sidebar) {
+                sidebar.classList.remove('hidden');
+            }
+            if (mainContent) {
+                mainContent.classList.remove('code-panel-active');
+            }
+        }
+
+        // Make closeCodePanel globally available
+        window.closeCodePanel = closeCodePanel;
     </script>
 
     <!-- Load JavaScript modules -->
