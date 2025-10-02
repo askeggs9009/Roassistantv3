@@ -513,7 +513,7 @@ class ChatManager {
             });
 
             return `
-                <div class="code-artifact-box" onclick="window.openCodePanel('${blockId}')">
+                <div class="code-artifact-box" data-block-id="${blockId}" onclick="console.log('Clicked:', '${blockId}'); window.openCodePanel('${blockId}');">
                     <div class="artifact-icon">
                         <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
@@ -532,14 +532,15 @@ class ChatManager {
             `;
         });
 
-        // Store code blocks for later use
-        if (!skipPanel && codeBlocks.length > 0) {
+        // Store code blocks for later use (always store, regardless of skipPanel)
+        if (codeBlocks.length > 0) {
             // Store globally so we can access them when user clicks
             if (!this._allCodeBlocks) {
                 this._allCodeBlocks = {};
             }
             codeBlocks.forEach(block => {
                 this._allCodeBlocks[block.id] = block;
+                console.log('Stored code block:', block.id);
             });
         }
 
