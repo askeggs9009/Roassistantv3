@@ -22,9 +22,6 @@ class ChatManager {
         }
 
         try {
-            // Reset code panel flag for new message
-            this._codePanelShown = false;
-
             this.isLoading = true;
             this.updateSendButton(true);
 
@@ -271,11 +268,6 @@ class ChatManager {
     updateStreamingMessage(messageId, content) {
         const messageElement = document.getElementById(`streaming-${messageId}`);
         if (messageElement) {
-            // Check if content contains code blocks and show panel immediately
-            if (content.includes('```') && !this._codePanelShown) {
-                this.showCodePanelFromStreaming(content);
-            }
-
             // Apply formatting in real-time as content streams
             const formattedContent = this.formatAssistantMessage(content, true);
             // Add blinking cursor at the end
@@ -331,11 +323,6 @@ class ChatManager {
         const container = element.querySelector('.message-text') || element;
 
         console.log('[Typewriter] Starting effect for:', text.substring(0, 50) + '...');
-
-        // Check if content contains code blocks and show panel immediately
-        if (text.includes('```') && !this._codePanelShown) {
-            this.showCodePanelFromStreaming(text);
-        }
 
         // Clear any existing content first
         container.innerHTML = '';
@@ -469,12 +456,13 @@ class ChatManager {
         // Store code blocks for the panel
         const codeBlocks = [];
 
-        // Code blocks with copy button
+        // Code blocks as clickable boxes (like Claude's artifacts)
         content = content.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, language, code) => {
             const blockId = `${messageId}_code_${codeBlockIndex++}`;
             const trimmedCode = code.trim();
             const escapedCode = this.escapeHtml(trimmedCode);
             const langLabel = language || 'lua';
+            const lineCount = trimmedCode.split('\n').length;
 
             // Store code block for panel display
             codeBlocks.push({
@@ -485,25 +473,34 @@ class ChatManager {
             });
 
             return `
-                <div class="code-block-container">
-                    <div class="code-block-header">
-                        <span class="code-language">${langLabel}</span>
-                        <button class="copy-code-btn" onclick="window.chatManager.copyCode('${blockId}')" title="Copy code">
-                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-                            </svg>
-                            <span class="copy-text">Copy</span>
-                        </button>
+                <div class="code-artifact-box" onclick="window.chatManager.openCodePanel('${blockId}')">
+                    <div class="artifact-icon">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
+                        </svg>
                     </div>
-                    <pre class="code-block ${langLabel}"><code id="${blockId}">${escapedCode}</code></pre>
+                    <div class="artifact-content">
+                        <div class="artifact-title">${langLabel.toUpperCase()} Script</div>
+                        <div class="artifact-meta">${lineCount} lines • Click to view</div>
+                    </div>
+                    <div class="artifact-arrow">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                        </svg>
+                    </div>
                 </div>
             `;
         });
 
-        // Store code blocks for later use (don't show panel on every format call)
-        if (!skipPanel && codeBlocks.length > 0 && !this._codePanelShown) {
-            this._codePanelShown = true;
-            this._currentCodeBlocks = codeBlocks;
+        // Store code blocks for later use
+        if (!skipPanel && codeBlocks.length > 0) {
+            // Store globally so we can access them when user clicks
+            if (!this._allCodeBlocks) {
+                this._allCodeBlocks = {};
+            }
+            codeBlocks.forEach(block => {
+                this._allCodeBlocks[block.id] = block;
+            });
         }
 
         // Headers (must be at line start)
@@ -543,28 +540,15 @@ class ChatManager {
         return content;
     }
 
-    // Show code panel from streaming content (early detection)
-    showCodePanelFromStreaming(content) {
-        // Extract code blocks early
-        const codeBlockPattern = /```(\w+)?\n([\s\S]*?)```/g;
-        const matches = [...content.matchAll(codeBlockPattern)];
-
-        if (matches.length > 0) {
-            const codeBlocks = matches.map((match, index) => {
-                const language = match[1] || 'lua';
-                const code = match[2].trim();
-                const blockId = `stream_code_${Date.now()}_${index}`;
-                return {
-                    id: blockId,
-                    language: language,
-                    code: code,
-                    escapedCode: this.escapeHtml(code)
-                };
-            });
-
-            this._codePanelShown = true;
-            this.showCodePanel(codeBlocks);
+    // Open code panel when user clicks on artifact box
+    openCodePanel(blockId) {
+        if (!this._allCodeBlocks || !this._allCodeBlocks[blockId]) {
+            console.error('Code block not found:', blockId);
+            return;
         }
+
+        const block = this._allCodeBlocks[blockId];
+        this.showCodePanel([block]);
     }
 
     // Show code panel with code blocks
