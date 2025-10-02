@@ -409,7 +409,7 @@ if (typeof gsap !== 'undefined') {
         activeColor: '#58a6ff',
         proximity: 80,
         speedTrigger: 100,
-        shockRadius: 250,
+        shockRadius: 100,
         shockStrength: 5,
         maxSpeed: 5000,
         resistance: 750,
