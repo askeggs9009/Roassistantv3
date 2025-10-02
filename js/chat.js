@@ -1163,7 +1163,8 @@ class ChatManager {
 
     // Clear current chat display and messages
     clearCurrentChat() {
-        console.log('[ChatManager] Clearing current chat for privacy');
+        console.log('[ChatManager] ⚠️ CLEARING MESSAGES - clearCurrentChat() called');
+        console.trace('[ChatManager] clearCurrentChat() stack trace');
 
         // Generate new chat ID to ensure complete privacy separation
         const newChatId = 'chat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -1175,6 +1176,7 @@ class ChatManager {
         // Clear the messages container
         const messagesContainer = document.getElementById('messagesContainer');
         if (messagesContainer) {
+            console.log('[ChatManager] Clearing messagesContainer innerHTML');
             messagesContainer.innerHTML = '';
         }
 
@@ -1284,9 +1286,13 @@ class ChatManager {
 
     // Display saved messages
     displaySavedMessages() {
+        console.log('[ChatManager] ⚠️ CLEARING MESSAGES - displaySavedMessages() called');
+        console.trace('[ChatManager] displaySavedMessages() stack trace');
+
         const messagesContainer = document.getElementById('messagesContainer');
         if (!messagesContainer) return;
 
+        console.log('[ChatManager] Clearing messagesContainer innerHTML in displaySavedMessages');
         messagesContainer.innerHTML = '';
         this.messages.forEach(msg => {
             this.displayMessage(msg.type, msg.content);
@@ -1353,6 +1359,9 @@ class ChatManager {
 
     // Start new chat
     startNewChat() {
+        console.log('[ChatManager] ⚠️ CLEARING MESSAGES - startNewChat() called');
+        console.trace('[ChatManager] startNewChat() stack trace');
+
         // Save current chat before starting new one
         if (this.messages.length > 0) {
             this.saveChatHistory();
@@ -1365,6 +1374,7 @@ class ChatManager {
         this.messages = [];
         const messagesContainer = document.getElementById('messagesContainer');
         if (messagesContainer) {
+            console.log('[ChatManager] Clearing messagesContainer innerHTML in startNewChat');
             messagesContainer.innerHTML = '';
         }
         this.clearAttachedFiles();
@@ -1597,8 +1607,12 @@ class ChatManager {
             }
 
             // Clear and display messages
+            console.log('[ChatManager] ⚠️ CLEARING MESSAGES - loadChat() called');
+            console.trace('[ChatManager] loadChat() stack trace');
+
             const messagesContainer = document.getElementById('messagesContainer');
             if (messagesContainer) {
+                console.log('[ChatManager] Clearing messagesContainer innerHTML in loadChat');
                 messagesContainer.innerHTML = '';
             }
 
