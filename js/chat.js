@@ -557,6 +557,14 @@ class ChatManager {
     // Add message to chat display and save it
     addMessage(type, content) {
         console.log('[ChatManager] addMessage called:', type, content.substring(0, 50));
+
+        // Ensure welcome screen is removed when adding any message
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        if (welcomeScreen && welcomeScreen.parentNode) {
+            welcomeScreen.remove();
+            console.log('[ChatManager] Welcome screen removed when adding message');
+        }
+
         // Use typewriter effect for assistant messages, regular display for others
         if (type === 'assistant') {
             this.displayAssistantMessageWithTypewriter(content);
@@ -1202,8 +1210,17 @@ class ChatManager {
     loadChatHistory() {
         // Protect project chat pages from having their messages cleared
         const isProjectPage = window.location.pathname.includes('project-chat.html');
-        if (isProjectPage && this.messages.length > 0) {
+
+        // Check for existing real messages (not just welcome screen)
+        const messagesContainer = document.getElementById('messagesContainer');
+        const hasRealMessages = messagesContainer && Array.from(messagesContainer.children).some(child =>
+            child.classList.contains('message') && !child.id.includes('welcome')
+        );
+
+        if (isProjectPage && (this.messages.length > 0 || hasRealMessages)) {
             console.log('[ChatManager] Skipping loadChatHistory on project page with existing messages');
+            // Still load recent chats for sidebar but don't touch the main chat
+            this.loadRecentChats();
             return;
         }
 
@@ -1299,9 +1316,13 @@ class ChatManager {
         const messagesContainer = document.getElementById('messagesContainer');
         if (!messagesContainer) return;
 
-        // Check if we're on a project page with active messages
+        // Check if we're on a project page with active messages (excluding welcome screen)
         const isProjectPage = window.location.pathname.includes('project-chat.html');
-        if (isProjectPage && messagesContainer.children.length > 1) {
+        const hasRealMessages = Array.from(messagesContainer.children).some(child =>
+            child.classList.contains('message') && !child.id.includes('welcome')
+        );
+
+        if (isProjectPage && hasRealMessages) {
             console.log('[ChatManager] Skipping message reload on project page with active messages');
             return;
         }
@@ -1713,11 +1734,11 @@ class ChatManager {
             return;
         }
 
-        // Hide welcome screen if it exists when displaying a message
+        // Remove welcome screen completely when displaying a message
         const welcomeScreen = document.getElementById('welcomeScreen');
-        if (welcomeScreen) {
-            welcomeScreen.style.display = 'none';
-            console.log('[ChatManager] Welcome screen hidden');
+        if (welcomeScreen && welcomeScreen.parentNode) {
+            welcomeScreen.remove();
+            console.log('[ChatManager] Welcome screen removed from DOM');
         }
 
         const messageDiv = document.createElement('div');
