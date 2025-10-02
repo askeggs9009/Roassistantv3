@@ -500,9 +500,9 @@ class ChatManager {
             const langLabel = language || 'lua';
             const lineCount = trimmedCode.split('\n').length;
 
-            // Create content-based hash for consistent IDs
+            // Create content-based hash for consistent IDs (use dashes to avoid markdown interference)
             const contentHash = this.hashCode(trimmedCode);
-            const blockId = `code_${contentHash}_${codeBlockIndex++}`;
+            const blockId = `code-${contentHash}-${codeBlockIndex++}`;
 
             // Store code block for panel display
             codeBlocks.push({
