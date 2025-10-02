@@ -50,8 +50,12 @@ class ChatManager {
                         // Save the updated chat with new title
                         this.saveChatHistory();
 
-                        // Update the sidebar display
-                        this.updateRecentChats();
+                        // Skip sidebar update on project pages - it causes messages to disappear
+                        const isProjectPage = window.location.pathname.includes('project-chat.html');
+                        if (!isProjectPage) {
+                            // Update the sidebar display
+                            this.updateRecentChats();
+                        }
 
                         console.log('[ChatManager] Chat title updated to:', title);
                     }
@@ -1350,8 +1354,12 @@ class ChatManager {
             localStorage.setItem(userStorageKey, JSON.stringify(allChats));
             localStorage.setItem('chatHistory', JSON.stringify(this.messages));
 
-            // Update recent chats display
-            this.updateRecentChats();
+            // SKIP updating recent chats display on project pages - this was causing messages to disappear
+            const isProjectPage = window.location.pathname.includes('project-chat.html');
+            if (!isProjectPage) {
+                // Update recent chats display only for normal chat
+                this.updateRecentChats();
+            }
         } catch (error) {
             console.error('Error saving chat history:', error);
         }
@@ -1573,6 +1581,13 @@ class ChatManager {
     updateRecentChatsDisplay(allChats) {
         const chatHistoryContainer = document.getElementById('chatHistory');
         if (!chatHistoryContainer) return;
+
+        // NEVER update sidebar on project pages - it was interfering with messages
+        const isProjectPage = window.location.pathname.includes('project-chat.html');
+        if (isProjectPage) {
+            console.log('[ChatManager] Skipping sidebar update on project page');
+            return;
+        }
 
         // Sort chats by lastUpdated timestamp
         const sortedChats = Object.entries(allChats)

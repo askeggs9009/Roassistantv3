@@ -10,21 +10,25 @@ class UIManager {
         const messageInput = document.getElementById('messageInput');
         const modelSelector = document.getElementById('modelSelector');
 
-        messageInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-        });
+        if (messageInput) {
+            messageInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
 
-        messageInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                window.chatManager.sendMessage();
-            }
-        });
+            messageInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    window.chatManager.sendMessage();
+                }
+            });
+        }
 
-        modelSelector.addEventListener('change', function() {
-            uiManager.selectedModel = this.value;
-        });
+        if (modelSelector) {
+            modelSelector.addEventListener('change', function() {
+                uiManager.selectedModel = this.value;
+            });
+        }
     }
 
     // Toggle sidebar (mobile)
