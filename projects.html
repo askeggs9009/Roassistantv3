@@ -4,23 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Projects - RoAssistant</title>
-    <link rel="icon" type="image/png" href="roassistant-logo.png">    <link rel="stylesheet" href="styles/liquid-glass.css">
+    <link rel="icon" type="image/png" href="roassistant-logo.png">
+
+    <!-- Animated Backgrounds -->
+    <link rel="stylesheet" href="styles/liquid-glass.css">
     <link rel="stylesheet" href="styles/dot-grid.css">
 
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/sidebar.css">
-    <link rel="stylesheet" href="styles/chat.css">
     <link rel="stylesheet" href="styles/projects.css">
     <link rel="stylesheet" href="styles/responsive.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-    <!-- Prism.js for code highlighting -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-lua.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
-
 </head>
 
 <body>
@@ -34,7 +28,7 @@
             <div class="sidebar-title">RoAssistant</div>
         </div>
 
-        <button class="new-chat-btn" onclick="startNewChat()">
+        <button class="new-chat-btn" onclick="window.location.href='/index.html'">
             <span>+</span>
             New chat
         </button>
@@ -60,11 +54,11 @@
                 </div>
             </div>
 
-            <!-- Recent Chats -->
+            <!-- Recent Projects -->
             <div class="nav-section">
-                <div class="nav-title">Recents</div>
-                <div id="chatHistory">
-                    <!-- Chat history will be populated by JavaScript -->
+                <div class="nav-title">Recent Projects</div>
+                <div id="recentProjects">
+                    <!-- Recent projects will be populated by JavaScript -->
                 </div>
             </div>
         </div>
@@ -88,7 +82,12 @@
             <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleSidebar()">
                 ☰
             </button>
-            <div class="header-title">Projects & Artifacts</div>
+
+            <!-- Back Button -->
+            <button class="back-button" onclick="window.location.href='#'" style="display: flex; align-items: center; gap: 0.5rem; background: none; border: none; color: #8b949e; cursor: pointer; padding: 0.5rem; border-radius: 6px; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(88, 166, 255, 0.1)'; this.style.color='#58a6ff';" onmouseout="this.style.background='none'; this.style.color='#8b949e';">
+                <i class="fas fa-arrow-left"></i>
+                <span>All projects</span>
+            </button>
 
             <!-- Subscription Status -->
             <div class="subscription-status" id="subscriptionStatus" style="display: none;">
@@ -102,17 +101,15 @@
             </div>
         </div>
 
-        <!-- Projects Container - Claude-inspired split view -->
-        <div class="projects-container">
-            <!-- Projects List Panel -->
-            <div class="projects-list-panel" id="projectsListPanel">
-                <div class="projects-list-header">
-                    <div class="projects-list-title">
-                        <i class="fas fa-folder"></i>
-                        <span>Projects</span>
-                    </div>
-                    <button class="toggle-panel-btn" onclick="toggleProjectsPanel()" title="Toggle Panel">
-                        <i class="fas fa-chevron-left" id="toggleIcon"></i>
+        <!-- Projects View Container -->
+        <div class="projects-view-container">
+            <!-- Projects List View -->
+            <div class="projects-list-view" id="projectsListView">
+                <div class="projects-header">
+                    <h1 class="projects-main-title">Projects</h1>
+                    <button class="create-project-btn" onclick="openNewProjectModal()">
+                        <i class="fas fa-plus"></i>
+                        <span>Create Project</span>
                     </button>
                 </div>
 
@@ -124,113 +121,91 @@
                            onkeyup="searchProjects(this.value)">
                 </div>
 
-                <div class="projects-list-content" id="projectsList">
-                    <!-- Project items will be populated here -->
+                <div class="projects-grid" id="projectsGrid">
+                    <!-- Project cards will be populated here -->
                 </div>
 
-                <div style="padding: 0.5rem;">
-                    <button class="artifact-action-btn primary" onclick="openNewProjectModal()" style="width: 100%;">
-                        <i class="fas fa-plus"></i>
-                        New Project
-                    </button>
-                </div>
-            </div>
-
-            <!-- Artifacts Panel -->
-            <div class="artifacts-panel" id="artifactsPanel">
-                <div id="projectView" style="display: none;">
-                    <div class="artifacts-header">
-                        <div class="artifacts-title" id="currentProjectName">Select a project</div>
-                        <div class="artifacts-actions">
-                            <button class="artifact-action-btn" onclick="openUploadModal()">
-                                <i class="fas fa-upload"></i>
-                                Upload
-                            </button>
-                            <button class="artifact-action-btn" onclick="createNewArtifact()">
-                                <i class="fas fa-file-plus"></i>
-                                New Artifact
-                            </button>
-                            <button class="artifact-action-btn" onclick="openProjectChat()">
-                                <i class="fas fa-comments"></i>
-                                Chat
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="artifact-tabs">
-                        <button class="artifact-tab active" onclick="switchArtifactTab('all', this)">
-                            <i class="fas fa-th"></i>
-                            All
-                            <span class="artifact-tab-count" id="allCount">0</span>
-                        </button>
-                        <button class="artifact-tab" onclick="switchArtifactTab('code', this)">
-                            <i class="fas fa-code"></i>
-                            Code
-                            <span class="artifact-tab-count" id="codeCount">0</span>
-                        </button>
-                        <button class="artifact-tab" onclick="switchArtifactTab('document', this)">
-                            <i class="fas fa-file-alt"></i>
-                            Documents
-                            <span class="artifact-tab-count" id="documentCount">0</span>
-                        </button>
-                        <button class="artifact-tab" onclick="switchArtifactTab('image', this)">
-                            <i class="fas fa-image"></i>
-                            Images
-                            <span class="artifact-tab-count" id="imageCount">0</span>
-                        </button>
-                        <button class="artifact-tab" onclick="switchArtifactTab('data', this)">
-                            <i class="fas fa-database"></i>
-                            Data
-                            <span class="artifact-tab-count" id="dataCount">0</span>
-                        </button>
-                    </div>
-
-                    <div class="artifacts-content" id="artifactsContent">
-                        <!-- Drop Zone -->
-                        <div class="drop-zone" id="dropZone" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
-                            <div class="drop-zone-icon">
-                                <i class="fas fa-cloud-upload-alt"></i>
-                            </div>
-                            <div class="drop-zone-text">Drag and drop files here</div>
-                            <div class="drop-zone-hint">or click the Upload button above</div>
-                        </div>
-
-                        <!-- Artifacts Grid -->
-                        <div class="artifacts-grid" id="artifactsGrid">
-                            <!-- Artifact cards will be populated here -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Empty State - No Project Selected -->
-                <div id="noProjectSelected" class="artifacts-empty-state">
+                <!-- Empty State -->
+                <div id="emptyState" class="empty-state" style="display: none;">
                     <div class="empty-state-icon">📁</div>
-                    <h2 class="empty-state-title">Select a Project</h2>
+                    <h2 class="empty-state-title">No projects yet</h2>
                     <p class="empty-state-description">
-                        Choose a project from the list to view and manage its artifacts
+                        Create your first project to organize your chats and files
                     </p>
-                    <button class="artifact-action-btn primary" onclick="openNewProjectModal()">
-                        <i class="fas fa-folder-plus"></i>
-                        Create New Project
+                    <button class="create-project-btn primary" onclick="openNewProjectModal()">
+                        <i class="fas fa-plus"></i>
+                        <span>Create Your First Project</span>
                     </button>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Artifact Detail View -->
-    <div class="artifact-detail-view" id="artifactDetailView">
-        <div class="artifact-detail-header">
-            <h2 class="artifact-detail-title" id="artifactDetailTitle">Artifact Details</h2>
-            <button class="close-detail-btn" onclick="closeArtifactDetail()">×</button>
-        </div>
-        <div class="artifact-detail-content" id="artifactDetailContent">
-            <!-- Artifact content will be displayed here -->
+            <!-- Single Project View -->
+            <div class="project-detail-view" id="projectDetailView" style="display: none;">
+                <div class="project-detail-header">
+                    <div class="project-detail-title-section">
+                        <h1 class="project-detail-title" id="projectDetailTitle">Project Name</h1>
+                        <div class="project-detail-meta" id="projectDetailMeta">
+                            <span class="meta-item">
+                                <i class="fas fa-calendar"></i>
+                                <span id="projectCreated">Created today</span>
+                            </span>
+                            <span class="meta-item">
+                                <i class="fas fa-paperclip"></i>
+                                <span id="projectArtifactCount">0 artifacts</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="project-detail-actions">
+                        <button class="project-action-btn" onclick="openProjectChat()" title="Open in chat">
+                            <i class="fas fa-comments"></i>
+                            <span>Chat</span>
+                        </button>
+                        <button class="project-action-btn" onclick="openProjectSettings()" title="Settings">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="project-content-layout">
+                    <!-- Main Content Area -->
+                    <div class="project-main-content">
+                        <div class="project-section">
+                            <div class="section-header">
+                                <h3>Project Instructions</h3>
+                                <button class="icon-btn" onclick="editInstructions()">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div class="instructions-content" id="instructionsContent">
+                                <p class="placeholder-text">Add instructions to tailor Claude's responses</p>
+                            </div>
+                        </div>
+
+                        <div class="project-section">
+                            <div class="section-header">
+                                <h3>Files</h3>
+                                <button class="icon-btn" onclick="openUploadModal()">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div class="files-content" id="filesContent">
+                                <div class="files-empty-state">
+                                    <div class="files-icon">
+                                        <i class="fas fa-file"></i>
+                                    </div>
+                                    <p class="placeholder-text">Add PDFs, documents, or other text to reference in this project.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- New Project Modal -->
     <div class="modal" id="newProjectModal" style="display: none;">
+        <div class="modal-overlay" onclick="closeNewProjectModal()"></div>
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">Create New Project</h2>
@@ -239,10 +214,10 @@
             <form onsubmit="createProject(event)">
                 <div class="form-group">
                     <label class="form-label" for="projectName">Project Name</label>
-                    <input type="text" id="projectName" class="form-input" placeholder="My Awesome Game" required>
+                    <input type="text" id="projectName" class="form-input" placeholder="My Awesome Project" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="projectDescription">Description</label>
+                    <label class="form-label" for="projectDescription">Description (optional)</label>
                     <textarea id="projectDescription" class="form-input form-textarea" placeholder="What's your project about?"></textarea>
                 </div>
                 <div class="modal-actions">
@@ -253,40 +228,9 @@
         </div>
     </div>
 
-    <!-- New Artifact Modal -->
-    <div class="modal" id="newArtifactModal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Create New Artifact</h2>
-                <button class="modal-close" onclick="closeNewArtifactModal()">×</button>
-            </div>
-            <form onsubmit="saveNewArtifact(event)">
-                <div class="form-group">
-                    <label class="form-label" for="artifactName">Artifact Name</label>
-                    <input type="text" id="artifactName" class="form-input" placeholder="main.lua" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="artifactType">Type</label>
-                    <select id="artifactType" class="form-input" onchange="updateArtifactTemplate()">
-                        <option value="code">Code</option>
-                        <option value="document">Document</option>
-                        <option value="data">Data (JSON)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="artifactContent">Content</label>
-                    <textarea id="artifactContent" class="form-input form-textarea" style="min-height: 200px; font-family: monospace;" placeholder="Enter your content here..." required></textarea>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeNewArtifactModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create Artifact</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- Upload Modal -->
     <div class="modal" id="uploadModal" style="display: none;">
+        <div class="modal-overlay" onclick="closeUploadModal()"></div>
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">Upload Files</h2>
@@ -294,12 +238,12 @@
             </div>
             <div class="form-group">
                 <input type="file" id="fileInput" multiple accept="*/*" style="display: none;" onchange="handleFileSelect(event)">
-                <div class="drop-zone" onclick="document.getElementById('fileInput').click()" style="cursor: pointer;">
-                    <div class="drop-zone-icon">
+                <div class="upload-drop-zone" onclick="document.getElementById('fileInput').click()" style="cursor: pointer;">
+                    <div class="upload-icon">
                         <i class="fas fa-cloud-upload-alt"></i>
                     </div>
-                    <div class="drop-zone-text">Click to select files</div>
-                    <div class="drop-zone-hint">or drag and drop them here</div>
+                    <div class="upload-text">Click to select files or drag and drop</div>
+                    <div class="upload-hint">PDFs, documents, code files, and more</div>
                 </div>
                 <div id="fileList" style="margin-top: 1rem;"></div>
             </div>
@@ -319,9 +263,17 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
             z-index: 1000;
-            animation: fadeIn 0.2s ease;
+        }
+
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
         }
 
         .modal-content {
@@ -337,17 +289,18 @@
             max-width: 500px;
             max-height: 90vh;
             overflow-y: auto;
-            animation: slideInUp 0.3s ease;
+            animation: modalFadeIn 0.2s ease;
+            z-index: 1;
         }
 
-        @keyframes slideInUp {
+        @keyframes modalFadeIn {
             from {
-                transform: translate(-50%, -40%);
                 opacity: 0;
+                transform: translate(-50%, -45%);
             }
             to {
-                transform: translate(-50%, -50%);
                 opacity: 1;
+                transform: translate(-50%, -50%);
             }
         }
 
@@ -372,6 +325,7 @@
             cursor: pointer;
             padding: 0.25rem;
             border-radius: 6px;
+            transition: all 0.2s ease;
         }
 
         .modal-close:hover {
@@ -451,6 +405,38 @@
             color: #58a6ff;
             background: rgba(88, 166, 255, 0.05);
         }
+
+        .upload-drop-zone {
+            border: 2px dashed #30363d;
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            background: rgba(88, 166, 255, 0.02);
+            transition: all 0.3s ease;
+        }
+
+        .upload-drop-zone:hover {
+            border-color: #58a6ff;
+            background: rgba(88, 166, 255, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #58a6ff;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+
+        .upload-text {
+            color: #c9d1d9;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-hint {
+            color: #8b949e;
+            font-size: 0.85rem;
+        }
     </style>
 
     <script>
@@ -467,10 +453,9 @@
 
         // Global Variables
         let currentProjectId = null;
-        let currentArtifactFilter = 'all';
         let selectedFiles = [];
 
-        // Enhanced Project Manager with Artifacts
+        // Enhanced Project Manager
         class ProjectManager {
             constructor() {
                 this.projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
@@ -484,15 +469,15 @@
                 this.saveProjects();
             }
 
-            createProject(name, description, type) {
+            createProject(name, description) {
                 const project = {
                     id: 'project_' + Date.now(),
                     name,
-                    description,
-                    type,
+                    description: description || '',
                     created: Date.now(),
                     updated: Date.now(),
-                    artifacts: []
+                    artifacts: [],
+                    instructions: ''
                 };
                 this.projects.push(project);
                 this.saveProjects();
@@ -508,7 +493,7 @@
                 this.saveProjects();
                 if (currentProjectId === projectId) {
                     currentProjectId = null;
-                    showNoProjectSelected();
+                    showProjectsList();
                 }
             }
 
@@ -530,12 +515,6 @@
                 if (project) {
                     artifact.id = 'artifact_' + Date.now();
                     artifact.created = Date.now();
-                    artifact.version = 1;
-                    artifact.versions = [{
-                        version: 1,
-                        content: artifact.content,
-                        created: Date.now()
-                    }];
                     project.artifacts.push(artifact);
                     project.updated = Date.now();
                     this.saveProjects();
@@ -544,46 +523,9 @@
                 return null;
             }
 
-            updateArtifact(projectId, artifactId, updates) {
-                const project = this.getProject(projectId);
-                if (project) {
-                    const artifact = project.artifacts.find(a => a.id === artifactId);
-                    if (artifact) {
-                        if (updates.content && updates.content !== artifact.content) {
-                            // Create new version
-                            artifact.version++;
-                            artifact.versions.push({
-                                version: artifact.version,
-                                content: updates.content,
-                                created: Date.now()
-                            });
-                        }
-                        Object.assign(artifact, updates);
-                        artifact.updated = Date.now();
-                        project.updated = Date.now();
-                        this.saveProjects();
-                    }
-                }
-            }
-
-            deleteArtifact(projectId, artifactId) {
-                const project = this.getProject(projectId);
-                if (project) {
-                    project.artifacts = project.artifacts.filter(a => a.id !== artifactId);
-                    project.updated = Date.now();
-                    this.saveProjects();
-                }
-            }
-
-            getProjectIcon(type) {
-                const icons = {
-                    'game': '🎮',
-                    'script': '🔧',
-                    'gui': '💻',
-                    'system': '⚙️',
-                    'other': '📋'
-                };
-                return icons[type] || '📋';
+            getProjectIcon(name) {
+                const firstChar = name.charAt(0).toUpperCase();
+                return firstChar;
             }
         }
 
@@ -592,14 +534,13 @@
         // Initialize the page
         document.addEventListener('DOMContentLoaded', function() {
             checkAuth();
-            renderProjectsList();
-            showNoProjectSelected();
+            renderProjectsGrid();
 
             // Check for project parameter in URL
             const urlParams = new URLSearchParams(window.location.search);
             const projectId = urlParams.get('project');
             if (projectId && projectManager.getProject(projectId)) {
-                selectProject(projectId);
+                viewProject(projectId);
             }
         });
 
@@ -652,18 +593,10 @@
             }
         }
 
-        // Toggle projects panel
-        function toggleProjectsPanel() {
-            const panel = document.getElementById('projectsListPanel');
-            const icon = document.getElementById('toggleIcon');
-            panel.classList.toggle('collapsed');
-            icon.classList.toggle('fa-chevron-left');
-            icon.classList.toggle('fa-chevron-right');
-        }
-
-        // Render projects list
-        function renderProjectsList(searchQuery = '') {
-            const container = document.getElementById('projectsList');
+        // Render projects grid
+        function renderProjectsGrid(searchQuery = '') {
+            const container = document.getElementById('projectsGrid');
+            const emptyState = document.getElementById('emptyState');
 
             let filteredProjects = projectManager.projects;
             if (searchQuery) {
@@ -678,34 +611,38 @@
             filteredProjects.sort((a, b) => b.updated - a.updated);
 
             if (filteredProjects.length === 0) {
-                container.innerHTML = `
-                    <div style="padding: 1rem; text-align: center; color: #8b949e;">
-                        ${projectManager.projects.length === 0 ? 'No projects yet' : 'No matching projects'}
-                    </div>
-                `;
+                container.innerHTML = '';
+                emptyState.style.display = 'flex';
                 return;
             }
 
+            emptyState.style.display = 'none';
             container.innerHTML = filteredProjects.map(project => {
                 const artifactCount = project.artifacts?.length || 0;
-                const isActive = project.id === currentProjectId;
                 return `
-                    <div class="project-item ${isActive ? 'active' : ''}" onclick="selectProject('${project.id}')">
-                        <div class="project-item-icon">
-                            ${projectManager.getProjectIcon(project.type)}
+                    <div class="project-card" onclick="viewProject('${project.id}')">
+                        <div class="project-card-icon">
+                            ${projectManager.getProjectIcon(project.name)}
                         </div>
-                        <div class="project-item-details">
-                            <div class="project-item-name">${project.name}</div>
-                            <div class="project-item-meta">
+                        <div class="project-card-content">
+                            <h3 class="project-card-title">${project.name}</h3>
+                            ${project.description ? `<p class="project-card-description">${project.description}</p>` : ''}
+                            <div class="project-card-meta">
+                                <span class="meta-item">
+                                    <i class="fas fa-calendar"></i>
+                                    ${formatDate(project.updated)}
+                                </span>
                                 ${artifactCount > 0 ? `
-                                    <span class="artifact-count">
+                                    <span class="meta-item">
                                         <i class="fas fa-paperclip"></i>
                                         ${artifactCount}
                                     </span>
                                 ` : ''}
-                                <span>${formatDate(project.updated)}</span>
                             </div>
                         </div>
+                        <button class="project-card-menu" onclick="event.stopPropagation(); deleteProject('${project.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 `;
             }).join('');
@@ -713,331 +650,107 @@
 
         // Search projects
         function searchProjects(query) {
-            renderProjectsList(query);
+            renderProjectsGrid(query);
         }
 
-        // Select a project
-        function selectProject(projectId) {
+        // View a project
+        function viewProject(projectId) {
             currentProjectId = projectId;
             const project = projectManager.getProject(projectId);
 
             if (!project) {
-                showNoProjectSelected();
+                showProjectsList();
                 return;
             }
 
-            // Update UI
-            document.getElementById('noProjectSelected').style.display = 'none';
-            document.getElementById('projectView').style.display = 'block';
-            document.getElementById('currentProjectName').textContent = project.name;
+            // Hide list view, show detail view
+            document.getElementById('projectsListView').style.display = 'none';
+            document.getElementById('projectDetailView').style.display = 'block';
 
-            // Update active state in list
-            renderProjectsList(document.getElementById('projectSearchInput').value);
+            // Update project details
+            document.getElementById('projectDetailTitle').textContent = project.name;
+            document.getElementById('projectCreated').textContent = `Created ${formatDate(project.created)}`;
+            document.getElementById('projectArtifactCount').textContent = `${project.artifacts?.length || 0} artifacts`;
 
-            // Load artifacts
-            renderArtifacts();
+            // Update instructions
+            const instructionsContent = document.getElementById('instructionsContent');
+            if (project.instructions) {
+                instructionsContent.innerHTML = `<p>${project.instructions}</p>`;
+            } else {
+                instructionsContent.innerHTML = '<p class="placeholder-text">Add instructions to tailor Claude\'s responses</p>';
+            }
+
+            // Update files
+            const filesContent = document.getElementById('filesContent');
+            if (project.artifacts && project.artifacts.length > 0) {
+                filesContent.innerHTML = project.artifacts.map(artifact => `
+                    <div class="file-item">
+                        <div class="file-icon">
+                            <i class="fas fa-file"></i>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">${artifact.name}</div>
+                            <div class="file-size">${formatFileSize(artifact.size || 0)}</div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                filesContent.innerHTML = `
+                    <div class="files-empty-state">
+                        <div class="files-icon">
+                            <i class="fas fa-file"></i>
+                        </div>
+                        <p class="placeholder-text">Add PDFs, documents, or other text to reference in this project.</p>
+                    </div>
+                `;
+            }
         }
 
-        // Show no project selected
-        function showNoProjectSelected() {
-            document.getElementById('noProjectSelected').style.display = 'flex';
-            document.getElementById('projectView').style.display = 'none';
+        // Show projects list
+        function showProjectsList() {
+            document.getElementById('projectsListView').style.display = 'block';
+            document.getElementById('projectDetailView').style.display = 'none';
+            currentProjectId = null;
+            renderProjectsGrid();
         }
 
-        // Render artifacts
-        function renderArtifacts() {
+        // Open project chat
+        function openProjectChat() {
             if (!currentProjectId) return;
-
-            const project = projectManager.getProject(currentProjectId);
-            if (!project) return;
-
-            let artifacts = project.artifacts || [];
-
-            // Filter by type if needed
-            if (currentArtifactFilter !== 'all') {
-                artifacts = artifacts.filter(a => a.type === currentArtifactFilter);
-            }
-
-            // Update counts
-            const allCount = project.artifacts?.length || 0;
-            const codeCount = project.artifacts?.filter(a => a.type === 'code').length || 0;
-            const documentCount = project.artifacts?.filter(a => a.type === 'document').length || 0;
-            const imageCount = project.artifacts?.filter(a => a.type === 'image').length || 0;
-            const dataCount = project.artifacts?.filter(a => a.type === 'data').length || 0;
-
-            document.getElementById('allCount').textContent = allCount;
-            document.getElementById('codeCount').textContent = codeCount;
-            document.getElementById('documentCount').textContent = documentCount;
-            document.getElementById('imageCount').textContent = imageCount;
-            document.getElementById('dataCount').textContent = dataCount;
-
-            const grid = document.getElementById('artifactsGrid');
-
-            if (artifacts.length === 0) {
-                grid.innerHTML = '';
-                document.getElementById('dropZone').style.display = 'block';
-            } else {
-                document.getElementById('dropZone').style.display = 'none';
-                grid.innerHTML = artifacts.map(artifact => {
-                    const icon = getArtifactIcon(artifact.type);
-                    const preview = getArtifactPreview(artifact);
-                    return `
-                        <div class="artifact-card" onclick="openArtifactDetail('${artifact.id}')">
-                            <div class="artifact-card-header">
-                                <div class="artifact-type-icon ${artifact.type}">
-                                    ${icon}
-                                </div>
-                                <div class="artifact-card-menu">
-                                    <button class="artifact-menu-btn" onclick="event.stopPropagation(); deleteArtifact('${artifact.id}')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="artifact-card-title">${artifact.name}</div>
-                            ${preview ? `<div class="artifact-card-preview">${preview}</div>` : ''}
-                            <div class="artifact-card-footer">
-                                <span class="artifact-version">
-                                    <i class="fas fa-code-branch"></i>
-                                    v${artifact.version || 1}
-                                </span>
-                                <span class="artifact-size">${formatFileSize(artifact.size || artifact.content?.length || 0)}</span>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
+            window.location.href = `/project-chat.html?project=${currentProjectId}`;
         }
 
-        // Switch artifact tab
-        function switchArtifactTab(filter, tabElement) {
-            currentArtifactFilter = filter;
-
-            // Update active tab
-            document.querySelectorAll('.artifact-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            tabElement.classList.add('active');
-
-            // Re-render artifacts
-            renderArtifacts();
+        // Project modal functions
+        function openNewProjectModal() {
+            document.getElementById('newProjectModal').style.display = 'block';
+            document.getElementById('projectName').focus();
         }
 
-        // Get artifact icon
-        function getArtifactIcon(type) {
-            const icons = {
-                'code': '<i class="fas fa-code"></i>',
-                'document': '<i class="fas fa-file-alt"></i>',
-                'image': '<i class="fas fa-image"></i>',
-                'data': '<i class="fas fa-database"></i>'
-            };
-            return icons[type] || '<i class="fas fa-file"></i>';
+        function closeNewProjectModal() {
+            document.getElementById('newProjectModal').style.display = 'none';
+            document.getElementById('projectName').value = '';
+            document.getElementById('projectDescription').value = '';
         }
 
-        // Get artifact preview
-        function getArtifactPreview(artifact) {
-            if (artifact.type === 'code' || artifact.type === 'document' || artifact.type === 'data') {
-                return (artifact.content || '').substring(0, 200);
-            }
-            return null;
-        }
-
-        // Open artifact detail
-        function openArtifactDetail(artifactId) {
-            const project = projectManager.getProject(currentProjectId);
-            const artifact = project.artifacts.find(a => a.id === artifactId);
-
-            if (!artifact) return;
-
-            const detailView = document.getElementById('artifactDetailView');
-            const titleEl = document.getElementById('artifactDetailTitle');
-            const contentEl = document.getElementById('artifactDetailContent');
-
-            titleEl.textContent = artifact.name;
-
-            // Display content based on type
-            if (artifact.type === 'code') {
-                const language = getLanguageFromExtension(artifact.name);
-                contentEl.innerHTML = `
-                    <div class="code-view">
-                        <div class="code-header">
-                            <span class="code-language">${language}</span>
-                            <div class="code-actions">
-                                <button class="code-action-btn" onclick="copyArtifactContent('${artifactId}')">
-                                    <i class="fas fa-copy"></i> Copy
-                                </button>
-                                <button class="code-action-btn" onclick="downloadArtifact('${artifactId}')">
-                                    <i class="fas fa-download"></i> Download
-                                </button>
-                            </div>
-                        </div>
-                        <pre class="code-content"><code class="language-${language}">${escapeHtml(artifact.content || '')}</code></pre>
-                    </div>
-                `;
-                // Highlight code if Prism is available
-                if (typeof Prism !== 'undefined') {
-                    Prism.highlightAll();
-                }
-            } else if (artifact.type === 'document') {
-                contentEl.innerHTML = `
-                    <div style="padding: 1.5rem;">
-                        <div class="code-actions" style="margin-bottom: 1rem;">
-                            <button class="code-action-btn" onclick="copyArtifactContent('${artifactId}')">
-                                <i class="fas fa-copy"></i> Copy
-                            </button>
-                            <button class="code-action-btn" onclick="downloadArtifact('${artifactId}')">
-                                <i class="fas fa-download"></i> Download
-                            </button>
-                        </div>
-                        <div style="white-space: pre-wrap; font-family: inherit; line-height: 1.6;">
-                            ${escapeHtml(artifact.content || '')}
-                        </div>
-                    </div>
-                `;
-            } else if (artifact.type === 'image') {
-                contentEl.innerHTML = `
-                    <div style="padding: 1.5rem; text-align: center;">
-                        <img src="${artifact.content}" style="max-width: 100%; border-radius: 8px;">
-                        <div class="code-actions" style="margin-top: 1rem;">
-                            <button class="code-action-btn" onclick="downloadArtifact('${artifactId}')">
-                                <i class="fas fa-download"></i> Download
-                            </button>
-                        </div>
-                    </div>
-                `;
-            } else if (artifact.type === 'data') {
-                contentEl.innerHTML = `
-                    <div class="code-view">
-                        <div class="code-header">
-                            <span class="code-language">JSON</span>
-                            <div class="code-actions">
-                                <button class="code-action-btn" onclick="copyArtifactContent('${artifactId}')">
-                                    <i class="fas fa-copy"></i> Copy
-                                </button>
-                                <button class="code-action-btn" onclick="downloadArtifact('${artifactId}')">
-                                    <i class="fas fa-download"></i> Download
-                                </button>
-                            </div>
-                        </div>
-                        <pre class="code-content"><code class="language-json">${escapeHtml(artifact.content || '')}</code></pre>
-                    </div>
-                `;
-                if (typeof Prism !== 'undefined') {
-                    Prism.highlightAll();
-                }
-            }
-
-            detailView.classList.add('open');
-        }
-
-        // Close artifact detail
-        function closeArtifactDetail() {
-            document.getElementById('artifactDetailView').classList.remove('open');
-        }
-
-        // Copy artifact content
-        function copyArtifactContent(artifactId) {
-            const project = projectManager.getProject(currentProjectId);
-            const artifact = project.artifacts.find(a => a.id === artifactId);
-
-            if (artifact && artifact.content) {
-                navigator.clipboard.writeText(artifact.content).then(() => {
-                    showNotification('Copied to clipboard!');
-                });
-            }
-        }
-
-        // Download artifact
-        function downloadArtifact(artifactId) {
-            const project = projectManager.getProject(currentProjectId);
-            const artifact = project.artifacts.find(a => a.id === artifactId);
-
-            if (!artifact) return;
-
-            if (artifact.type === 'image') {
-                // For images, create a link and trigger download
-                const a = document.createElement('a');
-                a.href = artifact.content;
-                a.download = artifact.name;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            } else {
-                // For text-based content
-                const blob = new Blob([artifact.content || ''], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = artifact.name;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }
-        }
-
-        // Delete artifact
-        function deleteArtifact(artifactId) {
-            if (confirm('Are you sure you want to delete this artifact?')) {
-                projectManager.deleteArtifact(currentProjectId, artifactId);
-                renderArtifacts();
-                showNotification('Artifact deleted');
-            }
-        }
-
-        // Create new artifact
-        function createNewArtifact() {
-            if (!currentProjectId) {
-                showNotification('Please select a project first');
-                return;
-            }
-            document.getElementById('newArtifactModal').style.display = 'block';
-            document.getElementById('artifactName').focus();
-        }
-
-        // Close new artifact modal
-        function closeNewArtifactModal() {
-            document.getElementById('newArtifactModal').style.display = 'none';
-            document.getElementById('artifactName').value = '';
-            document.getElementById('artifactContent').value = '';
-            document.getElementById('artifactType').value = 'code';
-        }
-
-        // Save new artifact
-        function saveNewArtifact(event) {
+        function createProject(event) {
             event.preventDefault();
+            const name = document.getElementById('projectName').value.trim();
+            const description = document.getElementById('projectDescription').value.trim();
 
-            const name = document.getElementById('artifactName').value.trim();
-            const content = document.getElementById('artifactContent').value;
-            const type = document.getElementById('artifactType').value;
+            if (!name) return;
 
-            if (!name || !content) return;
-
-            const artifact = {
-                name,
-                content,
-                type,
-                size: content.length
-            };
-
-            projectManager.addArtifact(currentProjectId, artifact);
-            closeNewArtifactModal();
-            renderArtifacts();
-            showNotification('Artifact created successfully');
+            const project = projectManager.createProject(name, description);
+            closeNewProjectModal();
+            viewProject(project.id);
+            showNotification('Project created successfully');
         }
 
-        // Update artifact template
-        function updateArtifactTemplate() {
-            const type = document.getElementById('artifactType').value;
-            const contentField = document.getElementById('artifactContent');
-
-            const templates = {
-                'code': '-- Example Lua script\nlocal function main()\n    print("Hello, World!")\nend\n\nmain()',
-                'document': '# Documentation\n\n## Overview\nDescribe your project here...\n\n## Features\n- Feature 1\n- Feature 2\n\n## Usage\nExplain how to use your project...',
-                'data': '{\n  "name": "Example",\n  "version": "1.0.0",\n  "data": [\n    \n  ]\n}'
-            };
-
-            if (contentField.value === '' || contentField.value === templates.code || contentField.value === templates.document || contentField.value === templates.data) {
-                contentField.value = templates[type] || '';
+        // Delete project
+        function deleteProject(projectId) {
+            if (confirm('Are you sure you want to delete this project?')) {
+                projectManager.deleteProject(projectId);
+                renderProjectsGrid();
+                showNotification('Project deleted');
             }
         }
 
@@ -1091,11 +804,10 @@
             selectedFiles.forEach(file => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const type = getFileType(file.name);
                     const artifact = {
                         name: file.name,
                         content: e.target.result,
-                        type: type,
+                        type: 'file',
                         size: file.size
                     };
                     projectManager.addArtifact(currentProjectId, artifact);
@@ -1110,133 +822,33 @@
 
             setTimeout(() => {
                 closeUploadModal();
-                renderArtifacts();
+                viewProject(currentProjectId); // Refresh view
                 showNotification(`${selectedFiles.length} file(s) uploaded successfully`);
             }, 500);
         }
 
-        // Handle drag over
-        function handleDragOver(event) {
-            event.preventDefault();
-            document.getElementById('dropZone').classList.add('active');
-        }
-
-        // Handle drag leave
-        function handleDragLeave(event) {
-            event.preventDefault();
-            document.getElementById('dropZone').classList.remove('active');
-        }
-
-        // Handle drop
-        function handleDrop(event) {
-            event.preventDefault();
-            document.getElementById('dropZone').classList.remove('active');
-
-            if (!currentProjectId) {
-                showNotification('Please select a project first');
-                return;
+        // Edit instructions (stub)
+        function editInstructions() {
+            const instructions = prompt('Enter project instructions:');
+            if (instructions !== null) {
+                projectManager.updateProject(currentProjectId, { instructions });
+                viewProject(currentProjectId);
             }
-
-            const files = Array.from(event.dataTransfer.files);
-            if (files.length === 0) return;
-
-            files.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const type = getFileType(file.name);
-                    const artifact = {
-                        name: file.name,
-                        content: e.target.result,
-                        type: type,
-                        size: file.size
-                    };
-                    projectManager.addArtifact(currentProjectId, artifact);
-                    renderArtifacts();
-                };
-
-                if (file.type.startsWith('image/')) {
-                    reader.readAsDataURL(file);
-                } else {
-                    reader.readAsText(file);
-                }
-            });
-
-            showNotification(`${files.length} file(s) uploaded successfully`);
         }
 
-        // Open project chat
-        function openProjectChat() {
-            if (!currentProjectId) return;
-            window.location.href = `/project-chat.html?project=${currentProjectId}`;
-        }
-
-        // Project modal functions
-        function openNewProjectModal() {
-            document.getElementById('newProjectModal').style.display = 'block';
-            document.getElementById('projectName').focus();
-        }
-
-        function closeNewProjectModal() {
-            document.getElementById('newProjectModal').style.display = 'none';
-            document.getElementById('projectName').value = '';
-            document.getElementById('projectDescription').value = '';
-        }
-
-        function createProject(event) {
-            event.preventDefault();
-            const name = document.getElementById('projectName').value.trim();
-            const description = document.getElementById('projectDescription').value.trim();
-            const type = 'game'; // Default type
-
-            if (!name) return;
-
-            const project = projectManager.createProject(name, description, type);
-            closeNewProjectModal();
-            renderProjectsList();
-            selectProject(project.id);
-            showNotification('Project created successfully');
+        // Open project settings (stub)
+        function openProjectSettings() {
+            alert('Project settings coming soon!');
         }
 
         // Helper functions
-        function getFileType(filename) {
-            const ext = filename.split('.').pop().toLowerCase();
-            const codeExtensions = ['lua', 'js', 'ts', 'py', 'java', 'cpp', 'c', 'h', 'css', 'html', 'xml', 'sh'];
-            const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'bmp', 'ico'];
-            const dataExtensions = ['json', 'yaml', 'yml', 'xml', 'csv'];
-
-            if (codeExtensions.includes(ext)) return 'code';
-            if (imageExtensions.includes(ext)) return 'image';
-            if (dataExtensions.includes(ext)) return 'data';
-            return 'document';
-        }
-
-        function getLanguageFromExtension(filename) {
-            const ext = filename.split('.').pop().toLowerCase();
-            const langMap = {
-                'lua': 'lua',
-                'js': 'javascript',
-                'ts': 'typescript',
-                'py': 'python',
-                'java': 'java',
-                'cpp': 'cpp',
-                'c': 'c',
-                'h': 'c',
-                'css': 'css',
-                'html': 'html',
-                'xml': 'xml',
-                'json': 'json',
-                'sh': 'bash'
-            };
-            return langMap[ext] || 'plaintext';
-        }
-
         function formatDate(timestamp) {
             const now = Date.now();
             const diff = now - timestamp;
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-            if (days === 0) return 'Today';
-            if (days === 1) return 'Yesterday';
+            if (days === 0) return 'today';
+            if (days === 1) return 'yesterday';
             if (days < 7) return `${days} days ago`;
             return new Date(timestamp).toLocaleDateString();
         }
@@ -1249,14 +861,7 @@
             return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
         }
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
         function showNotification(message) {
-            // Simple notification - you can enhance this
             const notification = document.createElement('div');
             notification.textContent = message;
             notification.style.cssText = `
@@ -1283,7 +888,7 @@
 
         // Modal event listeners
         document.addEventListener('click', function(event) {
-            const modals = ['newProjectModal', 'newArtifactModal', 'uploadModal'];
+            const modals = ['newProjectModal', 'uploadModal'];
             modals.forEach(modalId => {
                 const modal = document.getElementById(modalId);
                 if (event.target === modal) {
@@ -1294,14 +899,12 @@
 
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
-                closeArtifactDetail();
                 closeNewProjectModal();
-                closeNewArtifactModal();
                 closeUploadModal();
             }
         });
 
-        // Sidebar functions (from main app)
+        // Sidebar functions
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
@@ -1316,18 +919,35 @@
             overlay.classList.remove('show');
         }
 
-        function startNewChat() {
-            window.location.href = '/index.html';
+        @keyframes slideInUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
         }
     </script>
 
     <!-- Load auth module -->
-    <script src="js/auth.js"></script>    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="js/auth.js"></script>
 
+    <!-- GSAP for animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 
     <!-- ReactBits-Inspired Animations -->
     <script src="js/animations/dot-grid-background.js"></script>
-    <script src="js/animations/click-spark.js"></script>
     <script src="js/animations/cursor-trail.js"></script>
     <script src="js/animations/blur-text.js"></script>
     <script src="js/animations/micro-interactions.js"></script>
