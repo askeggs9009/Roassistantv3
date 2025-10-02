@@ -258,17 +258,14 @@ class DotGridBackground {
         dot._inertiaApplied = true;
         gsap.killTweensOf(dot);
 
-        const pushX = dot.cx - pr.x + pr.vx * 0.005;
-        const pushY = dot.cy - pr.y + pr.vy * 0.005;
-
-        // Simulate physics with standard GSAP animation
-        const pushDuration = 0.6;
+        const pushX = (dot.cx - pr.x + pr.vx * 0.005) * 0.15;
+        const pushY = (dot.cy - pr.y + pr.vy * 0.005) * 0.15;
 
         gsap.to(dot, {
             xOffset: pushX,
             yOffset: pushY,
-            duration: pushDuration,
-            ease: 'power2.out',
+            duration: 0.3,
+            ease: 'power3.out',
             onComplete: () => {
                 gsap.to(dot, {
                     xOffset: 0,
@@ -288,17 +285,14 @@ class DotGridBackground {
         gsap.killTweensOf(dot);
 
         const falloff = Math.max(0, 1 - dist / this.shockRadius);
-        const pushX = (dot.cx - cx) * this.shockStrength * falloff;
-        const pushY = (dot.cy - cy) * this.shockStrength * falloff;
-
-        // Simulate shock wave physics with standard GSAP animation
-        const shockDuration = 0.5;
+        const pushX = (dot.cx - cx) * this.shockStrength * falloff * 0.2;
+        const pushY = (dot.cy - cy) * this.shockStrength * falloff * 0.2;
 
         gsap.to(dot, {
             xOffset: pushX,
             yOffset: pushY,
-            duration: shockDuration,
-            ease: 'power2.out',
+            duration: 0.3,
+            ease: 'power3.out',
             onComplete: () => {
                 gsap.to(dot, {
                     xOffset: 0,
