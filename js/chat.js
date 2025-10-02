@@ -300,8 +300,8 @@ class ChatManager {
                         </svg>
                     </div>
                     <div class="artifact-content">
-                        <div class="artifact-title">${language.toUpperCase()} Script</div>
-                        <div class="artifact-meta">${lineCount} lines • Writing...</div>
+                        <div class="artifact-title">Writing Code...</div>
+                        <div class="artifact-meta">${lineCount} lines</div>
                     </div>
                     <div class="artifact-arrow">
                         <div class="streaming-dots">
@@ -498,6 +498,52 @@ class ChatManager {
         this.saveChatHistory();
     }
 
+    // Generate a brief summary for code block (max 3 words)
+    generateCodeSummary(code, language) {
+        const lower = code.toLowerCase();
+
+        // Check for common patterns and keywords
+        if (lower.includes('http') || lower.includes('fetch') || lower.includes('request')) {
+            return 'API Request Handler';
+        } else if (lower.includes('button') && lower.includes('click')) {
+            return 'Button Click Handler';
+        } else if (lower.includes('datastore') || lower.includes('data store')) {
+            return 'DataStore Management';
+        } else if (lower.includes('remote') && lower.includes('event')) {
+            return 'Remote Event Handler';
+        } else if (lower.includes('tween') || lower.includes('animation')) {
+            return 'Animation System';
+        } else if (lower.includes('player') && lower.includes('join')) {
+            return 'Player Join Handler';
+        } else if (lower.includes('gui') || lower.includes('frame') || lower.includes('textbutton')) {
+            return 'UI Component';
+        } else if (lower.includes('tool') || lower.includes('equipped')) {
+            return 'Tool System';
+        } else if (lower.includes('part') && (lower.includes('touch') || lower.includes('collision'))) {
+            return 'Collision Handler';
+        } else if (lower.includes('leaderstats')) {
+            return 'Leaderboard System';
+        } else if (lower.includes('spawn')) {
+            return 'Spawn Handler';
+        } else if (lower.includes('damage')) {
+            return 'Damage System';
+        } else if (lower.includes('shop') || lower.includes('purchase')) {
+            return 'Shop System';
+        } else if (lower.includes('function') || lower.includes('def ') || lower.includes('const ')) {
+            // Extract first function name
+            const funcMatch = code.match(/(?:function|def|const)\s+(\w+)/);
+            if (funcMatch && funcMatch[1]) {
+                const funcName = funcMatch[1];
+                // Convert camelCase to Title Case (max 3 words)
+                const words = funcName.replace(/([A-Z])/g, ' $1').trim().split(/\s+/).slice(0, 3);
+                return words.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+            }
+        }
+
+        // Fallback to language type
+        return `${language.charAt(0).toUpperCase() + language.slice(1)} Code`;
+    }
+
     // Format assistant messages with enhanced markdown support
     formatAssistantMessage(content, skipPanel = false) {
         // Store code blocks for the panel
@@ -515,12 +561,16 @@ class ChatManager {
             const contentHash = this.hashCode(trimmedCode);
             const blockId = `code-${contentHash}-${codeBlockIndex++}`;
 
+            // Generate a brief summary for the code
+            const codeSummary = this.generateCodeSummary(trimmedCode, langLabel);
+
             // Store code block for panel display
             codeBlocks.push({
                 id: blockId,
                 language: langLabel,
                 code: trimmedCode,
-                escapedCode: escapedCode
+                escapedCode: escapedCode,
+                summary: codeSummary
             });
 
             return `
@@ -531,7 +581,7 @@ class ChatManager {
                         </svg>
                     </div>
                     <div class="artifact-content">
-                        <div class="artifact-title">${langLabel.toUpperCase()} Script</div>
+                        <div class="artifact-title">${codeSummary}</div>
                         <div class="artifact-meta">${lineCount} lines • Click to view</div>
                     </div>
                     <div class="artifact-arrow">
