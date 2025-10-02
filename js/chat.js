@@ -268,12 +268,52 @@ class ChatManager {
     updateStreamingMessage(messageId, content) {
         const messageElement = document.getElementById(`streaming-${messageId}`);
         if (messageElement) {
-            // Apply formatting in real-time as content streams
-            const formattedContent = this.formatAssistantMessage(content, true);
+            // Apply formatting with streaming code blocks
+            const formattedContent = this.formatAssistantMessageStreaming(content, messageId);
             // Add blinking cursor at the end
             messageElement.innerHTML = formattedContent + '<span class="streaming-cursor">|</span>';
             // No auto-scrolling - user can freely scroll while AI types
         }
+    }
+
+    // Format message for streaming with live code block updates
+    formatAssistantMessageStreaming(content, messageId) {
+        // Handle incomplete code blocks (streaming)
+        let processedContent = content;
+
+        // Check for incomplete code blocks (``` without closing)
+        const incompleteCodeMatch = content.match(/```(\w+)?\n([\s\S]*?)$/);
+
+        if (incompleteCodeMatch && !content.match(/```(\w+)?\n[\s\S]*?```/g)) {
+            // We have an opening ``` but no closing yet
+            const language = incompleteCodeMatch[1] || 'lua';
+            const codeContent = incompleteCodeMatch[2];
+            const lineCount = codeContent.split('\n').length;
+            const blockId = `${messageId}_streaming_code`;
+
+            // Replace the incomplete code block with artifact box
+            processedContent = content.replace(/```(\w+)?\n[\s\S]*?$/, `
+                <div class="code-artifact-box streaming">
+                    <div class="artifact-icon">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
+                        </svg>
+                    </div>
+                    <div class="artifact-content">
+                        <div class="artifact-title">${language.toUpperCase()} Script</div>
+                        <div class="artifact-meta">${lineCount} lines • Writing...</div>
+                    </div>
+                    <div class="artifact-arrow">
+                        <div class="streaming-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+
+        // Use regular formatting for the rest
+        return this.formatAssistantMessage(processedContent, true);
     }
 
     // Finalize streaming message with proper formatting
@@ -473,7 +513,7 @@ class ChatManager {
             });
 
             return `
-                <div class="code-artifact-box" onclick="window.chatManager.openCodePanel('${blockId}')">
+                <div class="code-artifact-box" onclick="window.openCodePanel('${blockId}')">
                     <div class="artifact-icon">
                         <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
@@ -542,8 +582,10 @@ class ChatManager {
 
     // Open code panel when user clicks on artifact box
     openCodePanel(blockId) {
+        console.log('Opening code panel for:', blockId);
         if (!this._allCodeBlocks || !this._allCodeBlocks[blockId]) {
             console.error('Code block not found:', blockId);
+            console.log('Available blocks:', Object.keys(this._allCodeBlocks || {}));
             return;
         }
 
@@ -1448,6 +1490,7 @@ window.chatManager = new ChatManager();
 window.sendMessage = () => window.chatManager.sendMessage();
 window.startNewChat = () => window.chatManager.startNewChat();
 window.closeUpgradeModal = () => window.chatManager.closeUpgradeModal();
+window.openCodePanel = (blockId) => window.chatManager.openCodePanel(blockId);
 
 // Handle Enter key in message input
 document.addEventListener('DOMContentLoaded', function() {
