@@ -556,6 +556,7 @@ class ChatManager {
 
     // Add message to chat display and save it
     addMessage(type, content) {
+        console.log('[ChatManager] addMessage called:', type, content.substring(0, 50));
         // Use typewriter effect for assistant messages, regular display for others
         if (type === 'assistant') {
             this.displayAssistantMessageWithTypewriter(content);
@@ -1678,7 +1679,11 @@ class ChatManager {
     // Display message without saving (used for loading saved messages)
     displayMessage(type, content) {
         const messagesContainer = document.getElementById('messagesContainer');
-        if (!messagesContainer) return;
+        console.log('[ChatManager] displayMessage:', type, 'container found:', !!messagesContainer);
+        if (!messagesContainer) {
+            console.error('[ChatManager] messagesContainer not found!');
+            return;
+        }
 
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${type}`;
@@ -1686,6 +1691,7 @@ class ChatManager {
         const timestamp = new Date().toLocaleTimeString();
 
         if (type === 'user') {
+            console.log('[ChatManager] Creating user message div');
             messageDiv.innerHTML = `
                 ${this.getUserAvatarHtml()}
                 <div class="message-content">
@@ -1729,10 +1735,12 @@ class ChatManager {
         }
 
         messagesContainer.appendChild(messageDiv);
+        console.log('[ChatManager] Message appended to container. Total messages:', messagesContainer.children.length);
 
         // Only auto-scroll for user messages
         if (type === 'user') {
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            console.log('[ChatManager] Scrolled to bottom');
         }
     }
 }
