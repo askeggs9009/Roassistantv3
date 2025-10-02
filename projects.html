@@ -172,28 +172,38 @@
                         <div class="project-section">
                             <div class="section-header">
                                 <h3>Project Instructions</h3>
-                                <button class="icon-btn" onclick="editInstructions()">
-                                    <i class="fas fa-plus"></i>
+                                <button class="icon-btn" id="saveInstructionsBtn" onclick="saveInstructions()" style="display: none;">
+                                    <i class="fas fa-save"></i>
                                 </button>
                             </div>
-                            <div class="instructions-content" id="instructionsContent">
-                                <p class="placeholder-text">Add instructions to tailor Claude's responses</p>
+                            <div class="instructions-content">
+                                <textarea
+                                    id="instructionsTextarea"
+                                    class="instructions-textarea"
+                                    placeholder="Add instructions to tailor Claude's responses for this Roblox project..."
+                                    oninput="showSaveButton()"
+                                ></textarea>
                             </div>
                         </div>
 
                         <div class="project-section">
                             <div class="section-header">
-                                <h3>Files</h3>
-                                <button class="icon-btn" onclick="openUploadModal()">
-                                    <i class="fas fa-plus"></i>
-                                </button>
+                                <h3>Artifacts</h3>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button class="icon-btn" onclick="openAddTextModal()" title="Add Text/Script">
+                                        <i class="fas fa-file-code"></i>
+                                    </button>
+                                    <button class="icon-btn" onclick="openAddImageModal()" title="Add Image">
+                                        <i class="fas fa-image"></i>
+                                    </button>
+                                </div>
                             </div>
                             <div class="files-content" id="filesContent">
                                 <div class="files-empty-state">
                                     <div class="files-icon">
-                                        <i class="fas fa-file"></i>
+                                        <i class="fas fa-cube"></i>
                                     </div>
-                                    <p class="placeholder-text">Add PDFs, documents, or other text to reference in this project.</p>
+                                    <p class="placeholder-text">Add scripts or images (models/UI) to reference in this project.</p>
                                 </div>
                             </div>
                         </div>
@@ -228,28 +238,57 @@
         </div>
     </div>
 
-    <!-- Upload Modal -->
-    <div class="modal" id="uploadModal" style="display: none;">
-        <div class="modal-overlay" onclick="closeUploadModal()"></div>
+    <!-- Add Text/Script Modal -->
+    <div class="modal" id="addTextModal" style="display: none;">
+        <div class="modal-overlay" onclick="closeAddTextModal()"></div>
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">Upload Files</h2>
-                <button class="modal-close" onclick="closeUploadModal()">×</button>
+                <h2 class="modal-title">Add Text Artifact</h2>
+                <button class="modal-close" onclick="closeAddTextModal()">×</button>
+            </div>
+            <form onsubmit="addTextArtifact(event)">
+                <div class="form-group">
+                    <label class="form-label" for="textArtifactName">Name</label>
+                    <input type="text" id="textArtifactName" class="form-input" placeholder="Script name (e.g., MainScript)" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="textArtifactContent">Content</label>
+                    <textarea id="textArtifactContent" class="form-input form-textarea" placeholder="Paste your Roblox script here..." rows="10" required></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddTextModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Image Modal -->
+    <div class="modal" id="addImageModal" style="display: none;">
+        <div class="modal-overlay" onclick="closeAddImageModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Add Image Artifact</h2>
+                <button class="modal-close" onclick="closeAddImageModal()">×</button>
             </div>
             <div class="form-group">
-                <input type="file" id="fileInput" multiple accept="*/*" style="display: none;" onchange="handleFileSelect(event)">
-                <div class="upload-drop-zone" onclick="document.getElementById('fileInput').click()" style="cursor: pointer;">
+                <label class="form-label" for="imageArtifactName">Name</label>
+                <input type="text" id="imageArtifactName" class="form-input" placeholder="Model or UI name" required>
+            </div>
+            <div class="form-group">
+                <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageSelect(event)">
+                <div class="upload-drop-zone" onclick="document.getElementById('imageInput').click()" style="cursor: pointer;">
                     <div class="upload-icon">
-                        <i class="fas fa-cloud-upload-alt"></i>
+                        <i class="fas fa-image"></i>
                     </div>
-                    <div class="upload-text">Click to select files or drag and drop</div>
-                    <div class="upload-hint">PDFs, documents, code files, and more</div>
+                    <div class="upload-text">Click to select image</div>
+                    <div class="upload-hint">Models, UI screenshots, reference images</div>
                 </div>
-                <div id="fileList" style="margin-top: 1rem;"></div>
+                <div id="imagePreview" style="margin-top: 1rem;"></div>
             </div>
             <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeUploadModal()">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="uploadFiles()">Upload</button>
+                <button type="button" class="btn btn-secondary" onclick="closeAddImageModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="addImageArtifact()">Add</button>
             </div>
         </div>
     </div>
@@ -673,34 +712,34 @@
             document.getElementById('projectArtifactCount').textContent = `${project.artifacts?.length || 0} artifacts`;
 
             // Update instructions
-            const instructionsContent = document.getElementById('instructionsContent');
-            if (project.instructions) {
-                instructionsContent.innerHTML = `<p>${project.instructions}</p>`;
-            } else {
-                instructionsContent.innerHTML = '<p class="placeholder-text">Add instructions to tailor Claude\'s responses</p>';
-            }
+            const instructionsTextarea = document.getElementById('instructionsTextarea');
+            instructionsTextarea.value = project.instructions || '';
+            document.getElementById('saveInstructionsBtn').style.display = 'none';
 
-            // Update files
+            // Update artifacts
             const filesContent = document.getElementById('filesContent');
             if (project.artifacts && project.artifacts.length > 0) {
-                filesContent.innerHTML = project.artifacts.map(artifact => `
-                    <div class="file-item">
-                        <div class="file-icon">
-                            <i class="fas fa-file"></i>
+                filesContent.innerHTML = project.artifacts.map(artifact => {
+                    const icon = artifact.type === 'image' ? 'fa-image' : 'fa-file-code';
+                    return `
+                        <div class="file-item">
+                            <div class="file-icon">
+                                <i class="fas ${icon}"></i>
+                            </div>
+                            <div class="file-info">
+                                <div class="file-name">${artifact.name}</div>
+                                <div class="file-size">${artifact.type === 'text' ? 'Script' : 'Image'} • ${formatFileSize(artifact.size || 0)}</div>
+                            </div>
                         </div>
-                        <div class="file-info">
-                            <div class="file-name">${artifact.name}</div>
-                            <div class="file-size">${formatFileSize(artifact.size || 0)}</div>
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             } else {
                 filesContent.innerHTML = `
                     <div class="files-empty-state">
                         <div class="files-icon">
-                            <i class="fas fa-file"></i>
+                            <i class="fas fa-cube"></i>
                         </div>
-                        <p class="placeholder-text">Add PDFs, documents, or other text to reference in this project.</p>
+                        <p class="placeholder-text">Add scripts or images (models/UI) to reference in this project.</p>
                     </div>
                 `;
             }
@@ -768,85 +807,121 @@
         }
 
         // Open upload modal
-        function openUploadModal() {
+        // Instructions editing
+        function showSaveButton() {
+            document.getElementById('saveInstructionsBtn').style.display = 'flex';
+        }
+
+        function saveInstructions() {
             if (!currentProjectId) {
                 showNotification('Please select a project first');
                 return;
             }
-            selectedFiles = [];
-            document.getElementById('uploadModal').style.display = 'block';
-            document.getElementById('fileList').innerHTML = '';
+            const instructions = document.getElementById('instructionsTextarea').value;
+            projectManager.updateProject(currentProjectId, { instructions });
+            document.getElementById('saveInstructionsBtn').style.display = 'none';
+            showNotification('Instructions saved');
         }
 
-        // Close upload modal
-        function closeUploadModal() {
-            document.getElementById('uploadModal').style.display = 'none';
-            selectedFiles = [];
-            document.getElementById('fileInput').value = '';
-        }
-
-        // Handle file select
-        function handleFileSelect(event) {
-            selectedFiles = Array.from(event.target.files);
-            updateFileList();
-        }
-
-        // Update file list
-        function updateFileList() {
-            const fileList = document.getElementById('fileList');
-            if (selectedFiles.length === 0) {
-                fileList.innerHTML = '';
+        // Text artifact modal
+        function openAddTextModal() {
+            if (!currentProjectId) {
+                showNotification('Please select a project first');
                 return;
             }
+            document.getElementById('addTextModal').style.display = 'block';
+        }
 
-            fileList.innerHTML = '<div style="color: #8b949e; margin-bottom: 0.5rem;">Selected files:</div>' +
-                selectedFiles.map(file => `
-                    <div style="padding: 0.5rem; background: rgba(88, 166, 255, 0.1); border-radius: 6px; margin-bottom: 0.25rem;">
-                        ${file.name} (${formatFileSize(file.size)})
+        function closeAddTextModal() {
+            document.getElementById('addTextModal').style.display = 'none';
+            document.getElementById('textArtifactName').value = '';
+            document.getElementById('textArtifactContent').value = '';
+        }
+
+        function addTextArtifact(event) {
+            event.preventDefault();
+            const name = document.getElementById('textArtifactName').value;
+            const content = document.getElementById('textArtifactContent').value;
+
+            const artifact = {
+                name: name,
+                content: content,
+                type: 'text',
+                size: new Blob([content]).size
+            };
+
+            projectManager.addArtifact(currentProjectId, artifact);
+            closeAddTextModal();
+            viewProject(currentProjectId);
+            showNotification('Text artifact added');
+        }
+
+        // Image artifact modal
+        let selectedImage = null;
+
+        function openAddImageModal() {
+            if (!currentProjectId) {
+                showNotification('Please select a project first');
+                return;
+            }
+            selectedImage = null;
+            document.getElementById('addImageModal').style.display = 'block';
+        }
+
+        function closeAddImageModal() {
+            document.getElementById('addImageModal').style.display = 'none';
+            document.getElementById('imageArtifactName').value = '';
+            document.getElementById('imageInput').value = '';
+            document.getElementById('imagePreview').innerHTML = '';
+            selectedImage = null;
+        }
+
+        function handleImageSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            selectedImage = file;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('imagePreview').innerHTML = `
+                    <div style="text-align: center;">
+                        <img src="${e.target.result}" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid rgba(88, 166, 255, 0.3);">
+                        <div style="color: #8b949e; margin-top: 0.5rem; font-size: 0.85rem;">${file.name} (${formatFileSize(file.size)})</div>
                     </div>
-                `).join('');
+                `;
+            };
+            reader.readAsDataURL(file);
         }
 
-        // Upload files
-        function uploadFiles() {
-            if (selectedFiles.length === 0) {
-                showNotification('Please select files to upload');
+        function addImageArtifact() {
+            const name = document.getElementById('imageArtifactName').value;
+
+            if (!name) {
+                showNotification('Please enter a name');
                 return;
             }
 
-            selectedFiles.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const artifact = {
-                        name: file.name,
-                        content: e.target.result,
-                        type: 'file',
-                        size: file.size
-                    };
-                    projectManager.addArtifact(currentProjectId, artifact);
+            if (!selectedImage) {
+                showNotification('Please select an image');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const artifact = {
+                    name: name,
+                    content: e.target.result,
+                    type: 'image',
+                    size: selectedImage.size
                 };
 
-                if (file.type.startsWith('image/')) {
-                    reader.readAsDataURL(file);
-                } else {
-                    reader.readAsText(file);
-                }
-            });
-
-            setTimeout(() => {
-                closeUploadModal();
-                viewProject(currentProjectId); // Refresh view
-                showNotification(`${selectedFiles.length} file(s) uploaded successfully`);
-            }, 500);
-        }
-
-        // Edit instructions (stub)
-        function editInstructions() {
-            const instructions = prompt('Enter project instructions:');
-            if (instructions !== null) {
-                projectManager.updateProject(currentProjectId, { instructions });
+                projectManager.addArtifact(currentProjectId, artifact);
+                closeAddImageModal();
                 viewProject(currentProjectId);
-            }
+                showNotification('Image artifact added');
+            };
+            reader.readAsDataURL(selectedImage);
         }
 
         // Open project settings (stub)

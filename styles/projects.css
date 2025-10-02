@@ -376,6 +376,32 @@
     line-height: 1.6;
 }
 
+.instructions-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 1rem;
+    background: rgba(13, 17, 23, 0.4);
+    border: 1px solid rgba(48, 54, 61, 0.6);
+    border-radius: 8px;
+    color: #c9d1d9;
+    font-size: 0.9rem;
+    font-family: inherit;
+    line-height: 1.6;
+    resize: vertical;
+    transition: all 0.2s ease;
+}
+
+.instructions-textarea::placeholder {
+    color: #6e7681;
+    font-style: italic;
+}
+
+.instructions-textarea:focus {
+    outline: none;
+    border-color: rgba(88, 166, 255, 0.5);
+    background: rgba(13, 17, 23, 0.6);
+}
+
 .placeholder-text {
     color: #6e7681;
     font-style: italic;
