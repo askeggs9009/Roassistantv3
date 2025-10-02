@@ -403,11 +403,11 @@ class DotGridBackground {
 // Auto-initialize with default options (dot size 2 as requested)
 if (typeof gsap !== 'undefined') {
     window.dotGridBackground = new DotGridBackground({
-        dotSize: 2,              // As requested
+        dotSize: 2,
         gap: 32,
-        baseColor: '#5227FF',    // Purple base
-        activeColor: '#58a6ff',  // Blue active (matches AI theme)
-        proximity: 180,          // Increased from 120 for larger hover effect area
+        baseColor: '#5227FF',
+        activeColor: '#58a6ff',
+        proximity: 80,
         speedTrigger: 100,
         shockRadius: 250,
         shockStrength: 5,
