@@ -1021,14 +1021,42 @@ class ChatManager {
         // Load recent chats in sidebar
         this.loadRecentChats();
 
-        // Load from localStorage or server
-        const savedMessages = localStorage.getItem('chatHistory');
-        if (savedMessages) {
-            try {
-                this.messages = JSON.parse(savedMessages);
+        // Try to load from user-specific chat history first
+        try {
+            const chatId = this.getCurrentChatId();
+            const userStorageKey = this.getUserStorageKey('allChatHistories');
+            const allChats = JSON.parse(localStorage.getItem(userStorageKey) || '{}');
+
+            if (allChats[chatId] && allChats[chatId].messages) {
+                // Load from the specific chat
+                this.messages = allChats[chatId].messages;
                 this.displaySavedMessages();
-            } catch (error) {
-                console.error('Error loading chat history:', error);
+
+                // Update the chat title if it exists
+                const chatTitle = document.getElementById('chatTitle');
+                if (chatTitle && allChats[chatId].title) {
+                    chatTitle.textContent = allChats[chatId].title;
+                }
+            } else {
+                // Fall back to generic chat history
+                const savedMessages = localStorage.getItem('chatHistory');
+                if (savedMessages) {
+                    this.messages = JSON.parse(savedMessages);
+                    this.displaySavedMessages();
+                }
+            }
+        } catch (error) {
+            console.error('Error loading chat history:', error);
+
+            // Final fallback to generic chat history
+            const savedMessages = localStorage.getItem('chatHistory');
+            if (savedMessages) {
+                try {
+                    this.messages = JSON.parse(savedMessages);
+                    this.displaySavedMessages();
+                } catch (err) {
+                    console.error('Error loading fallback chat history:', err);
+                }
             }
         }
 
