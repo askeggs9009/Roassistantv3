@@ -532,15 +532,15 @@ class ChatManager {
             `;
         });
 
-        // Store code blocks for later use (always store, regardless of skipPanel)
+        // Store code blocks globally for reliable access
         if (codeBlocks.length > 0) {
-            // Store globally so we can access them when user clicks
-            if (!this._allCodeBlocks) {
-                this._allCodeBlocks = {};
+            // Use window object for global storage
+            if (!window._codeBlocks) {
+                window._codeBlocks = {};
             }
             codeBlocks.forEach(block => {
-                this._allCodeBlocks[block.id] = block;
-                console.log('Stored code block:', block.id);
+                window._codeBlocks[block.id] = block;
+                console.log('[CodeBlock] Stored:', block.id, 'Total blocks:', Object.keys(window._codeBlocks).length);
             });
         }
 
@@ -583,14 +583,23 @@ class ChatManager {
 
     // Open code panel when user clicks on artifact box
     openCodePanel(blockId) {
-        console.log('Opening code panel for:', blockId);
-        if (!this._allCodeBlocks || !this._allCodeBlocks[blockId]) {
-            console.error('Code block not found:', blockId);
-            console.log('Available blocks:', Object.keys(this._allCodeBlocks || {}));
+        console.log('[CodeBlock] Opening panel for:', blockId);
+        console.log('[CodeBlock] Available blocks:', Object.keys(window._codeBlocks || {}));
+
+        if (!window._codeBlocks || !window._codeBlocks[blockId]) {
+            console.error('[CodeBlock] Not found:', blockId);
+            console.log('[CodeBlock] Checking all stored keys:');
+
+            if (window._codeBlocks) {
+                for (let key in window._codeBlocks) {
+                    console.log('  Key:', key, '| Match:', key === blockId, '| Lengths:', key.length, blockId.length);
+                }
+            }
             return;
         }
 
-        const block = this._allCodeBlocks[blockId];
+        const block = window._codeBlocks[blockId];
+        console.log('[CodeBlock] Found block, opening panel');
         this.showCodePanel([block]);
     }
 
