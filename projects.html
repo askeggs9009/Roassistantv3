@@ -722,14 +722,27 @@
 
         // Project modal functions
         function openNewProjectModal() {
-            document.getElementById('newProjectModal').style.display = 'block';
-            document.getElementById('projectName').focus();
+            const modal = document.getElementById('newProjectModal');
+            if (modal) {
+                modal.style.display = 'block';
+                setTimeout(() => {
+                    const projectNameInput = document.getElementById('projectName');
+                    if (projectNameInput) {
+                        projectNameInput.focus();
+                    }
+                }, 100);
+            }
         }
 
         function closeNewProjectModal() {
-            document.getElementById('newProjectModal').style.display = 'none';
-            document.getElementById('projectName').value = '';
-            document.getElementById('projectDescription').value = '';
+            const modal = document.getElementById('newProjectModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            const projectNameInput = document.getElementById('projectName');
+            const projectDescInput = document.getElementById('projectDescription');
+            if (projectNameInput) projectNameInput.value = '';
+            if (projectDescInput) projectDescInput.value = '';
         }
 
         function createProject(event) {
