@@ -12,7 +12,21 @@
       "Bash(done)",
       "Bash(mv:*)",
       "WebSearch",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "WebFetch(domain:reactbits.dev)",
+      "Bash(npm install:*)",
+      "Bash(echo $APPDATA)",
+      "Read(//c/Users/askeg/AppData/Roaming/Claude/**)",
+      "Bash(npx reactbits-dev-mcp-server:*)",
+      "Bash(claude mcp add reactbits --scope user:*)",
+      "Bash(claude mcp:*)",
+      "Bash(gh repo clone:*)",
+      "Bash(git clone:*)",
+      "Bash(mkdir:*)",
+      "Bash(node:*)",
+      "Bash(git pull:*)",
+      "Bash(python:*)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": []

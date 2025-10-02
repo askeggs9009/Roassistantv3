@@ -796,6 +796,41 @@
     transform: translateX(0);
 }
 
+/* Resize Handle for Code Panel */
+.code-panel-resize-handle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    cursor: ew-resize;
+    z-index: 10;
+    transition: background 0.2s ease;
+}
+
+.code-panel-resize-handle:hover,
+.code-panel-resize-handle.resizing {
+    background: rgba(88, 166, 255, 0.5);
+}
+
+.code-panel-resize-handle::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 3px;
+    height: 40px;
+    background: rgba(88, 166, 255, 0.3);
+    border-radius: 2px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.code-panel-resize-handle:hover::before {
+    opacity: 1;
+}
+
 .code-panel-header {
     display: flex;
     justify-content: space-between;

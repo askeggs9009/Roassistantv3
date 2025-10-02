@@ -1524,4 +1524,48 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Code panel resize functionality
+    const codePanel = document.getElementById('codePanel');
+    const resizeHandle = document.getElementById('codePanelResizeHandle');
+
+    if (codePanel && resizeHandle) {
+        let isResizing = false;
+        let startX = 0;
+        let startWidth = 0;
+
+        resizeHandle.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            startX = e.clientX;
+            startWidth = codePanel.offsetWidth;
+            resizeHandle.classList.add('resizing');
+            document.body.style.cursor = 'ew-resize';
+            document.body.style.userSelect = 'none';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+
+            const deltaX = startX - e.clientX;
+            const newWidth = startWidth + deltaX;
+
+            // Min width: 300px, Max width: 80% of window
+            const minWidth = 300;
+            const maxWidth = window.innerWidth * 0.8;
+
+            if (newWidth >= minWidth && newWidth <= maxWidth) {
+                codePanel.style.width = `${newWidth}px`;
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                resizeHandle.classList.remove('resizing');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            }
+        });
+    }
 });
