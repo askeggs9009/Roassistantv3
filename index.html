@@ -1539,14 +1539,10 @@
         // Close code panel function
         function closeCodePanel() {
             const codePanel = document.getElementById('codePanel');
-            const sidebar = document.getElementById('sidebar');
             const mainContent = document.getElementById('mainContent');
 
             if (codePanel) {
                 codePanel.classList.remove('active');
-            }
-            if (sidebar) {
-                sidebar.classList.remove('hidden');
             }
             if (mainContent) {
                 mainContent.classList.remove('code-panel-active');

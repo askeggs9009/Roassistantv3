@@ -22,6 +22,9 @@ class ChatManager {
         }
 
         try {
+            // Reset code panel flag for new message
+            this._codePanelShown = false;
+
             this.isLoading = true;
             this.updateSendButton(true);
 
@@ -268,8 +271,13 @@ class ChatManager {
     updateStreamingMessage(messageId, content) {
         const messageElement = document.getElementById(`streaming-${messageId}`);
         if (messageElement) {
+            // Check if content contains code blocks and show panel immediately
+            if (content.includes('```') && !this._codePanelShown) {
+                this.showCodePanelFromStreaming(content);
+            }
+
             // Apply formatting in real-time as content streams
-            const formattedContent = this.formatAssistantMessage(content);
+            const formattedContent = this.formatAssistantMessage(content, true);
             // Add blinking cursor at the end
             messageElement.innerHTML = formattedContent + '<span class="streaming-cursor">|</span>';
             // No auto-scrolling - user can freely scroll while AI types
@@ -324,6 +332,11 @@ class ChatManager {
 
         console.log('[Typewriter] Starting effect for:', text.substring(0, 50) + '...');
 
+        // Check if content contains code blocks and show panel immediately
+        if (text.includes('```') && !this._codePanelShown) {
+            this.showCodePanelFromStreaming(text);
+        }
+
         // Clear any existing content first
         container.innerHTML = '';
 
@@ -343,15 +356,15 @@ class ChatManager {
                 currentText += (wordIndex > 0 ? ' ' : '') + words[wordIndex];
                 wordIndex++;
 
-                // Format and display the current text with cursor
-                container.innerHTML = this.formatAssistantMessage(currentText) + '<span class="typewriter-cursor">|</span>';
+                // Format and display the current text with cursor (skip panel trigger)
+                container.innerHTML = this.formatAssistantMessage(currentText, true) + '<span class="typewriter-cursor">|</span>';
                 // No auto-scrolling during typewriter effect
 
                 // Continue streaming with slight randomness (reduced for faster effect)
                 setTimeout(streamNextWord, baseDelay + Math.random() * 10);
             } else {
                 // Streaming complete - remove cursor and show final formatted content
-                container.innerHTML = this.formatAssistantMessage(text);
+                container.innerHTML = this.formatAssistantMessage(text, true);
 
                 console.log('[Typewriter] Effect completed');
                 // No auto-scrolling after typewriter completes
@@ -448,7 +461,7 @@ class ChatManager {
     }
 
     // Format assistant messages with enhanced markdown support
-    formatAssistantMessage(content) {
+    formatAssistantMessage(content, skipPanel = false) {
         // Generate unique ID for code blocks in this message
         const messageId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         let codeBlockIndex = 0;
@@ -487,11 +500,10 @@ class ChatManager {
             `;
         });
 
-        // Show code panel if code blocks were found
-        if (codeBlocks.length > 0) {
-            setTimeout(() => {
-                this.showCodePanel(codeBlocks);
-            }, 300);
+        // Store code blocks for later use (don't show panel on every format call)
+        if (!skipPanel && codeBlocks.length > 0 && !this._codePanelShown) {
+            this._codePanelShown = true;
+            this._currentCodeBlocks = codeBlocks;
         }
 
         // Headers (must be at line start)
@@ -531,11 +543,34 @@ class ChatManager {
         return content;
     }
 
+    // Show code panel from streaming content (early detection)
+    showCodePanelFromStreaming(content) {
+        // Extract code blocks early
+        const codeBlockPattern = /```(\w+)?\n([\s\S]*?)```/g;
+        const matches = [...content.matchAll(codeBlockPattern)];
+
+        if (matches.length > 0) {
+            const codeBlocks = matches.map((match, index) => {
+                const language = match[1] || 'lua';
+                const code = match[2].trim();
+                const blockId = `stream_code_${Date.now()}_${index}`;
+                return {
+                    id: blockId,
+                    language: language,
+                    code: code,
+                    escapedCode: this.escapeHtml(code)
+                };
+            });
+
+            this._codePanelShown = true;
+            this.showCodePanel(codeBlocks);
+        }
+    }
+
     // Show code panel with code blocks
     showCodePanel(codeBlocks) {
         const codePanel = document.getElementById('codePanel');
         const codePanelContent = document.getElementById('codePanelContent');
-        const sidebar = document.getElementById('sidebar');
         const mainContent = document.getElementById('mainContent');
 
         if (!codePanel || !codePanelContent) return;
@@ -562,10 +597,9 @@ class ChatManager {
             codePanelContent.innerHTML += blockHtml;
         });
 
-        // Show panel with animation
+        // Show panel with animation (no sidebar hiding)
         setTimeout(() => {
             codePanel.classList.add('active');
-            if (sidebar) sidebar.classList.add('hidden');
             if (mainContent) mainContent.classList.add('code-panel-active');
         }, 100);
     }
