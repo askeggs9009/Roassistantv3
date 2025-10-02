@@ -327,6 +327,17 @@ class ChatManager {
                 </div>
             `;
         }
+
+        // IMPORTANT: Store the assistant message in messages array for persistence
+        const chatId = this.getCurrentChatId();
+        this.messages.push({
+            type: 'assistant',
+            content: content,
+            timestamp: Date.now(),
+            chatId
+        });
+        this.saveChatHistory();
+
         // No scroll manipulation when AI finishes
     }
 
