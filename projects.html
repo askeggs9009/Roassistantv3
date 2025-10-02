@@ -293,6 +293,50 @@
         </div>
     </div>
 
+    <!-- Project Settings Modal -->
+    <div class="modal" id="projectSettingsModal" style="display: none;">
+        <div class="modal-overlay" onclick="closeProjectSettings()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Project Settings</h2>
+                <button class="modal-close" onclick="closeProjectSettings()">×</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Artifact Search Mode</label>
+                <p style="color: #8b949e; font-size: 0.85rem; margin-bottom: 1rem;">
+                    Controls how the AI references your artifacts and instructions when answering.
+                </p>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <label class="radio-option">
+                        <input type="radio" name="searchMode" value="full" id="searchModeFull">
+                        <div class="radio-label">
+                            <strong>Read Everything</strong>
+                            <span class="radio-description">AI reads all artifacts and instructions before answering (Highest quality, uses most tokens)</span>
+                        </div>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="searchMode" value="keyword" id="searchModeKeyword" checked>
+                        <div class="radio-label">
+                            <strong>Keyword Search Only</strong>
+                            <span class="radio-description">AI searches for relevant artifacts based on your question (Balanced quality and token usage)</span>
+                        </div>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="searchMode" value="none" id="searchModeNone">
+                        <div class="radio-label">
+                            <strong>No Search</strong>
+                            <span class="radio-description">AI won't reference artifacts (Lowest token usage, may miss context)</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeProjectSettings()">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveProjectSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Styles -->
     <style>
         .modal {
@@ -303,6 +347,54 @@
             right: 0;
             bottom: 0;
             z-index: 1000;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: rgba(22, 27, 34, 0.4);
+            border: 1px solid rgba(48, 54, 61, 0.6);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .radio-option:hover {
+            background: rgba(88, 166, 255, 0.05);
+            border-color: rgba(88, 166, 255, 0.3);
+        }
+
+        .radio-option input[type="radio"] {
+            margin-top: 0.25rem;
+            cursor: pointer;
+        }
+
+        .radio-label {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            flex: 1;
+        }
+
+        .radio-label strong {
+            color: #f0f6fc;
+            font-size: 0.95rem;
+        }
+
+        .radio-description {
+            color: #8b949e;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .radio-option input[type="radio"]:checked ~ .radio-label {
+            color: #58a6ff;
+        }
+
+        .radio-option input[type="radio"]:checked ~ .radio-label strong {
+            color: #58a6ff;
         }
 
         .modal-overlay {
@@ -967,9 +1059,36 @@
             reader.readAsDataURL(selectedImage);
         }
 
-        // Open project settings (stub)
+        // Open project settings
         function openProjectSettings() {
-            alert('Project settings coming soon!');
+            if (!currentProjectId) {
+                showNotification('Please select a project first');
+                return;
+            }
+
+            const project = projectManager.getProject(currentProjectId);
+            const searchMode = project.searchMode || 'keyword';
+
+            // Set radio button based on current setting
+            document.getElementById('searchModeFull').checked = searchMode === 'full';
+            document.getElementById('searchModeKeyword').checked = searchMode === 'keyword';
+            document.getElementById('searchModeNone').checked = searchMode === 'none';
+
+            document.getElementById('projectSettingsModal').style.display = 'block';
+        }
+
+        function closeProjectSettings() {
+            document.getElementById('projectSettingsModal').style.display = 'none';
+        }
+
+        function saveProjectSettings() {
+            if (!currentProjectId) return;
+
+            const searchMode = document.querySelector('input[name="searchMode"]:checked').value;
+
+            projectManager.updateProject(currentProjectId, { searchMode });
+            closeProjectSettings();
+            showNotification('Settings saved');
         }
 
         // Helper functions

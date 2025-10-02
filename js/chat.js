@@ -78,17 +78,58 @@ class ChatManager {
 
             // Add project context if available
             if (this.currentProject) {
+                const searchMode = this.currentProject.searchMode || 'keyword';
+                let contextMessage = `\n\n[Project: ${this.currentProject.name}`;
+
+                if (this.currentProject.description) {
+                    contextMessage += ` - ${this.currentProject.description}`;
+                }
+
+                // Add instructions based on search mode
+                if (searchMode !== 'none' && this.currentProject.instructions) {
+                    contextMessage += `\n\nProject Instructions:\n${this.currentProject.instructions}`;
+                }
+
+                // Add artifacts based on search mode
+                if (searchMode === 'full' && this.currentProject.artifacts && this.currentProject.artifacts.length > 0) {
+                    contextMessage += '\n\nProject Artifacts:';
+                    this.currentProject.artifacts.forEach(artifact => {
+                        contextMessage += `\n\n--- ${artifact.name} (${artifact.type}) ---\n`;
+                        if (artifact.type === 'text') {
+                            contextMessage += artifact.content;
+                        } else if (artifact.type === 'image') {
+                            contextMessage += '[Image artifact attached - refer to this when relevant]';
+                        }
+                    });
+                } else if (searchMode === 'keyword' && this.currentProject.artifacts && this.currentProject.artifacts.length > 0) {
+                    // Simple keyword matching
+                    const keywords = message.toLowerCase().split(/\s+/).filter(word => word.length > 3);
+                    const relevantArtifacts = this.currentProject.artifacts.filter(artifact => {
+                        const artifactText = (artifact.name + ' ' + (artifact.content || '')).toLowerCase();
+                        return keywords.some(keyword => artifactText.includes(keyword));
+                    });
+
+                    if (relevantArtifacts.length > 0) {
+                        contextMessage += '\n\nRelevant Artifacts:';
+                        relevantArtifacts.forEach(artifact => {
+                            contextMessage += `\n\n--- ${artifact.name} (${artifact.type}) ---\n`;
+                            if (artifact.type === 'text') {
+                                contextMessage += artifact.content;
+                            } else if (artifact.type === 'image') {
+                                contextMessage += '[Image artifact - may be relevant to your question]';
+                            }
+                        });
+                    }
+                }
+
+                contextMessage += ']';
+                requestBody.prompt = message + contextMessage;
+
                 requestBody.projectContext = {
                     name: this.currentProject.name,
                     description: this.currentProject.description,
-                    type: this.currentProject.type,
-                    context: this.currentProject.context,
-                    files: this.currentProject.files
+                    searchMode: searchMode
                 };
-                
-                // Add context message to prompt
-                const contextMessage = `\n\n[Project Context: ${this.currentProject.name} - ${this.currentProject.description}. This is a ${this.currentProject.type} project. ${this.currentProject.context}]`;
-                requestBody.prompt = message + contextMessage;
             }
 
             // Check if streaming is enabled
