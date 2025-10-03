@@ -1173,6 +1173,13 @@ class ChatManager {
         console.log('[ChatManager] ⚠️ CLEARING MESSAGES - clearCurrentChat() called');
         console.trace('[ChatManager] clearCurrentChat() stack trace');
 
+        // NEVER clear chat on project pages
+        const isProjectPage = window.location.pathname.includes('project-chat.html');
+        if (isProjectPage) {
+            console.log('[ChatManager] BLOCKED clearCurrentChat() on project page');
+            return;
+        }
+
         // Generate new chat ID to ensure complete privacy separation
         const newChatId = 'chat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         sessionStorage.setItem('currentChatId', newChatId);
@@ -1315,14 +1322,10 @@ class ChatManager {
         const messagesContainer = document.getElementById('messagesContainer');
         if (!messagesContainer) return;
 
-        // Check if we're on a project page with active messages
+        // NEVER clear and redisplay messages on project pages
         const isProjectPage = window.location.pathname.includes('project-chat.html');
-        const hasRealMessages = Array.from(messagesContainer.children).some(child =>
-            child.classList.contains('message')
-        );
-
-        if (isProjectPage && hasRealMessages) {
-            console.log('[ChatManager] Skipping message reload on project page with active messages');
+        if (isProjectPage) {
+            console.log('[ChatManager] BLOCKED displaySavedMessages() on project page');
             return;
         }
 
@@ -1403,6 +1406,13 @@ class ChatManager {
     startNewChat() {
         console.log('[ChatManager] ⚠️ CLEARING MESSAGES - startNewChat() called');
         console.trace('[ChatManager] startNewChat() stack trace');
+
+        // NEVER start new chat on project pages - project pages should maintain state
+        const isProjectPage = window.location.pathname.includes('project-chat.html');
+        if (isProjectPage) {
+            console.log('[ChatManager] BLOCKED startNewChat() on project page');
+            return;
+        }
 
         // Save current chat before starting new one
         if (this.messages.length > 0) {
@@ -1629,6 +1639,13 @@ class ChatManager {
 
     // Load a specific chat
     loadChat(chatId) {
+        // NEVER load different chat on project pages
+        const isProjectPage = window.location.pathname.includes('project-chat.html');
+        if (isProjectPage) {
+            console.log('[ChatManager] BLOCKED loadChat() on project page');
+            return;
+        }
+
         try {
             const userStorageKey = this.getUserStorageKey('allChatHistories');
             const allChats = JSON.parse(localStorage.getItem(userStorageKey) || '{}');
