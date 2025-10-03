@@ -969,6 +969,23 @@
                 updateModelSelector();
             }, 100);
 
+            // Add MutationObserver to debug what's clearing the messages
+            const messagesContainer = document.getElementById('messagesContainer');
+            if (messagesContainer) {
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        if (mutation.type === 'childList') {
+                            if (mutation.removedNodes.length > 0) {
+                                console.warn('[DEBUG] Nodes removed from messagesContainer:', mutation.removedNodes);
+                                console.trace('[DEBUG] Stack trace for removal:');
+                            }
+                        }
+                    });
+                });
+                observer.observe(messagesContainer, { childList: true, subtree: true });
+                console.log('[DEBUG] MutationObserver attached to messagesContainer');
+            }
+
             // Check subscription status and refresh periodically
             checkSubscriptionStatus();
             setInterval(checkSubscriptionStatus, 60000); // Refresh every minute

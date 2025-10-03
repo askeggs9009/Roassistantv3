@@ -1345,6 +1345,10 @@ class ChatManager {
             const userStorageKey = this.getUserStorageKey('allChatHistories');
             const chatId = this.getCurrentChatId();
             const allChats = JSON.parse(localStorage.getItem(userStorageKey) || '{}');
+
+            // Log for debugging
+            console.log('[ChatManager] Saving chat history - chatId:', chatId, 'messages count:', this.messages.length);
+
             allChats[chatId] = {
                 messages: this.messages,
                 title: document.getElementById('chatTitle')?.textContent || 'New Chat',
@@ -1739,7 +1743,12 @@ class ChatManager {
     displayMessage(type, content) {
         const messagesContainer = document.getElementById('messagesContainer');
         console.log('[ChatManager] displayMessage:', type, 'container found:', !!messagesContainer);
-        if (!messagesContainer) {
+
+        // Add debugging to track the container's contents
+        if (messagesContainer) {
+            console.log('[ChatManager] Messages container before adding - children count:', messagesContainer.children.length);
+            console.log('[ChatManager] Messages container innerHTML length:', messagesContainer.innerHTML.length);
+        } else {
             console.error('[ChatManager] messagesContainer not found!');
             return;
         }
