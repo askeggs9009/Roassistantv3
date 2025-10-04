@@ -50,12 +50,8 @@ class ChatManager {
                         // Save the updated chat with new title
                         this.saveChatHistory();
 
-                        // Skip sidebar update on project pages - it causes messages to disappear
-                        const isProjectPage = window.location.pathname.includes('project-chat.html');
-                        if (!isProjectPage) {
-                            // Update the sidebar display
-                            this.updateRecentChats();
-                        }
+                                        // Update the sidebar display
+                        this.updateRecentChats();
 
                         console.log('[ChatManager] Chat title updated to:', title);
                     }
@@ -1173,13 +1169,6 @@ class ChatManager {
         console.log('[ChatManager] ⚠️ CLEARING MESSAGES - clearCurrentChat() called');
         console.trace('[ChatManager] clearCurrentChat() stack trace');
 
-        // NEVER clear chat on project pages
-        const isProjectPage = window.location.pathname.includes('project-chat.html');
-        if (isProjectPage) {
-            console.log('[ChatManager] BLOCKED clearCurrentChat() on project page');
-            return;
-        }
-
         // Generate new chat ID to ensure complete privacy separation
         const newChatId = 'chat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         sessionStorage.setItem('currentChatId', newChatId);
@@ -1214,21 +1203,6 @@ class ChatManager {
 
     // Load chat history
     loadChatHistory() {
-        // Protect project chat pages from having their messages cleared
-        const isProjectPage = window.location.pathname.includes('project-chat.html');
-
-        // Check for existing messages
-        const messagesContainer = document.getElementById('messagesContainer');
-        const hasRealMessages = messagesContainer && Array.from(messagesContainer.children).some(child =>
-            child.classList.contains('message')
-        );
-
-        if (isProjectPage && (this.messages.length > 0 || hasRealMessages)) {
-            console.log('[ChatManager] Skipping loadChatHistory on project page with existing messages');
-            // Still load recent chats for sidebar but don't touch the main chat
-            this.loadRecentChats();
-            return;
-        }
 
         // Reset sidebar title when loading chats
         const sidebarTitle = document.querySelector('.sidebar-header h3');
@@ -1322,13 +1296,6 @@ class ChatManager {
         const messagesContainer = document.getElementById('messagesContainer');
         if (!messagesContainer) return;
 
-        // NEVER clear and redisplay messages on project pages
-        const isProjectPage = window.location.pathname.includes('project-chat.html');
-        if (isProjectPage) {
-            console.log('[ChatManager] BLOCKED displaySavedMessages() on project page');
-            return;
-        }
-
         console.log('[ChatManager] Clearing messagesContainer innerHTML in displaySavedMessages');
         messagesContainer.innerHTML = '';
         this.messages.forEach(msg => {
@@ -1361,12 +1328,8 @@ class ChatManager {
             localStorage.setItem(userStorageKey, JSON.stringify(allChats));
             localStorage.setItem('chatHistory', JSON.stringify(this.messages));
 
-            // SKIP updating recent chats display on project pages - this was causing messages to disappear
-            const isProjectPage = window.location.pathname.includes('project-chat.html');
-            if (!isProjectPage) {
-                // Update recent chats display only for normal chat
-                this.updateRecentChats();
-            }
+            // Update recent chats display
+            this.updateRecentChats();
         } catch (error) {
             console.error('Error saving chat history:', error);
         }
@@ -1406,13 +1369,6 @@ class ChatManager {
     startNewChat() {
         console.log('[ChatManager] ⚠️ CLEARING MESSAGES - startNewChat() called');
         console.trace('[ChatManager] startNewChat() stack trace');
-
-        // NEVER start new chat on project pages - project pages should maintain state
-        const isProjectPage = window.location.pathname.includes('project-chat.html');
-        if (isProjectPage) {
-            console.log('[ChatManager] BLOCKED startNewChat() on project page');
-            return;
-        }
 
         // Save current chat before starting new one
         if (this.messages.length > 0) {
@@ -1596,13 +1552,6 @@ class ChatManager {
         const chatHistoryContainer = document.getElementById('chatHistory');
         if (!chatHistoryContainer) return;
 
-        // NEVER update sidebar on project pages - it was interfering with messages
-        const isProjectPage = window.location.pathname.includes('project-chat.html');
-        if (isProjectPage) {
-            console.log('[ChatManager] Skipping sidebar update on project page');
-            return;
-        }
-
         // Sort chats by lastUpdated timestamp
         const sortedChats = Object.entries(allChats)
             .sort(([, a], [, b]) => b.lastUpdated - a.lastUpdated)
@@ -1639,13 +1588,6 @@ class ChatManager {
 
     // Load a specific chat
     loadChat(chatId) {
-        // NEVER load different chat on project pages
-        const isProjectPage = window.location.pathname.includes('project-chat.html');
-        if (isProjectPage) {
-            console.log('[ChatManager] BLOCKED loadChat() on project page');
-            return;
-        }
-
         try {
             const userStorageKey = this.getUserStorageKey('allChatHistories');
             const allChats = JSON.parse(localStorage.getItem(userStorageKey) || '{}');

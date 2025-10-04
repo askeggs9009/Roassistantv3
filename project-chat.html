@@ -436,7 +436,12 @@
         <!-- Chat Area -->
         <div class="chat-area">
             <div class="messages-container" id="messagesContainer">
-                <!-- Messages will appear here -->
+                <!-- Welcome Screen -->
+                <div class="welcome-screen stagger-animation" id="welcomeScreen">
+                    <div class="welcome-icon"><i class="fas fa-rocket"></i></div>
+                    <h1 class="welcome-title" data-text="Welcome to Project Chat">Welcome to Project Chat</h1>
+                    <p class="welcome-subtitle">Your project-focused AI assistant</p>
+                </div>
             </div>
 
             <!-- Input Area -->
@@ -955,40 +960,16 @@
         }
 
 
-        // Initialize app when DOM and all scripts are loaded
-        window.addEventListener('load', function() {
-            console.log('All scripts loaded, initializing project chat...');
+        // Simple initialization - DO NOT call any chat clearing functions
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('Project chat DOM loaded');
             loadProjectFromUrl();
 
-            // Ensure project is set in chatManager after all scripts load
-            setTimeout(() => {
-                if (window.chatManager && currentProject) {
-                    window.chatManager.currentProject = currentProject;
-                    console.log('Project synced to ChatManager:', currentProject.name);
-                }
-                updateModelSelector();
-            }, 100);
-
-            // Add MutationObserver to debug what's clearing the messages
-            const messagesContainer = document.getElementById('messagesContainer');
-            if (messagesContainer) {
-                const observer = new MutationObserver((mutations) => {
-                    mutations.forEach((mutation) => {
-                        if (mutation.type === 'childList') {
-                            if (mutation.removedNodes.length > 0) {
-                                console.warn('[DEBUG] Nodes removed from messagesContainer:', mutation.removedNodes);
-                                console.trace('[DEBUG] Stack trace for removal:');
-                            }
-                        }
-                    });
-                });
-                observer.observe(messagesContainer, { childList: true, subtree: true });
-                console.log('[DEBUG] MutationObserver attached to messagesContainer');
+            // Just set the project context, don't reload anything
+            if (window.chatManager && currentProject) {
+                window.chatManager.currentProject = currentProject;
+                console.log('Project set:', currentProject.name);
             }
-
-            // Check subscription status and refresh periodically
-            checkSubscriptionStatus();
-            setInterval(checkSubscriptionStatus, 60000); // Refresh every minute
         });
 
         // Check for project parameter in URL
