@@ -30,7 +30,7 @@ class AuthManager {
 
                 // Only reload chat if user state changed and not on project page
                 const wasLoggedIn = this.isLoggedIn;
-                const isProjectPage = window.location.pathname.includes('project-chat.html');
+                const isProjectPage = window.PROJECT_CHAT_MODE === true;
                 if (!wasLoggedIn && !isProjectPage) {
                     console.log('[AuthManager] User state changed - clearing chat and loading user chats');
                     if (window.chatManager) {
@@ -38,7 +38,7 @@ class AuthManager {
                         window.chatManager.loadChatHistory();
                     }
                 } else if (isProjectPage) {
-                    console.log('[AuthManager] On project page - skipping chat clear');
+                    console.log('[AuthManager] PROJECT_CHAT_MODE detected - skipping chat clear');
                 }
 
                 // Re-read user data after refresh
@@ -90,7 +90,7 @@ class AuthManager {
 
             // Only reload chat if user state changed and not on project page
             const wasLoggedIn = this.isLoggedIn;
-            const isProjectPage = window.location.pathname.includes('project-chat.html');
+            const isProjectPage = window.PROJECT_CHAT_MODE === true;
             if (wasLoggedIn && !isProjectPage) {
                 console.log('[AuthManager] User state changed - clearing chat and loading guest chats');
                 if (window.chatManager) {
@@ -98,7 +98,7 @@ class AuthManager {
                     window.chatManager.loadChatHistory();
                 }
             } else if (isProjectPage) {
-                console.log('[AuthManager] On project page - skipping chat clear');
+                console.log('[AuthManager] PROJECT_CHAT_MODE detected - skipping chat clear');
             }
 
             this.showGuestUser();

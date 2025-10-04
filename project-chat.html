@@ -4,7 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Chat - RoAssistant</title>
-    <link rel="icon" type="image/png" href="roassistant-logo.png">    <link rel="stylesheet" href="styles/liquid-glass.css">
+    <link rel="icon" type="image/png" href="roassistant-logo.png">
+
+    <!-- Set PROJECT_CHAT_MODE flag immediately for robust detection -->
+    <script>
+        window.PROJECT_CHAT_MODE = true;
+        console.log('[PROJECT-CHAT] Setting PROJECT_CHAT_MODE flag to true');
+    </script>
+
+    <link rel="stylesheet" href="styles/liquid-glass.css">
     <link rel="stylesheet" href="styles/dot-grid.css">
 
     <link rel="stylesheet" href="styles/main.css">
@@ -1155,12 +1163,12 @@
         }
     </script>
 
-    <!-- Load JavaScript modules -->
-    <script src="js/auth.js"></script>
-    <script src="js/chat.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/scripts.js"></script>
-    <script src="js/app.js"></script>
+    <!-- Load JavaScript modules with cache busting -->
+    <script src="js/auth.js?v=20250104-fix"></script>
+    <script src="js/chat.js?v=20250104-fix"></script>
+    <script src="js/ui.js?v=20250104-fix"></script>
+    <script src="js/scripts.js?v=20250104-fix"></script>
+    <script src="js/app.js?v=20250104-fix"></script>
 
     <!-- Initialize the application -->
     <script>

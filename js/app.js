@@ -24,11 +24,11 @@ class App {
 
             // Only load chat history on non-project pages
             // Project pages maintain their own chat state
-            const isProjectPage = window.location.pathname.includes('project-chat.html');
+            const isProjectPage = window.PROJECT_CHAT_MODE === true;
             if (window.chatManager && !isProjectPage) {
                 window.chatManager.loadChatHistory();
             } else if (isProjectPage) {
-                console.log('[App] On project page - skipping loadChatHistory()');
+                console.log('[App] PROJECT_CHAT_MODE detected - skipping loadChatHistory()');
             }
             if (window.uiManager) {
                 window.uiManager.setupEventListeners();

@@ -9,6 +9,39 @@ class ChatManager {
         this.API_BASE_URL = 'https://www.roassistant.me';
         this.currentProject = null;
         this.projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
+
+        // Project chat mode detection - multiple methods for robustness
+        this.projectChatMode = this.detectProjectChatMode();
+        console.log('[ChatManager] Project chat mode:', this.projectChatMode);
+    }
+
+    // Detect if we're on a project chat page using multiple methods
+    detectProjectChatMode() {
+        // Method 1: Check pathname
+        const pathIncludesProject = window.location.pathname.includes('project-chat');
+
+        // Method 2: Check URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasProjectParam = urlParams.has('project');
+
+        // Method 3: Check for explicit flag set by page
+        const explicitFlag = window.PROJECT_CHAT_MODE === true;
+
+        // Method 4: Check document title
+        const titleIncludesProject = document.title && document.title.toLowerCase().includes('project');
+
+        const isProjectMode = pathIncludesProject || hasProjectParam || explicitFlag || titleIncludesProject;
+
+        console.log('[ChatManager] Project detection:', {
+            pathname: window.location.pathname,
+            pathIncludesProject,
+            hasProjectParam,
+            explicitFlag,
+            titleIncludesProject,
+            result: isProjectMode
+        });
+
+        return isProjectMode;
     }
 
     // Send message functionality
@@ -1169,10 +1202,9 @@ class ChatManager {
         console.log('[ChatManager] ⚠️ CLEARING MESSAGES - clearCurrentChat() called');
         console.trace('[ChatManager] clearCurrentChat() stack trace');
 
-        // Don't clear on project pages
-        const isProjectPage = window.location.pathname.includes('project-chat.html');
-        if (isProjectPage) {
-            console.log('[ChatManager] On project page - NOT clearing chat');
+        // Don't clear on project pages - use the robust detection
+        if (this.projectChatMode) {
+            console.log('[ChatManager] 🛡️ PROJECT MODE - NOT clearing chat (clearCurrentChat blocked)');
             return;
         }
 
@@ -1210,10 +1242,9 @@ class ChatManager {
 
     // Load chat history
     loadChatHistory() {
-        // Don't load chat history on project pages
-        const isProjectPage = window.location.pathname.includes('project-chat.html');
-        if (isProjectPage) {
-            console.log('[ChatManager] On project page - NOT loading chat history');
+        // Don't load chat history on project pages - use the robust detection
+        if (this.projectChatMode) {
+            console.log('[ChatManager] 🛡️ PROJECT MODE - NOT loading chat history (loadChatHistory blocked)');
             return;
         }
 
@@ -1309,10 +1340,9 @@ class ChatManager {
         const messagesContainer = document.getElementById('messagesContainer');
         if (!messagesContainer) return;
 
-        // Check if we're on project page - if so, don't clear existing messages
-        const isProjectPage = window.location.pathname.includes('project-chat.html');
-        if (isProjectPage) {
-            console.log('[ChatManager] On project page - NOT clearing messages');
+        // Check if we're on project page - use the robust detection
+        if (this.projectChatMode) {
+            console.log('[ChatManager] 🛡️ PROJECT MODE - NOT clearing messages (displaySavedMessages blocked)');
             return; // Don't do anything on project pages
         }
 
@@ -1390,10 +1420,9 @@ class ChatManager {
         console.log('[ChatManager] ⚠️ CLEARING MESSAGES - startNewChat() called');
         console.trace('[ChatManager] startNewChat() stack trace');
 
-        // Don't start new chat on project pages
-        const isProjectPage = window.location.pathname.includes('project-chat.html');
-        if (isProjectPage) {
-            console.log('[ChatManager] On project page - NOT starting new chat');
+        // Don't start new chat on project pages - use the robust detection
+        if (this.projectChatMode) {
+            console.log('[ChatManager] 🛡️ PROJECT MODE - NOT starting new chat (startNewChat blocked)');
             return;
         }
 
@@ -1615,10 +1644,9 @@ class ChatManager {
 
     // Load a specific chat
     loadChat(chatId) {
-        // Don't load different chats on project pages
-        const isProjectPage = window.location.pathname.includes('project-chat.html');
-        if (isProjectPage) {
-            console.log('[ChatManager] On project page - NOT loading different chat');
+        // Don't load different chats on project pages - use the robust detection
+        if (this.projectChatMode) {
+            console.log('[ChatManager] 🛡️ PROJECT MODE - NOT loading different chat (loadChat blocked)');
             return;
         }
 
