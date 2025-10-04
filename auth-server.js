@@ -266,7 +266,7 @@ const SUBSCRIPTION_PLANS = {
             models: ['claude-4-sonnet'],  // Free: Only RoCode 3, limited
             max_file_size: 1048576, // 1MB
             scripts_storage: 5,
-            projects: 0,
+            projects: 1,  // Free: 1 project
             support: 'community'
         },
         features: ['Basic AI assistant', 'GPT-4.1 access', 'Limited daily messages', 'Community support']
@@ -278,7 +278,7 @@ const SUBSCRIPTION_PLANS = {
             models: ['claude-4-sonnet', 'claude-4-opus'],
             max_file_size: 10485760, // 10MB
             scripts_storage: -1, // unlimited
-            projects: 5,
+            projects: 5,  // Pro: 5 projects
             support: 'email',
             daily_tokens: 150000  // ~150k tokens/day = $3-4.50 cost
         },
@@ -295,7 +295,7 @@ const SUBSCRIPTION_PLANS = {
             models: ['claude-4-sonnet', 'claude-4-opus', 'rocode-studio'],
             max_file_size: 52428800, // 50MB
             scripts_storage: -1, // unlimited
-            projects: -1, // unlimited
+            projects: 20,  // Enterprise: 20 projects
             support: 'priority',
             daily_tokens: 600000,  // ~600k tokens/day = $12-18 cost
             daily_studio: 50  // RoCode Studio: 50 messages/day = $10-15 cost
