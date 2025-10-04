@@ -79,8 +79,12 @@ class ChatManager {
             // Add project context if available
             if (this.currentProject) {
                 console.log('[ChatManager] Current project:', this.currentProject);
+                console.log('[ChatManager] Project has artifacts:', this.currentProject.artifacts?.length || 0);
+
+                // Default to 'keyword' mode if not set
                 const searchMode = this.currentProject.searchMode || 'keyword';
                 console.log('[ChatManager] Search mode:', searchMode);
+
                 let contextMessage = `\n\n[Project: ${this.currentProject.name}`;
 
                 if (this.currentProject.description) {
@@ -94,29 +98,33 @@ class ChatManager {
 
                 // Add artifacts based on search mode
                 if (searchMode === 'full' && this.currentProject.artifacts && this.currentProject.artifacts.length > 0) {
-                    console.log('[ChatManager] Including ALL artifacts:', this.currentProject.artifacts.length);
-                    contextMessage += '\n\nProject Artifacts:';
+                    console.log('[ChatManager] Including ALL artifacts (full mode):', this.currentProject.artifacts.length);
+                    contextMessage += '\n\nProject Artifacts (All):';
                     this.currentProject.artifacts.forEach(artifact => {
                         console.log('[ChatManager] Adding artifact:', artifact.name, 'Type:', artifact.type, 'Content length:', artifact.content ? artifact.content.length : 0);
                         contextMessage += `\n\n--- ${artifact.name} (${artifact.type}) ---\n`;
                         if (artifact.type === 'text') {
-                            contextMessage += artifact.content;
+                            contextMessage += artifact.content || '[Empty content]';
                         } else if (artifact.type === 'image') {
                             contextMessage += '[Image artifact attached - refer to this when relevant]';
                         }
                     });
                 } else if (searchMode === 'keyword' && this.currentProject.artifacts && this.currentProject.artifacts.length > 0) {
-                    // Simple keyword matching
+                    // Keyword matching with more inclusive artifact detection
                     const messageLower = message.toLowerCase();
-                    const keywords = messageLower.split(/\s+/).filter(word => word.length > 3);
+                    const keywords = messageLower.split(/\s+/).filter(word => word.length > 2);  // Reduced from 3 to 2
                     console.log('[ChatManager] Keywords for search:', keywords);
 
                     // Check if user is asking about artifacts in general
                     const askingAboutArtifacts = messageLower.includes('artifact') ||
                                                 messageLower.includes('script') ||
+                                                messageLower.includes('code') ||
                                                 messageLower.includes('file') ||
                                                 messageLower.includes('read my') ||
-                                                messageLower.includes('show me');
+                                                messageLower.includes('show me') ||
+                                                messageLower.includes('look at') ||
+                                                messageLower.includes('analyze') ||
+                                                messageLower.includes('review');
 
                     let relevantArtifacts;
                     if (askingAboutArtifacts && (messageLower.includes('all') || messageLower.includes('every'))) {
@@ -136,14 +144,19 @@ class ChatManager {
                     if (relevantArtifacts.length > 0) {
                         contextMessage += '\n\nRelevant Artifacts:';
                         relevantArtifacts.forEach(artifact => {
-                            console.log('[ChatManager] Adding relevant artifact:', artifact.name, 'Content length:', artifact.content ? artifact.content.length : 0);
+                            console.log('[ChatManager] Adding relevant artifact:', artifact.name, 'Type:', artifact.type, 'Content length:', artifact.content ? artifact.content.length : 0);
                             contextMessage += `\n\n--- ${artifact.name} (${artifact.type}) ---\n`;
                             if (artifact.type === 'text') {
-                                contextMessage += artifact.content;
+                                contextMessage += artifact.content || '[Empty content]';
                             } else if (artifact.type === 'image') {
                                 contextMessage += '[Image artifact - may be relevant to your question]';
                             }
                         });
+                    } else if (this.currentProject.artifacts.length > 0) {
+                        // If no artifacts matched but project has artifacts, include a hint
+                        console.log('[ChatManager] No relevant artifacts found for keywords, but project has', this.currentProject.artifacts.length, 'artifacts available');
+                        const artifactNames = this.currentProject.artifacts.map(a => a.name).join(', ');
+                        contextMessage += `\n\n[Available project artifacts: ${artifactNames}. Ask about specific artifacts to include them.]`;
                     }
                 }
 

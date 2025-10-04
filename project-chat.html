@@ -264,28 +264,72 @@
             const projectId = urlParams.get('project');
 
             if (projectId) {
-                // Load project from localStorage
+                // Load project from localStorage with full artifact data
                 const projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
                 currentProject = projects.find(p => p.id === projectId);
 
                 if (currentProject) {
+                    // Ensure artifacts array exists
+                    if (!currentProject.artifacts) {
+                        currentProject.artifacts = [];
+                    }
+
+                    // Log project details for debugging
+                    console.log('Project loaded:', currentProject.name);
+                    console.log('Project artifacts:', currentProject.artifacts?.length || 0);
+                    console.log('Project instructions:', currentProject.instructions?.substring(0, 100));
+
                     // Set project in chat manager
                     if (window.chatManager) {
                         window.chatManager.currentProject = currentProject;
-                        console.log('Project loaded in ChatManager:', currentProject.name);
+                        console.log('Project set in ChatManager with', currentProject.artifacts?.length || 0, 'artifacts');
                     }
 
-                    // Update UI to show project name
+                    // Update UI to show project name and artifact count
                     const chatTitle = document.getElementById('chatTitle');
                     if (chatTitle) {
-                        chatTitle.textContent = `Project: ${currentProject.name}`;
+                        const artifactCount = currentProject.artifacts?.length || 0;
+                        chatTitle.innerHTML = `Project: ${currentProject.name} ${artifactCount > 0 ? `<span style="color: #58a6ff; font-size: 0.85rem; margin-left: 0.5rem;">(${artifactCount} artifact${artifactCount !== 1 ? 's' : ''})</span>` : ''}`;
                     }
+
+                    // Display artifacts in welcome screen if available
+                    displayProjectArtifacts();
                 } else {
                     console.log('Project not found:', projectId);
                     window.location.href = 'projects.html';
                 }
             } else {
                 window.location.href = 'projects.html';
+            }
+        }
+
+        // Display project artifacts in the welcome screen
+        function displayProjectArtifacts() {
+            if (!currentProject || !currentProject.artifacts || currentProject.artifacts.length === 0) return;
+
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            if (welcomeScreen) {
+                const artifactsList = currentProject.artifacts.map(artifact => {
+                    const icon = artifact.type === 'image' ? '🖼️' : '📝';
+                    return `<li>${icon} ${artifact.name}</li>`;
+                }).join('');
+
+                const artifactsSection = `
+                    <div class="project-files-info" style="margin-top: 1.5rem;">
+                        <strong>📦 Available Artifacts:</strong>
+                        <ul style="margin-top: 0.5rem; list-style: none; padding-left: 0;">
+                            ${artifactsList}
+                        </ul>
+                        <p style="font-size: 0.85rem; color: #8b949e; margin-top: 0.5rem;">
+                            These artifacts are automatically included when relevant to your questions.
+                        </p>
+                    </div>
+                `;
+
+                const welcomeContent = welcomeScreen.querySelector('.welcome-subtitle');
+                if (welcomeContent) {
+                    welcomeContent.insertAdjacentHTML('afterend', artifactsSection);
+                }
             }
         }
 
@@ -370,12 +414,33 @@
             loadProjectFromUrl();
 
             // Set project in chat manager after it's initialized
-            setTimeout(() => {
+            // Use a longer delay and multiple attempts to ensure ChatManager is ready
+            let attempts = 0;
+            const maxAttempts = 10;
+
+            const setProjectInChatManager = () => {
                 if (window.chatManager && currentProject) {
+                    // Ensure currentProject has all its data including artifacts
                     window.chatManager.currentProject = currentProject;
-                    console.log('Project set:', currentProject.name);
+                    console.log('Project set in ChatManager:', currentProject.name);
+                    console.log('With artifacts:', currentProject.artifacts?.length || 0);
+
+                    // Force update the welcome screen with project info
+                    if (window.chatManager.updateWelcomeScreen) {
+                        window.chatManager.updateWelcomeScreen();
+                    }
+
+                    // Display artifacts if not already displayed
+                    displayProjectArtifacts();
+                } else if (attempts < maxAttempts) {
+                    attempts++;
+                    setTimeout(setProjectInChatManager, 200);
+                } else {
+                    console.error('Failed to set project in ChatManager after', maxAttempts, 'attempts');
                 }
-            }, 100);
+            };
+
+            setTimeout(setProjectInChatManager, 100);
         });
     </script>
 
