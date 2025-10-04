@@ -165,6 +165,23 @@
         </div>
     </div>
 
+    <!-- Code Panel (for displaying code blocks) -->
+    <div class="code-panel-overlay" id="codePanel">
+        <div class="code-panel-resize-handle" id="codePanelResizeHandle"></div>
+        <div class="code-panel-header">
+            <div class="code-panel-title">
+                <i class="fas fa-code"></i>
+                <span>Code Output</span>
+            </div>
+            <button class="code-panel-close" onclick="closeCodePanel()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="code-panel-content" id="codePanelContent">
+            <!-- Code blocks will be displayed here -->
+        </div>
+    </div>
+
     <!-- Main Content -->
     <div class="main-content" id="mainContent">
         <!-- Header -->
@@ -489,6 +506,42 @@
 
     <!-- Initialize the application -->
     <script>
+        // Ensure openCodePanel is available globally for project chat
+        if (!window.openCodePanel) {
+            window.openCodePanel = function(blockId) {
+                console.log('[Project Chat] openCodePanel called for:', blockId);
+                if (window.chatManager && window.chatManager.openCodePanel) {
+                    window.chatManager.openCodePanel(blockId);
+                } else {
+                    console.error('[Project Chat] ChatManager not ready, retrying...');
+                    // Retry after a short delay
+                    setTimeout(() => {
+                        if (window.chatManager && window.chatManager.openCodePanel) {
+                            window.chatManager.openCodePanel(blockId);
+                        } else {
+                            console.error('[Project Chat] ChatManager still not available');
+                        }
+                    }, 500);
+                }
+            };
+        }
+
+        // Close code panel function
+        function closeCodePanel() {
+            const codePanel = document.getElementById('codePanel');
+            const mainContent = document.getElementById('mainContent');
+
+            if (codePanel) {
+                codePanel.classList.remove('active');
+            }
+            if (mainContent) {
+                mainContent.classList.remove('code-panel-active');
+            }
+        }
+
+        // Make closeCodePanel globally available
+        window.closeCodePanel = closeCodePanel;
+
         // Initialize app when DOM is ready
         document.addEventListener('DOMContentLoaded', function() {
             // Add click outside listener for model dropdown
@@ -502,6 +555,50 @@
                     }
                 }
             });
+
+            // Code panel resize functionality
+            const codePanel = document.getElementById('codePanel');
+            const resizeHandle = document.getElementById('codePanelResizeHandle');
+
+            if (codePanel && resizeHandle) {
+                let isResizing = false;
+                let startX = 0;
+                let startWidth = 0;
+
+                resizeHandle.addEventListener('mousedown', (e) => {
+                    isResizing = true;
+                    startX = e.clientX;
+                    startWidth = codePanel.offsetWidth;
+                    resizeHandle.classList.add('resizing');
+                    document.body.style.cursor = 'ew-resize';
+                    document.body.style.userSelect = 'none';
+                    e.preventDefault();
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (!isResizing) return;
+
+                    const deltaX = startX - e.clientX;
+                    const newWidth = startWidth + deltaX;
+
+                    // Min width: 300px, Max width: 80% of window
+                    const minWidth = 300;
+                    const maxWidth = window.innerWidth * 0.8;
+
+                    if (newWidth >= minWidth && newWidth <= maxWidth) {
+                        codePanel.style.width = `${newWidth}px`;
+                    }
+                });
+
+                document.addEventListener('mouseup', () => {
+                    if (isResizing) {
+                        isResizing = false;
+                        resizeHandle.classList.remove('resizing');
+                        document.body.style.cursor = '';
+                        document.body.style.userSelect = '';
+                    }
+                });
+            }
         });
     </script>
 </body>
