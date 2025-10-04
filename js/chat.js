@@ -13,6 +13,74 @@ class ChatManager {
         // Project chat mode detection - multiple methods for robustness
         this.projectChatMode = this.detectProjectChatMode();
         console.log('[ChatManager] Project chat mode:', this.projectChatMode);
+
+        // If in project mode, set up aggressive message protection
+        if (this.projectChatMode) {
+            this.setupMessageProtection();
+        }
+    }
+
+    // Set up comprehensive message protection for project chat
+    setupMessageProtection() {
+        console.log('[ChatManager] 🛡️ Setting up aggressive message protection for PROJECT MODE');
+
+        // Store a backup of messages whenever they're added
+        this.messageBackup = [];
+
+        // Wait for DOM to be ready
+        setTimeout(() => {
+            const messagesContainer = document.getElementById('messagesContainer');
+            if (!messagesContainer) {
+                console.error('[ChatManager] messagesContainer not found for protection setup');
+                return;
+            }
+
+            // Method 1: Override innerHTML setter to prevent clearing
+            const originalDescriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
+            Object.defineProperty(messagesContainer, 'innerHTML', {
+                set: function(value) {
+                    // If trying to set empty or just whitespace, block it
+                    if (value === '' || (typeof value === 'string' && value.trim() === '')) {
+                        console.log('[ChatManager] 🛡️ BLOCKED attempt to clear messagesContainer via innerHTML');
+                        console.trace('Blocked clearing attempt stack trace');
+                        return; // Don't allow clearing
+                    }
+                    // Otherwise allow the set
+                    console.log('[ChatManager] 🛡️ Allowing innerHTML set with content length:', value.length);
+                    originalDescriptor.set.call(this, value);
+                },
+                get: originalDescriptor.get,
+                configurable: true
+            });
+
+            // Method 2: MutationObserver to detect and restore cleared messages
+            const observer = new MutationObserver((mutations) => {
+                for (let mutation of mutations) {
+                    // Check if all children were removed
+                    if (mutation.type === 'childList' &&
+                        mutation.removedNodes.length > 0 &&
+                        messagesContainer.children.length === 0) {
+
+                        console.log('[ChatManager] 🛡️ DETECTED message container was cleared! Attempting restore...');
+
+                        // Restore from backup if available
+                        if (this.messageBackup && this.messageBackup.length > 0) {
+                            console.log('[ChatManager] 🛡️ Restoring', this.messageBackup.length, 'messages from backup');
+                            this.messageBackup.forEach(msg => {
+                                this.displayMessage(msg.type, msg.content);
+                            });
+                        }
+                    }
+                }
+            });
+
+            observer.observe(messagesContainer, {
+                childList: true,
+                subtree: true
+            });
+
+            console.log('[ChatManager] 🛡️ Message protection fully activated');
+        }, 100);
     }
 
     // Detect if we're on a project chat page using multiple methods
@@ -602,7 +670,15 @@ class ChatManager {
 
         // Store message with chat ID
         const chatId = this.getCurrentChatId();
-        this.messages.push({ type, content, timestamp: Date.now(), chatId });
+        const message = { type, content, timestamp: Date.now(), chatId };
+        this.messages.push(message);
+
+        // If in project mode, also backup the message for restoration
+        if (this.projectChatMode && this.messageBackup) {
+            this.messageBackup.push({ type, content });
+            console.log('[ChatManager] 🛡️ Message backed up. Total backup:', this.messageBackup.length);
+        }
+
         this.saveChatHistory();
     }
 
