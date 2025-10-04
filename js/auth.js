@@ -28,17 +28,14 @@ class AuthManager {
                 // Fetch latest user data including subscription status
                 await this.refreshUserData();
 
-                // Only reload chat if user state changed and not on project page
+                // Only reload chat if user state changed
                 const wasLoggedIn = this.isLoggedIn;
-                const isProjectPage = window.PROJECT_CHAT_MODE === true;
-                if (!wasLoggedIn && !isProjectPage) {
+                if (!wasLoggedIn) {
                     console.log('[AuthManager] User state changed - clearing chat and loading user chats');
                     if (window.chatManager) {
                         window.chatManager.clearCurrentChat();
                         window.chatManager.loadChatHistory();
                     }
-                } else if (isProjectPage) {
-                    console.log('[AuthManager] PROJECT_CHAT_MODE detected - skipping chat clear');
                 }
 
                 // Re-read user data after refresh
@@ -88,17 +85,14 @@ class AuthManager {
                 return;
             }
 
-            // Only reload chat if user state changed and not on project page
+            // Only reload chat if user state changed
             const wasLoggedIn = this.isLoggedIn;
-            const isProjectPage = window.PROJECT_CHAT_MODE === true;
-            if (wasLoggedIn && !isProjectPage) {
+            if (wasLoggedIn) {
                 console.log('[AuthManager] User state changed - clearing chat and loading guest chats');
                 if (window.chatManager) {
                     window.chatManager.clearCurrentChat();
                     window.chatManager.loadChatHistory();
                 }
-            } else if (isProjectPage) {
-                console.log('[AuthManager] PROJECT_CHAT_MODE detected - skipping chat clear');
             }
 
             this.showGuestUser();

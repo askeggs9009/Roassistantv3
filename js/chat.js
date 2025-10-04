@@ -9,107 +9,6 @@ class ChatManager {
         this.API_BASE_URL = 'https://www.roassistant.me';
         this.currentProject = null;
         this.projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
-
-        // Project chat mode detection - multiple methods for robustness
-        this.projectChatMode = this.detectProjectChatMode();
-        console.log('[ChatManager] Project chat mode:', this.projectChatMode);
-
-        // If in project mode, set up aggressive message protection
-        if (this.projectChatMode) {
-            this.setupMessageProtection();
-        }
-    }
-
-    // Set up comprehensive message protection for project chat
-    setupMessageProtection() {
-        console.log('[ChatManager] 🛡️ Setting up aggressive message protection for PROJECT MODE');
-
-        // Store a backup of messages whenever they're added
-        this.messageBackup = [];
-
-        // Wait for DOM to be ready
-        setTimeout(() => {
-            const messagesContainer = document.getElementById('messagesContainer');
-            if (!messagesContainer) {
-                console.error('[ChatManager] messagesContainer not found for protection setup');
-                return;
-            }
-
-            // Method 1: Override innerHTML setter to prevent clearing
-            const originalDescriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
-            Object.defineProperty(messagesContainer, 'innerHTML', {
-                set: function(value) {
-                    // If trying to set empty or just whitespace, block it
-                    if (value === '' || (typeof value === 'string' && value.trim() === '')) {
-                        console.log('[ChatManager] 🛡️ BLOCKED attempt to clear messagesContainer via innerHTML');
-                        console.trace('Blocked clearing attempt stack trace');
-                        return; // Don't allow clearing
-                    }
-                    // Otherwise allow the set
-                    console.log('[ChatManager] 🛡️ Allowing innerHTML set with content length:', value.length);
-                    originalDescriptor.set.call(this, value);
-                },
-                get: originalDescriptor.get,
-                configurable: true
-            });
-
-            // Method 2: MutationObserver to detect and restore cleared messages
-            const observer = new MutationObserver((mutations) => {
-                for (let mutation of mutations) {
-                    // Check if all children were removed
-                    if (mutation.type === 'childList' &&
-                        mutation.removedNodes.length > 0 &&
-                        messagesContainer.children.length === 0) {
-
-                        console.log('[ChatManager] 🛡️ DETECTED message container was cleared! Attempting restore...');
-
-                        // Restore from backup if available
-                        if (this.messageBackup && this.messageBackup.length > 0) {
-                            console.log('[ChatManager] 🛡️ Restoring', this.messageBackup.length, 'messages from backup');
-                            this.messageBackup.forEach(msg => {
-                                this.displayMessage(msg.type, msg.content);
-                            });
-                        }
-                    }
-                }
-            });
-
-            observer.observe(messagesContainer, {
-                childList: true,
-                subtree: true
-            });
-
-            console.log('[ChatManager] 🛡️ Message protection fully activated');
-        }, 100);
-    }
-
-    // Detect if we're on a project chat page using multiple methods
-    detectProjectChatMode() {
-        // Method 1: Check pathname
-        const pathIncludesProject = window.location.pathname.includes('project-chat');
-
-        // Method 2: Check URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const hasProjectParam = urlParams.has('project');
-
-        // Method 3: Check for explicit flag set by page
-        const explicitFlag = window.PROJECT_CHAT_MODE === true;
-
-        // Method 4: Check document title
-        const titleIncludesProject = document.title && document.title.toLowerCase().includes('project');
-
-        const isProjectMode = pathIncludesProject || hasProjectParam || explicitFlag || titleIncludesProject;
-
-        console.log('[ChatManager] Project detection:', {
-            pathname: window.location.pathname,
-            pathIncludesProject,
-            hasProjectParam,
-            explicitFlag,
-            titleIncludesProject,
-            result: isProjectMode
-        });
-
-        return isProjectMode;
     }
 
     // Send message functionality
@@ -670,15 +569,7 @@ class ChatManager {
 
         // Store message with chat ID
         const chatId = this.getCurrentChatId();
-        const message = { type, content, timestamp: Date.now(), chatId };
-        this.messages.push(message);
-
-        // If in project mode, also backup the message for restoration
-        if (this.projectChatMode && this.messageBackup) {
-            this.messageBackup.push({ type, content });
-            console.log('[ChatManager] 🛡️ Message backed up. Total backup:', this.messageBackup.length);
-        }
-
+        this.messages.push({ type, content, timestamp: Date.now(), chatId });
         this.saveChatHistory();
     }
 
@@ -1275,14 +1166,6 @@ class ChatManager {
 
     // Clear current chat display and messages
     clearCurrentChat() {
-        console.log('[ChatManager] ⚠️ CLEARING MESSAGES - clearCurrentChat() called');
-        console.trace('[ChatManager] clearCurrentChat() stack trace');
-
-        // Don't clear on project pages - use the robust detection
-        if (this.projectChatMode) {
-            console.log('[ChatManager] 🛡️ PROJECT MODE - NOT clearing chat (clearCurrentChat blocked)');
-            return;
-        }
 
         // Generate new chat ID to ensure complete privacy separation
         const newChatId = 'chat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -1318,11 +1201,6 @@ class ChatManager {
 
     // Load chat history
     loadChatHistory() {
-        // Don't load chat history on project pages - use the robust detection
-        if (this.projectChatMode) {
-            console.log('[ChatManager] 🛡️ PROJECT MODE - NOT loading chat history (loadChatHistory blocked)');
-            return;
-        }
 
         // Reset sidebar title when loading chats
         const sidebarTitle = document.querySelector('.sidebar-header h3');
@@ -1410,19 +1288,8 @@ class ChatManager {
 
     // Display saved messages
     displaySavedMessages() {
-        console.log('[ChatManager] ⚠️ displaySavedMessages() called');
-        console.trace('[ChatManager] displaySavedMessages() stack trace');
-
         const messagesContainer = document.getElementById('messagesContainer');
         if (!messagesContainer) return;
-
-        // Check if we're on project page - use the robust detection
-        if (this.projectChatMode) {
-            console.log('[ChatManager] 🛡️ PROJECT MODE - NOT clearing messages (displaySavedMessages blocked)');
-            return; // Don't do anything on project pages
-        }
-
-        console.log('[ChatManager] Clearing messagesContainer innerHTML in displaySavedMessages');
         messagesContainer.innerHTML = '';
         this.messages.forEach(msg => {
             this.displayMessage(msg.type, msg.content);
@@ -1493,14 +1360,6 @@ class ChatManager {
 
     // Start new chat
     startNewChat() {
-        console.log('[ChatManager] ⚠️ CLEARING MESSAGES - startNewChat() called');
-        console.trace('[ChatManager] startNewChat() stack trace');
-
-        // Don't start new chat on project pages - use the robust detection
-        if (this.projectChatMode) {
-            console.log('[ChatManager] 🛡️ PROJECT MODE - NOT starting new chat (startNewChat blocked)');
-            return;
-        }
 
         // Save current chat before starting new one
         if (this.messages.length > 0) {
@@ -1720,11 +1579,6 @@ class ChatManager {
 
     // Load a specific chat
     loadChat(chatId) {
-        // Don't load different chats on project pages - use the robust detection
-        if (this.projectChatMode) {
-            console.log('[ChatManager] 🛡️ PROJECT MODE - NOT loading different chat (loadChat blocked)');
-            return;
-        }
 
         try {
             const userStorageKey = this.getUserStorageKey('allChatHistories');
@@ -1753,12 +1607,8 @@ class ChatManager {
             }
 
             // Clear and display messages
-            console.log('[ChatManager] ⚠️ CLEARING MESSAGES - loadChat() called');
-            console.trace('[ChatManager] loadChat() stack trace');
-
             const messagesContainer = document.getElementById('messagesContainer');
             if (messagesContainer) {
-                console.log('[ChatManager] Clearing messagesContainer innerHTML in loadChat');
                 messagesContainer.innerHTML = '';
             }
 

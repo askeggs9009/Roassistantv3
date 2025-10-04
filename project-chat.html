@@ -3,24 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Chat - RoAssistant</title>
-    <link rel="icon" type="image/png" href="roassistant-logo.png">
-
-    <!-- Set PROJECT_CHAT_MODE flag immediately for robust detection -->
-    <script>
-        window.PROJECT_CHAT_MODE = true;
-        console.log('[PROJECT-CHAT] Setting PROJECT_CHAT_MODE flag to true');
-    </script>
+    <title>RoAssistant - Project Chat</title>
+    <link rel="icon" type="image/png" href="/roassistant-logo.png">
 
     <link rel="stylesheet" href="styles/liquid-glass.css">
     <link rel="stylesheet" href="styles/dot-grid.css">
-
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/sidebar.css">
     <link rel="stylesheet" href="styles/chat.css">
+    <link rel="stylesheet" href="styles/animations.css">
     <link rel="stylesheet" href="styles/responsive.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
 
     <style>
         /* Subscription Status Styles */
@@ -57,59 +50,6 @@
             background: linear-gradient(45deg, #9d4edd, #7c3aed);
         }
 
-        /* Project Chat Context Styles */
-        .project-context-header {
-            background: rgba(88, 166, 255, 0.1);
-            border: 1px solid rgba(88, 166, 255, 0.2);
-            border-radius: 8px;
-            padding: 1rem;
-            margin: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .project-context-icon {
-            font-size: 2rem;
-            width: 3rem;
-            height: 3rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #58a6ff, #a5b4fc);
-            border-radius: 8px;
-        }
-        
-        .project-context-details h3 {
-            color: #f0f6fc;
-            margin: 0 0 0.25rem 0;
-            font-size: 1.125rem;
-        }
-        
-        .project-context-details p {
-            color: #8b949e;
-            margin: 0;
-            font-size: 0.875rem;
-        }
-        
-        .back-to-projects {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #8b949e;
-            text-decoration: none;
-            font-size: 0.875rem;
-            margin: 1rem;
-            padding: 0.5rem;
-            border-radius: 6px;
-            transition: all 0.2s ease;
-        }
-        
-        .back-to-projects:hover {
-            color: #f0f6fc;
-            background: rgba(110, 118, 129, 0.1);
-        }
-        
         /* Project Context Styles */
         .project-files-info {
             background: rgba(88, 166, 255, 0.1);
@@ -119,12 +59,12 @@
             margin-top: 1rem;
             font-size: 0.9rem;
         }
-        
+
         .welcome-content a {
             color: #58a6ff;
             text-decoration: none;
         }
-        
+
         .welcome-content a:hover {
             text-decoration: underline;
         }
@@ -160,176 +100,10 @@
         .usage-fill.danger {
             background: linear-gradient(90deg, #f85149, #da3633);
         }
-
-        .upgrade-prompt {
-            display: none;
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            background: linear-gradient(135deg, #161b22, #21262d);
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            padding: 1.5rem;
-            max-width: 350px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            animation: slideInUp 0.3s ease;
-        }
-
-        @keyframes slideInUp {
-            from {
-                transform: translateY(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .upgrade-prompt-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .upgrade-prompt-title {
-            font-weight: 600;
-            color: #f0f6fc;
-        }
-
-        .upgrade-prompt-close {
-            background: none;
-            border: none;
-            color: #8b949e;
-            cursor: pointer;
-            font-size: 1.5rem;
-            line-height: 1;
-        }
-
-        .upgrade-prompt-message {
-            color: #8b949e;
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-            line-height: 1.4;
-        }
-
-        .upgrade-prompt-buttons {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .upgrade-btn {
-            flex: 1;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            border: none;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 0.85rem;
-        }
-
-        .upgrade-btn.primary {
-            background: linear-gradient(45deg, #238636, #2ea043);
-            color: white;
-        }
-
-        .upgrade-btn.primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(46, 160, 67, 0.4);
-        }
-
-        .upgrade-btn.secondary {
-            background: transparent;
-            border: 1px solid #30363d;
-            color: #8b949e;
-        }
-
-        .upgrade-btn.secondary:hover {
-            border-color: #58a6ff;
-            color: #58a6ff;
-        }
-
-        .model-locked {
-            position: relative;
-        }
-
-        .model-locked::after {
-            content: '\f023';
-            font-family: 'Font Awesome 6 Free';
-            font-weight: 900;
-            position: absolute;
-            right: 35px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 0.8rem;
-        }
-
-        .usage-warning {
-            background: rgba(212, 172, 13, 0.1);
-            border: 1px solid rgba(212, 172, 13, 0.3);
-            border-radius: 8px;
-            padding: 0.75rem;
-            margin: 1rem;
-            color: #d4ac0d;
-            font-size: 0.85rem;
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .usage-limit-reached {
-            background: rgba(248, 81, 73, 0.1);
-            border: 1px solid rgba(248, 81, 73, 0.3);
-            border-radius: 8px;
-            padding: 1rem;
-            margin: 1rem;
-            color: #f85149;
-            text-align: center;
-            display: none;
-        }
-
-        /* FIXED: Account switch notification */
-        .account-switch-notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(45deg, #58a6ff, #1f6feb);
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(88, 166, 255, 0.4);
-            z-index: 1000;
-            opacity: 0;
-            transform: translateX(100%);
-            transition: all 0.3s ease;
-        }
-
-        .account-switch-notification.show {
-            opacity: 1;
-            transform: translateX(0);
-        }
     </style>
 </head>
 
 <body>
-    <!-- FIXED: Account Switch Notification -->
-    <div class="account-switch-notification" id="accountSwitchNotification">
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <i class="fas fa-sync-alt"></i>
-            <span>Account switched! Loading your data...</span>
-        </div>
-    </div>
-
-    <!-- Sidebar Overlay for Mobile -->
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -341,7 +115,6 @@
             <span>+</span>
             New chat
         </button>
-
 
         <div class="sidebar-nav">
             <!-- Main Navigation -->
@@ -357,6 +130,10 @@
                 <div class="nav-item" onclick="setActiveNav(this, 'scripts')">
                     <span class="nav-icon"><i class="fas fa-wrench"></i></span>
                     Scripts
+                </div>
+                <div class="nav-item authenticated-only" onclick="window.location.href='/account.html'" style="color: #8b949e;">
+                    <span class="nav-icon">⚙️</span>
+                    Account
                 </div>
                 <div class="nav-item" onclick="window.location.href='/pricing.html'" style="color: #58a6ff;">
                     <span class="nav-icon"><i class="fas fa-gem"></i></span>
@@ -389,17 +166,19 @@
     </div>
 
     <!-- Main Content -->
-    <div class="main-content">
+    <div class="main-content" id="mainContent">
         <!-- Header -->
         <div class="main-header">
             <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleSidebar()">
                 ☰
             </button>
-            <div class="header-title" id="chatTitle">Project Chat</div>
-            
+            <div class="header-title" id="chatTitle">New Chat</div>
+
             <!-- Subscription Status -->
             <div class="subscription-status" id="subscriptionStatus" style="display: none;">
-                <div class="plan-badge" id="planBadge">Free</div>
+                <a href="/account.html" style="text-decoration: none;">
+                    <div class="plan-badge" id="planBadge" style="cursor: pointer; transition: transform 0.2s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" title="View Account Details">Free</div>
+                </a>
                 <div class="usage-counter">
                     <span id="usageText">0/10</span>
                     <div class="usage-bar">
@@ -409,46 +188,14 @@
             </div>
         </div>
 
-        <!-- Usage Warning -->
-        <div id="usageWarning" class="usage-warning">
-            <i class="fas fa-exclamation-triangle"></i> You're approaching your daily message limit. Consider upgrading for unlimited access!
-        </div>
-
-        <!-- Usage Limit Reached -->
-        <div id="usageLimitReached" class="usage-limit-reached">
-            <i class="fas fa-ban"></i> Daily message limit reached. <a href="/pricing.html" style="color: #58a6ff;">Upgrade now</a> for unlimited messages!
-        </div>
-
-        <!-- Project Context Header -->
-        <div class="project-context-header" id="projectContextHeader">
-            <div class="project-icon" id="projectIcon"><i class="fas fa-folder"></i></div>
-            <div class="project-context-info">
-                <h3 id="projectName">Loading project...</h3>
-                <p id="projectDescription">Please wait while we load your project details.</p>
-            </div>
-            <div style="margin-left: auto; display: flex; gap: 0.5rem; align-items: center;">
-                <button onclick="openArtifactsModal()" style="background: rgba(88, 166, 255, 0.15); border: 1px solid rgba(88, 166, 255, 0.3); border-radius: 6px; color: #58a6ff; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem;">
-                    <i class="fas fa-paperclip"></i> <span id="artifactCount">0</span> Artifacts
-                </button>
-                <button onclick="openAddFileDialog()" style="background: #238636; border: none; border-radius: 6px; color: white; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.85rem;">
-                    <i class="fas fa-folder-open"></i> Add Files
-                </button>
-                <button onclick="openAddTextModal()" style="background: #1f6feb; border: none; border-radius: 6px; color: white; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.85rem;">
-                    <i class="fas fa-edit"></i> Add Text
-                </button>
-                <a href="projects.html" class="back-to-projects"><i class="fas fa-arrow-left"></i> Back</a>
-            </div>
-        </div>
-
-
         <!-- Chat Area -->
         <div class="chat-area">
             <div class="messages-container" id="messagesContainer">
                 <!-- Welcome Screen -->
                 <div class="welcome-screen stagger-animation" id="welcomeScreen">
                     <div class="welcome-icon"><i class="fas fa-rocket"></i></div>
-                    <h1 class="welcome-title" data-text="Welcome to Project Chat">Welcome to Project Chat</h1>
-                    <p class="welcome-subtitle">Your project-focused AI assistant</p>
+                    <h1 class="welcome-title" data-text="Welcome to RoAssistant">Welcome to RoAssistant</h1>
+                    <p class="welcome-subtitle">Your intelligent assistant for Roblox game development</p>
                 </div>
             </div>
 
@@ -458,15 +205,13 @@
                     <div class="input-content">
                         <!-- File attachments area -->
                         <div class="file-attachments" id="fileAttachments" style="display: none;"></div>
-                        
+
                         <!-- Input row -->
                         <div class="input-row">
-                            <button class="attach-button" id="attachButton" onclick="openFileDialog()" title="Add file or image">
-                                <span><i class="fas fa-paperclip"></i></span>
-                            </button>
                             <button class="model-button" id="modelButton" onclick="toggleModelSelector()" title="Select AI Model">
                                 <span><i class="fas fa-sliders-h"></i></span>
                             </button>
+
                             <!-- Model Selector Dropdown -->
                             <div class="model-dropdown" id="modelDropdown" style="display: none;">
                                 <div class="model-dropdown-header">Select Model</div>
@@ -476,30 +221,14 @@
                                 </div>
                                 <div class="model-option premium" data-model="claude-4-opus" onclick="selectModel('claude-4-opus')">
                                     <div class="model-name">RoCode Nexus 3</div>
-                                    <div class="model-right">
-                                        <div class="model-badge" id="nexusUsageCounter">0/3</div>
-                                        <i class="fas fa-check model-check" style="display: none;"></i>
-                                    </div>
+                                    <i class="fas fa-check model-check" style="display: none;"></i>
                                 </div>
-                            </div>
-
-                            <!-- Model Indicator -->
-                            <div class="model-indicator" id="modelIndicator">
-                                <span class="model-name" id="currentModelName">RoCode 3</span>
-                                <span class="model-usage" id="currentModelUsage" style="display: none;">0/3</span>
-                            </div>
-
-                            <!-- Token Estimation Display -->
-                            <div class="token-estimation" id="tokenEstimation" style="display: none;">
-                                <span class="token-icon">🔢</span>
-                                <span class="token-text" id="tokenEstimationText">~0 tokens</span>
-                                <span class="token-warning" id="tokenWarning" style="display: none;">⚠️ Exceeds daily limit</span>
                             </div>
 
                             <textarea
                                 class="input-area"
                                 id="messageInput"
-                                placeholder="Ask questions about your project, request code reviews, or get help with specific features..."
+                                placeholder="Ask me about your project..."
                                 rows="1"
                             ></textarea>
                             <button class="send-button" id="sendButton" onclick="sendMessage()">
@@ -508,89 +237,57 @@
                         </div>
                     </div>
                 </div>
-                <input type="file" id="fileInput" accept="image/*,.txt,.lua,.luau,.js,.json,.md" style="display: none;" onchange="handleFileSelect(event)" multiple>
-                
-                <!-- Drag & Drop Overlay -->
-                <div class="drag-overlay" id="dragOverlay" style="display: none;">
-                    <div class="drag-content">
-                        <div class="drag-icon">📁</div>
-                        <div class="drag-text">Drop files here to upload</div>
-                        <div class="drag-subtext">Images, code files, and documents</div>
-                    </div>
-                </div>
             </div>
-        </div>
-
-    </div>
-
-    <!-- Upgrade Prompt -->
-    <div class="upgrade-prompt" id="upgradePrompt">
-        <div class="upgrade-prompt-header">
-            <div class="upgrade-prompt-title">🚀 Unlock More Power</div>
-            <button class="upgrade-prompt-close" onclick="closeUpgradePrompt()">×</button>
-        </div>
-        <div class="upgrade-prompt-message" id="upgradePromptMessage">
-            You've used 8 of your 10 daily messages. Upgrade to Pro for 500 messages per day!
-        </div>
-        <div class="upgrade-prompt-buttons">
-            <button class="upgrade-btn primary" onclick="window.location.href='/pricing.html'">
-                View Plans
-            </button>
-            <button class="upgrade-btn secondary" onclick="closeUpgradePrompt()">
-                Maybe Later
-            </button>
         </div>
     </div>
 
     <script>
-        // DYNAMIC API CONFIGURATION - Updated for production deployment
+        // DYNAMIC API CONFIGURATION
         const getApiBaseUrl = () => {
-            // Check if we're running on localhost (development)
             if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                 return 'http://localhost:3000';
             }
-            
-            // For production, point to Railway backend
             return 'https://roassistantv3-production.up.railway.app';
         };
 
         const API_BASE_URL = getApiBaseUrl();
         console.log(`[CONFIG] Using API Base URL: ${API_BASE_URL}`);
 
-        // FIXED: Global variables with proper user isolation
-        let currentChatId = null;
-        let isLoggedIn = false;
-        let authToken = null;
-        let currentUser = null;
+        // Global variables
         let selectedModel = 'claude-4-sonnet';
         window.selectedModel = selectedModel;
-        let currentView = 'projects';
-        let attachedFiles = [];
-        let currentProjectId = null;
         let currentProject = null;
 
-        // FIXED: User-specific data storage
-        let userChats = [];
-        let userScripts = [];
+        // Load project context from URL
+        function loadProjectFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectId = urlParams.get('project');
 
-        // Subscription management
-        let userSubscription = {
-            plan: 'free',
-            limits: {
-                daily_messages: 10,
-                models: ['gpt-4o-mini']
-            },
-            usage: {
-                daily_messages: 0,
-                daily_limit: 10
+            if (projectId) {
+                // Load project from localStorage
+                const projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
+                currentProject = projects.find(p => p.id === projectId);
+
+                if (currentProject) {
+                    // Set project in chat manager
+                    if (window.chatManager) {
+                        window.chatManager.currentProject = currentProject;
+                        console.log('Project loaded in ChatManager:', currentProject.name);
+                    }
+
+                    // Update UI to show project name
+                    const chatTitle = document.getElementById('chatTitle');
+                    if (chatTitle) {
+                        chatTitle.textContent = `Project: ${currentProject.name}`;
+                    }
+                } else {
+                    console.log('Project not found:', projectId);
+                    window.location.href = 'projects.html';
+                }
+            } else {
+                window.location.href = 'projects.html';
             }
-        };
-
-        // Message counter for ad insertion
-        let messageCount = 0;
-        const AD_FREQUENCY = 5; // Show ad every 5 messages
-
-        // Project chat specific functions
+        }
 
         // Global sendMessage wrapper
         function sendMessage() {
@@ -601,582 +298,108 @@
             }
         }
 
-        function loadProjectFromUrl() {
-            const urlParams = new URLSearchParams(window.location.search);
-            currentProjectId = urlParams.get('project');
-
-            if (currentProjectId) {
-                const projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
-                currentProject = projects.find(p => p.id === currentProjectId);
-
-                if (currentProject) {
-                    updateProjectHeader();
-
-                    // Set project in chat manager
-                    if (window.chatManager) {
-                        window.chatManager.currentProject = currentProject;
-                        console.log('Project loaded in ChatManager:', currentProject.name);
-                    }
-                } else {
-                    // Project not found, redirect to projects page
-                    window.location.href = 'projects.html';
-                }
-            } else {
-                // No project ID, redirect to projects page
-                window.location.href = 'projects.html';
-            }
-        }
-
-        function updateProjectHeader() {
-            if (!currentProject) return;
-            
-            document.getElementById('chatTitle').textContent = currentProject.name;
-            document.getElementById('projectName').textContent = currentProject.name;
-            document.getElementById('projectDescription').textContent = currentProject.description || 'No description provided';
-            
-            // Update project icon based on type
-            const iconElement = document.getElementById('projectIcon');
-            const iconMap = {
-                'game': '🎮',
-                'script': '📝',
-                'tool': '🔧',
-                'library': '📚',
-                'template': '📋'
-            };
-            iconElement.textContent = iconMap[currentProject.type] || '📂';
-            
-            // Update artifact count
-            const artifactCount = currentProject.artifacts ? currentProject.artifacts.length : 0;
-            document.getElementById('artifactCount').textContent = artifactCount;
-        }
-
-        // Artifact Management Functions
-        function openArtifactsModal() {
-            document.getElementById('artifactsModal').style.display = 'block';
-            renderArtifacts();
-        }
-
-        function closeArtifactsModal() {
-            document.getElementById('artifactsModal').style.display = 'none';
-        }
-
-        function openAddTextModal() {
-            document.getElementById('addTextModal').style.display = 'block';
-            document.getElementById('artifactName').focus();
-        }
-
-        function closeAddTextModal() {
-            document.getElementById('addTextModal').style.display = 'none';
-            document.getElementById('artifactName').value = '';
-            document.getElementById('artifactContent').value = '';
-        }
-
-        function openAddFileDialog() {
-            document.getElementById('artifactFileInput').click();
-        }
-
-        function addTextArtifact(event) {
-            event.preventDefault();
-            const name = document.getElementById('artifactName').value.trim();
-            const content = document.getElementById('artifactContent').value.trim();
-            
-            if (!name || !content) return;
-            
-            const artifact = {
-                id: 'artifact_' + Date.now(),
-                type: 'text',
-                name: name,
-                content: content,
-                size: new Blob([content]).size,
-                created: Date.now()
-            };
-            
-            addArtifactToProject(artifact);
-            closeAddTextModal();
-        }
-
-        function handleArtifactFileSelect(event) {
-            const files = event.target.files;
-            if (!files || files.length === 0) return;
-            
-            Array.from(files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const artifact = {
-                        id: 'artifact_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                        type: 'file',
-                        name: file.name,
-                        content: e.target.result,
-                        mimeType: file.type,
-                        size: file.size,
-                        created: Date.now()
-                    };
-                    addArtifactToProject(artifact);
-                };
-                
-                // Read as text for text files, as data URL for others
-                if (file.type.startsWith('text/') || 
-                    file.name.endsWith('.lua') || 
-                    file.name.endsWith('.luau') || 
-                    file.name.endsWith('.js') || 
-                    file.name.endsWith('.json') ||
-                    file.name.endsWith('.md')) {
-                    reader.readAsText(file);
-                } else {
-                    reader.readAsDataURL(file);
-                }
-            });
-            
-            // Clear the file input
-            event.target.value = '';
-        }
-
-        function addArtifactToProject(artifact) {
-            if (!currentProject) return;
-            
-            if (!currentProject.artifacts) {
-                currentProject.artifacts = [];
-            }
-            
-            currentProject.artifacts.push(artifact);
-            currentProject.updated = Date.now();
-            
-            // Save to localStorage
-            const projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
-            const projectIndex = projects.findIndex(p => p.id === currentProject.id);
-            if (projectIndex !== -1) {
-                projects[projectIndex] = currentProject;
-                localStorage.setItem('roblox_projects', JSON.stringify(projects));
-            }
-            
-            // Update UI
-            updateProjectHeader();
-            renderArtifacts();
-            
-            // Show success message
-            showNotification(`Added "${artifact.name}" to project artifacts`);
-        }
-
-        function removeArtifact(artifactId) {
-            if (!currentProject || !currentProject.artifacts) return;
-            
-            const artifact = currentProject.artifacts.find(a => a.id === artifactId);
-            if (!artifact) return;
-            
-            if (confirm(`Remove "${artifact.name}" from artifacts?`)) {
-                currentProject.artifacts = currentProject.artifacts.filter(a => a.id !== artifactId);
-                currentProject.updated = Date.now();
-                
-                // Save to localStorage
-                const projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
-                const projectIndex = projects.findIndex(p => p.id === currentProject.id);
-                if (projectIndex !== -1) {
-                    projects[projectIndex] = currentProject;
-                    localStorage.setItem('roblox_projects', JSON.stringify(projects));
-                }
-                
-                // Update UI
-                updateProjectHeader();
-                renderArtifacts();
-                
-                // Show success message
-                showNotification(`Removed "${artifact.name}" from artifacts`);
-            }
-        }
-
-        function renderArtifacts() {
-            const artifactsList = document.getElementById('artifactsList');
-            
-            if (!currentProject || !currentProject.artifacts || currentProject.artifacts.length === 0) {
-                artifactsList.innerHTML = `
-                    <div style="text-align: center; padding: 2rem; color: #8b949e;">
-                        <div style="font-size: 2rem; margin-bottom: 1rem;">📭</div>
-                        <p>No artifacts yet. Add files or text content to help the AI understand your project better.</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            artifactsList.innerHTML = currentProject.artifacts.map(artifact => {
-                const icon = artifact.type === 'text' ? '📝' : getFileIcon(artifact.name);
-                const sizeStr = formatFileSize(artifact.size);
-                
-                return `
-                    <div class="artifact-item">
-                        <div class="artifact-info">
-                            <div class="artifact-icon">${icon}</div>
-                            <div class="artifact-details">
-                                <h4>${artifact.name}</h4>
-                                <p>${artifact.type === 'text' ? 'Text content' : 'File'} • ${sizeStr} • ${formatDate(artifact.created)}</p>
-                            </div>
-                        </div>
-                        <div class="artifact-actions">
-                            <button class="artifact-btn" onclick="viewArtifact('${artifact.id}')">View</button>
-                            <button class="artifact-btn delete" onclick="removeArtifact('${artifact.id}')">Remove</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function viewArtifact(artifactId) {
-            const artifact = currentProject.artifacts.find(a => a.id === artifactId);
-            if (!artifact) return;
-            
-            // For text content, show in a modal or copy to clipboard
-            if (artifact.type === 'text' || artifact.mimeType?.startsWith('text/')) {
-                const truncated = artifact.content.length > 1000 
-                    ? artifact.content.substring(0, 1000) + '...\n\n[Content truncated for preview]'
-                    : artifact.content;
-                
-                alert(`Content of "${artifact.name}":\n\n${truncated}`);
-            } else {
-                alert(`"${artifact.name}" is a binary file and cannot be previewed directly.`);
-            }
-        }
-
-        function getFileIcon(filename) {
-            const ext = filename.split('.').pop().toLowerCase();
-            const iconMap = {
-                'lua': '📜',
-                'luau': '📜',
-                'js': '🟨',
-                'json': '📋',
-                'md': '📄',
-                'txt': '📄',
-                'png': '🖼️',
-                'jpg': '🖼️',
-                'jpeg': '🖼️',
-                'gif': '🖼️',
-                'zip': '📦',
-                'rbxm': '🎮',
-                'rbxl': '🎮'
-            };
-            return iconMap[ext] || '📎';
-        }
-
-        function formatFileSize(bytes) {
-            if (bytes < 1024) return bytes + ' B';
-            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-        }
-
-        function formatDate(timestamp) {
-            const now = Date.now();
-            const diff = now - timestamp;
-            const minutes = Math.floor(diff / 60000);
-            
-            if (minutes < 1) return 'Just now';
-            if (minutes === 1) return '1 minute ago';
-            if (minutes < 60) return `${minutes} minutes ago`;
-            
-            const hours = Math.floor(minutes / 60);
-            if (hours === 1) return '1 hour ago';
-            if (hours < 24) return `${hours} hours ago`;
-            
-            const days = Math.floor(hours / 24);
-            if (days === 1) return 'Yesterday';
-            if (days < 7) return `${days} days ago`;
-            
-            return new Date(timestamp).toLocaleDateString();
-        }
-
-        function showNotification(message) {
-            // Create a temporary notification
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                bottom: 2rem;
-                left: 50%;
-                transform: translateX(-50%);
-                background: linear-gradient(45deg, #238636, #2ea043);
-                color: white;
-                padding: 1rem 1.5rem;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-                z-index: 1001;
-                animation: slideInUp 0.3s ease;
-            `;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.animation = 'fadeOut 0.3s ease';
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
-        }
-
-        // Add modal close on click outside
-        document.addEventListener('click', function(event) {
-            if (event.target.classList.contains('modal')) {
-                if (event.target.id === 'artifactsModal') {
-                    closeArtifactsModal();
-                } else if (event.target.id === 'addTextModal') {
-                    closeAddTextModal();
-                }
-            }
-        });
-
-        // FIXED: Account switching functionality
-        class AccountManager {
-            constructor() {
-                this.lastKnownUser = null;
-                this.initializeWatcher();
-            }
-
-            initializeWatcher() {
-                // Watch for auth token changes
-                const originalSetItem = localStorage.setItem;
-                const originalRemoveItem = localStorage.removeItem;
-                
-                localStorage.setItem = (key, value) => {
-                    if (key === 'authToken' || key === 'user') {
-                        setTimeout(() => this.checkForAccountSwitch(), 100);
-                    }
-                    return originalSetItem.call(localStorage, key, value);
-                };
-                
-                localStorage.removeItem = (key) => {
-                    if (key === 'authToken' || key === 'user') {
-                        setTimeout(() => this.checkForAccountSwitch(), 100);
-                    }
-                    return originalRemoveItem.call(localStorage, key);
-                };
-            }
-
-            checkForAccountSwitch() {
-                const currentToken = localStorage.getItem('authToken');
-                const currentUserData = localStorage.getItem('user');
-                
-                let currentUserId = null;
-                if (currentUserData) {
-                    try {
-                        const user = JSON.parse(currentUserData);
-                        currentUserId = user.id || user.email;
-                    } catch (error) {
-                        console.error('Error parsing user data:', error);
-                    }
-                }
-
-                // Check if user has switched
-                if (this.lastKnownUser !== currentUserId) {
-                    console.log('[ACCOUNT] User switch detected:', this.lastKnownUser, '->', currentUserId);
-                    this.handleAccountSwitch(currentUserId);
-                    this.lastKnownUser = currentUserId;
-                }
-            }
-        }
-
-
-        // Simple initialization - DO NOT call any chat clearing functions
-        window.addEventListener('DOMContentLoaded', function() {
-            console.log('Project chat DOM loaded');
-            loadProjectFromUrl();
-
-            // Just set the project context, don't reload anything
-            if (window.chatManager && currentProject) {
-                window.chatManager.currentProject = currentProject;
-                console.log('Project set:', currentProject.name);
-            }
-        });
-
-        // Check for project parameter in URL
-        function checkProjectParameter() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const projectId = urlParams.get('project');
-            
-            if (projectId) {
-                // Load project context if needed
-                console.log('Loading project context:', projectId);
-                // You can implement project-specific logic here
-            }
-        }
-
-
-
-        // Delegate authentication functions to authManager
-        function showLoggedInUser(userData) {
-            // Always use authManager's implementation
-            if (!window.authManager) {
-                console.error('[AUTH] authManager not initialized yet');
-                return;
-            }
-            window.authManager.showLoggedInUser(userData);
-        }
-
-        function showGuestUser() {
-            // Always use authManager's implementation
-            if (!window.authManager) {
-                console.error('[AUTH] authManager not initialized yet');
-                return;
-            }
-            window.authManager.showGuestUser();
-        }
-
-        function logout() {
-            // Always use authManager's implementation
-            if (!window.authManager) {
-                console.error('[AUTH] authManager not initialized yet');
-                return;
-            }
-            window.authManager.logout();
-        }
-
         // Toggle model selector dropdown
         function toggleModelSelector() {
             const dropdown = document.getElementById('modelDropdown');
             dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
         }
 
-        // Streaming functionality - enabled by default
-        let streamingEnabled = true;
-        window.streamingEnabled = true; // Make it available globally
-
         // Select a model
         function selectModel(model) {
-            const newModel = model;
-            console.log('Model changed to:', newModel);
+            selectedModel = model;
+            window.selectedModel = selectedModel;
 
-            // If the model actually changed, start a new chat
-            if (newModel !== selectedModel) {
-                selectedModel = newModel;
-                window.selectedModel = selectedModel;
-
-                // Update checkmarks in dropdown
-                document.querySelectorAll('.model-option').forEach(option => {
-                    option.classList.remove('selected');
-                    const check = option.querySelector('.model-check');
-                    if (check) {
-                        check.style.display = 'none';
-                    }
-                });
-                const selectedOption = document.querySelector(`.model-option[data-model="${model}"]`);
-                if (selectedOption) {
-                    selectedOption.classList.add('selected');
-                    const check = selectedOption.querySelector('.model-check');
-                    if (check) {
-                        check.style.display = 'block';
-                    }
+            // Update selected state in dropdown
+            document.querySelectorAll('.model-option').forEach(option => {
+                option.classList.remove('selected');
+                const check = option.querySelector('.model-check');
+                if (check) {
+                    check.style.display = 'none';
                 }
+            });
 
-                // Update button icon to show current model
-                updateModelButton();
-
-                // Update model indicator
-                updateModelIndicator();
-
-                // Start a new chat when model changes
-                startNewChat();
-
-                // Show a message indicating the model change
-                const modelName = model === 'claude-4-opus' ? 'RoCode Nexus 3' : 'RoCode 3';
-                if (window.chatManager) {
-                    window.chatManager.addMessage('system', `🔄 Switched to ${modelName}. Starting a new conversation.`);
+            const selectedOption = document.querySelector(`.model-option[data-model="${model}"]`);
+            if (selectedOption) {
+                selectedOption.classList.add('selected');
+                const check = selectedOption.querySelector('.model-check');
+                if (check) {
+                    check.style.display = 'block';
                 }
+            }
+
+            // Start a new chat when model changes
+            startNewChat();
+
+            // Show a message indicating the model change
+            const modelName = model === 'claude-4-opus' ? 'RoCode Nexus 3' : 'RoCode 3';
+            if (window.chatManager) {
+                window.chatManager.addMessage('system', `🔄 Switched to ${modelName}. Starting a new conversation.`);
             }
 
             // Hide dropdown
             document.getElementById('modelDropdown').style.display = 'none';
         }
 
-        // Update model button to show current selection
-        function updateModelButton() {
-            const modelButton = document.getElementById('modelButton');
-            if (modelButton) {
-                // Update title to show current model
-                const modelName = selectedModel === 'claude-4-opus' ? 'RoCode Nexus 3' : 'RoCode 3';
-                modelButton.title = `Current Model: ${modelName}`;
+        // Start new chat
+        function startNewChat() {
+            if (window.chatManager) {
+                window.chatManager.startNewChat();
             }
         }
 
-        // Update model indicator next to send button
-        function updateModelIndicator() {
-            const modelNameElement = document.getElementById('currentModelName');
-            const modelUsageElement = document.getElementById('currentModelUsage');
-
-            if (modelNameElement) {
-                const modelName = selectedModel === 'claude-4-opus' ? 'RoCode Nexus 3' : 'RoCode 3';
-                modelNameElement.textContent = modelName;
-            }
-
-            if (modelUsageElement) {
-                // Show usage counter only for free users with Nexus
-                if (selectedModel === 'claude-4-opus' && isLoggedIn && currentUser) {
-                    // Check if user is on free plan
-                    const userSubscription = currentUser.subscription || { plan: 'free' };
-                    if (userSubscription.plan === 'free') {
-                        modelUsageElement.style.display = 'inline';
-                        // Get current usage from server response or default to 0
-                        const currentUsage = window.currentNexusUsage || 0;
-                        modelUsageElement.textContent = `${currentUsage}/3`;
-                    } else {
-                        modelUsageElement.style.display = 'none';
-                    }
-                } else {
-                    modelUsageElement.style.display = 'none';
-                }
-            }
-        }
-
-        // Update model selector for auth status
-        function updateModelSelector() {
-            // Update the premium model option based on auth status
-            const premiumOption = document.querySelector('.model-option.premium');
-            if (premiumOption && !isLoggedIn) {
-                premiumOption.classList.add('disabled');
-            } else if (premiumOption) {
-                premiumOption.classList.remove('disabled');
-            }
-            updateModelButton();
-        }
-
-
-        // Check subscription status (stub for now)
-        function checkSubscriptionStatus() {
-            // This function would normally check subscription status from server
-            console.log('Checking subscription status...');
-        }
-
-        // Navigation function to update active nav
-        function setActiveNav(element, view) {
-            // Remove active class from all nav items
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // Add active class to clicked nav item
-            element.classList.add('active');
-            
-            // Navigate based on view
-            if (view === 'chats') {
+        // Set active nav
+        function setActiveNav(element, section) {
+            if (section === 'chats') {
                 window.location.href = 'index.html';
-            } else if (view === 'projects') {
+            } else if (section === 'projects') {
                 window.location.href = 'projects.html';
-            } else if (view === 'scripts') {
+            } else if (section === 'scripts') {
                 window.location.href = 'scripts.html';
             }
         }
 
-        // Start new chat function
-        function startNewChat() {
-            window.location.href = 'index.html';
+        // Toggle sidebar
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
         }
+
+        // Load project when DOM is ready
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('Project chat DOM loaded');
+            loadProjectFromUrl();
+
+            // Set project in chat manager after it's initialized
+            setTimeout(() => {
+                if (window.chatManager && currentProject) {
+                    window.chatManager.currentProject = currentProject;
+                    console.log('Project set:', currentProject.name);
+                }
+            }, 100);
+        });
     </script>
 
-    <!-- Load JavaScript modules with cache busting -->
-    <script src="js/auth.js?v=20250104-fix2"></script>
-    <script src="js/chat.js?v=20250104-fix2"></script>
-    <script src="js/ui.js?v=20250104-fix2"></script>
-    <script src="js/scripts.js?v=20250104-fix2"></script>
-    <script src="js/app.js?v=20250104-fix2"></script>
+    <!-- Load JavaScript modules - EXACT SAME ORDER AS index.html -->
+    <script src="js/auth.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/scripts.js"></script>
+    <script src="js/micro-interactions.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+    <!-- ReactBits-Inspired Animations -->
+    <script src="js/animations/dot-grid-background.js"></script>
+    <script src="js/animations/cursor-trail.js"></script>
+    <script src="js/animations/blur-text.js"></script>
+    <script src="js/animations/micro-interactions.js"></script>
+    <script src="js/animations/animations-init.js"></script>
+
+    <script src="js/app.js"></script>
 
     <!-- Initialize the application -->
     <script>
         // Initialize app when DOM is ready
         document.addEventListener('DOMContentLoaded', function() {
-            // Let authManager initialize from auth.js
-            // The App() initialization happens in app.js automatically
-
             // Add click outside listener for model dropdown
             document.addEventListener('click', function(e) {
                 const modelDropdown = document.getElementById('modelDropdown');
@@ -1187,378 +410,8 @@
                         modelDropdown.style.display = 'none';
                     }
                 }
-
-                // Close user dropdown when clicking outside
-                const userDropdownMenu = document.getElementById('userDropdownMenu');
-                const userDropdownTrigger = document.querySelector('.user-dropdown-trigger');
-                if (userDropdownMenu && userDropdownTrigger) {
-                    if (!userDropdownTrigger.contains(e.target) && !userDropdownMenu.contains(e.target)) {
-                        userDropdownMenu.style.display = 'none';
-                        const svg = userDropdownTrigger.querySelector('svg');
-                        if (svg) {
-                            userDropdownTrigger.classList.remove('dropdown-open');
-                        }
-                    }
-                }
             });
-
-            // Initialize model button and indicator
-            updateModelButton();
-            updateModelIndicator();
-
-            // Setup token estimation for message input
-            setupTokenEstimation();
         });
-
-        // Token estimation functionality
-        let estimationTimeout;
-        let lastEstimation = null;
-
-        function setupTokenEstimation() {
-            const messageInput = document.getElementById('messageInput');
-            if (messageInput) {
-                messageInput.addEventListener('input', debounceTokenEstimation);
-                messageInput.addEventListener('keyup', debounceTokenEstimation);
-            }
-        }
-
-        function debounceTokenEstimation() {
-            clearTimeout(estimationTimeout);
-            estimationTimeout = setTimeout(() => {
-                updateTokenEstimation();
-            }, 500); // Wait 500ms after user stops typing
-        }
-
-        async function updateTokenEstimation() {
-            const messageInput = document.getElementById('messageInput');
-            const tokenEstimation = document.getElementById('tokenEstimation');
-            const tokenEstimationText = document.getElementById('tokenEstimationText');
-            const tokenWarning = document.getElementById('tokenWarning');
-
-            if (!messageInput || !tokenEstimation) return;
-
-            const prompt = messageInput.value.trim();
-
-            if (prompt.length === 0) {
-                tokenEstimation.style.display = 'none';
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/estimate-tokens`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': authToken ? `Bearer ${authToken}` : ''
-                    },
-                    body: JSON.stringify({
-                        prompt: prompt,
-                        model: selectedModel
-                    })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    lastEstimation = data.estimation;
-
-                    // Show estimation
-                    tokenEstimation.style.display = 'flex';
-
-                    // Format display based on confidence level
-                    const confidenceSymbol = data.estimation.confidence === 'high' ? '' :
-                                            data.estimation.confidence === 'medium' ? '≈' : '~';
-                    tokenEstimationText.textContent = `${confidenceSymbol}${data.estimation.estimatedTotal.toLocaleString()} tokens`;
-
-                    // Reset classes
-                    tokenEstimation.classList.remove('warning', 'error');
-                    tokenWarning.style.display = 'none';
-
-                    // Check for warnings if user is authenticated and has limits
-                    if (data.userContext && data.userContext.wouldExceedLimit) {
-                        tokenEstimation.classList.add('error');
-                        tokenWarning.style.display = 'inline';
-                        tokenWarning.textContent = '⚠️ Exceeds daily limit';
-                    } else if (data.userContext && data.userContext.remainingTokens < data.estimation.estimatedTotal * 2) {
-                        tokenEstimation.classList.add('warning');
-                    }
-
-                } else {
-                    console.error('Token estimation failed:', response.statusText);
-                }
-            } catch (error) {
-                console.error('Token estimation error:', error);
-            }
-        }
-
-        // Update the chat manager to show estimation results
-        if (window.chatManager) {
-            const originalUpdateUsageDisplay = window.chatManager.updateUsageDisplay;
-            window.chatManager.updateUsageDisplay = function(usageInfo) {
-                originalUpdateUsageDisplay.call(this, usageInfo);
-
-                // Log estimation accuracy if available
-                if (usageInfo && usageInfo.tokenEstimation && lastEstimation) {
-                    console.log(`[TOKEN ESTIMATION] Accuracy: ${usageInfo.tokenEstimation.actualAccuracy}% (estimated: ${lastEstimation.estimatedTotal}, actual: ${usageInfo.tokenUsage.totalTokens})`);
-                }
-            };
-        }
-
     </script>
-
-
-    <!-- Artifacts Modal -->
-    <div class="modal" id="artifactsModal" style="display: none;">
-        <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
-            <div class="modal-header">
-                <h2 class="modal-title">Project Artifacts</h2>
-                <button class="modal-close" onclick="closeArtifactsModal()">×</button>
-            </div>
-            <div id="artifactsList" style="padding: 1rem 0;">
-                <!-- Artifacts will be listed here -->
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-secondary" onclick="closeArtifactsModal()">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Text Modal -->
-    <div class="modal" id="addTextModal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Add Text Content</h2>
-                <button class="modal-close" onclick="closeAddTextModal()">×</button>
-            </div>
-            <form onsubmit="addTextArtifact(event)">
-                <div class="form-group">
-                    <label class="form-label" for="artifactName">Name</label>
-                    <input type="text" id="artifactName" class="form-input" placeholder="e.g., Game Logic, Player Stats, UI Code" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="artifactContent">Content</label>
-                    <textarea id="artifactContent" class="form-input form-textarea" placeholder="Paste your code or text here..." style="min-height: 200px; font-family: monospace;" required></textarea>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeAddTextModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Text</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Hidden file input for artifacts -->
-    <input type="file" id="artifactFileInput" accept="*" style="display: none;" onchange="handleArtifactFileSelect(event)" multiple>
-
-    <style>
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-        }
-        
-        .modal-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 8px;
-            padding: 2rem;
-            width: 90%;
-            max-width: 480px;
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-        
-        .modal-title {
-            color: #f0f6fc;
-            margin: 0;
-            font-size: 1.25rem;
-        }
-        
-        .modal-close {
-            background: none;
-            border: none;
-            color: #6e7681;
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-        
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        
-        .form-label {
-            display: block;
-            color: #f0f6fc;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
-        
-        .form-input {
-            width: 100%;
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 0.75rem;
-            color: #f0f6fc;
-            font-size: 0.875rem;
-            box-sizing: border-box;
-        }
-        
-        .form-input:focus {
-            outline: none;
-            border-color: #58a6ff;
-        }
-        
-        .form-textarea {
-            min-height: 80px;
-            resize: vertical;
-        }
-        
-        .modal-actions {
-            display: flex;
-            gap: 0.75rem;
-            justify-content: flex-end;
-            margin-top: 1.5rem;
-        }
-        
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.875rem;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        
-        .btn-primary {
-            background: #238636;
-            color: white;
-        }
-        
-        .btn-secondary {
-            background: transparent;
-            color: #8b949e;
-            border: 1px solid #30363d;
-        }
-
-        .artifact-item {
-            background: rgba(33, 38, 45, 0.6);
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 1rem;
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .artifact-info {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            flex: 1;
-        }
-
-        .artifact-icon {
-            font-size: 1.5rem;
-        }
-
-        .artifact-details h4 {
-            color: #f0f6fc;
-            margin: 0 0 0.25rem 0;
-            font-size: 0.95rem;
-        }
-
-        .artifact-details p {
-            color: #8b949e;
-            margin: 0;
-            font-size: 0.8rem;
-        }
-
-        .artifact-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .artifact-btn {
-            background: none;
-            border: 1px solid #30363d;
-            border-radius: 4px;
-            color: #8b949e;
-            padding: 0.25rem 0.5rem;
-            cursor: pointer;
-            font-size: 0.75rem;
-        }
-
-        .artifact-btn:hover {
-            border-color: #58a6ff;
-            color: #58a6ff;
-        }
-
-        .artifact-btn.delete:hover {
-            border-color: #f85149;
-            color: #f85149;
-        }
-    </style>
-
-    <!-- Nexus Upgrade Modal -->
-    <div id="nexusUpgradeModal" class="nexus-upgrade-modal" style="display: none;">
-        <div class="nexus-upgrade-content">
-            <div class="nexus-upgrade-header">
-                <h2>Daily limit reached</h2>
-                <button class="nexus-close" onclick="closeUpgradeModal()">&times;</button>
-            </div>
-            <div class="nexus-upgrade-body">
-                <p>You've reached your daily limit for RoCode Nexus 3.</p>
-                <div class="nexus-benefits">
-                    <div class="benefit-item">
-                        <span class="checkmark">✓</span>
-                        <span>200 messages per day</span>
-                    </div>
-                    <div class="benefit-item">
-                        <span class="checkmark">✓</span>
-                        <span>All AI models</span>
-                    </div>
-                    <div class="benefit-item">
-                        <span class="checkmark">✓</span>
-                        <span>Priority support</span>
-                    </div>
-                    <div class="benefit-item">
-                        <span class="checkmark">✓</span>
-                        <span>Advanced project features</span>
-                    </div>
-                </div>
-                <div class="nexus-upgrade-footer">
-                    <button class="nexus-upgrade-btn" onclick="window.location.href='pricing.html'">
-                        Upgrade to Pro
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-
-
-
-    <!-- ReactBits-Inspired Animations -->
-    <script src="js/animations/dot-grid-background.js"></script>
-    <script src="js/animations/click-spark.js"></script>
-    <script src="js/animations/cursor-trail.js"></script>
-    <script src="js/animations/blur-text.js"></script>
-    <script src="js/animations/micro-interactions.js"></script>
-    <script src="js/animations/animations-init.js"></script>
-
 </body>
 </html>
