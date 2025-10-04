@@ -257,6 +257,7 @@
         let selectedModel = 'claude-4-sonnet';
         window.selectedModel = selectedModel;
         let currentProject = null;
+        let currentChatName = 'New Chat';
 
         // Load project context from URL
         function loadProjectFromUrl() {
@@ -285,12 +286,8 @@
                         console.log('Project set in ChatManager with', currentProject.artifacts?.length || 0, 'artifacts');
                     }
 
-                    // Update UI to show project name and artifact count
-                    const chatTitle = document.getElementById('chatTitle');
-                    if (chatTitle) {
-                        const artifactCount = currentProject.artifacts?.length || 0;
-                        chatTitle.innerHTML = `Project: ${currentProject.name} ${artifactCount > 0 ? `<span style="color: #58a6ff; font-size: 0.85rem; margin-left: 0.5rem;">(${artifactCount} artifact${artifactCount !== 1 ? 's' : ''})</span>` : ''}`;
-                    }
+                    // Update UI to show project/chat format
+                    updateChatTitle();
 
                     // Display artifacts in welcome screen if available
                     displayProjectArtifacts();
@@ -331,6 +328,33 @@
                     welcomeContent.insertAdjacentHTML('afterend', artifactsSection);
                 }
             }
+        }
+
+        // Update chat title in directory format
+        function updateChatTitle() {
+            const chatTitle = document.getElementById('chatTitle');
+            if (!chatTitle) return;
+
+            if (currentProject) {
+                const artifactCount = currentProject.artifacts?.length || 0;
+                const artifactInfo = artifactCount > 0 ?
+                    `<span style="color: #58a6ff; font-size: 0.85rem; margin-left: 0.5rem;">(${artifactCount} artifact${artifactCount !== 1 ? 's' : ''})</span>` : '';
+
+                chatTitle.innerHTML = `
+                    <span style="color: #8b949e;">${currentProject.name}</span>
+                    <span style="color: #484f58; margin: 0 0.25rem;">/</span>
+                    <span>${currentChatName}</span>
+                    ${artifactInfo}
+                `;
+            } else {
+                chatTitle.textContent = currentChatName;
+            }
+        }
+
+        // Update chat name when it changes
+        window.updateChatName = function(newName) {
+            currentChatName = newName || 'New Chat';
+            updateChatTitle();
         }
 
         // Global sendMessage wrapper
@@ -386,6 +410,8 @@
 
         // Start new chat
         function startNewChat() {
+            currentChatName = 'New Chat';
+            updateChatTitle();
             if (window.chatManager) {
                 window.chatManager.startNewChat();
             }

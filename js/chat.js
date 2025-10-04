@@ -42,9 +42,14 @@ class ChatManager {
                 this.generateChatTitle(message).then(title => {
                     if (title && title !== 'New Chat') {
                         // Update the chat title in the UI
-                        const chatTitle = document.getElementById('chatTitle');
-                        if (chatTitle) {
-                            chatTitle.textContent = title;
+                        // Update the chat name and title
+                        if (window.updateChatName) {
+                            window.updateChatName(title);
+                        } else {
+                            const chatTitle = document.getElementById('chatTitle');
+                            if (chatTitle) {
+                                chatTitle.textContent = title;
+                            }
                         }
 
                         // Save the updated chat with new title
@@ -1203,9 +1208,14 @@ class ChatManager {
         });
 
         // Reset chat title
-        const chatTitle = document.getElementById('chatTitle');
-        if (chatTitle) {
-            chatTitle.textContent = 'New Chat';
+        // Reset chat title
+        if (window.updateChatName) {
+            window.updateChatName('New Chat');
+        } else {
+            const chatTitle = document.getElementById('chatTitle');
+            if (chatTitle) {
+                chatTitle.textContent = 'New Chat';
+            }
         }
 
         // Clear localStorage chat history (but keep user-specific histories)
@@ -1239,9 +1249,15 @@ class ChatManager {
                 this.displaySavedMessages();
 
                 // Update the chat title if it exists
-                const chatTitle = document.getElementById('chatTitle');
-                if (chatTitle && allChats[chatId].title) {
-                    chatTitle.textContent = allChats[chatId].title;
+                // Restore chat title
+                const title = allChats[chatId].title || 'New Chat';
+                if (window.updateChatName) {
+                    window.updateChatName(title);
+                } else {
+                    const chatTitle = document.getElementById('chatTitle');
+                    if (chatTitle) {
+                        chatTitle.textContent = title;
+                    }
                 }
             } else {
                 // Fall back to generic chat history
@@ -1393,9 +1409,14 @@ class ChatManager {
         localStorage.removeItem('chatHistory');
 
         // Reset chat title
-        const chatTitle = document.getElementById('chatTitle');
-        if (chatTitle) {
-            chatTitle.textContent = 'New Chat';
+        // Reset chat title
+        if (window.updateChatName) {
+            window.updateChatName('New Chat');
+        } else {
+            const chatTitle = document.getElementById('chatTitle');
+            if (chatTitle) {
+                chatTitle.textContent = 'New Chat';
+            }
         }
 
         // Reload project context if needed
@@ -1614,9 +1635,15 @@ class ChatManager {
             this.currentProject = chatData.projectContext || null;
 
             // Update UI
-            const chatTitle = document.getElementById('chatTitle');
-            if (chatTitle) {
-                chatTitle.textContent = chatData.title || 'New Chat';
+            // Load chat title
+            const title = chatData.title || 'New Chat';
+            if (window.updateChatName) {
+                window.updateChatName(title);
+            } else {
+                const chatTitle = document.getElementById('chatTitle');
+                if (chatTitle) {
+                    chatTitle.textContent = title;
+                }
             }
 
             // Clear and display messages
