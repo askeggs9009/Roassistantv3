@@ -1169,6 +1169,13 @@ class ChatManager {
         console.log('[ChatManager] ⚠️ CLEARING MESSAGES - clearCurrentChat() called');
         console.trace('[ChatManager] clearCurrentChat() stack trace');
 
+        // Don't clear on project pages
+        const isProjectPage = window.location.pathname.includes('project-chat.html');
+        if (isProjectPage) {
+            console.log('[ChatManager] On project page - NOT clearing chat');
+            return;
+        }
+
         // Generate new chat ID to ensure complete privacy separation
         const newChatId = 'chat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         sessionStorage.setItem('currentChatId', newChatId);
@@ -1203,6 +1210,12 @@ class ChatManager {
 
     // Load chat history
     loadChatHistory() {
+        // Don't load chat history on project pages
+        const isProjectPage = window.location.pathname.includes('project-chat.html');
+        if (isProjectPage) {
+            console.log('[ChatManager] On project page - NOT loading chat history');
+            return;
+        }
 
         // Reset sidebar title when loading chats
         const sidebarTitle = document.querySelector('.sidebar-header h3');
@@ -1296,6 +1309,13 @@ class ChatManager {
         const messagesContainer = document.getElementById('messagesContainer');
         if (!messagesContainer) return;
 
+        // Check if we're on project page - if so, don't clear existing messages
+        const isProjectPage = window.location.pathname.includes('project-chat.html');
+        if (isProjectPage) {
+            console.log('[ChatManager] On project page - NOT clearing messages');
+            return; // Don't do anything on project pages
+        }
+
         console.log('[ChatManager] Clearing messagesContainer innerHTML in displaySavedMessages');
         messagesContainer.innerHTML = '';
         this.messages.forEach(msg => {
@@ -1369,6 +1389,13 @@ class ChatManager {
     startNewChat() {
         console.log('[ChatManager] ⚠️ CLEARING MESSAGES - startNewChat() called');
         console.trace('[ChatManager] startNewChat() stack trace');
+
+        // Don't start new chat on project pages
+        const isProjectPage = window.location.pathname.includes('project-chat.html');
+        if (isProjectPage) {
+            console.log('[ChatManager] On project page - NOT starting new chat');
+            return;
+        }
 
         // Save current chat before starting new one
         if (this.messages.length > 0) {
@@ -1588,6 +1615,13 @@ class ChatManager {
 
     // Load a specific chat
     loadChat(chatId) {
+        // Don't load different chats on project pages
+        const isProjectPage = window.location.pathname.includes('project-chat.html');
+        if (isProjectPage) {
+            console.log('[ChatManager] On project page - NOT loading different chat');
+            return;
+        }
+
         try {
             const userStorageKey = this.getUserStorageKey('allChatHistories');
             const allChats = JSON.parse(localStorage.getItem(userStorageKey) || '{}');
