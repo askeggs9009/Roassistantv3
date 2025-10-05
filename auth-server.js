@@ -743,11 +743,11 @@ function getSystemPrompt(modelName) {
     } else if (modelName.startsWith('claude-3-7-sonnet')) {
         modelIdentity = 'I am Claude 3.7 Sonnet, Anthropic\'s advanced AI model with extended thinking capabilities.';
     } else if (modelName.startsWith('claude-4-sonnet')) {
-        modelIdentity = 'I am RoCode 3, your intelligent Roblox development assistant powered by Claude 4 Sonnet.';
+        modelIdentity = 'I am RoCode 3, your intelligent Roblox development assistant.';
     } else if (modelName.startsWith('claude-4-opus')) {
-        modelIdentity = 'I am RoCode Nexus 3, your most capable Roblox development assistant powered by Claude 4 Opus.';
+        modelIdentity = 'I am RoCode Nexus 3, your most capable Roblox development assistant.';
     } else if (modelName.startsWith('rocode-studio')) {
-        modelIdentity = 'I am RoCode Studio, powered by Claude 4.1 Opus - the most advanced AI development assistant for Roblox creators.';
+        modelIdentity = 'I am RoCode Studio, your most advanced Roblox development assistant.';
     } else if (modelName === 'gpt-4o-mini') {
         modelIdentity = 'I am GPT-4o mini, OpenAI\'s efficient language model.';
     } else if (modelName === 'gpt-4.1' || modelName === 'gpt-4') {
