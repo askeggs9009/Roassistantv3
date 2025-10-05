@@ -2056,6 +2056,151 @@ app.get("/api/billing-history", authenticateToken, async (req, res) => {
     }
 });
 
+// ===== User Data Sync Endpoints =====
+
+// Save user chats to database
+app.post("/api/user/sync-chats", authenticateToken, async (req, res) => {
+    try {
+        const { chats } = req.body;
+
+        if (!chats || typeof chats !== 'object') {
+            return res.status(400).json({ error: 'Invalid chats data' });
+        }
+
+        await DatabaseManager.saveUserChats(req.user.email, chats);
+
+        res.json({
+            success: true,
+            message: 'Chats synchronized successfully',
+            count: Object.keys(chats).length
+        });
+    } catch (error) {
+        console.error('[ERROR] Failed to sync chats:', error);
+        res.status(500).json({ error: 'Failed to sync chats' });
+    }
+});
+
+// Save user scripts to database
+app.post("/api/user/sync-scripts", authenticateToken, async (req, res) => {
+    try {
+        const { scripts } = req.body;
+
+        if (!Array.isArray(scripts)) {
+            return res.status(400).json({ error: 'Invalid scripts data' });
+        }
+
+        await DatabaseManager.saveUserScripts(req.user.email, scripts);
+
+        res.json({
+            success: true,
+            message: 'Scripts synchronized successfully',
+            count: scripts.length
+        });
+    } catch (error) {
+        console.error('[ERROR] Failed to sync scripts:', error);
+        res.status(500).json({ error: 'Failed to sync scripts' });
+    }
+});
+
+// Save user projects to database
+app.post("/api/user/sync-projects", authenticateToken, async (req, res) => {
+    try {
+        const { projects } = req.body;
+
+        if (!Array.isArray(projects)) {
+            return res.status(400).json({ error: 'Invalid projects data' });
+        }
+
+        await DatabaseManager.saveUserProjects(req.user.email, projects);
+
+        res.json({
+            success: true,
+            message: 'Projects synchronized successfully',
+            count: projects.length
+        });
+    } catch (error) {
+        console.error('[ERROR] Failed to sync projects:', error);
+        res.status(500).json({ error: 'Failed to sync projects' });
+    }
+});
+
+// Get all user data from database
+app.get("/api/user/data", authenticateToken, async (req, res) => {
+    try {
+        const userData = await DatabaseManager.getUserData(req.user.email);
+
+        if (!userData) {
+            return res.status(404).json({ error: 'User data not found' });
+        }
+
+        res.json({
+            success: true,
+            data: userData
+        });
+    } catch (error) {
+        console.error('[ERROR] Failed to get user data:', error);
+        res.status(500).json({ error: 'Failed to retrieve user data' });
+    }
+});
+
+// Export all user data
+app.get("/api/user/export", authenticateToken, async (req, res) => {
+    try {
+        const user = await DatabaseManager.findUserByEmail(req.user.email);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const exportData = {
+            user: {
+                email: user.email,
+                name: user.name,
+                createdAt: user.createdAt
+            },
+            chats: user.chats || {},
+            scripts: user.scripts || [],
+            projects: user.preferences?.projects || [],
+            exportedAt: new Date().toISOString()
+        };
+
+        // Set headers for file download
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename="roassistant-backup-${Date.now()}.json"`);
+        res.json(exportData);
+    } catch (error) {
+        console.error('[ERROR] Failed to export user data:', error);
+        res.status(500).json({ error: 'Failed to export user data' });
+    }
+});
+
+// Import user data
+app.post("/api/user/import", authenticateToken, async (req, res) => {
+    try {
+        const { chats, scripts, projects } = req.body;
+
+        const updates = {};
+        if (chats) updates.chats = chats;
+        if (scripts) updates.scripts = scripts;
+        if (projects) updates['preferences.projects'] = projects;
+
+        if (Object.keys(updates).length === 0) {
+            return res.status(400).json({ error: 'No data to import' });
+        }
+
+        await DatabaseManager.updateUser(req.user.email, updates);
+
+        res.json({
+            success: true,
+            message: 'Data imported successfully',
+            imported: Object.keys(updates)
+        });
+    } catch (error) {
+        console.error('[ERROR] Failed to import user data:', error);
+        res.status(500).json({ error: 'Failed to import user data' });
+    }
+});
+
 // Get User Profile (also available at /api/user/profile)
 app.get("/api/user-profile", authenticateToken, async (req, res) => {
     try {

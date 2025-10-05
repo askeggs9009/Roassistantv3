@@ -42,6 +42,9 @@ class AuthManager {
                 const refreshedUser = JSON.parse(localStorage.getItem('user'));
                 this.showLoggedInUser(refreshedUser);
                 this.isLoggedIn = true;
+
+                // Dispatch login event for sync manager
+                window.dispatchEvent(new Event('user-logged-in'));
             } catch (error) {
                 console.log('[AuthManager] Auth check failed, redirecting to welcome page:', error);
 
@@ -154,6 +157,9 @@ class AuthManager {
 
                     // Clear hash to clean URL
                     window.location.hash = '';
+
+                    // Dispatch login event for sync manager
+                    window.dispatchEvent(new Event('user-logged-in'));
 
                     // Clear current chat and reload history for the new user
                     if (window.chatManager) {
@@ -446,6 +452,9 @@ class AuthManager {
         // Update state
         this.isLoggedIn = false;
         this.authToken = null;
+
+        // Dispatch logout event for sync manager
+        window.dispatchEvent(new Event('user-logged-out'));
 
         // Show guest user interface
         this.showGuestUser();

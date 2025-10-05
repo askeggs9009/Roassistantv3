@@ -40,6 +40,17 @@ class StorageUtils {
         try {
             const scopedKey = this.getUserKey(key);
             localStorage.setItem(scopedKey, JSON.stringify(value));
+
+            // Mark for sync
+            if (window.syncManager) {
+                if (key === 'allChatHistories') {
+                    window.syncManager.markChanged('chats');
+                } else if (key === 'roblox_ai_scripts') {
+                    window.syncManager.markChanged('scripts');
+                } else if (key === 'roblox_projects') {
+                    window.syncManager.markChanged('projects');
+                }
+            }
         } catch (error) {
             console.error(`[StorageUtils] Error writing ${key}:`, error);
         }

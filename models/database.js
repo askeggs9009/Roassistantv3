@@ -670,4 +670,82 @@ export class DatabaseManager {
             throw error;
         }
     }
+
+    // User data sync methods
+    static async saveUserChats(email, chats) {
+        try {
+            const user = await User.findOneAndUpdate(
+                { email: email.toLowerCase() },
+                {
+                    chats: chats,
+                    lastActive: new Date()
+                },
+                { new: true }
+            );
+            if (user) {
+                console.log(`[DATABASE] ✅ User chats saved: ${email} (${Object.keys(chats || {}).length} chats)`);
+            }
+            return user;
+        } catch (error) {
+            console.error('[DATABASE] Error saving user chats:', error);
+            throw error;
+        }
+    }
+
+    static async saveUserScripts(email, scripts) {
+        try {
+            const user = await User.findOneAndUpdate(
+                { email: email.toLowerCase() },
+                {
+                    scripts: scripts,
+                    lastActive: new Date()
+                },
+                { new: true }
+            );
+            if (user) {
+                console.log(`[DATABASE] ✅ User scripts saved: ${email} (${scripts?.length || 0} scripts)`);
+            }
+            return user;
+        } catch (error) {
+            console.error('[DATABASE] Error saving user scripts:', error);
+            throw error;
+        }
+    }
+
+    static async saveUserProjects(email, projects) {
+        try {
+            const user = await User.findOneAndUpdate(
+                { email: email.toLowerCase() },
+                {
+                    'preferences.projects': projects,
+                    lastActive: new Date()
+                },
+                { new: true }
+            );
+            if (user) {
+                console.log(`[DATABASE] ✅ User projects saved: ${email} (${projects?.length || 0} projects)`);
+            }
+            return user;
+        } catch (error) {
+            console.error('[DATABASE] Error saving user projects:', error);
+            throw error;
+        }
+    }
+
+    static async getUserData(email) {
+        try {
+            const user = await User.findOne({ email: email.toLowerCase() });
+            if (user) {
+                return {
+                    chats: user.chats || {},
+                    scripts: user.scripts || [],
+                    projects: user.preferences?.projects || []
+                };
+            }
+            return null;
+        } catch (error) {
+            console.error('[DATABASE] Error getting user data:', error);
+            throw error;
+        }
+    }
 }
