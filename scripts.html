@@ -606,19 +606,19 @@
             }
 
             extractScriptsFromContent(content, chatId, chatTitle, targetArray) {
-                const codeBlockRegex = /```(?:lua|luau)?\\n?([\\s\\S]*?)```/g;
+                const codeBlockRegex = /```(?:lua|luau)?\n?([\s\S]*?)```/g;
                 let match;
-                
+
                 while ((match = codeBlockRegex.exec(content)) !== null) {
                     const scriptContent = match[1].trim();
-                    
-                    if (scriptContent.length > 50 && scriptContent.includes('\\n')) {
+
+                    if (scriptContent.length > 50 && scriptContent.includes('\n')) {
                         let title = 'Untitled Script';
-                        const lines = scriptContent.split('\\n');
+                        const lines = scriptContent.split('\n');
                         const firstLine = lines[0].trim();
-                        
+
                         if (firstLine.startsWith('--')) {
-                            title = firstLine.replace(/^--\\s*/, '').trim();
+                            title = firstLine.replace(/^--\s*/, '').trim();
                         } else {
                             title = `Script from: ${chatTitle}`;
                         }
