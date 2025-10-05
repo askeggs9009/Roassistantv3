@@ -601,14 +601,6 @@
                     </h2>
                     <div class="info-grid">
                         <div class="info-row">
-                            <span class="info-label">Theme:</span>
-                            <select id="theme-select" onchange="updatePreferences()">
-                                <option value="dark">Dark Mode</option>
-                                <option value="light">Light Mode</option>
-                                <option value="auto">Auto (System)</option>
-                            </select>
-                        </div>
-                        <div class="info-row">
                             <span class="info-label">Best describe your work:</span>
                             <select id="work-type-select" onchange="handleWorkTypeChange()">
                                 <option value="">Select an option</option>
@@ -622,13 +614,6 @@
                             <select id="work-subtype-select" onchange="updatePreferences()">
                                 <!-- Options will be populated dynamically -->
                             </select>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Notifications:</span>
-                            <label class="switch">
-                                <input type="checkbox" id="notifications-toggle" onchange="updatePreferences()">
-                                <span class="slider"></span>
-                            </label>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Email Updates:</span>
@@ -912,11 +897,6 @@
         }
 
         function updatePreferencesUI(preferences) {
-            if (preferences.theme) {
-                applyTheme(preferences.theme);
-            }
-
-            document.getElementById('notifications-toggle').checked = preferences.notifications;
             document.getElementById('email-notifications-toggle').checked = preferences.emailNotifications;
 
             // Update work type preferences
@@ -1091,8 +1071,6 @@
                     document.getElementById('work-subtype-select').value : null;
 
                 const preferences = {
-                    theme: document.getElementById('theme-select').value,
-                    notifications: document.getElementById('notifications-toggle').checked,
                     emailNotifications: document.getElementById('email-notifications-toggle').checked,
                     workType: workType,
                     workSubtype: workSubtype,
