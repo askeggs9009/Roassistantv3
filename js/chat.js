@@ -8,7 +8,7 @@ class ChatManager {
         // Use the backend API URL
         this.API_BASE_URL = 'https://www.roassistant.me';
         this.currentProject = null;
-        this.projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
+        this.projects = window.storageUtils ? window.storageUtils.getUserData('roblox_projects', []) : [];
     }
 
     // Send message functionality
@@ -1218,8 +1218,12 @@ class ChatManager {
             }
         }
 
-        // Clear localStorage chat history (but keep user-specific histories)
-        localStorage.removeItem('chatHistory');
+        // Clear user-scoped chat history
+        if (window.storageUtils) {
+            window.storageUtils.removeUserData('chatHistory');
+        } else {
+            localStorage.removeItem('chatHistory');
+        }
     }
 
     // Load chat history
@@ -1260,21 +1264,25 @@ class ChatManager {
                     }
                 }
             } else {
-                // Fall back to generic chat history
-                const savedMessages = localStorage.getItem('chatHistory');
+                // Fall back to user-scoped chat history
+                const savedMessages = window.storageUtils ?
+                    window.storageUtils.getUserData('chatHistory', null) :
+                    (localStorage.getItem('chatHistory') ? JSON.parse(localStorage.getItem('chatHistory')) : null);
                 if (savedMessages) {
-                    this.messages = JSON.parse(savedMessages);
+                    this.messages = Array.isArray(savedMessages) ? savedMessages : JSON.parse(savedMessages);
                     this.displaySavedMessages();
                 }
             }
         } catch (error) {
             console.error('Error loading chat history:', error);
 
-            // Final fallback to generic chat history
-            const savedMessages = localStorage.getItem('chatHistory');
+            // Final fallback to user-scoped chat history
+            const savedMessages = window.storageUtils ?
+                window.storageUtils.getUserData('chatHistory', null) :
+                (localStorage.getItem('chatHistory') ? JSON.parse(localStorage.getItem('chatHistory')) : null);
             if (savedMessages) {
                 try {
-                    this.messages = JSON.parse(savedMessages);
+                    this.messages = Array.isArray(savedMessages) ? savedMessages : JSON.parse(savedMessages);
                     this.displaySavedMessages();
                 } catch (err) {
                     console.error('Error loading fallback chat history:', err);
@@ -1348,7 +1356,12 @@ class ChatManager {
                 projectContext: this.currentProject
             };
             localStorage.setItem(userStorageKey, JSON.stringify(allChats));
-            localStorage.setItem('chatHistory', JSON.stringify(this.messages));
+            // Save current chat history in user-scoped storage
+            if (window.storageUtils) {
+                window.storageUtils.setUserData('chatHistory', this.messages);
+            } else {
+                localStorage.setItem('chatHistory', JSON.stringify(this.messages));
+            }
 
             // Update recent chats display
             this.updateRecentChats();
@@ -1373,6 +1386,10 @@ class ChatManager {
 
     // Get user-specific storage key
     getUserStorageKey(baseKey) {
+        // Use centralized storageUtils if available
+        if (window.storageUtils) {
+            return window.storageUtils.getUserKey(baseKey);
+        }
         const userId = this.getCurrentUserId();
         return `${baseKey}_${userId}`;
     }
@@ -1406,7 +1423,11 @@ class ChatManager {
             messagesContainer.innerHTML = '';
         }
         this.clearAttachedFiles();
-        localStorage.removeItem('chatHistory');
+        if (window.storageUtils) {
+            window.storageUtils.removeUserData('chatHistory');
+        } else {
+            localStorage.removeItem('chatHistory');
+        }
 
         // Reset chat title
         // Reset chat title

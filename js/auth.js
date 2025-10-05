@@ -433,6 +433,11 @@ class AuthManager {
     async logout() {
         console.log('[AuthManager] Logging out user...');
 
+        // Clear user-scoped data first
+        if (window.storageUtils) {
+            window.storageUtils.clearUserData();
+        }
+
         // Clear auth data
         localStorage.removeItem('authToken');
         localStorage.removeItem('token');

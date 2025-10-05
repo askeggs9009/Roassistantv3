@@ -1,7 +1,7 @@
 // Scripts Management Module
 class ScriptsManager {
     constructor() {
-        this.scripts = JSON.parse(localStorage.getItem('roblox_ai_scripts') || '[]');
+        this.scripts = window.storageUtils ? window.storageUtils.getUserData('roblox_ai_scripts', []) : [];
         this.migrateOldScripts();
     }
 
@@ -21,7 +21,9 @@ class ScriptsManager {
         });
         
         if (needsSave) {
-            localStorage.setItem('roblox_ai_scripts', JSON.stringify(this.scripts));
+            if (window.storageUtils) {
+                window.storageUtils.setUserData('roblox_ai_scripts', this.scripts);
+            }
         }
     }
 
@@ -110,7 +112,7 @@ class ScriptsManager {
 
     // Load all scripts from all chats
     loadAllScriptsFromChats() {
-        const allChats = JSON.parse(localStorage.getItem('allChatHistories') || '{}');
+        const allChats = window.storageUtils ? window.storageUtils.getUserData('allChatHistories', {}) : {};
         const allScripts = [];
         
         // Extract scripts from all saved chats
@@ -134,9 +136,11 @@ class ScriptsManager {
         
         // Sort by creation date (newest first)
         this.scripts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        
+
         // Save updated scripts
-        localStorage.setItem('roblox_ai_scripts', JSON.stringify(this.scripts));
+        if (window.storageUtils) {
+            window.storageUtils.setUserData('roblox_ai_scripts', this.scripts);
+        }
     }
 
     // Extract scripts from content
@@ -335,8 +339,10 @@ class ScriptsManager {
         
         if (confirm('Are you sure you want to delete this script?')) {
             this.scripts = this.scripts.filter(s => s.id !== scriptId);
-            localStorage.setItem('roblox_ai_scripts', JSON.stringify(this.scripts));
-            
+            if (window.storageUtils) {
+                window.storageUtils.setUserData('roblox_ai_scripts', this.scripts);
+            }
+
             if (uiManager.currentView === 'scripts') {
                 this.loadScriptsView();
             }
@@ -391,7 +397,9 @@ class ScriptsManager {
         }
         
         if (scriptsAdded) {
-            localStorage.setItem('roblox_ai_scripts', JSON.stringify(this.scripts));
+            if (window.storageUtils) {
+                window.storageUtils.setUserData('roblox_ai_scripts', this.scripts);
+            }
         }
     }
 }
