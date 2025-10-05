@@ -53,11 +53,6 @@ class SyncUI {
                         style="background: #21262d; border: 1px solid #30363d; border-radius: 4px; color: #8b949e; padding: 0.25rem 0.5rem; cursor: pointer; font-size: 0.7rem; transition: all 0.2s;">
                     💾
                 </button>
-                <button id="syncNowBtn"
-                        title="Sync now"
-                        style="background: #21262d; border: 1px solid #30363d; border-radius: 4px; color: #8b949e; padding: 0.25rem 0.5rem; cursor: pointer; font-size: 0.7rem; transition: all 0.2s;">
-                    🔄
-                </button>
             </div>
         `;
 
@@ -65,7 +60,6 @@ class SyncUI {
         sidebarFooter.insertBefore(syncIndicator, sidebarFooter.firstChild);
 
         // Add event listeners
-        document.getElementById('syncNowBtn').addEventListener('click', () => this.handleSyncNow());
         document.getElementById('exportDataBtn').addEventListener('click', () => this.handleExport());
 
         // Initial update
@@ -102,32 +96,6 @@ class SyncUI {
             syncIcon.textContent = '⏸️';
             syncText.textContent = 'Not synced';
             syncText.style.color = '#8b949e';
-        }
-    }
-
-    // Handle sync now button
-    async handleSyncNow() {
-        if (!window.authManager || !window.authManager.isLoggedIn) {
-            this.showNotification('Please log in to sync your data', 'warning');
-            return;
-        }
-
-        if (!window.syncManager) return;
-
-        const btn = document.getElementById('syncNowBtn');
-        const originalText = btn.textContent;
-        btn.textContent = '⌛';
-        btn.disabled = true;
-
-        try {
-            await window.syncManager.forceSyncNow();
-            this.showNotification('Data synchronized successfully!', 'success');
-        } catch (error) {
-            this.showNotification('Failed to sync data', 'error');
-        } finally {
-            btn.textContent = originalText;
-            btn.disabled = false;
-            this.updateSyncIndicator();
         }
     }
 
