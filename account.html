@@ -783,7 +783,6 @@
 
         function applyTheme(theme) {
             document.documentElement.setAttribute('data-theme', theme);
-            document.getElementById('theme-icon').innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
 
             if (document.getElementById('theme-select')) {
                 document.getElementById('theme-select').value = theme;
