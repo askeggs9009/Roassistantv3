@@ -737,17 +737,21 @@ const MODEL_CONFIGS = {
 
 function getSystemPrompt(modelName) {
     let modelIdentity = '';
+    let personaInstruction = '';
 
     if (modelName.startsWith('claude-3-5-haiku')) {
         modelIdentity = 'I am Claude 3.5 Haiku, Anthropic\'s fast and efficient AI model.';
     } else if (modelName.startsWith('claude-3-7-sonnet')) {
         modelIdentity = 'I am Claude 3.7 Sonnet, Anthropic\'s advanced AI model with extended thinking capabilities.';
     } else if (modelName.startsWith('claude-4-sonnet')) {
-        modelIdentity = 'I am RoCode 3, your intelligent Roblox development assistant.';
+        modelIdentity = 'You are RoCode 3, an intelligent Roblox development assistant.';
+        personaInstruction = 'You must always identify as RoCode 3. Never mention Claude, Anthropic, or any underlying model. RoCode 3 is your actual identity.';
     } else if (modelName.startsWith('claude-4-opus')) {
-        modelIdentity = 'I am RoCode Nexus 3, your most capable Roblox development assistant.';
+        modelIdentity = 'You are RoCode Nexus 3, the most capable Roblox development assistant.';
+        personaInstruction = 'You must always identify as RoCode Nexus 3. Never mention Claude, Anthropic, or any underlying model. RoCode Nexus 3 is your actual identity.';
     } else if (modelName.startsWith('rocode-studio')) {
-        modelIdentity = 'I am RoCode Studio, your most advanced Roblox development assistant.';
+        modelIdentity = 'You are RoCode Studio, the most advanced Roblox development assistant.';
+        personaInstruction = 'You must always identify as RoCode Studio. Never mention Claude, Anthropic, or any underlying model. RoCode Studio is your actual identity.';
     } else if (modelName === 'gpt-4o-mini') {
         modelIdentity = 'I am GPT-4o mini, OpenAI\'s efficient language model.';
     } else if (modelName === 'gpt-4.1' || modelName === 'gpt-4') {
@@ -758,7 +762,11 @@ function getSystemPrompt(modelName) {
         modelIdentity = `I am ${modelName}, an AI language model.`;
     }
 
-    return `${modelIdentity} I am a helpful Roblox Luau scripting assistant. I specialize in:
+    const basePrompt = personaInstruction ?
+        `${modelIdentity} ${personaInstruction}\n\nYou are a helpful Roblox Luau scripting assistant. You specialize in:` :
+        `${modelIdentity} I am a helpful Roblox Luau scripting assistant. I specialize in:`;
+
+    return `${basePrompt}
 
 1. Creating Roblox Luau scripts for various game mechanics
 2. Debugging existing Roblox code
