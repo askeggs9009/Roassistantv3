@@ -785,17 +785,17 @@
                 });
 
                 // Strings
-                highlighted = highlighted.replace(/"([^"\\\\]|\\\\.)*"/g, '<span style="color: #a5d6ff;">"$1"</span>');
-                highlighted = highlighted.replace(/'([^'\\\\]|\\\\.)*'/g, '<span style="color: #a5d6ff;">\'$1\'</span>');
+                highlighted = highlighted.replace(/"([^"\\]|\\.)*"/g, '<span style="color: #a5d6ff;">"$1"</span>');
+                highlighted = highlighted.replace(/'([^'\\]|\\.)*'/g, '<span style="color: #a5d6ff;">\'$1\'</span>');
 
                 // Comments
                 highlighted = highlighted.replace(/--.*$/gm, '<span style="color: #8b949e;">$&</span>');
 
                 // Numbers
-                highlighted = highlighted.replace(/\\b\\d+(\\.\\d+)?\\b/g, '<span style="color: #79c0ff;">$&</span>');
+                highlighted = highlighted.replace(/\b\d+(\.\d+)?\b/g, '<span style="color: #79c0ff;">$&</span>');
 
                 // Functions
-                highlighted = highlighted.replace(/\\b([a-zA-Z_][a-zA-Z0-9_]*)(\\s*\\()/g, '<span style="color: #d2a8ff;">$1</span>$2');
+                highlighted = highlighted.replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)(\s*\()/g, '<span style="color: #d2a8ff;">$1</span>$2');
 
                 return highlighted;
             }
