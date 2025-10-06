@@ -3314,12 +3314,20 @@ app.post("/ask-stream", optionalAuthenticateToken, checkUsageLimits, async (req,
             }
         }
 
-        const config = MODEL_CONFIGS[model];
+        // 🚀 OPTIMIZATION: AI-powered model routing (GPT-4o-mini decides)
+        let selectedModel = model;
+        const analysis = await analyzePromptWithAI(prompt, openai);
+        if (analysis.suggestedModel === 'claude-3-5-haiku' && model.startsWith('claude')) {
+            selectedModel = 'claude-3-5-haiku';
+            console.log(`[MODEL ROUTING STREAM] ${analysis.analyzedBy} chose Haiku for simple task (95% cheaper)`);
+        }
+
+        const config = MODEL_CONFIGS[selectedModel];
         if (!config) {
             return res.status(400).json({ error: "Invalid model selected" });
         }
 
-        const systemPrompt = getSystemPrompt(model);
+        const systemPrompt = getSystemPrompt(selectedModel);
 
         // Set up SSE headers
         res.setHeader('Content-Type', 'text/event-stream');
@@ -3416,7 +3424,12 @@ app.post("/ask-stream", optionalAuthenticateToken, checkUsageLimits, async (req,
                 outputTokens: outputTokens,
                 totalTokens: totalTokens
             },
-            model: model,
+            model: selectedModel,
+            requestedModel: model !== selectedModel ? model : undefined,
+            routingAnalysis: analysis.analyzedBy ? {
+                analyzedBy: analysis.analyzedBy,
+                complexity: analysis.complexity
+            } : undefined,
             provider: config.provider
         };
 
