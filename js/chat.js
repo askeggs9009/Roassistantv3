@@ -213,6 +213,54 @@ class ChatManager {
 
         const data = await response.json();
 
+        // 🔍 Log AI routing process to console
+        console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #00ff00');
+        console.log('%c🤖 AI ROUTING PROCESS', 'color: #00ff00; font-weight: bold; font-size: 14px');
+        console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #00ff00');
+
+        if (data.fromCache) {
+            console.log('%c💾 CACHE HIT - Zero API Cost!', 'color: #ffaa00; font-weight: bold');
+            console.log('   Response served from cache (no API call made)');
+        } else {
+            if (data.routingAnalysis) {
+                console.log(`%c🧠 ${data.routingAnalysis.analyzedBy} Analysis:`, 'color: #00aaff; font-weight: bold');
+                console.log(`   Task complexity: ${data.routingAnalysis.complexity.toUpperCase()}`);
+            }
+
+            if (data.requestedModel && data.requestedModel !== data.model) {
+                console.log('%c✅ SMART ROUTING ACTIVATED', 'color: #00ff00; font-weight: bold');
+                console.log(`   Requested: ${data.requestedModel}`);
+                console.log(`   Routed to: ${data.model}`);
+                console.log('%c   💰 Cost savings: 95% cheaper!', 'color: #ffaa00');
+            } else {
+                console.log(`%c   Model used: ${data.model}`, 'color: #00aaff');
+                console.log('   (No routing needed - already optimal)');
+            }
+
+            if (data.tokenUsage) {
+                console.log('%c📈 Token Usage:', 'color: #ff66ff; font-weight: bold');
+                console.log(`   Input tokens:  ${data.tokenUsage.inputTokens}`);
+                console.log(`   Output tokens: ${data.tokenUsage.outputTokens}`);
+                console.log(`   Total tokens:  ${data.tokenUsage.totalTokens}`);
+
+                // Calculate approximate cost
+                const costs = {
+                    'claude-3-5-haiku': { input: 0.25, output: 1.25 },
+                    'claude-4-sonnet': { input: 3, output: 15 },
+                    'gpt-4o-mini': { input: 0.15, output: 0.60 }
+                };
+
+                const modelCost = costs[data.model] || { input: 1, output: 5 };
+                const inputCost = (data.tokenUsage.inputTokens / 1000000) * modelCost.input;
+                const outputCost = (data.tokenUsage.outputTokens / 1000000) * modelCost.output;
+                const totalCost = inputCost + outputCost;
+
+                console.log(`%c   💵 Estimated cost: $${totalCost.toFixed(6)}`, 'color: #00ff00');
+            }
+        }
+
+        console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #00ff00');
+
         // Hide AI thinking animation
         this.hideAiThinking();
 

@@ -3697,6 +3697,10 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             reply: reply,
             model: selectedModel,
             requestedModel: model !== selectedModel ? model : undefined,
+            routingAnalysis: analysis.analyzedBy ? {
+                analyzedBy: analysis.analyzedBy,
+                complexity: analysis.complexity
+            } : undefined,
             provider: config.provider,
             tokenUsage: {
                 inputTokens: inputTokens,
