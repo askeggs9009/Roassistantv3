@@ -178,6 +178,7 @@ class ChatManager {
 
             // Check if streaming is enabled
             const streamingEnabled = window.streamingEnabled || false;
+            console.log(`[ChatManager] Streaming mode: ${streamingEnabled}`);
 
             if (streamingEnabled) {
                 // Use streaming endpoint (don't await - it handles its own state)
@@ -201,6 +202,8 @@ class ChatManager {
 
     // Handle regular non-streaming response
     async handleRegularResponse(requestBody, headers) {
+        console.log('[ChatManager] Sending request to /ask endpoint...');
+
         // Show AI thinking animation
         this.showAiThinking();
 
@@ -211,7 +214,10 @@ class ChatManager {
             body: JSON.stringify(requestBody)
         });
 
+        console.log(`[ChatManager] Response status: ${response.status}`);
+
         const data = await response.json();
+        console.log('[ChatManager] Response data received:', data);
 
         // 🔍 Log AI routing process to console
         console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #00ff00');
