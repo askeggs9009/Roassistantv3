@@ -20,13 +20,6 @@ dotenv.config();
 // Import Resend for email functionality
 import { sendVerificationEmailWithResend, testResendConnection } from './resend-email.js';
 
-// Import optimization modules
-import { optimizeAIRequest, storeOptimizedResponse, getOptimizationMetrics } from './services/optimization-integrator.js';
-import { tokenBudgetManager } from './services/token-budget-manager.js';
-import { queueForBatch, canBatch } from './services/batch-request-handler.js';
-import { getOptimizedSystemPrompt, TOKEN_LIMITS } from './config/prompt-optimization.js';
-import TESTING_CONFIG from './config/testing-config.js';
-
 // Email service status
 let emailServiceAvailable = true;
 
@@ -699,24 +692,91 @@ function recordUsage(userIdentifier, model) {
     guestUsage.set(userIdentifier, usage);
 }
 
-// TESTING CONFIG: Only Haiku and Sonnet 4.5
 const MODEL_CONFIGS = {
+    "gpt-4o-mini": {
+        model: "gpt-4o-mini",
+        requiresPlan: 'free',
+        provider: 'openai'
+    },
+    "gpt-4.1": {
+        model: "gpt-4",
+        requiresPlan: 'pro',
+        provider: 'openai'
+    },
+    "gpt-5": {
+        model: "gpt-4-turbo-preview",
+        requiresPlan: 'enterprise',
+        provider: 'openai'
+    },
     "claude-3-5-haiku": {
         model: "claude-3-5-haiku-20241022",
         requiresPlan: 'free',
         provider: 'anthropic'
     },
+    "claude-3-7-sonnet": {
+        model: "claude-3-7-sonnet-20250219",
+        requiresPlan: 'pro',
+        provider: 'anthropic'
+    },
     "claude-4-sonnet": {
-        model: "claude-3-5-sonnet-20241022",  // Sonnet 4.5
+        model: "claude-sonnet-4-20250514",
         requiresPlan: 'free',
+        provider: 'anthropic'
+    },
+    "claude-4-opus": {
+        model: "claude-opus-4-20250514",
+        requiresPlan: 'pro',  // Pro and Enterprise only
+        provider: 'anthropic'
+    },
+    "rocode-studio": {
+        model: "claude-sonnet-4-5-20250929",
+        requiresPlan: 'enterprise',
         provider: 'anthropic'
     }
 };
 
-// Optimized system prompt function
-function getSystemPrompt(modelName, optimizationMode = 'codeOnly') {
-    // Use optimized prompts from our configuration
-    return getOptimizedSystemPrompt(modelName, optimizationMode);
+function getSystemPrompt(modelName) {
+    let modelIdentity = '';
+    let personaInstruction = '';
+
+    if (modelName.startsWith('claude-3-5-haiku')) {
+        modelIdentity = 'I am Claude 3.5 Haiku, Anthropic\'s fast and efficient AI model.';
+    } else if (modelName.startsWith('claude-3-7-sonnet')) {
+        modelIdentity = 'I am Claude 3.7 Sonnet, Anthropic\'s advanced AI model with extended thinking capabilities.';
+    } else if (modelName.startsWith('claude-4-sonnet')) {
+        modelIdentity = 'You are RoCode 3, an intelligent Roblox development assistant.';
+        personaInstruction = 'You must always identify as RoCode 3. Never mention Claude, Anthropic, or any underlying model. RoCode 3 is your actual identity.';
+    } else if (modelName.startsWith('claude-4-opus')) {
+        modelIdentity = 'You are RoCode Nexus 3, the most capable Roblox development assistant.';
+        personaInstruction = 'You must always identify as RoCode Nexus 3. Never mention Claude, Anthropic, or any underlying model. RoCode Nexus 3 is your actual identity.';
+    } else if (modelName.startsWith('rocode-studio')) {
+        modelIdentity = 'You are RoCode Studio, the most advanced Roblox development assistant.';
+        personaInstruction = 'You must always identify as RoCode Studio. Never mention Claude, Anthropic, or any underlying model. RoCode Studio is your actual identity.';
+    } else if (modelName === 'gpt-4o-mini') {
+        modelIdentity = 'I am GPT-4o mini, OpenAI\'s efficient language model.';
+    } else if (modelName === 'gpt-4.1' || modelName === 'gpt-4') {
+        modelIdentity = 'I am GPT-4, OpenAI\'s advanced language model.';
+    } else if (modelName === 'gpt-5' || modelName === 'gpt-4-turbo-preview') {
+        modelIdentity = 'I am GPT-4 Turbo, OpenAI\'s latest and most advanced model.';
+    } else {
+        modelIdentity = `I am ${modelName}, an AI language model.`;
+    }
+
+    const basePrompt = personaInstruction ?
+        `${modelIdentity} ${personaInstruction}\n\nYou are a helpful Roblox Luau scripting assistant. You specialize in:` :
+        `${modelIdentity} I am a helpful Roblox Luau scripting assistant. I specialize in:`;
+
+    return `${basePrompt}
+
+1. Creating Roblox Luau scripts for various game mechanics
+2. Debugging existing Roblox code
+3. Explaining Roblox Studio concepts and best practices
+4. Helping with game development workflows
+5. Providing optimized and clean code solutions
+
+When providing code, always use proper Luau syntax and follow Roblox scripting best practices. Include comments to explain complex logic and suggest where scripts should be placed (ServerScriptService, StarterPlayerScripts, etc.).
+
+Be helpful, clear, and provide working examples when possible.`;
 }
 
 // Token estimation function using Anthropic's count_tokens API
@@ -3451,10 +3511,9 @@ app.post("/ask-stream", optionalAuthenticateToken, checkUsageLimits, async (req,
     }
 });
 
-// Optimized /ask endpoint with all cost-saving features
 app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) => {
     try {
-        const { prompt, model = "claude-4-sonnet", messages = [], projectContext } = req.body;
+        const { prompt, model = "gpt-4.1" } = req.body;
         const isAuthenticated = req.user !== null;
 
         // Check if authenticated user can use this model
