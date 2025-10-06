@@ -312,6 +312,19 @@
                         <!-- File attachments area -->
                         <div class="file-attachments" id="fileAttachments" style="display: none;"></div>
 
+                        <!-- Roblox Auto-Send Toggle -->
+                        <div class="roblox-toggle-container" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <input type="checkbox" id="robloxAutoSend" style="width: 16px; height: 16px; cursor: pointer;">
+                            <label for="robloxAutoSend" style="cursor: pointer; user-select: none; font-size: 14px; color: rgba(255,255,255,0.8); flex: 1;">
+                                <i class="fas fa-cube" style="margin-right: 6px;"></i>
+                                Auto-send to Roblox Studio
+                            </label>
+                            <div id="robloxStatus" style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: rgba(255,255,255,0.6);">
+                                <div id="robloxStatusDot" style="width: 8px; height: 8px; border-radius: 50%; background: #666;"></div>
+                                <span id="robloxStatusText">Checking...</span>
+                            </div>
+                        </div>
+
                         <!-- Input row -->
                         <div class="input-row">
                             <button class="model-button" id="modelButton" onclick="toggleModelSelector()" title="Select AI Model">
@@ -540,6 +553,200 @@
             sidebar.classList.toggle('active');
         }
 
+        // ============================================
+        // ROBLOX AUTO-SEND FUNCTIONALITY
+        // ============================================
+
+        let robloxConnected = false;
+
+        // Check Roblox connection status
+        async function checkRobloxConnection() {
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/roblox/connection-status`);
+                const data = await response.json();
+
+                robloxConnected = data.connected && data.clients > 0;
+
+                const statusDot = document.getElementById('robloxStatusDot');
+                const statusText = document.getElementById('robloxStatusText');
+                const checkbox = document.getElementById('robloxAutoSend');
+
+                if (robloxConnected) {
+                    statusDot.style.background = '#57f287'; // Green
+                    statusText.textContent = 'Connected';
+                    checkbox.disabled = false;
+                } else {
+                    statusDot.style.background = '#ed4245'; // Red
+                    statusText.textContent = 'Not Connected';
+                    checkbox.disabled = true;
+                    checkbox.checked = false;
+                }
+            } catch (error) {
+                console.error('[Roblox] Failed to check connection:', error);
+                const statusDot = document.getElementById('robloxStatusDot');
+                const statusText = document.getElementById('robloxStatusText');
+                statusDot.style.background = '#666';
+                statusText.textContent = 'Error';
+            }
+        }
+
+        // Send code to Roblox Studio
+        async function sendCodeToRoblox(codeBlock) {
+            try {
+                const scriptName = codeBlock.summary || codeBlock.id || 'GeneratedScript';
+
+                const response = await fetch(`${getApiBaseUrl()}/roblox/send-script`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: scriptName,
+                        code: codeBlock.code,
+                        scriptType: 'Script',
+                        location: 'ServerScriptService'
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log(`[Roblox] ✅ Sent script: ${scriptName}`);
+                    return { success: true, scriptName };
+                } else {
+                    console.error(`[Roblox] ❌ Failed to send script: ${scriptName}`);
+                    return { success: false, scriptName };
+                }
+            } catch (error) {
+                console.error('[Roblox] Error sending script:', error);
+                return { success: false, scriptName: codeBlock.summary || 'Unknown' };
+            }
+        }
+
+        // Auto-send all code blocks to Roblox if toggle is enabled
+        async function autoSendToRoblox() {
+            const checkbox = document.getElementById('robloxAutoSend');
+
+            // Check if toggle is enabled and we're connected
+            if (!checkbox.checked || !robloxConnected) {
+                return;
+            }
+
+            // Get all code blocks from global storage
+            if (!window._codeBlocks || Object.keys(window._codeBlocks).length === 0) {
+                console.log('[Roblox] No code blocks to send');
+                return;
+            }
+
+            console.log(`[Roblox] Auto-sending ${Object.keys(window._codeBlocks).length} code blocks...`);
+
+            const results = [];
+            for (const blockId in window._codeBlocks) {
+                const result = await sendCodeToRoblox(window._codeBlocks[blockId]);
+                results.push(result);
+            }
+
+            // Show notification
+            const successCount = results.filter(r => r.success).length;
+            const totalCount = results.length;
+
+            if (successCount > 0) {
+                // Create a simple toast notification
+                showRobloxNotification(`✅ Sent ${successCount}/${totalCount} script(s) to Roblox Studio`);
+            } else {
+                showRobloxNotification(`❌ Failed to send scripts to Roblox Studio`, 'error');
+            }
+        }
+
+        // Show notification toast
+        function showRobloxNotification(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                background: ${type === 'success' ? '#57f287' : '#ed4245'};
+                color: #000;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 500;
+                z-index: 10000;
+                animation: slideIn 0.3s ease-out;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            // Add animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(400px); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Save toggle state to localStorage
+        function saveRobloxToggleState() {
+            const checkbox = document.getElementById('robloxAutoSend');
+            localStorage.setItem('robloxAutoSend', checkbox.checked ? 'true' : 'false');
+        }
+
+        // Load toggle state from localStorage
+        function loadRobloxToggleState() {
+            const saved = localStorage.getItem('robloxAutoSend');
+            if (saved === 'true') {
+                const checkbox = document.getElementById('robloxAutoSend');
+                checkbox.checked = true;
+            }
+        }
+
+        // Hook into ChatManager to trigger auto-send when message completes
+        function setupRobloxAutoSendHook() {
+            // Check connection every 5 seconds
+            checkRobloxConnection();
+            setInterval(checkRobloxConnection, 5000);
+
+            // Load saved toggle state
+            loadRobloxToggleState();
+
+            // Save state when checkbox changes
+            const checkbox = document.getElementById('robloxAutoSend');
+            checkbox.addEventListener('change', saveRobloxToggleState);
+
+            // Override the original addMessage to trigger auto-send when assistant messages complete
+            if (window.chatManager) {
+                const originalAddMessage = window.chatManager.addMessage.bind(window.chatManager);
+
+                window.chatManager.addMessage = function(role, content, options) {
+                    const result = originalAddMessage(role, content, options);
+
+                    // If this is an assistant message, trigger auto-send after a short delay
+                    // to ensure code blocks are processed
+                    if (role === 'assistant') {
+                        setTimeout(() => {
+                            autoSendToRoblox();
+                        }, 500);
+                    }
+
+                    return result;
+                };
+            }
+        }
+
+        // ============================================
+        // END ROBLOX FUNCTIONALITY
+        // ============================================
+
         // Load project when DOM is ready
         window.addEventListener('DOMContentLoaded', function() {
             console.log('Project chat DOM loaded');
@@ -573,6 +780,9 @@
             };
 
             setTimeout(setProjectInChatManager, 100);
+
+            // Initialize Roblox auto-send functionality
+            setTimeout(setupRobloxAutoSendHook, 500);
         });
     </script>
 
