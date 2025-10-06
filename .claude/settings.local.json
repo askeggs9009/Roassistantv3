@@ -28,7 +28,22 @@
       "Bash(python:*)",
       "Bash(git reset:*)",
       "Bash(find:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(railway status:*)",
+      "Bash(railway up:*)",
+      "Bash(railway variables:*)",
+      "Bash(railway logs:*)",
+      "Bash(railway list:*)",
+      "mcp__reactbits__search_components",
+      "mcp__reactbits__get_component_demo",
+      "Bash(do if grep -q \"cursor-trail\" \"$file\")",
+      "Bash(then sed -i '/<script src=\"\"js\\/animations\\/cursor-trail.js\"\"><\\/script>/d' \"$file\")",
+      "Bash(fi)",
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(chmod:*)",
+      "Bash(tree:*)",
+      "WebFetch(domain:devforum.roblox.com)",
+      "WebFetch(domain:create.roblox.com)"
     ],
     "deny": [],
     "ask": []

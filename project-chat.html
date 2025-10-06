@@ -98,6 +98,89 @@
         }
 
         .usage-fill.danger {
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+        }
+
+        /* Roblox Connection Status Styles */
+        .roblox-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.8rem;
+            background: rgba(33, 38, 45, 0.6);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-right: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .roblox-status:hover {
+            background: rgba(33, 38, 45, 0.8);
+            border-color: #484f58;
+        }
+
+        .roblox-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .roblox-status-dot.connected {
+            background: #57f287;
+            box-shadow: 0 0 8px rgba(87, 242, 135, 0.6);
+        }
+
+        .roblox-status-dot.disconnected {
+            background: #ed4245;
+            box-shadow: 0 0 8px rgba(237, 66, 69, 0.6);
+        }
+
+        .roblox-status-text {
+            color: #8b949e;
+            font-weight: 500;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Send to Roblox Button */
+        .send-to-roblox-btn {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s ease;
+            margin-left: 0.5rem;
+        }
+
+        .send-to-roblox-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+        }
+
+        .send-to-roblox-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .send-to-roblox-btn i {
+            font-size: 0.9rem;
+        }
+
+        .usage-fill.danger {
             background: linear-gradient(90deg, #f85149, #da3633);
         }
     </style>
@@ -202,6 +285,12 @@
                         <div class="usage-fill" id="usageFill" style="width: 0%;"></div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Roblox Connection Status -->
+            <div class="roblox-status" id="robloxStatus" title="Click to check connection">
+                <div class="roblox-status-dot disconnected" id="robloxStatusDot"></div>
+                <span class="roblox-status-text" id="robloxStatusText">Roblox Studio</span>
             </div>
         </div>
 
@@ -500,7 +589,6 @@
 
     <!-- ReactBits-Inspired Animations -->
     <script src="js/animations/dot-grid-background.js"></script>
-    <script src="js/animations/cursor-trail.js"></script>
     <script src="js/animations/blur-text.js"></script>
     <script src="js/animations/micro-interactions.js"></script>
     <script src="js/animations/animations-init.js"></script>
@@ -602,6 +690,217 @@
                     }
                 });
             }
+
+            // ================================================
+            // ROBLOX STUDIO INTEGRATION
+            // ================================================
+
+            // Check Roblox connection status
+            async function checkRobloxConnection() {
+                try {
+                    const response = await fetch('/roblox/connection-status');
+                    const data = await response.json();
+
+                    const statusDot = document.getElementById('robloxStatusDot');
+                    const statusText = document.getElementById('robloxStatusText');
+
+                    if (data.connected) {
+                        statusDot.classList.remove('disconnected');
+                        statusDot.classList.add('connected');
+                        statusText.textContent = 'Roblox Studio ✓';
+                    } else {
+                        statusDot.classList.remove('connected');
+                        statusDot.classList.add('disconnected');
+                        statusText.textContent = 'Roblox Studio';
+                    }
+                } catch (error) {
+                    console.error('Error checking Roblox connection:', error);
+                }
+            }
+
+            // Send script to Roblox Studio
+            async function sendToRoblox(code, name, scriptType = 'Script', location = 'ServerScriptService') {
+                try {
+                    // Show loading state
+                    const buttons = document.querySelectorAll('.send-to-roblox-btn');
+                    buttons.forEach(btn => {
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+                    });
+
+                    const response = await fetch('/roblox/send-script', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            name: name || 'GeneratedScript',
+                            code: code,
+                            scriptType: scriptType,
+                            location: location
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Show success message
+                        showToast(data.sentImmediately ?
+                            '✅ Script sent to Roblox Studio!' :
+                            '📥 Script queued for Roblox Studio', 'success');
+
+                        // Reset button state
+                        setTimeout(() => {
+                            buttons.forEach(btn => {
+                                btn.disabled = false;
+                                btn.innerHTML = '<i class="fas fa-cube"></i> Send to Roblox';
+                            });
+                        }, 2000);
+                    } else {
+                        throw new Error(data.error || 'Failed to send script');
+                    }
+                } catch (error) {
+                    console.error('Error sending to Roblox:', error);
+                    showToast('❌ Failed to send script: ' + error.message, 'error');
+
+                    // Reset button state
+                    const buttons = document.querySelectorAll('.send-to-roblox-btn');
+                    buttons.forEach(btn => {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-cube"></i> Send to Roblox';
+                    });
+                }
+            }
+
+            // Show toast notification
+            function showToast(message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+                    position: fixed;
+                    top: 80px;
+                    right: 20px;
+                    background: ${type === 'success' ? '#238636' : type === 'error' ? '#da3633' : '#1f6feb'};
+                    color: white;
+                    padding: 1rem 1.5rem;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                    z-index: 10000;
+                    font-size: 0.9rem;
+                    animation: slideIn 0.3s ease;
+                `;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.style.animation = 'slideOut 0.3s ease';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+
+            // Add "Send to Roblox" buttons to code blocks
+            function addRobloxButtons() {
+                const codeBlocks = document.querySelectorAll('pre code');
+
+                codeBlocks.forEach((codeBlock) => {
+                    // Skip if button already exists
+                    if (codeBlock.parentElement.querySelector('.send-to-roblox-btn')) {
+                        return;
+                    }
+
+                    // Only add button for Lua/Luau code
+                    const code = codeBlock.textContent;
+                    const isLua = codeBlock.className.includes('lua') ||
+                                  codeBlock.className.includes('luau') ||
+                                  code.includes('game:GetService') ||
+                                  code.includes('script.Parent') ||
+                                  code.includes('function') && code.includes('end');
+
+                    if (isLua) {
+                        // Create button
+                        const button = document.createElement('button');
+                        button.className = 'send-to-roblox-btn';
+                        button.innerHTML = '<i class="fas fa-cube"></i> Send to Roblox';
+                        button.onclick = () => {
+                            // Extract script name from context if possible
+                            let scriptName = 'GeneratedScript';
+                            const messageDiv = codeBlock.closest('.message');
+                            if (messageDiv) {
+                                const text = messageDiv.textContent;
+                                const match = text.match(/script\s+(?:named|called)\s+["']?(\w+)["']?/i);
+                                if (match) {
+                                    scriptName = match[1];
+                                }
+                            }
+
+                            sendToRoblox(code, scriptName);
+                        };
+
+                        // Add button to code block container
+                        const pre = codeBlock.parentElement;
+                        if (pre.tagName === 'PRE') {
+                            pre.style.position = 'relative';
+                            button.style.position = 'absolute';
+                            button.style.top = '8px';
+                            button.style.right = '8px';
+                            pre.appendChild(button);
+                        }
+                    }
+                });
+            }
+
+            // Initialize Roblox integration
+            checkRobloxConnection();
+            setInterval(checkRobloxConnection, 5000); // Check every 5 seconds
+
+            // Add Roblox buttons when messages are added
+            const messagesContainer = document.getElementById('messagesContainer');
+            if (messagesContainer) {
+                const observer = new MutationObserver(() => {
+                    addRobloxButtons();
+                });
+
+                observer.observe(messagesContainer, {
+                    childList: true,
+                    subtree: true
+                });
+            }
+
+            // Add click handler for connection status
+            document.getElementById('robloxStatus')?.addEventListener('click', () => {
+                checkRobloxConnection();
+                showToast('🔄 Checking connection...', 'info');
+            });
+
+            // Add CSS animations for toast
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from {
+                        transform: translateX(400px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+
+                @keyframes slideOut {
+                    from {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                    to {
+                        transform: translateX(400px);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+
+            // ================================================
+            // END ROBLOX INTEGRATION
+            // ================================================
         });
     </script>
 </body>

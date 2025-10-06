@@ -3909,6 +3909,182 @@ setInterval(() => {
     }
 }, 60 * 60 * 1000); // Clean up every hour
 
+// ================================================
+// ROBLOX STUDIO PLUGIN INTEGRATION
+// ================================================
+
+// State for Roblox plugin connections
+const robloxClients = new Set();
+const robloxCommandQueue = [];
+const robloxStatus = {
+    connected: false,
+    lastHeartbeat: null,
+    pluginInfo: null
+};
+
+/**
+ * SSE endpoint for Roblox Studio plugin
+ * Streams commands in real-time
+ */
+app.get("/roblox/stream", (req, res) => {
+    console.log('[ROBLOX] Plugin connected via SSE');
+
+    // Set SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // Disable buffering for nginx
+
+    // Send initial connection message
+    res.write(`data: ${JSON.stringify({ type: 'connected', message: 'Welcome to RoAssistant!' })}\n\n`);
+
+    // Add client to set
+    robloxClients.add(res);
+    robloxStatus.connected = true;
+    robloxStatus.lastHeartbeat = new Date();
+
+    // Send any queued commands
+    while (robloxCommandQueue.length > 0) {
+        const command = robloxCommandQueue.shift();
+        res.write(`data: ${JSON.stringify(command)}\n\n`);
+    }
+
+    // Heartbeat to keep connection alive
+    const heartbeatInterval = setInterval(() => {
+        if (res.writableEnded) {
+            clearInterval(heartbeatInterval);
+            return;
+        }
+        res.write(`data: ${JSON.stringify({ type: 'ping', timestamp: new Date().toISOString() })}\n\n`);
+    }, 20000); // Every 20 seconds
+
+    // Handle client disconnect
+    req.on('close', () => {
+        console.log('[ROBLOX] Plugin disconnected');
+        clearInterval(heartbeatInterval);
+        robloxClients.delete(res);
+
+        if (robloxClients.size === 0) {
+            robloxStatus.connected = false;
+        }
+
+        res.end();
+    });
+});
+
+/**
+ * Send a script command to Roblox Studio
+ * POST /roblox/send-script
+ */
+app.post("/roblox/send-script", (req, res) => {
+    try {
+        const { name, code, scriptType = "Script", location = "ServerScriptService" } = req.body;
+
+        if (!name || !code) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields: name and code'
+            });
+        }
+
+        const command = {
+            type: 'script',
+            name,
+            code,
+            scriptType,
+            location,
+            timestamp: new Date().toISOString()
+        };
+
+        // If plugin is connected, send immediately
+        if (robloxClients.size > 0) {
+            let sent = false;
+            robloxClients.forEach(client => {
+                if (!client.writableEnded) {
+                    client.write(`data: ${JSON.stringify(command)}\n\n`);
+                    sent = true;
+                }
+            });
+
+            if (sent) {
+                console.log('[ROBLOX] ✅ Script sent to plugin:', name);
+                return res.json({
+                    success: true,
+                    message: 'Script sent to Roblox Studio',
+                    sentImmediately: true
+                });
+            }
+        }
+
+        // Otherwise, queue for when plugin connects
+        robloxCommandQueue.push(command);
+        console.log('[ROBLOX] 📥 Script queued (plugin not connected):', name);
+
+        res.json({
+            success: true,
+            message: 'Script queued. Will be sent when plugin connects.',
+            queued: true,
+            queueLength: robloxCommandQueue.length
+        });
+
+    } catch (error) {
+        console.error('[ROBLOX] Error sending script:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * Receive status updates from Roblox Studio plugin
+ * POST /roblox/status
+ */
+app.post("/roblox/status", (req, res) => {
+    try {
+        const { status, message, scriptName, timestamp } = req.body;
+
+        console.log('[ROBLOX] Status update:', status, '-', message);
+
+        // Update plugin status
+        robloxStatus.lastHeartbeat = new Date(timestamp || Date.now());
+        robloxStatus.pluginInfo = { status, message, scriptName };
+
+        // Broadcast status to all connected web clients if needed
+        // (You can implement WebSocket broadcasting here if needed)
+
+        res.json({
+            success: true,
+            received: true
+        });
+
+    } catch (error) {
+        console.error('[ROBLOX] Error receiving status:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * Get current Roblox plugin connection status
+ * GET /roblox/connection-status
+ */
+app.get("/roblox/connection-status", (req, res) => {
+    res.json({
+        connected: robloxStatus.connected,
+        clients: robloxClients.size,
+        lastHeartbeat: robloxStatus.lastHeartbeat,
+        queueLength: robloxCommandQueue.length,
+        pluginInfo: robloxStatus.pluginInfo
+    });
+});
+
+// ================================================
+// END ROBLOX INTEGRATION
+// ================================================
+
 app.get("/", (req, res) => {
     res.redirect('/index.html');
 });
