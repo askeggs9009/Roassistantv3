@@ -558,6 +558,7 @@
         // ============================================
 
         let robloxConnected = false;
+        let sentCodeBlocks = new Set(); // Track which code blocks we've already sent
 
         // Check Roblox connection status
         async function checkRobloxConnection() {
@@ -623,7 +624,7 @@
             }
         }
 
-        // Auto-send all code blocks to Roblox if toggle is enabled
+        // Auto-send NEW code blocks to Roblox if toggle is enabled
         async function autoSendToRoblox() {
             const checkbox = document.getElementById('robloxAutoSend');
 
@@ -638,11 +639,25 @@
                 return;
             }
 
-            console.log(`[Roblox] Auto-sending ${Object.keys(window._codeBlocks).length} code blocks...`);
+            // Find NEW code blocks that haven't been sent yet
+            const newBlocks = [];
+            for (const blockId in window._codeBlocks) {
+                if (!sentCodeBlocks.has(blockId)) {
+                    newBlocks.push(window._codeBlocks[blockId]);
+                    sentCodeBlocks.add(blockId); // Mark as sent
+                }
+            }
+
+            if (newBlocks.length === 0) {
+                console.log('[Roblox] No new code blocks to send');
+                return;
+            }
+
+            console.log(`[Roblox] Auto-sending ${newBlocks.length} NEW code block(s)...`);
 
             const results = [];
-            for (const blockId in window._codeBlocks) {
-                const result = await sendCodeToRoblox(window._codeBlocks[blockId]);
+            for (const block of newBlocks) {
+                const result = await sendCodeToRoblox(block);
                 results.push(result);
             }
 
