@@ -1,6 +1,42 @@
 // Smart Prompt Optimizer
 // Reduces token usage while keeping natural, helpful responses
 
+// AI-powered complexity analysis using GPT-4o-mini (most cost-efficient)
+export async function analyzePromptWithAI(prompt, openaiClient) {
+    try {
+        const response = await openaiClient.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You analyze Roblox Luau coding requests. Reply with ONLY "simple" or "complex". Simple tasks: syntax fixes, small edits, basic scripts, common patterns. Complex tasks: full systems, advanced logic, multiplayer, security, architecture.'
+                },
+                {
+                    role: 'user',
+                    content: prompt
+                }
+            ],
+            max_tokens: 10,
+            temperature: 0
+        });
+
+        const analysis = response.choices[0].message.content.toLowerCase().trim();
+        const isSimple = analysis.includes('simple');
+
+        console.log(`[AI ROUTING] GPT-4o-mini analyzed as: ${isSimple ? 'SIMPLE' : 'COMPLEX'}`);
+
+        return {
+            complexity: isSimple ? 'simple' : 'complex',
+            suggestedModel: isSimple ? 'claude-3-5-haiku' : 'claude-4-sonnet',
+            analyzedBy: 'gpt-4o-mini'
+        };
+    } catch (error) {
+        console.error('[AI ROUTING] Error analyzing with GPT-4o-mini, falling back to pattern matching:', error.message);
+        // Fallback to pattern matching if API fails
+        return analyzePromptComplexity(prompt);
+    }
+}
+
 export function getOptimizedSystemPrompt(modelName) {
     // Shorter, more efficient system prompts
     // Key: Be concise and helpful, not verbose, but still natural
@@ -79,5 +115,6 @@ export function analyzePromptComplexity(prompt) {
 export default {
     getOptimizedSystemPrompt,
     needsDetailedExplanation,
-    analyzePromptComplexity
+    analyzePromptComplexity,
+    analyzePromptWithAI
 };

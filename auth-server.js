@@ -21,7 +21,7 @@ dotenv.config();
 import { sendVerificationEmailWithResend, testResendConnection } from './resend-email.js';
 
 // Import optimization services
-import { getOptimizedSystemPrompt, analyzePromptComplexity } from './services/smart-prompt-optimizer.js';
+import { getOptimizedSystemPrompt, analyzePromptWithAI } from './services/smart-prompt-optimizer.js';
 import simpleCache from './services/simple-cache.js';
 import { trimConversation } from './services/conversation-trimmer.js';
 
@@ -3534,12 +3534,12 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             }
         }
 
-        // 🚀 OPTIMIZATION 2: Smart model routing (use Haiku for simple tasks)
+        // 🚀 OPTIMIZATION 2: AI-powered model routing (GPT-4o-mini decides)
         let selectedModel = model;
-        const analysis = analyzePromptComplexity(prompt);
+        const analysis = await analyzePromptWithAI(prompt, openai);
         if (analysis.suggestedModel === 'claude-3-5-haiku' && model.startsWith('claude')) {
             selectedModel = 'claude-3-5-haiku';
-            console.log(`[MODEL ROUTING] Using Haiku for simple task (95% cheaper)`);
+            console.log(`[MODEL ROUTING] ${analysis.analyzedBy} chose Haiku for simple task (95% cheaper)`);
         }
 
         const config = MODEL_CONFIGS[selectedModel];
