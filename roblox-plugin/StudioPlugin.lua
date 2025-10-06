@@ -161,9 +161,15 @@ end
 local function handleMessage(message)
 	print("[RoAssistant] 📥 Received message:", message)
 
-	-- Parse the message
+	-- SSE messages come with "data: " prefix, strip it
+	local jsonString = message
+	if string.sub(message, 1, 6) == "data: " then
+		jsonString = string.sub(message, 7) -- Remove "data: " prefix
+	end
+
+	-- Parse the JSON
 	local success, data = pcall(function()
-		return HttpService:JSONDecode(message)
+		return HttpService:JSONDecode(jsonString)
 	end)
 
 	if not success then
