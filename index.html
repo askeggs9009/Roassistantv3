@@ -1224,20 +1224,29 @@
             const newModel = model;
             console.log('Model changed to:', newModel);
 
-            // Check if trying to select Nexus when limit is reached
+            // Check if trying to select Nexus when limit is reached (only for free users)
             if (newModel === 'claude-4-opus') {
                 const nexusCounter = document.getElementById('nexusUsageCounter');
                 if (nexusCounter) {
                     const counterText = nexusCounter.textContent;
-                    const [used, limit] = counterText.split('/').map(Number);
-                    if (used >= limit) {
-                        // Show upgrade popup instead of switching
-                        if (window.chatManager) {
-                            window.chatManager.showNexusUpgradePopup();
+
+                    // If counter shows "Unlimited", user has pro/enterprise plan - allow access
+                    if (counterText === 'Unlimited') {
+                        console.log('User has unlimited Nexus access (Pro/Enterprise plan)');
+                    } else {
+                        // Free user - check limit
+                        const [used, limit] = counterText.split('/').map(Number);
+
+                        // Only block if limit is valid and reached
+                        if (!isNaN(used) && !isNaN(limit) && limit > 0 && used >= limit) {
+                            // Show upgrade popup instead of switching
+                            if (window.chatManager) {
+                                window.chatManager.showNexusUpgradePopup();
+                            }
+                            // Hide dropdown
+                            document.getElementById('modelDropdown').style.display = 'none';
+                            return; // Don't switch to the model
                         }
-                        // Hide dropdown
-                        document.getElementById('modelDropdown').style.display = 'none';
-                        return; // Don't switch to the model
                     }
                 }
             }

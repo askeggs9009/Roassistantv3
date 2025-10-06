@@ -947,7 +947,25 @@ class ChatManager {
     updateNexusCounter(used, limit) {
         const nexusCounter = document.getElementById('nexusUsageCounter');
         if (nexusCounter) {
-            nexusCounter.textContent = `${used}/${limit}`;
+            // If limit is -1, user has unlimited access (Pro/Enterprise plan)
+            if (limit === -1) {
+                nexusCounter.textContent = 'Unlimited';
+                nexusCounter.style.background = 'linear-gradient(45deg, #58a6ff, #1f6feb)';
+                nexusCounter.style.color = 'white';
+                nexusCounter.style.padding = '0.25rem 0.5rem';
+                nexusCounter.style.borderRadius = '12px';
+                nexusCounter.style.fontSize = '0.7rem';
+                nexusCounter.style.fontWeight = '600';
+            } else {
+                // Free plan - show usage counter
+                nexusCounter.textContent = `${used}/${limit}`;
+                nexusCounter.style.background = '';
+                nexusCounter.style.color = '';
+                nexusCounter.style.padding = '';
+                nexusCounter.style.borderRadius = '';
+                nexusCounter.style.fontSize = '';
+                nexusCounter.style.fontWeight = '';
+            }
 
             // Don't auto-show popup - only show when user tries to use Nexus
             // The popup will be triggered by sendMessage() when they hit the limit
