@@ -20,6 +20,11 @@ dotenv.config();
 // Import Resend for email functionality
 import { sendVerificationEmailWithResend, testResendConnection } from './resend-email.js';
 
+// Import optimization services
+import { getOptimizedSystemPrompt, analyzePromptComplexity } from './services/smart-prompt-optimizer.js';
+import simpleCache from './services/simple-cache.js';
+import { trimConversation } from './services/conversation-trimmer.js';
+
 // Email service status
 let emailServiceAvailable = true;
 
@@ -735,48 +740,9 @@ const MODEL_CONFIGS = {
     }
 };
 
+// Optimized system prompt - shorter and more efficient
 function getSystemPrompt(modelName) {
-    let modelIdentity = '';
-    let personaInstruction = '';
-
-    if (modelName.startsWith('claude-3-5-haiku')) {
-        modelIdentity = 'I am Claude 3.5 Haiku, Anthropic\'s fast and efficient AI model.';
-    } else if (modelName.startsWith('claude-3-7-sonnet')) {
-        modelIdentity = 'I am Claude 3.7 Sonnet, Anthropic\'s advanced AI model with extended thinking capabilities.';
-    } else if (modelName.startsWith('claude-4-sonnet')) {
-        modelIdentity = 'You are RoCode 3, an intelligent Roblox development assistant.';
-        personaInstruction = 'You must always identify as RoCode 3. Never mention Claude, Anthropic, or any underlying model. RoCode 3 is your actual identity.';
-    } else if (modelName.startsWith('claude-4-opus')) {
-        modelIdentity = 'You are RoCode Nexus 3, the most capable Roblox development assistant.';
-        personaInstruction = 'You must always identify as RoCode Nexus 3. Never mention Claude, Anthropic, or any underlying model. RoCode Nexus 3 is your actual identity.';
-    } else if (modelName.startsWith('rocode-studio')) {
-        modelIdentity = 'You are RoCode Studio, the most advanced Roblox development assistant.';
-        personaInstruction = 'You must always identify as RoCode Studio. Never mention Claude, Anthropic, or any underlying model. RoCode Studio is your actual identity.';
-    } else if (modelName === 'gpt-4o-mini') {
-        modelIdentity = 'I am GPT-4o mini, OpenAI\'s efficient language model.';
-    } else if (modelName === 'gpt-4.1' || modelName === 'gpt-4') {
-        modelIdentity = 'I am GPT-4, OpenAI\'s advanced language model.';
-    } else if (modelName === 'gpt-5' || modelName === 'gpt-4-turbo-preview') {
-        modelIdentity = 'I am GPT-4 Turbo, OpenAI\'s latest and most advanced model.';
-    } else {
-        modelIdentity = `I am ${modelName}, an AI language model.`;
-    }
-
-    const basePrompt = personaInstruction ?
-        `${modelIdentity} ${personaInstruction}\n\nYou are a helpful Roblox Luau scripting assistant. You specialize in:` :
-        `${modelIdentity} I am a helpful Roblox Luau scripting assistant. I specialize in:`;
-
-    return `${basePrompt}
-
-1. Creating Roblox Luau scripts for various game mechanics
-2. Debugging existing Roblox code
-3. Explaining Roblox Studio concepts and best practices
-4. Helping with game development workflows
-5. Providing optimized and clean code solutions
-
-When providing code, always use proper Luau syntax and follow Roblox scripting best practices. Include comments to explain complex logic and suggest where scripts should be placed (ServerScriptService, StarterPlayerScripts, etc.).
-
-Be helpful, clear, and provide working examples when possible.`;
+    return getOptimizedSystemPrompt(modelName);
 }
 
 // Token estimation function using Anthropic's count_tokens API
@@ -3516,6 +3482,18 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
         const { prompt, model = "gpt-4.1" } = req.body;
         const isAuthenticated = req.user !== null;
 
+        // 🚀 OPTIMIZATION 1: Check cache for common requests (before expensive checks)
+        const cachedResponse = simpleCache.get(prompt);
+        if (cachedResponse) {
+            console.log('[CACHE HIT] Returning cached response - zero API cost!');
+            return res.json({
+                reply: cachedResponse,
+                model: 'cached',
+                fromCache: true,
+                tokenUsage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 }
+            });
+        }
+
         // Check if authenticated user can use this model
         if (isAuthenticated) {
             const user = await DatabaseManager.findUserByEmail(req.user.email);
@@ -3556,7 +3534,15 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             }
         }
 
-        const config = MODEL_CONFIGS[model];
+        // 🚀 OPTIMIZATION 2: Smart model routing (use Haiku for simple tasks)
+        let selectedModel = model;
+        const analysis = analyzePromptComplexity(prompt);
+        if (analysis.suggestedModel === 'claude-3-5-haiku' && model.startsWith('claude')) {
+            selectedModel = 'claude-3-5-haiku';
+            console.log(`[MODEL ROUTING] Using Haiku for simple task (95% cheaper)`);
+        }
+
+        const config = MODEL_CONFIGS[selectedModel];
         if (!config) {
             return res.status(400).json({ error: "Invalid model selected" });
         }
@@ -3564,8 +3550,8 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
         let response;
         let reply;
 
-        const systemPrompt = getSystemPrompt(model);
-        console.log(`[DEBUG] Model: ${model}, Provider: ${config.provider}`);
+        const systemPrompt = getSystemPrompt(selectedModel);
+        console.log(`[DEBUG] Model: ${selectedModel} (requested: ${model}), Provider: ${config.provider}`);
         console.log(`[DEBUG] System prompt starts with: ${systemPrompt.substring(0, 100)}...`);
 
         // Estimate token usage before making the API call
@@ -3667,6 +3653,10 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             }
         }
 
+        // Store successful response in cache for future requests
+        simpleCache.set(prompt, reply);
+        console.log(`[CACHE] Stored response for future use`);
+
         const userIdentifier = getUserIdentifier(req);
         const startTime = Date.now();
 
@@ -3705,7 +3695,8 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
 
         let responseData = {
             reply: reply,
-            model: model,
+            model: selectedModel,
+            requestedModel: model !== selectedModel ? model : undefined,
             provider: config.provider,
             tokenUsage: {
                 inputTokens: inputTokens,
