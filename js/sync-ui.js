@@ -8,62 +8,16 @@ class SyncUI {
     init() {
         if (this.initialized) return;
 
-        // Add sync indicator to sidebar footer
-        this.addSyncIndicator();
-
-        // Update sync indicator periodically
-        setInterval(() => {
-            this.updateSyncIndicator();
-        }, 5000); // Update every 5 seconds
-
+        // Sync UI disabled - automatic sync runs in background
         this.initialized = true;
-        console.log('[SyncUI] Initialized');
+        console.log('[SyncUI] Initialized (UI disabled - automatic sync only)');
     }
 
-    // Add sync indicator to sidebar
+    // Add sync indicator to sidebar - DISABLED
     addSyncIndicator() {
-        const sidebarFooter = document.querySelector('.sidebar-footer');
-        if (!sidebarFooter) {
-            console.warn('[SyncUI] Sidebar footer not found');
-            return;
-        }
-
-        // Create sync indicator container
-        const syncIndicator = document.createElement('div');
-        syncIndicator.id = 'syncIndicator';
-        syncIndicator.style.cssText = `
-            padding: 0.5rem 1rem;
-            border-top: 1px solid #30363d;
-            font-size: 0.75rem;
-            color: #8b949e;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.5rem;
-        `;
-
-        syncIndicator.innerHTML = `
-            <div id="syncStatus" style="display: flex; align-items: center; gap: 0.5rem; flex: 1;">
-                <span id="syncIcon">⏸️</span>
-                <span id="syncText">Sync paused</span>
-            </div>
-            <div style="display: flex; gap: 0.25rem;">
-                <button id="exportDataBtn"
-                        title="Export all data"
-                        style="background: #21262d; border: 1px solid #30363d; border-radius: 4px; color: #8b949e; padding: 0.25rem 0.5rem; cursor: pointer; font-size: 0.7rem; transition: all 0.2s;">
-                    💾
-                </button>
-            </div>
-        `;
-
-        // Insert before user profile
-        sidebarFooter.insertBefore(syncIndicator, sidebarFooter.firstChild);
-
-        // Add event listeners
-        document.getElementById('exportDataBtn').addEventListener('click', () => this.handleExport());
-
-        // Initial update
-        this.updateSyncIndicator();
+        // Sync indicator removed - system now syncs automatically in the background
+        console.log('[SyncUI] Sync indicator disabled - automatic sync is active');
+        return;
     }
 
     // Update sync indicator
