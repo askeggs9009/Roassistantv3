@@ -2124,6 +2124,59 @@ app.post("/api/user/sync-projects", authenticateToken, async (req, res) => {
     }
 });
 
+// Sync all user data at once (for page unload)
+app.post("/api/user/sync-all", async (req, res) => {
+    try {
+        // Get token from query string (sendBeacon can't set headers)
+        const token = req.query.token;
+
+        if (!token) {
+            return res.status(401).json({ error: 'No token provided' });
+        }
+
+        // Verify token manually
+        let userEmail;
+        try {
+            const decoded = jwt.verify(token, JWT_SECRET);
+            userEmail = decoded.email;
+        } catch (error) {
+            return res.status(403).json({ error: 'Invalid token' });
+        }
+
+        const { chats, scripts, projects } = req.body;
+
+        // Save all data in parallel
+        const savePromises = [];
+
+        if (chats && typeof chats === 'object') {
+            savePromises.push(DatabaseManager.saveUserChats(userEmail, chats));
+        }
+
+        if (scripts && Array.isArray(scripts)) {
+            savePromises.push(DatabaseManager.saveUserScripts(userEmail, scripts));
+        }
+
+        if (projects && Array.isArray(projects)) {
+            savePromises.push(DatabaseManager.saveUserProjects(userEmail, projects));
+        }
+
+        await Promise.all(savePromises);
+
+        res.json({
+            success: true,
+            message: 'All data synchronized successfully',
+            synced: {
+                chats: chats ? Object.keys(chats).length : 0,
+                scripts: scripts ? scripts.length : 0,
+                projects: projects ? projects.length : 0
+            }
+        });
+    } catch (error) {
+        console.error('[ERROR] Failed to sync all data:', error);
+        res.status(500).json({ error: 'Failed to sync data' });
+    }
+});
+
 // Get all user data from database
 app.get("/api/user/data", authenticateToken, async (req, res) => {
     try {

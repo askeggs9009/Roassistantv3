@@ -36,6 +36,20 @@ class SyncManager {
             console.log('[SyncManager] User logged out, stopping sync');
             this.stopAutoSync();
         });
+
+        // Sync when user navigates away or closes page
+        window.addEventListener('beforeunload', () => {
+            console.log('[SyncManager] Page closing/navigating, syncing data...');
+            this.syncOnUnload();
+        });
+
+        // Sync when user switches tabs or minimizes browser
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                console.log('[SyncManager] Page hidden, syncing data...');
+                this.syncToServer();
+            }
+        });
     }
 
     // Mark data as changed (needs sync)
@@ -323,6 +337,33 @@ class SyncManager {
             console.error('[SyncManager] Failed to import data:', error);
             alert('Failed to import data. Please check the file format and try again.');
             return false;
+        }
+    }
+
+    // Sync on page unload (synchronous)
+    syncOnUnload() {
+        if (!this.isLoggedIn()) {
+            return;
+        }
+
+        // Mark all data as changed to ensure everything is synced
+        this.pendingChanges = { chats: true, scripts: true, projects: true };
+
+        const token = this.getAuthToken();
+        const chats = window.storageUtils.getUserData('allChatHistories', {});
+        const scripts = window.storageUtils.getUserData('roblox_ai_scripts', []);
+        const projects = window.storageUtils.getUserData('roblox_projects', []);
+
+        // Use sendBeacon for reliable sync on page unload
+        const data = JSON.stringify({ chats, scripts, projects });
+        const blob = new Blob([data], { type: 'application/json' });
+
+        // Send to a combined sync endpoint
+        try {
+            navigator.sendBeacon(`${this.API_BASE_URL}/api/user/sync-all?token=${encodeURIComponent(token)}`, blob);
+            console.log('[SyncManager] ✅ Unload sync sent via beacon');
+        } catch (error) {
+            console.error('[SyncManager] Beacon sync failed:', error);
         }
     }
 
