@@ -807,43 +807,36 @@
                         return;
                     }
 
-                    // Only add button for Lua/Luau code
+                    // Add button to ALL code blocks (this is a Roblox-only website)
                     const code = codeBlock.textContent;
-                    const isLua = codeBlock.className.includes('lua') ||
-                                  codeBlock.className.includes('luau') ||
-                                  code.includes('game:GetService') ||
-                                  code.includes('script.Parent') ||
-                                  code.includes('function') && code.includes('end');
 
-                    if (isLua) {
-                        // Create button
-                        const button = document.createElement('button');
-                        button.className = 'send-to-roblox-btn';
-                        button.innerHTML = '<i class="fas fa-cube"></i> Send to Roblox';
-                        button.onclick = () => {
-                            // Extract script name from context if possible
-                            let scriptName = 'GeneratedScript';
-                            const messageDiv = codeBlock.closest('.message');
-                            if (messageDiv) {
-                                const text = messageDiv.textContent;
-                                const match = text.match(/script\s+(?:named|called)\s+["']?(\w+)["']?/i);
-                                if (match) {
-                                    scriptName = match[1];
-                                }
+                    // Create button
+                    const button = document.createElement('button');
+                    button.className = 'send-to-roblox-btn';
+                    button.innerHTML = '<i class="fas fa-cube"></i> Send to Roblox';
+                    button.onclick = () => {
+                        // Extract script name from context if possible
+                        let scriptName = 'GeneratedScript';
+                        const messageDiv = codeBlock.closest('.message');
+                        if (messageDiv) {
+                            const text = messageDiv.textContent;
+                            const match = text.match(/script\s+(?:named|called)\s+["']?(\w+)["']?/i);
+                            if (match) {
+                                scriptName = match[1];
                             }
-
-                            sendToRoblox(code, scriptName);
-                        };
-
-                        // Add button to code block container
-                        const pre = codeBlock.parentElement;
-                        if (pre.tagName === 'PRE') {
-                            pre.style.position = 'relative';
-                            button.style.position = 'absolute';
-                            button.style.top = '8px';
-                            button.style.right = '8px';
-                            pre.appendChild(button);
                         }
+
+                        sendToRoblox(code, scriptName);
+                    };
+
+                    // Add button to code block container
+                    const pre = codeBlock.parentElement;
+                    if (pre.tagName === 'PRE') {
+                        pre.style.position = 'relative';
+                        button.style.position = 'absolute';
+                        button.style.top = '8px';
+                        button.style.right = '8px';
+                        pre.appendChild(button);
                     }
                 });
             }
