@@ -43,7 +43,9 @@
       "Bash(chmod:*)",
       "Bash(tree:*)",
       "WebFetch(domain:devforum.roblox.com)",
-      "WebFetch(domain:create.roblox.com)"
+      "WebFetch(domain:create.roblox.com)",
+      "Bash(curl -s \"https://www.roassistant.me/project-chat.html\")",
+      "WebFetch(domain:www.roassistant.me)"
     ],
     "deny": [],
     "ask": []
