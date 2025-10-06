@@ -211,7 +211,8 @@ export class BatchRequestHandler {
             if (complexity !== 'simple') allSimple = false;
         });
 
-        if (hasComplex) return 'claude-4-opus';
+        // TESTING: Only use Haiku and Sonnet 4.5
+        if (hasComplex) return 'claude-4-sonnet';  // Use Sonnet 4.5 for complex
         if (allSimple) return 'claude-3-5-haiku';
         return 'claude-4-sonnet';
     }

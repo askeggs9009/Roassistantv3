@@ -5,6 +5,7 @@
 export class ModelRouter {
     constructor() {
         // Model capabilities and costs (per 1M tokens)
+        // TESTING MODE: Only Haiku and Sonnet 4.5
         this.models = {
             'claude-3-5-haiku': {
                 name: 'Claude 3.5 Haiku',
@@ -18,26 +19,15 @@ export class ModelRouter {
                 bestFor: ['simple edits', 'syntax fixes', 'explanations', 'small scripts']
             },
             'claude-4-sonnet': {
-                name: 'RoCode 3 (Claude Sonnet)',
+                name: 'Claude Sonnet 4.5',
                 provider: 'anthropic',
-                model: 'claude-sonnet-4-20250514',
+                model: 'claude-3-5-sonnet-20241022',  // Updated to Sonnet 4.5
                 costInput: 3.00,
                 costOutput: 15.00,
                 speed: 'medium',
                 capability: 'advanced',
                 maxTokens: 8192,
-                bestFor: ['complex scripts', 'game systems', 'debugging', 'refactoring']
-            },
-            'claude-4-opus': {
-                name: 'RoCode Nexus 3 (Claude Opus)',
-                provider: 'anthropic',
-                model: 'claude-opus-4-20250514',
-                costInput: 15.00,
-                costOutput: 75.00,
-                speed: 'slow',
-                capability: 'expert',
-                maxTokens: 16384,
-                bestFor: ['architecture', 'complex systems', 'optimization', 'security']
+                bestFor: ['complex scripts', 'game systems', 'debugging', 'refactoring', 'architecture']
             }
         };
 
@@ -199,8 +189,8 @@ export class ModelRouter {
                 complexity = 'complex';
                 taskType = 'architecture';
                 reason = 'Complex task requiring advanced capabilities';
-                suggestedModel = 'claude-4-opus';
-                alternativeModel = 'claude-4-sonnet';
+                suggestedModel = 'claude-4-sonnet';  // Use Sonnet 4.5 for complex tasks
+                alternativeModel = 'claude-3-5-haiku';
                 break;
             }
         }
