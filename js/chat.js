@@ -221,10 +221,6 @@ class ChatManager {
 
             // Show token usage for this response
             if (data.tokenUsage) {
-                // Add model info to tokenUsage if available
-                if (data.modelUsed) {
-                    data.tokenUsage.modelUsed = data.modelUsed;
-                }
                 this.displayTokenUsage(data.tokenUsage);
             }
 
@@ -300,10 +296,6 @@ class ChatManager {
                             } else if (data.type === 'complete') {
                                 // Show token usage
                                 if (data.tokenUsage) {
-                                    // Add model info to tokenUsage if available
-                                    if (data.modelUsed) {
-                                        data.tokenUsage.modelUsed = data.modelUsed;
-                                    }
                                     this.displayTokenUsage(data.tokenUsage);
                                 }
                                 // Update usage info if provided
@@ -1006,23 +998,11 @@ class ChatManager {
         const messagesContainer = document.getElementById('messagesContainer');
         if (!messagesContainer || !tokenUsage) return;
 
-        // Create token usage indicator with model info
+        // Create token usage indicator
         const tokenDiv = document.createElement('div');
         tokenDiv.className = 'token-usage-indicator';
-
-        // Determine model display name
-        let modelDisplay = tokenUsage.modelUsed || 'Unknown';
-        if (modelDisplay === 'claude-3-5-haiku') {
-            modelDisplay = '🚀 Haiku';
-        } else if (modelDisplay === 'claude-4-sonnet') {
-            modelDisplay = '⚡ Sonnet 4.5';
-        } else if (modelDisplay === 'CACHED') {
-            modelDisplay = '💾 Cached';
-        }
-
         tokenDiv.innerHTML = `
             <div class="token-info">
-                <span class="model-label" style="color: #10b981; font-weight: bold; margin-right: 10px;">[${modelDisplay}]</span>
                 <span class="token-label">Tokens Used:</span>
                 <span class="token-count">
                     <span class="input-tokens" title="Input tokens">${tokenUsage.inputTokens || 0}</span>
