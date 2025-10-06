@@ -799,23 +799,21 @@
 
             // Add "Send to Roblox" buttons to code blocks
             function addRobloxButtons() {
-                const codeBlocks = document.querySelectorAll('pre code');
+                // Handle both regular code blocks AND artifact code previews
+                const regularCodeBlocks = document.querySelectorAll('pre code');
+                const artifactCodePreviews = document.querySelectorAll('.artifact-code-preview');
 
-                codeBlocks.forEach((codeBlock) => {
-                    // Skip if button already exists
+                // Handle regular code blocks
+                regularCodeBlocks.forEach((codeBlock) => {
                     if (codeBlock.parentElement.querySelector('.send-to-roblox-btn')) {
                         return;
                     }
 
-                    // Add button to ALL code blocks (this is a Roblox-only website)
                     const code = codeBlock.textContent;
-
-                    // Create button
                     const button = document.createElement('button');
                     button.className = 'send-to-roblox-btn';
                     button.innerHTML = '<i class="fas fa-cube"></i> Send to Roblox';
                     button.onclick = () => {
-                        // Extract script name from context if possible
                         let scriptName = 'GeneratedScript';
                         const messageDiv = codeBlock.closest('.message');
                         if (messageDiv) {
@@ -825,11 +823,9 @@
                                 scriptName = match[1];
                             }
                         }
-
                         sendToRoblox(code, scriptName);
                     };
 
-                    // Add button to code block container
                     const pre = codeBlock.parentElement;
                     if (pre.tagName === 'PRE') {
                         pre.style.position = 'relative';
@@ -838,6 +834,36 @@
                         button.style.right = '8px';
                         pre.appendChild(button);
                     }
+                });
+
+                // Handle artifact code previews
+                artifactCodePreviews.forEach((artifact) => {
+                    if (artifact.querySelector('.send-to-roblox-btn')) {
+                        return;
+                    }
+
+                    const artifactId = artifact.dataset.artifactId;
+                    if (!artifactId || !window._codeBlocks || !window._codeBlocks[artifactId]) {
+                        return;
+                    }
+
+                    const codeData = window._codeBlocks[artifactId];
+                    const button = document.createElement('button');
+                    button.className = 'send-to-roblox-btn';
+                    button.innerHTML = '<i class="fas fa-cube"></i> Send to Roblox';
+                    button.style.position = 'absolute';
+                    button.style.top = '12px';
+                    button.style.right = '40px';
+                    button.style.zIndex = '10';
+
+                    button.onclick = (e) => {
+                        e.stopPropagation(); // Prevent artifact from opening
+                        const scriptName = codeData.title || 'GeneratedScript';
+                        sendToRoblox(codeData.code, scriptName);
+                    };
+
+                    artifact.style.position = 'relative';
+                    artifact.appendChild(button);
                 });
             }
 
