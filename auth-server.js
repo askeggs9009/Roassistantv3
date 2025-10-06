@@ -724,7 +724,7 @@ const MODEL_CONFIGS = {
         provider: 'anthropic'
     },
     "claude-4-sonnet": {
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-5-20250929",
         requiresPlan: 'free',
         provider: 'anthropic'
     },
