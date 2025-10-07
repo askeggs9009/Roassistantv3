@@ -175,7 +175,7 @@ local function buildExplorerHierarchy()
 	}
 
 	for _, service in ipairs(services) do
-		local serviceData = serializeInstance(service, 0, 4) -- Max depth 4 for services
+		local serviceData = serializeInstance(service, 0, 2) -- Reduced to depth 2 to minimize payload
 		if serviceData then
 			table.insert(hierarchy, serviceData)
 		end
@@ -524,9 +524,18 @@ local function connect()
 		sendStatus("connected", "Plugin connected to RoAssistant")
 		updateConnectionStatus()
 
-		-- Send initial Explorer data
-		task.wait(0.5) -- Small delay to ensure connection is stable
-		sendExplorerData()
+		-- Send initial Explorer data in a separate task to avoid blocking
+		task.spawn(function()
+			task.wait(1) -- Wait 1 second for connection to stabilize
+			print("[RoAssistant] 📂 Attempting to send Explorer data...")
+
+			local explorerSuccess, explorerError = pcall(sendExplorerData)
+			if not explorerSuccess then
+				warn("[RoAssistant] ❌ Failed to send initial Explorer data:", explorerError)
+			else
+				print("[RoAssistant] ✅ Initial Explorer data sent")
+			end
+		end)
 
 		-- Watch for Explorer changes
 		if not explorerChangeConnection then

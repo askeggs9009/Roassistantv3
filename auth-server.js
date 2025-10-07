@@ -4094,7 +4094,10 @@ app.post("/roblox/explorer", (req, res) => {
     try {
         const { hierarchy, timestamp } = req.body;
 
+        console.log('[ROBLOX] Explorer POST received - hierarchy:', hierarchy ? `${hierarchy.length} services` : 'null');
+
         if (!hierarchy) {
+            console.warn('[ROBLOX] Explorer data missing hierarchy field');
             return res.status(400).json({
                 success: false,
                 error: 'Missing hierarchy data'
@@ -4105,7 +4108,7 @@ app.post("/roblox/explorer", (req, res) => {
         robloxExplorerData = hierarchy;
         explorerLastUpdate = new Date(timestamp || Date.now());
 
-        console.log('[ROBLOX] Explorer data received');
+        console.log('[ROBLOX] ✅ Explorer data stored successfully - Services:', hierarchy.length);
 
         res.json({
             success: true,
@@ -4113,7 +4116,7 @@ app.post("/roblox/explorer", (req, res) => {
         });
 
     } catch (error) {
-        console.error('[ROBLOX] Error receiving Explorer data:', error);
+        console.error('[ROBLOX] ❌ Error receiving Explorer data:', error.message);
         res.status(500).json({
             success: false,
             error: error.message

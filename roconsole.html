@@ -1132,6 +1132,12 @@
                 const response = await fetch(`${getApiBaseUrl()}/roblox/explorer`);
                 const data = await response.json();
 
+                console.log('[Explorer] Received data:', {
+                    connected: data.connected,
+                    hierarchyLength: data.hierarchy ? data.hierarchy.length : 0,
+                    lastUpdate: data.lastUpdate
+                });
+
                 const explorerContent = document.getElementById('explorerContent');
                 const explorerStatus = document.getElementById('explorerStatus');
 
