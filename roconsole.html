@@ -1108,34 +1108,46 @@
                             clearInterval(codeBlockCheckInterval);
                         }
 
+                        // Reset code block count for new message
+                        lastCodeBlockCount = 0;
+
                         // Store the content for structured parsing
                         lastAIResponse = content;
 
                         // Start checking for code blocks every 200ms
                         let checksWithoutChange = 0;
+                        let hasSeenCodeBlocks = false;
                         codeBlockCheckInterval = setInterval(() => {
                             const currentCount = window._codeBlocks ? Object.keys(window._codeBlocks).length : 0;
 
-                            // If count hasn't changed for 2 checks (400ms of stability), send
-                            if (currentCount === lastCodeBlockCount) {
-                                checksWithoutChange++;
-
-                                if (checksWithoutChange >= 2) {
-                                    // Code blocks are stable, send them
-                                    clearInterval(codeBlockCheckInterval);
-                                    codeBlockCheckInterval = null;
-
-                                    console.log('[Roblox] Code blocks stable, triggering auto-send');
-                                    autoSendToRoblox(content);
-                                }
-                            } else {
-                                // Count changed, reset stability counter
-                                checksWithoutChange = 0;
-                                lastCodeBlockCount = currentCount;
+                            // Don't start stability counter until we've seen at least one code block
+                            if (currentCount > 0) {
+                                hasSeenCodeBlocks = true;
                             }
 
-                            // Safety timeout: after 5 seconds, send anyway
-                            if (checksWithoutChange >= 25) {
+                            // Only check stability if we've seen code blocks
+                            if (hasSeenCodeBlocks) {
+                                // If count hasn't changed for 2 checks (400ms of stability), send
+                                if (currentCount === lastCodeBlockCount) {
+                                    checksWithoutChange++;
+
+                                    if (checksWithoutChange >= 2) {
+                                        // Code blocks are stable, send them
+                                        clearInterval(codeBlockCheckInterval);
+                                        codeBlockCheckInterval = null;
+
+                                        console.log('[Roblox] Code blocks stable, triggering auto-send');
+                                        autoSendToRoblox(content);
+                                    }
+                                } else {
+                                    // Count changed, reset stability counter
+                                    checksWithoutChange = 0;
+                                    lastCodeBlockCount = currentCount;
+                                }
+                            }
+
+                            // Safety timeout: after 5 seconds, send anyway (only if we've seen blocks)
+                            if (checksWithoutChange >= 25 && hasSeenCodeBlocks) {
                                 clearInterval(codeBlockCheckInterval);
                                 codeBlockCheckInterval = null;
                                 console.log('[Roblox] Timeout reached, sending anyway');
