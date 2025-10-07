@@ -1,6 +1,8 @@
 # Stripe Setup Instructions
 
-The Stripe MCP had authentication issues, so you'll need to manually create the products and prices in your Stripe Dashboard.
+✅ **SETUP COMPLETE!** All price IDs have been configured in the backend.
+
+The Stripe MCP had authentication issues, so the products and prices were manually created in the Stripe Dashboard.
 
 ## Products to Create
 
@@ -57,7 +59,17 @@ Make sure to:
 3. Switch to live mode when ready to accept real payments
 4. Update the Stripe publishable key in pricing.html if needed
 
+## Current Setup Status
+
+✅ All products and prices created in Stripe Dashboard
+✅ Price IDs configured in backend (auth-server.js)
+✅ Frontend updated with correct pricing tiers
+✅ Server will automatically use configured price IDs
+
+The price IDs are hardcoded in `auth-server.js` with environment variable overrides. This means the system works immediately without requiring Railway environment variables (though you can still override via env vars if needed).
+
 ## Notes
 - The Free plan doesn't require Stripe (no payment)
 - Annual prices save exactly 20% compared to monthly × 12
 - Make sure to remove any old test products/prices to keep your dashboard clean
+- Price IDs are embedded in the code, so no manual Railway configuration needed
