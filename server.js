@@ -12,21 +12,32 @@ app.use(express.static('public')); // Serve static files
 
 // Stripe price IDs - Create these in your Stripe Dashboard
 const PRICE_IDS = {
-    pro_monthly: 'price_1234567890abcdef', // Replace with actual price IDs
-    pro_annual: 'price_0987654321fedcba',
-    enterprise_monthly: 'price_abcdef1234567890',
-    enterprise_annual: 'price_fedcba0987654321'
+    pro_monthly: 'price_REPLACE_WITH_PRO_MONTHLY',     // $19/month
+    pro_annual: 'price_REPLACE_WITH_PRO_ANNUAL',       // $182/year (20% discount)
+    max_monthly: 'price_REPLACE_WITH_MAX_MONTHLY',     // $37/month
+    max_annual: 'price_REPLACE_WITH_MAX_ANNUAL',       // $355/year (20% discount)
+    studio_monthly: 'price_REPLACE_WITH_STUDIO_MONTHLY', // $87/month
+    studio_annual: 'price_REPLACE_WITH_STUDIO_ANNUAL'    // $835/year (20% discount)
 };
 
 // Create Checkout Session
 app.post('/api/create-checkout-session', async (req, res) => {
     try {
-        const { priceId, plan, billing } = req.body;
+        const { plan, billing } = req.body;
 
-        // Validate the price ID exists in our configuration
-        const validPriceIds = Object.values(PRICE_IDS);
-        if (!validPriceIds.includes(priceId)) {
-            return res.status(400).json({ error: 'Invalid price ID' });
+        // Map plan and billing to price ID
+        const priceKey = `${plan}_${billing}`;
+        const priceId = PRICE_IDS[priceKey];
+
+        if (!priceId) {
+            return res.status(400).json({ error: 'Invalid plan or billing cycle' });
+        }
+
+        // Validate the price ID has been configured
+        if (priceId.startsWith('price_REPLACE_')) {
+            return res.status(500).json({
+                error: 'Stripe prices not configured. Please set up price IDs in server.js'
+            });
         }
 
         // Create Stripe checkout session

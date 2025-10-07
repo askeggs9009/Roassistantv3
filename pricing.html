@@ -629,9 +629,6 @@
         <section class="pricing-hero">
             <h1 class="hero-title">Choose Your Plan</h1>
             <p class="hero-subtitle">Start free, upgrade when you need more power</p>
-            <div style="background: #ff6b35; color: white; padding: 0.75rem; border-radius: 8px; margin: 1rem auto; max-width: 500px; text-align: center; font-weight: bold;">
-                🧪 TEST MODE - Use fake card numbers, no real charges!
-            </div>
             
             <!-- Billing Toggle -->
             <div class="billing-toggle">
@@ -700,7 +697,7 @@
                         <h2 class="plan-name">Pro</h2>
                         <div class="plan-price">
                             <span class="currency">$</span>
-                            <span class="amount" id="proPrice">1.00</span>
+                            <span class="amount" id="proPrice">19</span>
                             <span class="period" id="proPeriod">/month</span>
                         </div>
                         <p class="plan-description">Ideal for serious developers</p>
@@ -736,14 +733,56 @@
                     </button>
                 </div>
 
-                <!-- Enterprise Tier -->
+                <!-- Max Tier -->
                 <div class="pricing-card">
                     <div class="card-header">
-                        <h2 class="plan-name">Enterprise</h2>
+                        <h2 class="plan-name">Max</h2>
                         <div class="plan-price">
                             <span class="currency">$</span>
-                            <span class="amount" id="enterprisePrice">2.00</span>
-                            <span class="period" id="enterprisePeriod">/month</span>
+                            <span class="amount" id="maxPrice">37</span>
+                            <span class="period" id="maxPeriod">/month</span>
+                        </div>
+                        <p class="plan-description">For power users and small teams</p>
+                    </div>
+                    <div class="card-features">
+                        <div class="feature">
+                            <span class="feature-icon"><i class="fas fa-check"></i></span>
+                            <span class="feature-text">2,000 AI requests per month</span>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon"><i class="fas fa-check"></i></span>
+                            <span class="feature-text">Advanced code generation</span>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon"><i class="fas fa-check"></i></span>
+                            <span class="feature-text">Code optimization</span>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon"><i class="fas fa-check"></i></span>
+                            <span class="feature-text">Advanced debugging</span>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon"><i class="fas fa-check"></i></span>
+                            <span class="feature-text">Priority support</span>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon"><i class="fas fa-check"></i></span>
+                            <span class="feature-text">Team collaboration (up to 5)</span>
+                        </div>
+                    </div>
+                    <button class="plan-button primary" onclick="selectPlan('max')">
+                        Get Max Plan
+                    </button>
+                </div>
+
+                <!-- Studio Tier -->
+                <div class="pricing-card">
+                    <div class="card-header">
+                        <h2 class="plan-name">Studio</h2>
+                        <div class="plan-price">
+                            <span class="currency">$</span>
+                            <span class="amount" id="studioPrice">87</span>
+                            <span class="period" id="studioPeriod">/month</span>
                         </div>
                         <p class="plan-description">For teams and studios</p>
                     </div>
@@ -758,7 +797,7 @@
                         </div>
                         <div class="feature">
                             <span class="feature-icon"><i class="fas fa-check"></i></span>
-                            <span class="feature-text">Team collaboration</span>
+                            <span class="feature-text">Unlimited team collaboration</span>
                         </div>
                         <div class="feature">
                             <span class="feature-icon"><i class="fas fa-check"></i></span>
@@ -773,8 +812,8 @@
                             <span class="feature-text">Custom integrations</span>
                         </div>
                     </div>
-                    <button class="plan-button premium" onclick="selectPlan('enterprise')">
-                        Get Enterprise Plan
+                    <button class="plan-button premium" onclick="selectPlan('studio')">
+                        Get Studio Plan
                     </button>
                 </div>
             </section>
@@ -789,7 +828,8 @@
                                 <th>Feature</th>
                                 <th>Free</th>
                                 <th>Pro</th>
-                                <th>Enterprise</th>
+                                <th>Max</th>
+                                <th>Studio</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -797,10 +837,12 @@
                                 <td class="feature-name">Monthly AI Requests</td>
                                 <td>50</td>
                                 <td>500</td>
+                                <td>2,000</td>
                                 <td>Unlimited</td>
                             </tr>
                             <tr>
                                 <td class="feature-name">Code Generation</td>
+                                <td><span class="check-icon"><i class="fas fa-check"></i></span></td>
                                 <td><span class="check-icon"><i class="fas fa-check"></i></span></td>
                                 <td><span class="check-icon"><i class="fas fa-check"></i></span></td>
                                 <td><span class="check-icon"><i class="fas fa-check"></i></span></td>
@@ -810,10 +852,12 @@
                                 <td><span class="cross-icon">✗</span></td>
                                 <td><span class="check-icon"><i class="fas fa-check"></i></span></td>
                                 <td><span class="check-icon"><i class="fas fa-check"></i></span></td>
+                                <td><span class="check-icon"><i class="fas fa-check"></i></span></td>
                             </tr>
                             <tr>
                                 <td class="feature-name">Priority Support</td>
                                 <td><span class="cross-icon">✗</span></td>
+                                <td><span class="check-icon"><i class="fas fa-check"></i></span></td>
                                 <td><span class="check-icon"><i class="fas fa-check"></i></span></td>
                                 <td><span class="check-icon"><i class="fas fa-check"></i></span></td>
                             </tr>
@@ -821,10 +865,12 @@
                                 <td class="feature-name">Team Collaboration</td>
                                 <td><span class="cross-icon">✗</span></td>
                                 <td><span class="cross-icon">✗</span></td>
-                                <td><span class="check-icon"><i class="fas fa-check"></i></span></td>
+                                <td>Up to 5 members</td>
+                                <td>Unlimited</td>
                             </tr>
                             <tr>
                                 <td class="feature-name">Custom AI Models</td>
+                                <td><span class="cross-icon">✗</span></td>
                                 <td><span class="cross-icon">✗</span></td>
                                 <td><span class="cross-icon">✗</span></td>
                                 <td><span class="check-icon"><i class="fas fa-check"></i></span></td>
@@ -982,34 +1028,40 @@
         function toggleBilling() {
             const toggle = document.getElementById('billingToggle');
             const isAnnual = toggle.checked;
-            
+
             // Update pricing
             const proPrice = document.getElementById('proPrice');
-            const enterprisePrice = document.getElementById('enterprisePrice');
+            const maxPrice = document.getElementById('maxPrice');
+            const studioPrice = document.getElementById('studioPrice');
             const proPeriod = document.getElementById('proPeriod');
-            const enterprisePeriod = document.getElementById('enterprisePeriod');
-            
+            const maxPeriod = document.getElementById('maxPeriod');
+            const studioPeriod = document.getElementById('studioPeriod');
+
             // Update labels
             const monthlyLabel = document.getElementById('monthlyLabel');
             const annualLabel = document.getElementById('annualLabel');
-            
+
             if (isAnnual) {
-                // Annual pricing (TEST PRICES)
-                proPrice.textContent = '10.00';
-                enterprisePrice.textContent = '20.00';
+                // Annual pricing (20% discount)
+                proPrice.textContent = '182';
+                maxPrice.textContent = '355';
+                studioPrice.textContent = '835';
                 proPeriod.textContent = '/year';
-                enterprisePeriod.textContent = '/year';
+                maxPeriod.textContent = '/year';
+                studioPeriod.textContent = '/year';
 
                 // Update label styles
                 monthlyLabel.style.color = '#8b949e';
                 annualLabel.style.color = '#58a6ff';
             } else {
-                // Monthly pricing (TEST PRICES)
-                proPrice.textContent = '1.00';
-                enterprisePrice.textContent = '2.00';
+                // Monthly pricing
+                proPrice.textContent = '19';
+                maxPrice.textContent = '37';
+                studioPrice.textContent = '87';
                 proPeriod.textContent = '/month';
-                enterprisePeriod.textContent = '/month';
-                
+                maxPeriod.textContent = '/month';
+                studioPeriod.textContent = '/month';
+
                 // Update label styles
                 monthlyLabel.style.color = '#58a6ff';
                 annualLabel.style.color = '#8b949e';
@@ -1028,7 +1080,8 @@
                     break;
 
                 case 'pro':
-                case 'enterprise':
+                case 'max':
+                case 'studio':
                     // Check if user is logged in
                     const token = localStorage.getItem('authToken');
                     if (!token) {
