@@ -2,7 +2,7 @@
 	RoAssistant Studio Plugin - STANDALONE VERSION
 	Place this file directly in your Roblox Plugins folder
 
-	Version: 2.3.0 - Dynamic Service Support
+	Version: 2.4.0 - Delete Support + Duplication Fix
 
 	NEW FEATURES:
 	✅ Click scripts in Explorer to view their source code
@@ -517,6 +517,48 @@ local function editInstance(editData)
 end
 
 --[[
+	Delete an instance from Roblox Studio
+]]
+local function deleteInstance(deleteData)
+	local success, result = pcall(function()
+		local target = deleteData.target or deleteData.location
+		if not target then
+			error("No target specified for deletion")
+		end
+
+		-- Find the instance
+		local instance = findInstanceByPath(target)
+		if not instance then
+			error("Could not find instance at path: " .. target)
+		end
+
+		local instanceName = instance.Name
+		local instanceClass = instance.ClassName
+
+		print("[RoAssistant] 🗑️ Deleting:", instance:GetFullName())
+
+		-- Delete the instance
+		instance:Destroy()
+
+		-- Record undo history
+		ChangeHistoryService:SetWaypoint("Delete RoAssistant Object: " .. instanceName)
+
+		return instanceName, instanceClass
+	end)
+
+	if success then
+		local name, className = result
+		sendStatus("success", "Object deleted successfully", deleteData.target)
+		print("[RoAssistant] ✅ Delete complete:", deleteData.target)
+		return true, result
+	else
+		warn("[RoAssistant] ❌ Failed to delete object:", result)
+		sendStatus("error", "Failed to delete object: " .. tostring(result), deleteData.target)
+		return false, result
+	end
+end
+
+--[[
 	Insert a script into Roblox Studio
 ]]
 local function insertScript(scriptData)
@@ -592,6 +634,11 @@ local function handleMessage(message)
 			target = data.target,
 			code = data.code,
 			properties = data.properties
+		})
+	elseif data.type == "delete" then
+		-- Delete an existing object
+		deleteInstance({
+			target = data.target
 		})
 	elseif data.type == "ping" then
 		-- Respond to ping

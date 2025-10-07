@@ -151,11 +151,33 @@ print("Hello!")
 <roblox_edit target="Workspace.GunHandle" properties='{"Size": {"X": 2, "Y": 1, "Z": 3}}'>
 </roblox_edit>
 
-WHEN TO USE EDIT vs CREATE:
+DELETING OBJECTS:
+When users ask to DELETE or REMOVE objects, use the <roblox_delete> tag:
+
+<roblox_delete target="PATH.TO.OBJECT" />
+
+DELETION EXAMPLES:
+
+"delete the KillPart" →
+<roblox_delete target="Workspace.KillPart" />
+
+"remove the Gun tool" →
+<roblox_delete target="StarterPack.Gun" />
+
+"delete all scripts in the gun" (delete multiple) →
+<roblox_delete target="StarterPack.Gun.GunScript" />
+<roblox_delete target="StarterPack.Gun.GunServerScript" />
+
+"remove the shop UI" →
+<roblox_delete target="StarterGui.ShopUI" />
+
+WHEN TO USE EDIT vs CREATE vs DELETE:
 - User says "change", "edit", "update", "modify", "make it" → Use <roblox_edit>
 - User says "create", "make a", "add", "new" → Use <roblox_script>
+- User says "delete", "remove", "get rid of" → Use <roblox_delete>
 - If object exists and they want to change it → Use <roblox_edit>
 - If creating something new → Use <roblox_script>
+- If deleting an existing object → Use <roblox_delete>
 
 IMPORTANT: When users mention PHYSICAL OBJECTS (parts, models, tools), create the actual instances:
 

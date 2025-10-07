@@ -1122,6 +1122,28 @@
             return edits;
         }
 
+        function parseDeleteCommands(response) {
+            const deletes = [];
+            // Regex to capture delete commands: <roblox_delete target="path" /> or <roblox_delete target="path"></roblox_delete>
+            const deleteRegex = /<roblox_delete\s+target="([^"]+)"(?:\s*\/>|><\/roblox_delete>)/gi;
+
+            let match;
+            while ((match = deleteRegex.exec(response)) !== null) {
+                const [, target] = match;
+
+                const deleteCmd = {
+                    target: target.trim(),
+                    id: `delete_${Date.now()}_${deletes.length}`
+                };
+
+                deletes.push(deleteCmd);
+
+                console.log(`[Parser] Found delete command: ${target}`);
+            }
+
+            return deletes;
+        }
+
         function getScriptType(type) {
             const typeMap = {
                 'Script': 'Script',
@@ -1298,6 +1320,65 @@
             return results;
         }
 
+        async function sendDeleteToRoblox(deleteCmd) {
+            try {
+                const payload = {
+                    target: deleteCmd.target
+                };
+
+                console.log(`[Roblox] Sending delete command for:`, deleteCmd.target);
+
+                const response = await fetch(`${getApiBaseUrl()}/roblox/delete-object`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log(`[Roblox] ✅ Delete sent: ${deleteCmd.target}`);
+                    return { success: true, target: deleteCmd.target };
+                } else {
+                    console.error(`[Roblox] ❌ Failed to send delete: ${deleteCmd.target}`);
+                    return { success: false, target: deleteCmd.target };
+                }
+            } catch (error) {
+                console.error('[Roblox] Error sending delete:', error);
+                return { success: false, target: deleteCmd.target };
+            }
+        }
+
+        // Send delete commands
+        async function sendDeleteCommands(deletes) {
+            if (!deletes || deletes.length === 0) {
+                console.log('[Roblox] No delete commands to send');
+                return;
+            }
+
+            console.log(`[Roblox] Sending ${deletes.length} delete command(s)...`);
+
+            const results = [];
+            for (const deleteCmd of deletes) {
+                const result = await sendDeleteToRoblox(deleteCmd);
+                results.push(result);
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+
+            const successCount = results.filter(r => r.success).length;
+            const totalCount = results.length;
+
+            if (successCount > 0) {
+                showRobloxNotification(`✅ Deleted ${successCount}/${totalCount} object(s) in Roblox Studio`);
+            } else {
+                showRobloxNotification(`❌ Failed to delete objects in Roblox Studio`, 'error');
+            }
+
+            return results;
+        }
+
         // Send structured scripts
         async function sendStructuredScripts(scripts) {
             if (!scripts || scripts.length === 0) {
@@ -1347,6 +1428,16 @@
                 if (editCommands.length > 0) {
                     console.log(`[Roblox] Found ${editCommands.length} edit command(s) in AI response`);
                     await sendEditCommands(editCommands);
+                }
+            }
+
+            // Check for delete commands
+            if (lastAIResponse) {
+                const deleteCommands = parseDeleteCommands(lastAIResponse);
+
+                if (deleteCommands.length > 0) {
+                    console.log(`[Roblox] Found ${deleteCommands.length} delete command(s) in AI response`);
+                    await sendDeleteCommands(deleteCommands);
                 }
             }
 

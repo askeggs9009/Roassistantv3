@@ -4130,6 +4130,67 @@ app.post("/roblox/edit-object", (req, res) => {
 });
 
 /**
+ * Delete an object from Roblox Studio
+ * POST /roblox/delete-object
+ */
+app.post("/roblox/delete-object", (req, res) => {
+    try {
+        const { target } = req.body;
+
+        if (!target) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required field: target (path to object)'
+            });
+        }
+
+        const command = {
+            type: 'delete',
+            target: target,
+            timestamp: new Date().toISOString()
+        };
+
+        // If plugin is connected, send immediately
+        if (robloxClients.size > 0) {
+            let sent = false;
+            robloxClients.forEach(client => {
+                if (!client.writableEnded) {
+                    client.write(`data: ${JSON.stringify(command)}\n\n`);
+                    sent = true;
+                }
+            });
+
+            if (sent) {
+                console.log('[ROBLOX] ✅ Delete command sent to plugin:', target);
+                return res.json({
+                    success: true,
+                    message: 'Delete command sent to Roblox Studio',
+                    sentImmediately: true
+                });
+            }
+        }
+
+        // Otherwise, queue for when plugin connects
+        robloxCommandQueue.push(command);
+        console.log('[ROBLOX] 📥 Delete command queued (plugin not connected):', target);
+
+        res.json({
+            success: true,
+            message: 'Delete command queued. Will be sent when plugin connects.',
+            queued: true,
+            queueLength: robloxCommandQueue.length
+        });
+
+    } catch (error) {
+        console.error('[ROBLOX] Error sending delete command:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
  * Receive status updates from Roblox Studio plugin
  * POST /roblox/status
  */
