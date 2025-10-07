@@ -12,12 +12,12 @@ app.use(express.static('public')); // Serve static files
 
 // Stripe price IDs - Create these in your Stripe Dashboard
 const PRICE_IDS = {
-    pro_monthly: 'price_REPLACE_WITH_PRO_MONTHLY',     // $19/month
-    pro_annual: 'price_REPLACE_WITH_PRO_ANNUAL',       // $182/year (20% discount)
-    max_monthly: 'price_REPLACE_WITH_MAX_MONTHLY',     // $37/month
-    max_annual: 'price_REPLACE_WITH_MAX_ANNUAL',       // $355/year (20% discount)
-    studio_monthly: 'price_REPLACE_WITH_STUDIO_MONTHLY', // $87/month
-    studio_annual: 'price_REPLACE_WITH_STUDIO_ANNUAL'    // $835/year (20% discount)
+    pro_monthly: 'price_1SFjvnGsDklELrgDQ5jpu4ml',     // $19/month
+    pro_annual: 'price_1SFjwRGsDklELrgDrBstTq4R',       // $182/year (20% discount)
+    max_monthly: 'price_1SFjxPGsDklELrgDBWICQ6lZ',     // $37/month
+    max_annual: 'price_1SFjxtGsDklELrgD3ELTVyEI',       // $355/year (20% discount)
+    studio_monthly: 'price_1SFjzWGsDklELrgDX2jdvdTN', // $87/month
+    studio_annual: 'price_1SFk04GsDklELrgDrDn4XKQM'    // $835/year (20% discount)
 };
 
 // Create Checkout Session
