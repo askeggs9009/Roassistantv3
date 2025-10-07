@@ -11,22 +11,21 @@
     {
       "@context": "https://schema.org",
       "@type": "Organization",
-      "url": "https://roassistantv3-production.up.railway.app",
-      "logo": "https://roassistantv3-production.up.railway.app/roassistant-logo.png",
+      "url": "https://www.roassistant.me",
+      "logo": "https://www.roassistant.me/roassistant-logo.png",
       "name": "RoAssistant",
       "description": "AI-powered Roblox development assistant"
     }
-    </script>    <link rel="stylesheet" href="styles/liquid-glass.css">
+    </script>
+
+    <link rel="stylesheet" href="styles/liquid-glass.css">
     <link rel="stylesheet" href="styles/dot-grid.css">
-
-
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/sidebar.css">
     <link rel="stylesheet" href="styles/chat.css">
     <link rel="stylesheet" href="styles/animations.css">
     <link rel="stylesheet" href="styles/responsive.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
 
     <style>
         /* Subscription Status Styles */
@@ -72,12 +71,12 @@
             margin-top: 1rem;
             font-size: 0.9rem;
         }
-        
+
         .welcome-content a {
             color: #58a6ff;
             text-decoration: none;
         }
-        
+
         .welcome-content a:hover {
             text-decoration: underline;
         }
@@ -111,605 +110,503 @@
         }
 
         .usage-fill.danger {
-            background: linear-gradient(90deg, #f85149, #da3633);
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
         }
 
-        /* Nexus Upgrade Popup Styles - Centered on Screen */
-        .nexus-upgrade-popup {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 10000;
-            display: none;
+        /* Roblox Connection Status Styles */
+        .roblox-status {
+            display: flex;
             align-items: center;
-            justify-content: center;
-        }
-
-        .nexus-popup-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(4px);
-        }
-
-        .nexus-popup-content {
-            position: relative;
-            background: #0d1117;
+            gap: 0.5rem;
+            padding: 0.4rem 0.8rem;
+            background: rgba(33, 38, 45, 0.6);
             border: 1px solid #30363d;
-            border-radius: 16px;
-            padding: 2.5rem;
-            max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
-            animation: popupFadeIn 0.3s ease;
-            text-align: center;
-            z-index: 1;
-        }
-
-        @keyframes popupFadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .nexus-popup-close {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: none;
-            border: none;
-            color: #8b949e;
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0.25rem;
-            border-radius: 4px;
-            transition: all 0.2s ease;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .nexus-popup-close:hover {
-            background: rgba(248, 81, 73, 0.1);
-            color: #f85149;
-        }
-
-        .nexus-popup-title {
-            color: #f0f6fc;
-            margin: 0 0 0.5rem 0;
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #58a6ff, #1f6feb);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .nexus-popup-price {
-            color: #8b949e;
-            font-size: 1.1rem;
-            margin: 0 0 1.5rem 0;
-        }
-
-        .nexus-popup-message {
-            color: #c9d1d9;
-            margin-bottom: 2rem;
-            line-height: 1.5;
-            font-size: 0.95rem;
-        }
-
-        .nexus-benefits-list {
-            margin: 1.5rem 0;
-            text-align: left;
-        }
-
-        .nexus-benefit-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.75rem;
-            margin-bottom: 0.75rem;
-            color: #c9d1d9;
-        }
-
-        .nexus-benefit-item i {
-            color: #3fb950;
-            font-size: 0.875rem;
-            margin-top: 0.125rem;
-        }
-
-        .nexus-usage-note {
-            color: #6e7681;
-            font-size: 0.75rem;
-            font-style: italic;
-            margin: 1.5rem 0;
-        }
-
-        .nexus-popup-buttons {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-
-        .nexus-btn {
-            flex: 1;
-            padding: 0.875rem 1.5rem;
             border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
+            margin-right: 1rem;
             cursor: pointer;
             transition: all 0.2s ease;
-            border: none;
         }
 
-        .nexus-btn-primary {
-            background: linear-gradient(45deg, #238636, #2ea043);
+        .roblox-status:hover {
+            background: rgba(33, 38, 45, 0.8);
+            border-color: #484f58;
+        }
+
+        .roblox-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .roblox-status-dot.connected {
+            background: #57f287;
+            box-shadow: 0 0 8px rgba(87, 242, 135, 0.6);
+        }
+
+        .roblox-status-dot.disconnected {
+            background: #ed4245;
+            box-shadow: 0 0 8px rgba(237, 66, 69, 0.6);
+        }
+
+        .roblox-status-text {
+            color: #8b949e;
+            font-weight: 500;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Send to Roblox Button */
+        .send-to-roblox-btn {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
             color: white;
-        }
-
-        .nexus-btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(46, 160, 67, 0.5);
-        }
-
-        .nexus-btn-secondary {
-            background: transparent;
-            border: 1px solid #30363d;
-            color: #8b949e;
-        }
-
-        .nexus-btn-secondary:hover {
-            background: rgba(88, 166, 255, 0.1);
-            border-color: #58a6ff;
-            color: #58a6ff;
-        }
-
-        .model-badge {
-            color: #8b949e;
-            font-size: 0.75rem;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s ease;
             margin-left: 0.5rem;
         }
 
-        .upgrade-prompt {
-            display: none;
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            background: linear-gradient(135deg, #161b22, #21262d);
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            padding: 1.5rem;
-            max-width: 350px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            animation: slideInUp 0.3s ease;
+        .send-to-roblox-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
         }
 
-        @keyframes slideInUp {
-            from {
-                transform: translateY(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+        .send-to-roblox-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
         }
 
-        .upgrade-prompt-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .upgrade-prompt-title {
-            font-weight: 600;
-            color: #f0f6fc;
-        }
-
-        .upgrade-prompt-close {
-            background: none;
-            border: none;
-            color: #8b949e;
-            cursor: pointer;
-            font-size: 1.5rem;
-            line-height: 1;
-        }
-
-        .upgrade-prompt-message {
-            color: #8b949e;
+        .send-to-roblox-btn i {
             font-size: 0.9rem;
-            margin-bottom: 1rem;
-            line-height: 1.4;
         }
 
-        .upgrade-prompt-buttons {
+        .usage-fill.danger {
+            background: linear-gradient(90deg, #f85149, #da3633);
+        }
+
+        /* Explorer Panel Styles */
+        .explorer-panel {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 300px;
+            height: 100vh;
+            background: rgba(22, 27, 34, 0.95);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid #30363d;
+            z-index: 1000;
             display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease, right 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .explorer-panel.hidden {
+            transform: translateX(100%);
+        }
+
+        /* Shift Explorer left when code panel is open */
+        body.code-panel-open .explorer-panel {
+            right: 50%;
+        }
+
+        .explorer-header {
+            display: flex;
+            align-items: center;
             gap: 0.5rem;
+            padding: 1rem;
+            border-bottom: 1px solid #30363d;
+            background: rgba(33, 38, 45, 0.6);
         }
 
-        .upgrade-btn {
+        .explorer-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
             flex: 1;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            border: none;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 0.85rem;
+            font-weight: 600;
+            color: #c9d1d9;
         }
 
-        .upgrade-btn.primary {
-            background: linear-gradient(45deg, #238636, #2ea043);
-            color: white;
-        }
-
-        .upgrade-btn.primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(46, 160, 67, 0.4);
-        }
-
-        .upgrade-btn.secondary {
-            background: transparent;
-            border: 1px solid #30363d;
-            color: #8b949e;
-        }
-
-        .upgrade-btn.secondary:hover {
-            border-color: #58a6ff;
+        .explorer-title i {
             color: #58a6ff;
         }
 
-        .model-locked {
-            position: relative;
-        }
-
-        .model-locked::after {
-            content: '\f023';
-            font-family: 'Font Awesome 6 Free';
-            font-weight: 900;
-            position: absolute;
-            right: 35px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 0.8rem;
-        }
-
-        .usage-warning {
-            background: rgba(212, 172, 13, 0.1);
-            border: 1px solid rgba(212, 172, 13, 0.3);
-            border-radius: 8px;
-            padding: 0.75rem;
-            margin: 1rem;
-            color: #d4ac0d;
-            font-size: 0.85rem;
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .usage-limit-reached {
-            background: rgba(248, 81, 73, 0.1);
-            border: 1px solid rgba(248, 81, 73, 0.3);
-            border-radius: 8px;
-            padding: 1rem;
-            margin: 1rem;
-            color: #f85149;
-            text-align: center;
-            display: none;
-        }
-
-        /* FIXED: Account switch notification */
-        .account-switch-notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(45deg, #58a6ff, #1f6feb);
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(88, 166, 255, 0.4);
-            z-index: 1000;
-            opacity: 0;
-            transform: translateX(100%);
-            transition: all 0.3s ease;
-        }
-
-        .account-switch-notification.show {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        /* Attachment Dropdown Styles */
-        .attach-dropdown {
-            position: absolute;
-            bottom: 45px;
-            left: 0;
-            background: #21262d;
-            border: 1px solid #30363d;
-            border-radius: 8px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
-            min-width: 160px;
-        }
-
-        .attach-option {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            cursor: pointer;
-            transition: background 0.2s ease;
-            border-radius: 6px;
-            margin: 0.25rem;
-        }
-
-        .attach-option:hover {
-            background: rgba(88, 166, 255, 0.1);
-        }
-
-        .attach-option i {
-            width: 16px;
+        .explorer-refresh, .explorer-toggle {
+            background: transparent;
+            border: none;
             color: #8b949e;
-        }
-
-        .attach-option span {
-            color: #f0f6fc;
+            cursor: pointer;
+            padding: 0.4rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
             font-size: 0.9rem;
         }
 
-        /* Modal Styles */
-        .attachment-modal {
+        .explorer-refresh:hover, .explorer-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #c9d1d9;
+        }
+
+        .explorer-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            color: #8b949e;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid #30363d;
+        }
+
+        .explorer-status i {
+            font-size: 0.5rem;
+            color: #ed4245;
+        }
+
+        .explorer-status.connected i {
+            color: #57f287;
+        }
+
+        .explorer-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+
+        .explorer-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #8b949e;
+            text-align: center;
+        }
+
+        .explorer-empty i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .explorer-empty p {
+            font-size: 0.9rem;
+        }
+
+        /* Explorer Tree Styles */
+        .explorer-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.3rem 0.5rem;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.15s ease;
+            user-select: none;
+            font-size: 0.85rem;
+        }
+
+        .explorer-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .explorer-item-icon {
+            width: 16px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .explorer-item-toggle {
+            color: #8b949e;
+            font-size: 0.7rem;
+            width: 12px;
+            flex-shrink: 0;
+        }
+
+        .explorer-item-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .explorer-item-name {
+            color: #c9d1d9;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .explorer-item-class {
+            color: #8b949e;
+            font-size: 0.75rem;
+            opacity: 0.7;
+        }
+
+        .explorer-children {
+            margin-left: 1rem;
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            padding-left: 0.5rem;
+        }
+
+        .explorer-children.collapsed {
+            display: none;
+        }
+
+        /* Icon colors for different instance types */
+        .icon-script { color: #58a6ff; }
+        .icon-localscript { color: #79c0ff; }
+        .icon-modulescript { color: #f85149; }
+        .icon-folder { color: #8b949e; }
+        .icon-part { color: #57f287; }
+        .icon-model { color: #d2a8ff; }
+        .icon-screengui { color: #f0883e; }
+        .icon-default { color: #8b949e; }
+
+        /* Adjust main content when explorer is visible */
+        .main-content.explorer-visible {
+            margin-right: 300px;
+        }
+
+        /* Script Viewer Modal */
+        .script-viewer-modal {
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 10000;
-            display: flex;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
             align-items: center;
             justify-content: center;
         }
 
-        .modal-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(4px);
+        .script-viewer-modal.active {
+            display: flex;
         }
 
-        .modal-content {
-            position: relative;
-            background: #161b22;
+        .script-viewer-content {
+            background: rgba(22, 27, 34, 0.95);
             border: 1px solid #30363d;
             border-radius: 12px;
             width: 90%;
-            max-width: 500px;
+            max-width: 900px;
             max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.5rem 1.5rem 0;
-            margin-bottom: 1rem;
-        }
-
-        .modal-header h3 {
-            color: #f0f6fc;
-            margin: 0;
-            font-size: 1.25rem;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            color: #8b949e;
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0.25rem;
-            border-radius: 4px;
-            transition: all 0.2s ease;
-        }
-
-        .modal-close:hover {
-            background: rgba(248, 81, 73, 0.1);
-            color: #f85149;
-        }
-
-        .modal-body {
-            padding: 0 1.5rem 1rem;
-        }
-
-        .modal-body label {
-            display: block;
-            color: #f0f6fc;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-        }
-
-        .text-input {
-            width: 100%;
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 0.75rem;
-            color: #f0f6fc;
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-        }
-
-        .text-input:focus {
-            outline: none;
-            border-color: #58a6ff;
-            box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.1);
-        }
-
-        .text-textarea {
-            width: 100%;
-            min-height: 120px;
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 0.75rem;
-            color: #f0f6fc;
-            font-size: 0.9rem;
-            font-family: 'Monaco', 'Menlo', monospace;
-            resize: vertical;
-        }
-
-        .text-textarea:focus {
-            outline: none;
-            border-color: #58a6ff;
-            box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.1);
-        }
-
-        .modal-footer {
-            padding: 1rem 1.5rem 1.5rem;
-            display: flex;
-            gap: 0.75rem;
-            justify-content: flex-end;
-        }
-
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 6px;
-            font-weight: 500;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: none;
-        }
-
-        .btn-primary {
-            background: linear-gradient(45deg, #238636, #2ea043);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(46, 160, 67, 0.4);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            color: #8b949e;
-            border: 1px solid #30363d;
-        }
-
-        .btn-secondary:hover {
-            background: rgba(88, 166, 255, 0.1);
-            border-color: #58a6ff;
-            color: #58a6ff;
-        }
-
-        /* Image Options */
-        .image-options {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .image-option {
             display: flex;
             flex-direction: column;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .script-viewer-header {
+            display: flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 1.5rem 1rem;
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #30363d;
+            background: rgba(33, 38, 45, 0.6);
+            border-radius: 12px 12px 0 0;
         }
 
-        .image-option:hover {
-            background: rgba(88, 166, 255, 0.1);
-            border-color: #58a6ff;
+        .script-viewer-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #c9d1d9;
         }
 
-        .image-option i {
-            font-size: 1.5rem;
+        .script-viewer-title i {
             color: #58a6ff;
         }
 
-        .image-option span {
-            color: #f0f6fc;
+        .script-viewer-close {
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-size: 1.2rem;
+        }
+
+        .script-viewer-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #c9d1d9;
+        }
+
+        .script-viewer-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .script-viewer-body pre {
+            margin: 0;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .script-viewer-body code {
+            color: #c9d1d9;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* Make script items clickable */
+        .explorer-item.script-item {
+            cursor: pointer;
+        }
+
+        .explorer-item.script-item:hover {
+            background: rgba(88, 166, 255, 0.15);
+        }
+
+        .explorer-item.script-item:hover .explorer-item-name {
+            color: #58a6ff;
+        }
+
+        /* Project Selector Styles */
+        .project-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.8rem;
+            background: rgba(33, 38, 45, 0.6);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            margin-right: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .project-selector:hover {
+            background: rgba(33, 38, 45, 0.8);
+            border-color: #484f58;
+        }
+
+        .project-selector-icon {
+            color: #58a6ff;
             font-size: 0.9rem;
         }
 
-        .paste-area {
-            background: #0d1117;
-            border: 2px dashed #30363d;
-            border-radius: 8px;
-            padding: 2rem;
-            text-align: center;
+        .project-selector-text {
+            color: #c9d1d9;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .project-selector-arrow {
             color: #8b949e;
-            cursor: text;
+            font-size: 0.7rem;
+            margin-left: 0.25rem;
+        }
+
+        .project-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            min-width: 250px;
+            max-width: 350px;
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .project-dropdown.active {
+            display: block;
+        }
+
+        .project-dropdown-header {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #30363d;
+            font-weight: 600;
+            color: #c9d1d9;
+            font-size: 0.85rem;
+        }
+
+        .project-dropdown-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            border-bottom: 1px solid rgba(48, 54, 61, 0.3);
+        }
+
+        .project-dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .project-dropdown-item:hover {
+            background: rgba(88, 166, 255, 0.1);
+        }
+
+        .project-dropdown-item.active {
+            background: rgba(88, 166, 255, 0.2);
+            border-left: 3px solid #58a6ff;
+        }
+
+        .project-dropdown-name {
+            color: #c9d1d9;
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .project-dropdown-desc {
+            color: #8b949e;
+            font-size: 0.75rem;
+        }
+
+        .project-dropdown-footer {
+            padding: 0.75rem 1rem;
+            border-top: 1px solid #30363d;
+        }
+
+        .project-dropdown-create {
+            width: 100%;
+            padding: 0.5rem;
+            background: linear-gradient(45deg, #238636, #2ea043);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: 500;
+            font-size: 0.85rem;
+            cursor: pointer;
             transition: all 0.2s ease;
         }
 
-        .paste-area:focus {
-            border-color: #58a6ff;
-            outline: none;
-        }
-
-        .paste-area:hover {
-            border-color: #58a6ff;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .image-options {
-                grid-template-columns: 1fr;
-            }
-
-            .modal-content {
-                width: 95%;
-                margin: 1rem;
-            }
+        .project-dropdown-create:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(46, 160, 67, 0.4);
         }
     </style>
 </head>
 
 <body>
-    <!-- FIXED: Account Switch Notification -->
-    <div class="account-switch-notification" id="accountSwitchNotification">
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <i class="fas fa-sync-alt"></i>
-            <span>Account switched! Loading your data...</span>
-        </div>
-    </div>
-
-    <!-- Sidebar Overlay for Mobile -->
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -722,23 +619,18 @@
             New chat
         </button>
 
-
         <div class="sidebar-nav">
             <!-- Main Navigation -->
             <div class="nav-section">
-                <div class="nav-item active" onclick="setActiveNav(this, 'chats')">
+                <div class="nav-item active" onclick="window.location.href='/index.html'">
                     <span class="nav-icon"><i class="fas fa-comments"></i></span>
                     Chats
                 </div>
-                <div class="nav-item" onclick="setActiveNav(this, 'projects')">
+                <div class="nav-item" onclick="window.location.href='/projects.html'">
                     <span class="nav-icon"><i class="fas fa-folder"></i></span>
                     Projects
                 </div>
-                <div class="nav-item" onclick="window.location.href='/roconsole.html'">
-                    <span class="nav-icon"><i class="fas fa-cube"></i></span>
-                    RoConsole
-                </div>
-                <div class="nav-item" onclick="setActiveNav(this, 'scripts')">
+                <div class="nav-item" onclick="window.location.href='/scripts.html'">
                     <span class="nav-icon"><i class="fas fa-wrench"></i></span>
                     Scripts
                 </div>
@@ -776,7 +668,7 @@
         </div>
     </div>
 
-    <!-- Code Panel Overlay -->
+    <!-- Code Panel (for displaying code blocks) -->
     <div class="code-panel-overlay" id="codePanel">
         <div class="code-panel-resize-handle" id="codePanelResizeHandle"></div>
         <div class="code-panel-header">
@@ -793,6 +685,50 @@
         </div>
     </div>
 
+    <!-- Explorer Panel -->
+    <div class="explorer-panel" id="explorerPanel">
+        <div class="explorer-header">
+            <div class="explorer-title">
+                <i class="fas fa-folder-tree"></i>
+                <span>Explorer</span>
+            </div>
+            <button class="explorer-refresh" id="explorerRefreshBtn" title="Refresh Explorer">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <button class="explorer-toggle" id="explorerToggleBtn" title="Close Explorer">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="explorer-status" id="explorerStatus">
+            <i class="fas fa-circle"></i>
+            <span>Disconnected</span>
+        </div>
+        <div class="explorer-content" id="explorerContent">
+            <div class="explorer-empty">
+                <i class="fas fa-cube"></i>
+                <p>Connect Roblox Studio to view Explorer</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Viewer Modal -->
+    <div class="script-viewer-modal" id="scriptViewerModal">
+        <div class="script-viewer-content">
+            <div class="script-viewer-header">
+                <div class="script-viewer-title">
+                    <i class="fas fa-file-code"></i>
+                    <span id="scriptViewerName">Script</span>
+                </div>
+                <button class="script-viewer-close" onclick="closeScriptViewer()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="script-viewer-body">
+                <pre><code id="scriptViewerCode" class="language-lua"></code></pre>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <div class="main-content" id="mainContent">
         <!-- Header -->
@@ -801,7 +737,31 @@
                 ☰
             </button>
             <div class="header-title" id="chatTitle">New Chat</div>
-            
+
+            <!-- Project Selector -->
+            <div class="project-selector" id="projectSelector" style="display: none;" onclick="toggleProjectDropdown()">
+                <i class="fas fa-folder project-selector-icon"></i>
+                <span class="project-selector-text" id="projectSelectorText">No Project</span>
+                <i class="fas fa-chevron-down project-selector-arrow"></i>
+
+                <!-- Project Dropdown -->
+                <div class="project-dropdown" id="projectDropdown">
+                    <div class="project-dropdown-header">Select Project</div>
+                    <div class="project-dropdown-item" onclick="event.stopPropagation(); selectProject(null)">
+                        <div class="project-dropdown-name">No Project</div>
+                        <div class="project-dropdown-desc">Use standalone chat mode</div>
+                    </div>
+                    <div id="projectDropdownList">
+                        <!-- Projects will be populated here -->
+                    </div>
+                    <div class="project-dropdown-footer">
+                        <button class="project-dropdown-create" onclick="event.stopPropagation(); window.location.href='/projects.html'">
+                            <i class="fas fa-plus"></i> Create New Project
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Subscription Status -->
             <div class="subscription-status" id="subscriptionStatus" style="display: none;">
                 <a href="/account.html" style="text-decoration: none;">
@@ -814,18 +774,13 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Usage Warning -->
-        <div id="usageWarning" class="usage-warning">
-            <i class="fas fa-exclamation-triangle"></i> You're approaching your daily message limit. Consider upgrading for unlimited access!
+            <!-- Roblox Connection Status -->
+            <div class="roblox-status" id="robloxStatus" title="Click to check connection">
+                <div class="roblox-status-dot disconnected" id="robloxStatusDot"></div>
+                <span class="roblox-status-text" id="robloxStatusText">Roblox Studio</span>
+            </div>
         </div>
-
-        <!-- Usage Limit Reached -->
-        <div id="usageLimitReached" class="usage-limit-reached">
-            <i class="fas fa-ban"></i> Daily message limit reached. <a href="/pricing.html" style="color: #58a6ff;">Upgrade now</a> for unlimited messages!
-        </div>
-
 
         <!-- Chat Area -->
         <div class="chat-area">
@@ -844,31 +799,26 @@
                     <div class="input-content">
                         <!-- File attachments area -->
                         <div class="file-attachments" id="fileAttachments" style="display: none;"></div>
-                        
+
+                        <!-- Roblox Studio Connection Status -->
+                        <div class="roblox-status-banner" style="padding: 10px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(88, 101, 242, 0.05);">
+                            <i class="fas fa-cube" style="font-size: 16px; color: #5865f2;"></i>
+                            <div style="flex: 1;">
+                                <div style="font-size: 13px; color: rgba(255,255,255,0.9); font-weight: 500;">Roblox Studio Connection</div>
+                                <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px;">Auto-sends Lua scripts to connected Studio</div>
+                            </div>
+                            <div id="robloxStatusBanner" style="display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                                <div id="robloxStatusDotBanner" style="width: 10px; height: 10px; border-radius: 50%; background: #666;"></div>
+                                <span id="robloxStatusTextBanner" style="font-size: 12px; font-weight: 500;">Checking...</span>
+                            </div>
+                        </div>
+
                         <!-- Input row -->
                         <div class="input-row">
-                            <button class="attach-button" id="attachButton" onclick="toggleAttachMenu()" title="Add content">
-                                <span><i class="fas fa-paperclip"></i></span>
-                            </button>
-
-                            <!-- Attachment Options Dropdown -->
-                            <div class="attach-dropdown" id="attachDropdown" style="display: none;">
-                                <div class="attach-option" onclick="openFileDialog()">
-                                    <i class="fas fa-file"></i>
-                                    <span>Upload File</span>
-                                </div>
-                                <div class="attach-option" onclick="openTextModal()">
-                                    <i class="fas fa-edit"></i>
-                                    <span>Add Text</span>
-                                </div>
-                                <div class="attach-option" onclick="openImageModal()">
-                                    <i class="fas fa-image"></i>
-                                    <span>Add Image</span>
-                                </div>
-                            </div>
                             <button class="model-button" id="modelButton" onclick="toggleModelSelector()" title="Select AI Model">
                                 <span><i class="fas fa-sliders-h"></i></span>
                             </button>
+
                             <!-- Model Selector Dropdown -->
                             <div class="model-dropdown" id="modelDropdown" style="display: none;">
                                 <div class="model-dropdown-header">Select Model</div>
@@ -882,17 +832,10 @@
                                 </div>
                             </div>
 
-                            <!-- Token Estimation Display -->
-                            <div class="token-estimation" id="tokenEstimation" style="display: none;">
-                                <span class="token-icon">🔢</span>
-                                <span class="token-text" id="tokenEstimationText">~0 tokens</span>
-                                <span class="token-warning" id="tokenWarning" style="display: none;">⚠️ Exceeds daily limit</span>
-                            </div>
-
                             <textarea
                                 class="input-area"
                                 id="messageInput"
-                                placeholder="Ask me about Roblox scripting, debugging, or game development..."
+                                placeholder="Ask me about your project..."
                                 rows="1"
                             ></textarea>
                             <button class="send-button" id="sendButton" onclick="sendMessage()">
@@ -901,312 +844,147 @@
                         </div>
                     </div>
                 </div>
-                <input type="file" id="fileInput" accept="image/*,.txt,.lua,.luau,.js,.json,.md" style="display: none;" onchange="handleFileSelect(event)" multiple>
-
-                <!-- Text Content Modal -->
-                <div id="textModal" class="attachment-modal" style="display: none;">
-                    <div class="modal-overlay" onclick="closeTextModal()"></div>
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h3>Add Text Content</h3>
-                            <button class="modal-close" onclick="closeTextModal()">×</button>
-                        </div>
-                        <div class="modal-body">
-                            <label for="textTitle">Title (optional):</label>
-                            <input type="text" id="textTitle" placeholder="e.g., Code snippet, Notes, etc." class="text-input">
-
-                            <label for="textContent">Content:</label>
-                            <textarea id="textContent" placeholder="Paste or type your content here..." class="text-textarea"></textarea>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-secondary" onclick="closeTextModal()">Cancel</button>
-                            <button class="btn btn-primary" onclick="addTextContent()">Add Content</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Image Modal -->
-                <div id="imageModal" class="attachment-modal" style="display: none;">
-                    <div class="modal-overlay" onclick="closeImageModal()"></div>
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h3>Add Image</h3>
-                            <button class="modal-close" onclick="closeImageModal()">×</button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="image-options">
-                                <div class="image-option" onclick="document.getElementById('imageFileInput').click()">
-                                    <i class="fas fa-upload"></i>
-                                    <span>Upload Image</span>
-                                </div>
-                                <div class="image-option" onclick="showImageUrlInput()">
-                                    <i class="fas fa-link"></i>
-                                    <span>Image URL</span>
-                                </div>
-                                <div class="image-option" onclick="showImagePasteArea()">
-                                    <i class="fas fa-clipboard"></i>
-                                    <span>Paste Image</span>
-                                </div>
-                            </div>
-
-                            <input type="file" id="imageFileInput" accept="image/*" style="display: none;" onchange="handleImageFileSelect(event)">
-
-                            <div id="imageUrlInput" style="display: none;">
-                                <label for="imageUrl">Image URL:</label>
-                                <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg" class="text-input">
-                                <button class="btn btn-primary" onclick="addImageFromUrl()">Add Image</button>
-                            </div>
-
-                            <div id="imagePasteArea" style="display: none;">
-                                <p>Press Ctrl+V to paste an image from clipboard</p>
-                                <div class="paste-area" id="pasteArea" contenteditable="true">Click here and paste (Ctrl+V)</div>
-                            </div>
-
-                            <div id="imagePreview" style="display: none;">
-                                <img id="previewImg" style="max-width: 100%; max-height: 200px; border-radius: 8px;">
-                                <p id="imageName"></p>
-                                <button class="btn btn-primary" onclick="addImageContent()">Add Image</button>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-secondary" onclick="closeImageModal()">Cancel</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Drag & Drop Overlay -->
-                <div class="drag-overlay" id="dragOverlay" style="display: none;">
-                    <div class="drag-content">
-                        <div class="drag-icon"><i class="fas fa-folder-open"></i></div>
-                        <div class="drag-text">Drop files here to upload</div>
-                        <div class="drag-subtext">Images, code files, and documents</div>
-                    </div>
-                </div>
             </div>
-        </div>
-
-    </div>
-
-    <!-- Upgrade Prompt -->
-    <div class="upgrade-prompt" id="upgradePrompt">
-        <div class="upgrade-prompt-header">
-            <div class="upgrade-prompt-title"><i class="fas fa-rocket"></i> Unlock More Power</div>
-            <button class="upgrade-prompt-close" onclick="closeUpgradePrompt()">×</button>
-        </div>
-        <div class="upgrade-prompt-message" id="upgradePromptMessage">
-            You've used 8 of your 10 daily messages. Upgrade to Pro for 500 messages per day!
-        </div>
-        <div class="upgrade-prompt-buttons">
-            <button class="upgrade-btn primary" onclick="window.location.href='/pricing.html'">
-                View Plans
-            </button>
-            <button class="upgrade-btn secondary" onclick="closeUpgradePrompt()">
-                Maybe Later
-            </button>
         </div>
     </div>
 
     <script>
-        // DYNAMIC API CONFIGURATION - Updated for production deployment
+        // DYNAMIC API CONFIGURATION
         const getApiBaseUrl = () => {
-            // Check if we're running on localhost (development)
             if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                 return 'http://localhost:3000';
             }
-            
-            // For production, point to Railway backend
             return 'https://roassistantv3-production.up.railway.app';
         };
 
         const API_BASE_URL = getApiBaseUrl();
         console.log(`[CONFIG] Using API Base URL: ${API_BASE_URL}`);
 
-        // FIXED: Global variables with proper user isolation
-        let currentChatId = null;
-        let isLoggedIn = false;
-        let authToken = null;
-        let currentUser = null;
+        // Global variables
         let selectedModel = 'claude-4-sonnet';
         window.selectedModel = selectedModel;
-        let currentView = 'chats';
-        let attachedFiles = [];
+        let currentProject = null;
+        let currentChatName = 'New Chat';
+        let projects = [];
 
-        // FIXED: User-specific data storage
-        let userChats = [];
-        let userScripts = [];
-
-        // Subscription management
-        let userSubscription = {
-            plan: 'free',
-            limits: {
-                daily_messages: 10,
-                models: ['gpt-4o-mini']
-            },
-            usage: {
-                daily_messages: 0,
-                daily_limit: 10
-            }
-        };
-
-
-        // FIXED: Account switching functionality
-        class AccountManager {
-            constructor() {
-                this.lastKnownUser = null;
-                this.initializeWatcher();
-            }
-
-            initializeWatcher() {
-                // Watch for auth token changes
-                const originalSetItem = localStorage.setItem;
-                const originalRemoveItem = localStorage.removeItem;
-                
-                localStorage.setItem = (key, value) => {
-                    if (key === 'authToken' || key === 'user') {
-                        setTimeout(() => this.checkForAccountSwitch(), 100);
-                    }
-                    return originalSetItem.call(localStorage, key, value);
-                };
-                
-                localStorage.removeItem = (key) => {
-                    if (key === 'authToken' || key === 'user') {
-                        setTimeout(() => this.checkForAccountSwitch(), 100);
-                    }
-                    return originalRemoveItem.call(localStorage, key);
-                };
-            }
-
-            checkForAccountSwitch() {
-                const currentToken = localStorage.getItem('authToken');
-                const currentUserData = localStorage.getItem('user');
-                
-                let currentUserId = null;
-                if (currentUserData) {
-                    try {
-                        const user = JSON.parse(currentUserData);
-                        currentUserId = user.id || user.email;
-                    } catch (error) {
-                        console.error('Error parsing user data:', error);
-                    }
-                }
-
-                // Check if user has switched
-                if (this.lastKnownUser !== currentUserId) {
-                    console.log('[ACCOUNT] User switch detected:', this.lastKnownUser, '->', currentUserId);
-                    this.handleAccountSwitch(currentUserId);
-                    this.lastKnownUser = currentUserId;
-                }
-            }
-        }
-
-
-        // Initialize app when DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing app...');
-            initApp();
-            
-            // Check subscription status and refresh periodically
-            checkSubscriptionStatus();
-            setInterval(checkSubscriptionStatus, 60000); // Refresh every minute
-        });
-
-        // Check for project parameter in URL
-        function checkProjectParameter() {
+        // Check URL for project parameter
+        function loadProjectFromUrl() {
             const urlParams = new URLSearchParams(window.location.search);
             const projectId = urlParams.get('project');
-            
+
             if (projectId) {
-                // Load project context if needed
-                console.log('Loading project context:', projectId);
-                // You can implement project-specific logic here
-            }
-        }
+                // Load project from localStorage
+                const storedProjects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
+                const project = storedProjects.find(p => p.id === projectId);
 
-
-        // Authentication and User Profile Functions
-        function checkAuth() {
-            console.log('Checking auth...');
-            authToken = localStorage.getItem('authToken');
-            const user = localStorage.getItem('user');
-
-            if (authToken && user) {
-                try {
-                    const userData = JSON.parse(user);
-                    currentUser = userData;
-                    showLoggedInUser(userData);
-                    isLoggedIn = true;
-                } catch (error) {
-                    console.error('Error parsing user data:', error);
-                    showGuestUser();
-                    isLoggedIn = false;
-                    currentUser = null;
+                if (project) {
+                    selectProject(project);
+                } else {
+                    console.log('Project not found:', projectId);
                 }
-            } else {
-                showGuestUser();
-                isLoggedIn = false;
-                currentUser = null;
             }
-            updateModelSelector();
+
+            // Load all projects for dropdown
+            loadProjects();
         }
 
-        // Show logged in user profile
-        function showLoggedInUser(userData) {
-            const userProfile = document.getElementById('userProfile');
-            if (userProfile) {
-                const planText = userData.subscription?.plan || 'free';
-                const planDisplay = planText.charAt(0).toUpperCase() + planText.slice(1);
-                
-                userProfile.innerHTML = `
-                    <div class="user-avatar">${(userData.name || userData.email || 'U').charAt(0).toUpperCase()}</div>
-                    <div class="user-info">
-                        <div class="user-name">${userData.name || userData.email || 'User'}</div>
-                        <div class="user-plan">${planDisplay} Plan</div>
+        // Load all projects
+        function loadProjects() {
+            projects = JSON.parse(localStorage.getItem('roblox_projects') || '[]');
+
+            if (projects.length > 0) {
+                // Show project selector
+                document.getElementById('projectSelector').style.display = 'flex';
+
+                // Populate dropdown
+                const dropdownList = document.getElementById('projectDropdownList');
+                dropdownList.innerHTML = projects.map(project => `
+                    <div class="project-dropdown-item ${currentProject && currentProject.id === project.id ? 'active' : ''}"
+                         onclick="event.stopPropagation(); selectProjectById('${project.id}')">
+                        <div class="project-dropdown-name">${project.name}</div>
+                        <div class="project-dropdown-desc">${project.description || 'No description'}</div>
                     </div>
-                    <button onclick="logout()" style="background: #f85149; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
-                        Logout
-                    </button>
-                `;
+                `).join('');
             }
         }
 
-        // Show guest user profile
-        function showGuestUser() {
-            console.log('[AUTH] Showing guest user profile...');
-            const userProfile = document.getElementById('userProfile');
-            if (userProfile) {
-                userProfile.innerHTML = `
-                    <div class="user-avatar"><i class="fas fa-user"></i></div>
-                    <div class="user-info">
-                        <div class="user-name">Guest User</div>
-                        <div class="user-plan">Free Plan - <span style="color: #58a6ff; cursor: pointer;" onclick="window.location.href='/login.html'">Sign In for More</span></div>
-                    </div>
-                    <button onclick="window.location.href='/login.html'" style="background: #238636; border: none; border-radius: 6px; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem;">
-                        Sign In
-                    </button>
-                `;
-                console.log('[AUTH] Guest user profile updated successfully');
-            } else {
-                console.error('[AUTH] Could not find userProfile element!');
+        // Toggle project dropdown
+        function toggleProjectDropdown() {
+            const dropdown = document.getElementById('projectDropdown');
+            dropdown.classList.toggle('active');
+        }
+
+        // Select project by ID
+        function selectProjectById(projectId) {
+            const project = projects.find(p => p.id === projectId);
+            if (project) {
+                selectProject(project);
             }
         }
 
-        // Logout function (redirect to authManager if available)
-        function logout() {
-            if (window.authManager) {
-                window.authManager.logout();
+        // Select project
+        function selectProject(project) {
+            currentProject = project;
+
+            // Update URL
+            const url = new URL(window.location);
+            if (project) {
+                url.searchParams.set('project', project.id);
+                document.getElementById('projectSelectorText').textContent = project.name;
             } else {
-                // Fallback if authManager isn't loaded
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('user');
+                url.searchParams.delete('project');
+                document.getElementById('projectSelectorText').textContent = 'No Project';
+            }
+            window.history.pushState({}, '', url);
 
-                // Reset state variables
-                isLoggedIn = false;
-                authToken = null;
-                currentUser = null;
+            // Update chat manager
+            if (window.chatManager) {
+                window.chatManager.currentProject = project;
+            }
 
-                // Show guest user interface
-                showGuestUser();
-                updateModelSelector();
+            // Update title
+            updateChatTitle();
+
+            // Close dropdown
+            document.getElementById('projectDropdown').classList.remove('active');
+
+            // Start new chat with project context
+            startNewChat();
+        }
+
+        // Update chat title
+        function updateChatTitle() {
+            const chatTitle = document.getElementById('chatTitle');
+            if (!chatTitle) return;
+
+            if (currentProject) {
+                const artifactCount = currentProject.artifacts?.length || 0;
+                const artifactInfo = artifactCount > 0 ?
+                    `<span style="color: #58a6ff; font-size: 0.85rem; margin-left: 0.5rem;">(${artifactCount} artifact${artifactCount !== 1 ? 's' : ''})</span>` : '';
+
+                chatTitle.innerHTML = `
+                    <span style="color: #8b949e;">${currentProject.name}</span>
+                    <span style="color: #484f58; margin: 0 0.25rem;">/</span>
+                    <span>${currentChatName}</span>
+                    ${artifactInfo}
+                `;
+            } else {
+                chatTitle.textContent = currentChatName;
+            }
+        }
+
+        // Update chat name
+        window.updateChatName = function(newName) {
+            currentChatName = newName || 'New Chat';
+            updateChatTitle();
+        }
+
+        // Global sendMessage wrapper
+        function sendMessage() {
+            if (window.chatManager) {
+                window.chatManager.sendMessage();
+            } else {
+                console.error('ChatManager not initialized');
             }
         }
 
@@ -1216,14 +994,10 @@
             dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
         }
 
-        // Streaming functionality - enabled by default
-        let streamingEnabled = true;
-        window.streamingEnabled = true; // Make it available globally
-
         // Select a model
         function selectModel(model) {
-            const newModel = model;
-            console.log('Model changed to:', newModel);
+            selectedModel = model;
+            window.selectedModel = selectedModel;
 
             // Update selected state in dropdown
             document.querySelectorAll('.model-option').forEach(option => {
@@ -1243,301 +1017,584 @@
                 }
             }
 
-            // If the model actually changed, start a new chat
-            if (newModel !== selectedModel) {
-                selectedModel = newModel;
-                window.selectedModel = selectedModel;
+            // Start a new chat when model changes
+            startNewChat();
 
-                // Update button icon to show current model
-                updateModelButton();
-
-                // Start a new chat when model changes
-                startNewChat();
-
-                // Show a message indicating the model change
-                const modelName = model === 'claude-4-opus' ? 'RoCode Nexus 3' : 'RoCode 3';
-                if (window.chatManager) {
-                    window.chatManager.addMessage('system', `<i class="fas fa-sync-alt"></i> Switched to ${modelName}. Starting a new conversation.`);
-                }
+            // Show a message indicating the model change
+            const modelName = model === 'claude-4-opus' ? 'RoCode Nexus 3' : 'RoCode 3';
+            if (window.chatManager) {
+                window.chatManager.addMessage('system', `🔄 Switched to ${modelName}. Starting a new conversation.`);
             }
 
             // Hide dropdown
             document.getElementById('modelDropdown').style.display = 'none';
         }
 
-        // Update model button to show current selection
-        function updateModelButton() {
-            const modelButton = document.getElementById('modelButton');
-            if (modelButton) {
-                // Update title to show current model
-                const modelName = selectedModel === 'claude-4-opus' ? 'RoCode Nexus 3' : 'RoCode 3';
-                modelButton.title = `Current Model: ${modelName}`;
+        // Start new chat
+        function startNewChat() {
+            currentChatName = 'New Chat';
+            updateChatTitle();
+            if (window.chatManager) {
+                window.chatManager.startNewChat();
             }
         }
 
-
-        // Update model selector for auth status
-        function updateModelSelector() {
-            // Update the premium model option based on auth status
-            const premiumOption = document.querySelector('.model-option.premium');
-            if (premiumOption && !isLoggedIn) {
-                premiumOption.classList.add('disabled');
-            } else if (premiumOption) {
-                premiumOption.classList.remove('disabled');
-            }
-            updateModelButton();
+        // Toggle sidebar
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
         }
 
-        // Initialize app
-        function initApp() {
-            console.log('Initializing app...');
-            // Don't call local checkAuth here - let authManager handle it
-            // checkAuth();
-        }
+        // ============================================
+        // ROBLOX AUTO-SEND FUNCTIONALITY
+        // ============================================
 
-        // Check subscription status (stub for now)
-        function checkSubscriptionStatus() {
-            // This function would normally check subscription status from server
-            console.log('Checking subscription status...');
-        }
+        let robloxConnected = false;
+        let sentCodeBlocks = new Set();
 
-        // Enhanced attachment functionality
-        function toggleAttachMenu() {
-            const dropdown = document.getElementById('attachDropdown');
-            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-        }
+        // Structured script parser (from RoConsole)
+        function parseStructuredScripts(response) {
+            const scripts = [];
+            const scriptRegex = /<roblox_script\s+name="([^"]+)"\s+type="([^"]+)"\s+location="([^"]+)">([\s\S]*?)<\/roblox_script>/gi;
 
-        // Text content modal functions
-        function openTextModal() {
-            document.getElementById('attachDropdown').style.display = 'none';
-            document.getElementById('textModal').style.display = 'flex';
-            document.getElementById('textTitle').focus();
-        }
+            let match;
+            while ((match = scriptRegex.exec(response)) !== null) {
+                const [, name, type, location, code] = match;
 
-        function closeTextModal() {
-            document.getElementById('textModal').style.display = 'none';
-            document.getElementById('textTitle').value = '';
-            document.getElementById('textContent').value = '';
-        }
+                scripts.push({
+                    name: name.trim(),
+                    type: type.trim(),
+                    location: location.trim(),
+                    code: code.trim(),
+                    id: `structured_${Date.now()}_${scripts.length}`
+                });
 
-        function addTextContent() {
-            const title = document.getElementById('textTitle').value.trim();
-            const content = document.getElementById('textContent').value.trim();
-
-            if (!content) {
-                alert('Please enter some content');
-                return;
+                console.log(`[Parser] Found structured script: ${name} (${type}) -> ${location}`);
             }
 
-            // Create a text "file" attachment
-            const textFile = new Blob([content], { type: 'text/plain' });
-            const fileName = title || 'text-content.txt';
-
-            // Create a File object from the blob
-            const file = new File([textFile], fileName, { type: 'text/plain' });
-
-            // Add to attached files
-            if (!window.chatManager.attachedFiles) {
-                window.chatManager.attachedFiles = [];
-            }
-            window.chatManager.attachedFiles.push(file);
-
-            // Show in file attachments
-            showFileAttachment(file, window.chatManager.attachedFiles.length - 1);
-
-            closeTextModal();
+            return scripts;
         }
 
-        // Image modal functions
-        function openImageModal() {
-            document.getElementById('attachDropdown').style.display = 'none';
-            document.getElementById('imageModal').style.display = 'flex';
-            resetImageModal();
+        function getScriptType(type) {
+            const typeMap = {
+                'Script': 'Script',
+                'LocalScript': 'LocalScript',
+                'ModuleScript': 'ModuleScript',
+                'ScreenGui': 'Instance',
+                'Frame': 'Instance',
+                'TextButton': 'Instance',
+                'TextLabel': 'Instance',
+                'TextBox': 'Instance',
+                'ImageLabel': 'Instance',
+                'ImageButton': 'Instance',
+                'ScrollingFrame': 'Instance',
+                'Folder': 'Instance',
+                'RemoteEvent': 'Instance',
+                'RemoteFunction': 'Instance',
+                'Part': 'Instance',
+                'Model': 'Instance',
+                'Tool': 'Instance',
+                'MeshPart': 'Instance',
+                'UnionOperation': 'Instance',
+                'WedgePart': 'Instance',
+                'CornerWedgePart': 'Instance'
+            };
+
+            return typeMap[type] || 'Script';
         }
 
-        function closeImageModal() {
-            document.getElementById('imageModal').style.display = 'none';
-            resetImageModal();
-        }
-
-        function resetImageModal() {
-            document.getElementById('imageUrlInput').style.display = 'none';
-            document.getElementById('imagePasteArea').style.display = 'none';
-            document.getElementById('imagePreview').style.display = 'none';
-            document.getElementById('imageUrl').value = '';
-        }
-
-        function showImageUrlInput() {
-            resetImageModal();
-            document.getElementById('imageUrlInput').style.display = 'block';
-            document.getElementById('imageUrl').focus();
-        }
-
-        function showImagePasteArea() {
-            resetImageModal();
-            document.getElementById('imagePasteArea').style.display = 'block';
-
-            const pasteArea = document.getElementById('pasteArea');
-            pasteArea.focus();
-
-            // Add paste event listener
-            pasteArea.addEventListener('paste', handleImagePaste, { once: true });
-        }
-
-        function handleImagePaste(event) {
-            event.preventDefault();
-            const items = event.clipboardData.items;
-
-            for (let item of items) {
-                if (item.type.indexOf('image') !== -1) {
-                    const blob = item.getAsFile();
-                    if (blob) {
-                        showImagePreview(blob, 'pasted-image.png');
-                        return;
-                    }
-                }
-            }
-
-            alert('No image found in clipboard. Please copy an image first.');
-        }
-
-        function addImageFromUrl() {
-            const url = document.getElementById('imageUrl').value.trim();
-            if (!url) {
-                alert('Please enter a valid image URL');
-                return;
-            }
-
-            // Validate URL format
+        // Check Roblox connection status
+        async function checkRobloxConnection() {
             try {
-                new URL(url);
-            } catch {
-                alert('Please enter a valid URL');
+                const response = await fetch(`${getApiBaseUrl()}/roblox/connection-status`);
+                const data = await response.json();
+
+                robloxConnected = data.connected && data.clients > 0;
+
+                const statusDot = document.getElementById('robloxStatusDot');
+                const statusText = document.getElementById('robloxStatusText');
+                const statusDotBanner = document.getElementById('robloxStatusDotBanner');
+                const statusTextBanner = document.getElementById('robloxStatusTextBanner');
+
+                if (robloxConnected) {
+                    statusDot.classList.remove('disconnected');
+                    statusDot.classList.add('connected');
+                    statusText.textContent = 'Connected';
+                    statusDotBanner.style.background = '#57f287';
+                    statusTextBanner.textContent = 'Connected';
+                } else {
+                    statusDot.classList.remove('connected');
+                    statusDot.classList.add('disconnected');
+                    statusText.textContent = 'Disconnected';
+                    statusDotBanner.style.background = '#ed4245';
+                    statusTextBanner.textContent = 'Disconnected';
+                }
+            } catch (error) {
+                console.error('[Roblox] Failed to check connection:', error);
+                const statusDot = document.getElementById('robloxStatusDot');
+                const statusText = document.getElementById('robloxStatusText');
+                const statusDotBanner = document.getElementById('robloxStatusDotBanner');
+                const statusTextBanner = document.getElementById('robloxStatusTextBanner');
+
+                statusDot.classList.remove('connected');
+                statusDot.classList.add('disconnected');
+                statusText.textContent = 'Error';
+                statusDotBanner.style.background = '#666';
+                statusTextBanner.textContent = 'Error';
+            }
+        }
+
+        // Send code to Roblox Studio
+        async function sendCodeToRoblox(codeBlock) {
+            try {
+                const scriptName = codeBlock.name || codeBlock.summary || codeBlock.id || 'GeneratedScript';
+                const scriptType = codeBlock.type ? getScriptType(codeBlock.type) : 'Script';
+                const location = codeBlock.location || 'ServerScriptService';
+                const code = codeBlock.code || '';
+
+                const response = await fetch(`${getApiBaseUrl()}/roblox/send-script`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: scriptName,
+                        code: code,
+                        scriptType: scriptType,
+                        location: location,
+                        instanceType: codeBlock.type || scriptType
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log(`[Roblox] ✅ Sent ${codeBlock.type || 'script'}: ${scriptName} to ${location}`);
+                    return { success: true, scriptName, location };
+                } else {
+                    console.error(`[Roblox] ❌ Failed to send script: ${scriptName}`);
+                    return { success: false, scriptName, location };
+                }
+            } catch (error) {
+                console.error('[Roblox] Error sending script:', error);
+                return { success: false, scriptName: codeBlock.name || codeBlock.summary || 'Unknown' };
+            }
+        }
+
+        // Send structured scripts
+        async function sendStructuredScripts(scripts) {
+            if (!scripts || scripts.length === 0) {
+                console.log('[Roblox] No structured scripts to send');
                 return;
             }
 
-            // Show preview
-            const img = document.getElementById('previewImg');
-            img.src = url;
-            img.onload = () => {
-                document.getElementById('imageName').textContent = url.split('/').pop() || 'image-from-url';
-                document.getElementById('imageUrlInput').style.display = 'none';
-                document.getElementById('imagePreview').style.display = 'block';
+            console.log(`[Roblox] Sending ${scripts.length} structured script(s)...`);
 
-                // Store the URL for later use
-                img.dataset.imageUrl = url;
-            };
-            img.onerror = () => {
-                alert('Failed to load image from URL. Please check the URL and try again.');
-            };
+            const results = [];
+            for (const script of scripts) {
+                sentCodeBlocks.add(script.id);
+                const result = await sendCodeToRoblox(script);
+                results.push(result);
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+
+            const successCount = results.filter(r => r.success).length;
+            const totalCount = results.length;
+
+            if (successCount > 0) {
+                showRobloxNotification(`✅ Created ${successCount}/${totalCount} component(s) in Roblox Studio`);
+            } else {
+                showRobloxNotification(`❌ Failed to create components in Roblox Studio`, 'error');
+            }
+
+            return results;
         }
 
-        function handleImageFileSelect(event) {
-            const file = event.target.files[0];
-            if (file) {
-                showImagePreview(file, file.name);
+        let lastAIResponse = '';
+
+        // Auto-send to Roblox
+        async function autoSendToRoblox(fullResponse) {
+            if (!robloxConnected) {
+                console.log('[Roblox] Not connected to Roblox Studio');
+                return;
+            }
+
+            if (fullResponse) {
+                lastAIResponse = fullResponse;
+            }
+
+            // Check for structured scripts
+            if (lastAIResponse) {
+                const structuredScripts = parseStructuredScripts(lastAIResponse);
+
+                if (structuredScripts.length > 0) {
+                    console.log(`[Roblox] Found ${structuredScripts.length} structured script(s) in AI response`);
+                    await sendStructuredScripts(structuredScripts);
+                    lastAIResponse = '';
+                    return;
+                }
+            }
+
+            // Fallback to code blocks
+            if (!window._codeBlocks || Object.keys(window._codeBlocks).length === 0) {
+                console.log('[Roblox] No code blocks to send');
+                return;
+            }
+
+            const newBlocks = [];
+            for (const blockId in window._codeBlocks) {
+                if (!sentCodeBlocks.has(blockId)) {
+                    newBlocks.push(window._codeBlocks[blockId]);
+                    sentCodeBlocks.add(blockId);
+                }
+            }
+
+            if (newBlocks.length === 0) {
+                console.log('[Roblox] No new code blocks to send');
+                return;
+            }
+
+            console.log(`[Roblox] Auto-sending ${newBlocks.length} NEW code block(s)...`);
+
+            const results = [];
+            for (const block of newBlocks) {
+                const result = await sendCodeToRoblox(block);
+                results.push(result);
+            }
+
+            const successCount = results.filter(r => r.success).length;
+            const totalCount = results.length;
+
+            if (successCount > 0) {
+                showRobloxNotification(`✅ Sent ${successCount}/${totalCount} script(s) to Roblox Studio`);
+            } else {
+                showRobloxNotification(`❌ Failed to send scripts to Roblox Studio`, 'error');
             }
         }
 
-        function showImagePreview(file, name) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = document.getElementById('previewImg');
-                img.src = e.target.result;
-                img.dataset.imageFile = ''; // Mark as file
-                document.getElementById('imageName').textContent = name;
-                document.getElementById('imagePreview').style.display = 'block';
-
-                // Store the file for later use
-                img.dataset.imageBlob = file;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function addImageContent() {
-            const img = document.getElementById('previewImg');
-            const imageName = document.getElementById('imageName').textContent;
-
-            if (img.dataset.imageUrl) {
-                // Handle URL image - create a text file with the URL
-                const urlContent = `Image URL: ${img.dataset.imageUrl}`;
-                const textFile = new Blob([urlContent], { type: 'text/plain' });
-                const file = new File([textFile], `${imageName}-url.txt`, { type: 'text/plain' });
-
-                if (!window.chatManager.attachedFiles) {
-                    window.chatManager.attachedFiles = [];
-                }
-                window.chatManager.attachedFiles.push(file);
-                showFileAttachment(file, window.chatManager.attachedFiles.length - 1);
-            } else if (img.dataset.imageBlob) {
-                // Handle file image
-                const file = img.dataset.imageBlob;
-
-                if (!window.chatManager.attachedFiles) {
-                    window.chatManager.attachedFiles = [];
-                }
-                window.chatManager.attachedFiles.push(file);
-                showFileAttachment(file, window.chatManager.attachedFiles.length - 1);
-            }
-
-            closeImageModal();
-        }
-
-        function showFileAttachment(file, index) {
-            const fileAttachments = document.getElementById('fileAttachments');
-
-            // Create file preview
-            const filePreview = document.createElement('div');
-            filePreview.className = 'file-attachment';
-            filePreview.innerHTML = `
-                <div class="file-info">
-                    <span class="file-name">${file.name}</span>
-                    <span class="file-size">${formatFileSize(file.size)}</span>
-                </div>
-                <button class="remove-file" onclick="removeFile(${index})">×</button>
+        // Show notification toast
+        function showRobloxNotification(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                background: ${type === 'success' ? '#57f287' : '#ed4245'};
+                color: #000;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 500;
+                z-index: 10000;
+                animation: slideIn 0.3s ease-out;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
 
-            fileAttachments.appendChild(filePreview);
-            fileAttachments.style.display = 'block';
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(400px); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
 
-        // Close dropdowns when clicking outside
-        document.addEventListener('click', function(event) {
-            const attachButton = document.getElementById('attachButton');
-            const attachDropdown = document.getElementById('attachDropdown');
+        // Setup Roblox auto-send hook
+        function setupRobloxAutoSendHook() {
+            checkRobloxConnection();
+            setInterval(checkRobloxConnection, 5000);
 
-            if (!attachButton.contains(event.target) && !attachDropdown.contains(event.target)) {
-                attachDropdown.style.display = 'none';
+            let codeBlockCheckInterval = null;
+            let lastCodeBlockCount = 0;
+
+            if (window.chatManager) {
+                const originalAddMessage = window.chatManager.addMessage.bind(window.chatManager);
+
+                window.chatManager.addMessage = function(role, content, options) {
+                    const result = originalAddMessage(role, content, options);
+
+                    if (role === 'assistant') {
+                        if (codeBlockCheckInterval) {
+                            clearInterval(codeBlockCheckInterval);
+                        }
+
+                        lastCodeBlockCount = 0;
+                        lastAIResponse = content;
+
+                        const hasStructuredScripts = /<roblox_script\s+name="[^"]+"\s+type="[^"]+"\s+location="[^"]+">/.test(content);
+
+                        if (hasStructuredScripts) {
+                            console.log('[Roblox] Detected structured scripts, will auto-send after render');
+                            setTimeout(() => {
+                                console.log('[Roblox] Triggering auto-send for structured scripts');
+                                autoSendToRoblox(content);
+                            }, 500);
+                            return result;
+                        }
+
+                        let checksWithoutChange = 0;
+                        let hasSeenCodeBlocks = false;
+                        codeBlockCheckInterval = setInterval(() => {
+                            const currentCount = window._codeBlocks ? Object.keys(window._codeBlocks).length : 0;
+
+                            if (currentCount > 0) {
+                                hasSeenCodeBlocks = true;
+                            }
+
+                            if (hasSeenCodeBlocks) {
+                                if (currentCount === lastCodeBlockCount) {
+                                    checksWithoutChange++;
+
+                                    if (checksWithoutChange >= 2) {
+                                        clearInterval(codeBlockCheckInterval);
+                                        codeBlockCheckInterval = null;
+                                        console.log('[Roblox] Code blocks stable, triggering auto-send');
+                                        autoSendToRoblox(content);
+                                    }
+                                } else {
+                                    checksWithoutChange = 0;
+                                    lastCodeBlockCount = currentCount;
+                                }
+                            }
+
+                            if (checksWithoutChange >= 25 && hasSeenCodeBlocks) {
+                                clearInterval(codeBlockCheckInterval);
+                                codeBlockCheckInterval = null;
+                                console.log('[Roblox] Timeout reached, sending anyway');
+                                autoSendToRoblox(content);
+                            }
+                        }, 200);
+                    }
+
+                    return result;
+                };
             }
-        });
+        }
 
-        // Close modals with Escape key
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeTextModal();
-                closeImageModal();
-                closeCodePanel();
+        // ============================================
+        // EXPLORER PANEL FUNCTIONALITY
+        // ============================================
+
+        let explorerVisible = true;
+        let explorerData = null;
+
+        function getInstanceIcon(className) {
+            const iconMap = {
+                'Script': 'fas fa-file-code icon-script',
+                'LocalScript': 'fas fa-file-code icon-localscript',
+                'ModuleScript': 'fas fa-cube icon-modulescript',
+                'Folder': 'fas fa-folder icon-folder',
+                'Part': 'fas fa-cube icon-part',
+                'Model': 'fas fa-cubes icon-model',
+                'ScreenGui': 'fas fa-desktop icon-screengui',
+                'Frame': 'fas fa-square icon-default',
+                'TextButton': 'fas fa-mouse-pointer icon-default',
+                'TextLabel': 'fas fa-font icon-default',
+                'RemoteEvent': 'fas fa-bolt icon-default',
+                'RemoteFunction': 'fas fa-bolt icon-default'
+            };
+
+            return iconMap[className] || 'fas fa-circle icon-default';
+        }
+
+        function openScriptViewer(scriptName, sourceCode) {
+            const modal = document.getElementById('scriptViewerModal');
+            const nameElement = document.getElementById('scriptViewerName');
+            const codeElement = document.getElementById('scriptViewerCode');
+
+            nameElement.textContent = scriptName;
+            codeElement.textContent = sourceCode;
+
+            modal.classList.add('active');
+        }
+
+        function closeScriptViewer() {
+            const modal = document.getElementById('scriptViewerModal');
+            modal.classList.remove('active');
+        }
+
+        window.closeScriptViewer = closeScriptViewer;
+
+        function renderExplorerItem(item, level = 0) {
+            const hasChildren = item.children && item.children.length > 0;
+            const isScript = item.source && (item.className === 'Script' || item.className === 'LocalScript' || item.className === 'ModuleScript');
+
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'explorer-item-wrapper';
+            itemDiv.style.marginLeft = (level * 0.5) + 'rem';
+
+            const itemHeader = document.createElement('div');
+            itemHeader.className = 'explorer-item';
+
+            if (isScript) {
+                itemHeader.classList.add('script-item');
             }
-        });
 
-        // Close code panel function
-        function closeCodePanel() {
-            const codePanel = document.getElementById('codePanel');
+            if (hasChildren) {
+                const toggle = document.createElement('span');
+                toggle.className = 'explorer-item-toggle';
+                toggle.innerHTML = '<i class="fas fa-chevron-down"></i>';
+                itemHeader.appendChild(toggle);
+            } else {
+                const spacer = document.createElement('span');
+                spacer.className = 'explorer-item-toggle';
+                spacer.innerHTML = '';
+                itemHeader.appendChild(spacer);
+            }
+
+            const icon = document.createElement('span');
+            icon.className = 'explorer-item-icon';
+            icon.innerHTML = `<i class="${getInstanceIcon(item.className)}"></i>`;
+            itemHeader.appendChild(icon);
+
+            const name = document.createElement('span');
+            name.className = 'explorer-item-name';
+            name.textContent = item.name;
+            itemHeader.appendChild(name);
+
+            const className = document.createElement('span');
+            className.className = 'explorer-item-class';
+            className.textContent = item.className;
+            itemHeader.appendChild(className);
+
+            itemDiv.appendChild(itemHeader);
+
+            if (isScript) {
+                itemHeader.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openScriptViewer(item.name, item.source);
+                });
+            }
+
+            if (hasChildren) {
+                const childrenDiv = document.createElement('div');
+                childrenDiv.className = 'explorer-children';
+
+                for (const child of item.children) {
+                    childrenDiv.appendChild(renderExplorerItem(child, level + 1));
+                }
+
+                itemDiv.appendChild(childrenDiv);
+
+                if (!isScript) {
+                    itemHeader.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const toggle = itemHeader.querySelector('.explorer-item-toggle i');
+                        if (toggle) {
+                            toggle.classList.toggle('collapsed');
+                            childrenDiv.classList.toggle('collapsed');
+                        }
+                    });
+                }
+            }
+
+            return itemDiv;
+        }
+
+        async function updateExplorerPanel() {
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/roblox/explorer`);
+                const data = await response.json();
+
+                console.log('[Explorer] Received data:', {
+                    connected: data.connected,
+                    hierarchyLength: data.hierarchy ? data.hierarchy.length : 0,
+                    lastUpdate: data.lastUpdate
+                });
+
+                const explorerContent = document.getElementById('explorerContent');
+                const explorerStatus = document.getElementById('explorerStatus');
+
+                if (data.connected && data.hierarchy && data.hierarchy.length > 0) {
+                    explorerStatus.classList.add('connected');
+                    explorerStatus.innerHTML = '<i class="fas fa-circle"></i><span>Connected</span>';
+
+                    explorerContent.innerHTML = '';
+
+                    for (const service of data.hierarchy) {
+                        explorerContent.appendChild(renderExplorerItem(service));
+                    }
+
+                    explorerData = data.hierarchy;
+                } else {
+                    explorerStatus.classList.remove('connected');
+                    explorerStatus.innerHTML = '<i class="fas fa-circle"></i><span>Disconnected</span>';
+
+                    explorerContent.innerHTML = `
+                        <div class="explorer-empty">
+                            <i class="fas fa-cube"></i>
+                            <p>Connect Roblox Studio to view Explorer</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('[Explorer] Failed to fetch data:', error);
+            }
+        }
+
+        function toggleExplorerPanel() {
+            explorerVisible = !explorerVisible;
+            const panel = document.getElementById('explorerPanel');
             const mainContent = document.getElementById('mainContent');
 
-            if (codePanel) {
-                codePanel.classList.remove('active');
-            }
-            if (mainContent) {
-                mainContent.classList.remove('code-panel-active');
+            if (explorerVisible) {
+                panel.classList.remove('hidden');
+                mainContent.classList.add('explorer-visible');
+            } else {
+                panel.classList.add('hidden');
+                mainContent.classList.remove('explorer-visible');
             }
         }
 
-        // Make closeCodePanel globally available
-        window.closeCodePanel = closeCodePanel;
+        function initializeExplorerPanel() {
+            document.getElementById('scriptViewerModal').addEventListener('click', (e) => {
+                if (e.target.id === 'scriptViewerModal') {
+                    closeScriptViewer();
+                }
+            });
+
+            document.getElementById('explorerToggleBtn').addEventListener('click', toggleExplorerPanel);
+
+            document.getElementById('explorerRefreshBtn').addEventListener('click', () => {
+                const btn = document.getElementById('explorerRefreshBtn');
+                btn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i>';
+
+                updateExplorerPanel().then(() => {
+                    setTimeout(() => {
+                        btn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+                    }, 500);
+                });
+            });
+
+            updateExplorerPanel();
+            setInterval(updateExplorerPanel, 3000);
+
+            const mainContent = document.getElementById('mainContent');
+            mainContent.classList.add('explorer-visible');
+        }
+
+        // Initialize when DOM is ready
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('Unified RoAssistant loaded');
+
+            // Load project from URL if present
+            loadProjectFromUrl();
+
+            // Initialize Roblox features
+            setTimeout(setupRobloxAutoSendHook, 500);
+            setTimeout(initializeExplorerPanel, 100);
+        });
     </script>
 
-    <!-- Load JavaScript modules -->
+    <!-- Load JavaScript modules - EXACT SAME ORDER AS roconsole.html -->
     <script src="js/storage-utils.js"></script>
     <script src="js/sync-manager.js"></script>
     <script src="js/sync-ui.js"></script>
@@ -1545,8 +1602,8 @@
     <script src="js/chat.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/scripts.js"></script>
-    <script src="js/micro-interactions.js"></script>    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-
+    <script src="js/micro-interactions.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 
     <!-- ReactBits-Inspired Animations -->
     <script src="js/animations/dot-grid-background.js"></script>
@@ -1558,11 +1615,48 @@
 
     <!-- Initialize the application -->
     <script>
+        // Ensure openCodePanel is available globally
+        if (!window.openCodePanel) {
+            window.openCodePanel = function(blockId) {
+                console.log('[Project Chat] openCodePanel called for:', blockId);
+                if (window.chatManager && window.chatManager.openCodePanel) {
+                    window.chatManager.openCodePanel(blockId);
+                } else {
+                    console.error('[Project Chat] ChatManager not ready, retrying...');
+                    setTimeout(() => {
+                        if (window.chatManager && window.chatManager.openCodePanel) {
+                            window.chatManager.openCodePanel(blockId);
+                        } else {
+                            console.error('[Project Chat] ChatManager still not available');
+                        }
+                    }, 500);
+                }
+            };
+        }
+
+        // Close code panel function
+        function closeCodePanel() {
+            const codePanel = document.getElementById('codePanel');
+            const mainContent = document.getElementById('mainContent');
+            const explorerPanel = document.getElementById('explorerPanel');
+
+            if (codePanel) {
+                codePanel.classList.remove('active');
+            }
+            if (mainContent) {
+                mainContent.classList.remove('code-panel-active');
+            }
+            document.body.classList.remove('code-panel-open');
+
+            if (explorerPanel) {
+                explorerPanel.style.right = '';
+            }
+        }
+
+        window.closeCodePanel = closeCodePanel;
+
         // Initialize app when DOM is ready
         document.addEventListener('DOMContentLoaded', function() {
-            const app = new App();
-            app.init();
-
             // Add click outside listener for model dropdown
             document.addEventListener('click', function(e) {
                 const modelDropdown = document.getElementById('modelDropdown');
@@ -1575,152 +1669,49 @@
                 }
             });
 
-            // Initialize model button
-            updateModelButton();
+            // Code panel resize functionality
+            const codePanel = document.getElementById('codePanel');
+            const resizeHandle = document.getElementById('codePanelResizeHandle');
 
-            // Setup token estimation for message input
-            setupTokenEstimation();
-        });
+            if (codePanel && resizeHandle) {
+                let isResizing = false;
+                let startX = 0;
+                let startWidth = 0;
 
-        // Token estimation functionality
-        let estimationTimeout;
-        let lastEstimation = null;
-
-        function setupTokenEstimation() {
-            const messageInput = document.getElementById('messageInput');
-            if (messageInput) {
-                messageInput.addEventListener('input', debounceTokenEstimation);
-                messageInput.addEventListener('keyup', debounceTokenEstimation);
-            }
-        }
-
-        function debounceTokenEstimation() {
-            clearTimeout(estimationTimeout);
-            estimationTimeout = setTimeout(() => {
-                updateTokenEstimation();
-            }, 500); // Wait 500ms after user stops typing
-        }
-
-        async function updateTokenEstimation() {
-            const messageInput = document.getElementById('messageInput');
-            const tokenEstimation = document.getElementById('tokenEstimation');
-            const tokenEstimationText = document.getElementById('tokenEstimationText');
-            const tokenWarning = document.getElementById('tokenWarning');
-
-            if (!messageInput || !tokenEstimation) return;
-
-            const prompt = messageInput.value.trim();
-
-            if (prompt.length === 0) {
-                tokenEstimation.style.display = 'none';
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/estimate-tokens`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': authToken ? `Bearer ${authToken}` : ''
-                    },
-                    body: JSON.stringify({
-                        prompt: prompt,
-                        model: selectedModel
-                    })
+                resizeHandle.addEventListener('mousedown', (e) => {
+                    isResizing = true;
+                    startX = e.clientX;
+                    startWidth = codePanel.offsetWidth;
+                    resizeHandle.classList.add('resizing');
+                    document.body.style.cursor = 'ew-resize';
+                    document.body.style.userSelect = 'none';
+                    e.preventDefault();
                 });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    lastEstimation = data.estimation;
+                document.addEventListener('mousemove', (e) => {
+                    if (!isResizing) return;
 
-                    // Show estimation
-                    tokenEstimation.style.display = 'flex';
+                    const deltaX = startX - e.clientX;
+                    const newWidth = startWidth + deltaX;
 
-                    // Format display based on confidence level
-                    const confidenceSymbol = data.estimation.confidence === 'high' ? '' :
-                                            data.estimation.confidence === 'medium' ? '≈' : '~';
-                    tokenEstimationText.textContent = `${confidenceSymbol}${data.estimation.estimatedTotal.toLocaleString()} tokens`;
+                    const minWidth = 300;
+                    const maxWidth = window.innerWidth * 0.8;
 
-                    // Reset classes
-                    tokenEstimation.classList.remove('warning', 'error');
-                    tokenWarning.style.display = 'none';
-
-                    // Check for warnings if user is authenticated and has limits
-                    if (data.userContext && data.userContext.wouldExceedLimit) {
-                        tokenEstimation.classList.add('error');
-                        tokenWarning.style.display = 'inline';
-                        tokenWarning.textContent = '⚠️ Exceeds daily limit';
-                    } else if (data.userContext && data.userContext.remainingTokens < data.estimation.estimatedTotal * 2) {
-                        tokenEstimation.classList.add('warning');
+                    if (newWidth >= minWidth && newWidth <= maxWidth) {
+                        codePanel.style.width = `${newWidth}px`;
                     }
+                });
 
-                } else {
-                    console.error('Token estimation failed:', response.statusText);
-                }
-            } catch (error) {
-                console.error('Token estimation error:', error);
+                document.addEventListener('mouseup', () => {
+                    if (isResizing) {
+                        isResizing = false;
+                        resizeHandle.classList.remove('resizing');
+                        document.body.style.cursor = '';
+                        document.body.style.userSelect = '';
+                    }
+                });
             }
-        }
-
-        // Update the chat manager to show estimation results
-        if (window.chatManager) {
-            const originalUpdateUsageDisplay = window.chatManager.updateUsageDisplay;
-            window.chatManager.updateUsageDisplay = function(usageInfo) {
-                originalUpdateUsageDisplay.call(this, usageInfo);
-
-                // Log estimation accuracy if available
-                if (usageInfo && usageInfo.tokenEstimation && lastEstimation) {
-                    console.log(`[TOKEN ESTIMATION] Accuracy: ${usageInfo.tokenEstimation.actualAccuracy}% (estimated: ${lastEstimation.estimatedTotal}, actual: ${usageInfo.tokenUsage.totalTokens})`);
-                }
-            };
-        }
-
+        });
     </script>
-
-    <!-- Nexus Limit Upgrade Popup - Full Screen Overlay -->
-    <div id="nexusUpgradeModal" class="nexus-upgrade-popup" style="display: none;">
-        <div class="nexus-popup-overlay" onclick="closeUpgradeModal()"></div>
-        <div class="nexus-popup-content">
-            <button class="nexus-popup-close" onclick="closeUpgradeModal()">&times;</button>
-            <h1 class="nexus-popup-title">RoAssistant Pro</h1>
-            <p class="nexus-popup-price">$10/month</p>
-            <p class="nexus-popup-message">Daily RoCode Nexus 3 limit reached (3). Upgrade to Pro for unlimited access.</p>
-
-            <div class="nexus-benefits-list">
-                <div class="nexus-benefit-item">
-                    <i class="fas fa-check"></i>
-                    <span>More RoCode Nexus 3 usage*</span>
-                </div>
-                <div class="nexus-benefit-item">
-                    <i class="fas fa-check"></i>
-                    <span>Access to unlimited Projects to organize chats</span>
-                </div>
-                <div class="nexus-benefit-item">
-                    <i class="fas fa-check"></i>
-                    <span>Priority support and faster responses</span>
-                </div>
-                <div class="nexus-benefit-item">
-                    <i class="fas fa-check"></i>
-                    <span>Extended context for complex work</span>
-                </div>
-                <div class="nexus-benefit-item">
-                    <i class="fas fa-check"></i>
-                    <span>Advanced Roblox development features</span>
-                </div>
-                <div class="nexus-benefit-item">
-                    <i class="fas fa-check"></i>
-                    <span>Access to RoCode Studio (Enterprise)</span>
-                </div>
-            </div>
-
-            <p class="nexus-usage-note">*Usage limits apply</p>
-
-            <div class="nexus-popup-buttons">
-                <button class="nexus-btn nexus-btn-secondary" onclick="closeUpgradeModal(); selectModel('claude-4-sonnet');">Switch to RoCode 3</button>
-                <button class="nexus-btn nexus-btn-primary" onclick="window.location.href='/pricing.html'">Buy</button>
-            </div>
-        </div>
-    </div>
-
 </body>
 </html>

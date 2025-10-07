@@ -44,9 +44,9 @@
                     <span class="nav-icon"><i class="fas fa-folder"></i></span>
                     Projects
                 </div>
-                <div class="nav-item" onclick="window.location.href='/roconsole.html'">
+                <div class="nav-item" onclick="window.location.href='/index.html'">
                     <span class="nav-icon"><i class="fas fa-cube"></i></span>
-                    RoConsole
+                    Chat
                 </div>
                 <div class="nav-item" onclick="window.location.href='/scripts.html'">
                     <span class="nav-icon"><i class="fas fa-wrench"></i></span>
@@ -858,7 +858,7 @@
         // Open project chat
         function openProjectChat() {
             if (!currentProjectId) return;
-            window.location.href = `/project-chat.html?project=${currentProjectId}`;
+            window.location.href = `/index.html?project=${currentProjectId}`;
         }
 
         // Project modal functions
