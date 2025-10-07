@@ -1008,6 +1008,8 @@ class ChatManager {
         setTimeout(() => {
             codePanel.classList.add('active');
             if (mainContent) mainContent.classList.add('code-panel-active');
+            // Add class to body to shift Explorer panel
+            document.body.classList.add('code-panel-open');
         }, 100);
     }
 

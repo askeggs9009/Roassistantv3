@@ -197,11 +197,16 @@
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, right 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .explorer-panel.hidden {
             transform: translateX(100%);
+        }
+
+        /* Shift Explorer left when code panel is open */
+        body.code-panel-open .explorer-panel {
+            right: 50%; /* Move Explorer left by code panel width */
         }
 
         .explorer-header {
@@ -1475,6 +1480,8 @@
             if (mainContent) {
                 mainContent.classList.remove('code-panel-active');
             }
+            // Remove body class to shift Explorer back
+            document.body.classList.remove('code-panel-open');
         }
 
         // Make closeCodePanel globally available
