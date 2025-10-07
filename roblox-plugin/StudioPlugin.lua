@@ -120,7 +120,7 @@ local function createScriptInstance(scriptData)
 			scriptInstance = result
 			scriptInstance.Name = scriptData.name or instanceType
 
-			-- For UI elements, set some default properties
+			-- Set default properties based on instance type
 			if instanceType == "ScreenGui" then
 				scriptInstance.ResetOnSpawn = false
 			elseif instanceType == "Frame" then
@@ -138,6 +138,18 @@ local function createScriptInstance(scriptData)
 				scriptInstance.Text = scriptData.name or "Label"
 				scriptInstance.TextScaled = true
 				scriptInstance.BackgroundTransparency = 1
+			elseif instanceType == "Part" then
+				-- Default Part properties
+				scriptInstance.Size = Vector3.new(4, 1, 4)
+				scriptInstance.Position = Vector3.new(0, 5, 0)
+				scriptInstance.Anchored = true
+				scriptInstance.BrickColor = BrickColor.new("Bright red")
+				scriptInstance.Material = Enum.Material.SmoothPlastic
+			elseif instanceType == "Model" then
+				-- Models don't need default properties
+			elseif instanceType == "Tool" then
+				scriptInstance.CanBeDropped = true
+				scriptInstance.RequiresHandle = true
 			end
 		else
 			warn("[RoAssistant] Failed to create instance type:", instanceType)

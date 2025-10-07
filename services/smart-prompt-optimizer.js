@@ -95,17 +95,46 @@ Complex system (use structure):
 -- Communication bridge (no code needed for RemoteEvents)
 </roblox_script>
 
+IMPORTANT: When users mention PHYSICAL OBJECTS (parts, models, tools), create the actual instances:
+
+"make a part that kills players" →
+<roblox_script name="KillPart" type="Part" location="Workspace">
+-- Part will be created
+</roblox_script>
+
+<roblox_script name="KillScript" type="Script" location="Workspace.KillPart">
+-- Script that handles the killing
+script.Parent.Touched:Connect(function(hit)
+    local player = game.Players:GetPlayerFromCharacter(hit.Parent)
+    if player then
+        hit.Parent:FindFirstChild("Humanoid"):TakeDamage(100)
+    end
+end)
+</roblox_script>
+
+"create a teleport pad" →
+<roblox_script name="TeleportPad" type="Part" location="Workspace">
+-- Part instance
+</roblox_script>
+
+<roblox_script name="TeleportScript" type="Script" location="Workspace.TeleportPad">
+-- Teleport logic
+</roblox_script>
+
 Use structured format when users ask for:
+- Physical objects (parts, models, tools) with scripts
 - Complete systems (shops, inventories, games)
 - UI with functionality
 - Client-server systems
 - Multiple connected scripts
+- Anything with "make a [object] that does [action]"
 
 Use regular code blocks for:
-- Single scripts
+- Single standalone scripts (no physical object)
 - Code snippets
 - Functions
-- Quick fixes`;
+- Quick fixes
+- Helper utilities`;
 
     const prompts = {
         'claude-3-5-haiku': baseInstruction,

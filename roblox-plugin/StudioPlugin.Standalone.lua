@@ -2,20 +2,26 @@
 	RoAssistant Studio Plugin - STANDALONE VERSION
 	Place this file directly in your Roblox Plugins folder
 
-	Version: 2.0.0 - AI-Powered Automatic Placement Update
+	Version: 2.1.0 - Physical Objects Update
 
 	NEW FEATURES:
+	✅ Automatic physical object creation (Parts, Models, Tools)
+	✅ Creates Parts with scripts inside them automatically
 	✅ Automatic UI element creation (ScreenGui, Frame, TextButton, etc.)
 	✅ Automatic hierarchy creation (creates parent folders as needed)
 	✅ Support for RemoteEvents, RemoteFunctions, and Folders
 	✅ Smart placement for complete Roblox systems
 
-	When you ask "make me a shop ui", the AI will now automatically:
-	- Create ScreenGui in StarterGui
+	Examples:
+	"make a part that kills players" →
+	- Creates Part in Workspace
+	- Adds Script inside the Part with touch logic
+
+	"make me a shop ui" →
+	- Creates ScreenGui in StarterGui
 	- Add LocalScripts for UI logic
-	- Create ServerScripts in ServerScriptService
-	- Add RemoteEvents in ReplicatedStorage
-	- Place everything in the correct locations!
+	- Creates ServerScripts in ServerScriptService
+	- Adds RemoteEvents in ReplicatedStorage
 ]]
 
 -- ========================================
@@ -155,7 +161,7 @@ local function createScriptInstance(scriptData)
 			scriptInstance = result
 			scriptInstance.Name = scriptData.name or instanceType
 
-			-- For UI elements, set some default properties
+			-- Set default properties based on instance type
 			if instanceType == "ScreenGui" then
 				scriptInstance.ResetOnSpawn = false
 			elseif instanceType == "Frame" then
@@ -173,6 +179,18 @@ local function createScriptInstance(scriptData)
 				scriptInstance.Text = scriptData.name or "Label"
 				scriptInstance.TextScaled = true
 				scriptInstance.BackgroundTransparency = 1
+			elseif instanceType == "Part" then
+				-- Default Part properties
+				scriptInstance.Size = Vector3.new(4, 1, 4)
+				scriptInstance.Position = Vector3.new(0, 5, 0)
+				scriptInstance.Anchored = true
+				scriptInstance.BrickColor = BrickColor.new("Bright red")
+				scriptInstance.Material = Enum.Material.SmoothPlastic
+			elseif instanceType == "Model" then
+				-- Models don't need default properties
+			elseif instanceType == "Tool" then
+				scriptInstance.CanBeDropped = true
+				scriptInstance.RequiresHandle = true
 			end
 		else
 			warn("[RoAssistant] Failed to create instance type:", instanceType)
