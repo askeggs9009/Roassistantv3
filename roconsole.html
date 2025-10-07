@@ -1114,7 +1114,20 @@
                         // Store the content for structured parsing
                         lastAIResponse = content;
 
-                        // Start checking for code blocks every 200ms
+                        // Check if response has structured scripts (immediate send)
+                        const hasStructuredScripts = /<roblox_script\s+name="[^"]+"\s+type="[^"]+"\s+location="[^"]+">/.test(content);
+
+                        if (hasStructuredScripts) {
+                            // Structured scripts don't use code blocks, send immediately after typewriter
+                            console.log('[Roblox] Detected structured scripts, will auto-send after render');
+                            setTimeout(() => {
+                                console.log('[Roblox] Triggering auto-send for structured scripts');
+                                autoSendToRoblox(content);
+                            }, 500); // Short delay to ensure rendering completes
+                            return result;
+                        }
+
+                        // Start checking for code blocks every 200ms (fallback for regular code blocks)
                         let checksWithoutChange = 0;
                         let hasSeenCodeBlocks = false;
                         codeBlockCheckInterval = setInterval(() => {

@@ -812,7 +812,55 @@ class ChatManager {
         const codeBlocks = [];
         let codeBlockIndex = 0;
 
-        // Code blocks as clickable boxes (like Claude's artifacts)
+        // PRIORITY 1: Structured scripts as clickable boxes (like Claude's artifacts)
+        content = content.replace(/<roblox_script\s+name="([^"]+)"\s+type="([^"]+)"\s+location="([^"]+)">([\s\S]*?)<\/roblox_script>/g, (match, name, type, location, code) => {
+            const trimmedCode = code.trim();
+            const escapedCode = this.escapeHtml(trimmedCode);
+            const lineCount = trimmedCode.split('\n').length;
+
+            // Create content-based hash for consistent IDs
+            const contentHash = this.hashCode(trimmedCode + name + type);
+            const blockId = `structured-${contentHash}-${codeBlockIndex++}`;
+
+            // Icon based on type
+            let typeLabel = type;
+            if (type === 'Part' || type === 'Model' || type === 'Tool') {
+                typeLabel = `${type} (Instance)`;
+            }
+
+            // Store code block for panel display
+            codeBlocks.push({
+                id: blockId,
+                language: 'lua',
+                code: trimmedCode || `-- ${name} will be created in ${location}`,
+                escapedCode: escapedCode || `-- ${name} will be created in ${location}`,
+                summary: `${name} (${type})`,
+                structured: true,
+                scriptType: type,
+                location: location
+            });
+
+            return `
+                <div class="code-artifact-box structured" data-block-id="${blockId}" onclick="console.log('Clicked:', '${blockId}'); window.openCodePanel('${blockId}');">
+                    <div class="artifact-icon">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                        </svg>
+                    </div>
+                    <div class="artifact-content">
+                        <div class="artifact-title">${name}</div>
+                        <div class="artifact-meta">${typeLabel} → ${location}${trimmedCode ? ` • ${lineCount} lines` : ''}</div>
+                    </div>
+                    <div class="artifact-arrow">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                        </svg>
+                    </div>
+                </div>
+            `;
+        });
+
+        // PRIORITY 2: Regular code blocks as clickable boxes (like Claude's artifacts)
         content = content.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, language, code) => {
             const trimmedCode = code.trim();
             const escapedCode = this.escapeHtml(trimmedCode);
