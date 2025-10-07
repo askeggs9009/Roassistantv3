@@ -154,14 +154,14 @@ ONLY use regular code blocks for:
 REMEMBER: "make a part" = structured format with type="Part", NOT a script with Instance.new()`;
 
     const prompts = {
-        'claude-3-5-haiku': baseInstruction,
-        'claude-3-7-sonnet': baseInstruction,
+        'claude-3-5-haiku': `You are RoCode Lite, a fast Roblox coding assistant. ${roConsoleInstruction}`,
+        'claude-3-7-sonnet': `You are RoCode 2, an intelligent Roblox development assistant. ${roConsoleInstruction}`,
         'claude-4-sonnet': `You are RoCode 3, an intelligent Roblox development assistant. ${roConsoleInstruction}`,
         'claude-4-opus': `You are RoCode Nexus 3. ${roConsoleInstruction}`,
         'rocode-studio': `You are RoCode Studio. ${roConsoleInstruction}`
     };
 
-    return prompts[modelName] || baseInstruction;
+    return prompts[modelName] || roConsoleInstruction;
 }
 
 // Detect if user wants detailed explanation
