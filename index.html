@@ -1055,19 +1055,32 @@
         // Structured script parser (from RoConsole)
         function parseStructuredScripts(response) {
             const scripts = [];
-            const scriptRegex = /<roblox_script\s+name="([^"]+)"\s+type="([^"]+)"\s+location="([^"]+)">([\s\S]*?)<\/roblox_script>/gi;
+            // Updated regex to capture optional properties attribute
+            const scriptRegex = /<roblox_script\s+name="([^"]+)"\s+type="([^"]+)"\s+location="([^"]+)"(?:\s+properties='([^']*)')?>([\s\S]*?)<\/roblox_script>/gi;
 
             let match;
             while ((match = scriptRegex.exec(response)) !== null) {
-                const [, name, type, location, code] = match;
+                const [, name, type, location, properties, code] = match;
 
-                scripts.push({
+                const script = {
                     name: name.trim(),
                     type: type.trim(),
                     location: location.trim(),
                     code: code.trim(),
                     id: `structured_${Date.now()}_${scripts.length}`
-                });
+                };
+
+                // Parse properties if present
+                if (properties) {
+                    try {
+                        script.properties = JSON.parse(properties);
+                        console.log(`[Parser] Found properties for ${name}:`, script.properties);
+                    } catch (error) {
+                        console.warn(`[Parser] Failed to parse properties for ${name}:`, error);
+                    }
+                }
+
+                scripts.push(script);
 
                 console.log(`[Parser] Found structured script: ${name} (${type}) -> ${location}`);
             }
@@ -1152,18 +1165,26 @@
                 const location = codeBlock.location || 'ServerScriptService';
                 const code = codeBlock.code || '';
 
+                const payload = {
+                    name: scriptName,
+                    code: code,
+                    scriptType: scriptType,
+                    location: location,
+                    instanceType: codeBlock.type || scriptType
+                };
+
+                // Include properties if present
+                if (codeBlock.properties) {
+                    payload.properties = codeBlock.properties;
+                    console.log(`[Roblox] Sending with properties:`, codeBlock.properties);
+                }
+
                 const response = await fetch(`${getApiBaseUrl()}/roblox/send-script`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        name: scriptName,
-                        code: code,
-                        scriptType: scriptType,
-                        location: location,
-                        instanceType: codeBlock.type || scriptType
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 const result = await response.json();

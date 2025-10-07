@@ -271,6 +271,46 @@ local function getScriptParent(location)
 end
 
 --[[
+	Apply custom properties to an instance
+]]
+local function applyProperties(instance, properties)
+	if not properties then
+		return
+	end
+
+	for propertyName, propertyValue in pairs(properties) do
+		local success, error = pcall(function()
+			-- Handle special property types that need conversion
+			if propertyName == "Size" and typeof(propertyValue) == "table" then
+				-- Convert {X, Y, Z} to Vector3
+				instance.Size = Vector3.new(propertyValue.X or propertyValue[1], propertyValue.Y or propertyValue[2], propertyValue.Z or propertyValue[3])
+			elseif propertyName == "Position" and typeof(propertyValue) == "table" then
+				-- Convert {X, Y, Z} to Vector3
+				instance.Position = Vector3.new(propertyValue.X or propertyValue[1], propertyValue.Y or propertyValue[2], propertyValue.Z or propertyValue[3])
+			elseif propertyName == "Color" or propertyName == "BackgroundColor3" and typeof(propertyValue) == "table" then
+				-- Convert {R, G, B} to Color3
+				instance[propertyName] = Color3.fromRGB(propertyValue.R or propertyValue[1], propertyValue.G or propertyValue[2], propertyValue.B or propertyValue[3])
+			elseif propertyName == "BrickColor" and type(propertyValue) == "string" then
+				-- Convert string to BrickColor
+				instance.BrickColor = BrickColor.new(propertyValue)
+			elseif propertyName == "Material" and type(propertyValue) == "string" then
+				-- Convert string to Enum.Material
+				instance.Material = Enum.Material[propertyValue]
+			else
+				-- Direct assignment for simple properties
+				instance[propertyName] = propertyValue
+			end
+		end)
+
+		if not success then
+			warn("[RoAssistant] Failed to set property", propertyName, "on", instance.Name, ":", error)
+		else
+			print("[RoAssistant] ✅ Set property:", propertyName, "=", propertyValue)
+		end
+	end
+end
+
+--[[
 	Create a script instance based on type
 ]]
 local function createScriptInstance(scriptData)
@@ -289,37 +329,42 @@ local function createScriptInstance(scriptData)
 			scriptInstance = result
 			scriptInstance.Name = scriptData.name or instanceType
 
-			-- Set default properties based on instance type
-			if instanceType == "ScreenGui" then
-				scriptInstance.ResetOnSpawn = false
-			elseif instanceType == "Frame" then
-				scriptInstance.Size = UDim2.new(0.5, 0, 0.5, 0)
-				scriptInstance.Position = UDim2.new(0.25, 0, 0.25, 0)
-				scriptInstance.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-			elseif instanceType == "TextButton" then
-				scriptInstance.Size = UDim2.new(0.3, 0, 0.1, 0)
-				scriptInstance.Position = UDim2.new(0.35, 0, 0.45, 0)
-				scriptInstance.Text = scriptData.name or "Button"
-				scriptInstance.TextScaled = true
-			elseif instanceType == "TextLabel" then
-				scriptInstance.Size = UDim2.new(0.8, 0, 0.1, 0)
-				scriptInstance.Position = UDim2.new(0.1, 0, 0.1, 0)
-				scriptInstance.Text = scriptData.name or "Label"
-				scriptInstance.TextScaled = true
-				scriptInstance.BackgroundTransparency = 1
-			elseif instanceType == "Part" then
-				-- Default Part properties
-				scriptInstance.Size = Vector3.new(4, 1, 4)
-				scriptInstance.Position = Vector3.new(0, 5, 0)
-				scriptInstance.Anchored = true
-				scriptInstance.BrickColor = BrickColor.new("Bright red")
-				scriptInstance.Material = Enum.Material.SmoothPlastic
-			elseif instanceType == "Model" then
-				-- Models don't need default properties
-			elseif instanceType == "Tool" then
-				scriptInstance.CanBeDropped = true
-				scriptInstance.RequiresHandle = true
+			-- Set default properties based on instance type (only if custom properties not provided)
+			if not scriptData.properties then
+				if instanceType == "ScreenGui" then
+					scriptInstance.ResetOnSpawn = false
+				elseif instanceType == "Frame" then
+					scriptInstance.Size = UDim2.new(0.5, 0, 0.5, 0)
+					scriptInstance.Position = UDim2.new(0.25, 0, 0.25, 0)
+					scriptInstance.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				elseif instanceType == "TextButton" then
+					scriptInstance.Size = UDim2.new(0.3, 0, 0.1, 0)
+					scriptInstance.Position = UDim2.new(0.35, 0, 0.45, 0)
+					scriptInstance.Text = scriptData.name or "Button"
+					scriptInstance.TextScaled = true
+				elseif instanceType == "TextLabel" then
+					scriptInstance.Size = UDim2.new(0.8, 0, 0.1, 0)
+					scriptInstance.Position = UDim2.new(0.1, 0, 0.1, 0)
+					scriptInstance.Text = scriptData.name or "Label"
+					scriptInstance.TextScaled = true
+					scriptInstance.BackgroundTransparency = 1
+				elseif instanceType == "Part" then
+					-- Default Part properties
+					scriptInstance.Size = Vector3.new(4, 1, 4)
+					scriptInstance.Position = Vector3.new(0, 5, 0)
+					scriptInstance.Anchored = true
+					scriptInstance.BrickColor = BrickColor.new("Bright red")
+					scriptInstance.Material = Enum.Material.SmoothPlastic
+				elseif instanceType == "Model" then
+					-- Models don't need default properties
+				elseif instanceType == "Tool" then
+					scriptInstance.CanBeDropped = true
+					scriptInstance.RequiresHandle = true
+				end
 			end
+
+			-- Apply custom properties if provided (overrides defaults)
+			applyProperties(scriptInstance, scriptData.properties)
 		else
 			warn("[RoAssistant] Failed to create instance type:", instanceType)
 			-- Fallback to Folder
@@ -453,7 +498,8 @@ local function handleMessage(message)
 			code = data.code,
 			scriptType = data.scriptType,
 			location = data.location,
-			instanceType = data.instanceType -- Support for non-script instances
+			instanceType = data.instanceType, -- Support for non-script instances
+			properties = data.properties -- Custom properties support
 		})
 	elseif data.type == "ping" then
 		-- Respond to ping

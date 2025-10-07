@@ -111,6 +111,20 @@ Complex system (use structure):
 -- Communication bridge (no code needed for RemoteEvents)
 </roblox_script>
 
+PROPERTY CUSTOMIZATION:
+You can specify custom properties for instances using the properties attribute in the structured format:
+
+<roblox_script name="Gun" type="Part" location="Workspace" properties='{"Anchored": false, "Size": {"X": 1, "Y": 0.5, "Z": 2}, "Material": "Metal", "BrickColor": "Dark stone grey"}'>
+-- Gun part with custom properties
+</roblox_script>
+
+SUPPORTED PROPERTY TYPES:
+- Boolean: Anchored, CanCollide, Transparency
+- Number: Transparency, Size components
+- String: Material, BrickColor, Text
+- Vector3: Size {"X": 4, "Y": 1, "Z": 2}, Position {"X": 0, "Y": 5, "Z": 0}
+- Color3: BackgroundColor3 {"R": 255, "G": 0, "B": 0}
+
 IMPORTANT: When users mention PHYSICAL OBJECTS (parts, models, tools), create the actual instances:
 
 "make a part that kills players" →
@@ -126,6 +140,11 @@ script.Parent.Touched:Connect(function(hit)
         hit.Parent:FindFirstChild("Humanoid"):TakeDamage(100)
     end
 end)
+</roblox_script>
+
+"create a gun" (with properties) →
+<roblox_script name="GunHandle" type="Part" location="Workspace" properties='{"Anchored": false, "Size": {"X": 0.5, "Y": 1, "Z": 2}, "Material": "Metal", "BrickColor": "Dark stone grey"}'>
+-- Gun part with proper physics
 </roblox_script>
 
 "create a teleport pad" →

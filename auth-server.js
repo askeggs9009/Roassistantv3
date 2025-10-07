@@ -3983,7 +3983,7 @@ app.get("/roblox/stream", (req, res) => {
  */
 app.post("/roblox/send-script", (req, res) => {
     try {
-        const { name, code, scriptType = "Script", location = "ServerScriptService", instanceType } = req.body;
+        const { name, code, scriptType = "Script", location = "ServerScriptService", instanceType, properties } = req.body;
 
         // For non-script instances (Part, Model, etc.), code is optional
         if (!name) {
@@ -4000,6 +4000,7 @@ app.post("/roblox/send-script", (req, res) => {
             scriptType,
             location,
             instanceType: instanceType || scriptType, // Pass instanceType for Part, Model, etc.
+            properties: properties || {}, // Custom properties for the instance
             timestamp: new Date().toISOString()
         };
 
