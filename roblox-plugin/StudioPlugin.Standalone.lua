@@ -242,24 +242,21 @@ local function getScriptParent(location)
 	local parts = string.split(location, ".")
 	local parent = nil
 
-	-- Resolve the root service
-	if parts[1] == "ServerScriptService" then
-		parent = ServerScriptService
-	elseif parts[1] == "StarterPlayer" then
-		parent = StarterPlayer
-	elseif parts[1] == "ReplicatedStorage" then
-		parent = ReplicatedStorage
-	elseif parts[1] == "Workspace" or parts[1] == "workspace" then
+	-- Resolve the root service dynamically
+	if parts[1] == "Workspace" or parts[1] == "workspace" then
 		parent = workspace
-	elseif parts[1] == "StarterPack" then
-		parent = game:GetService("StarterPack")
-	elseif parts[1] == "StarterGui" then
-		parent = game:GetService("StarterGui")
-	elseif parts[1] == "ServerStorage" then
-		parent = game:GetService("ServerStorage")
 	else
-		-- Default to ServerScriptService
-		parent = ServerScriptService
+		-- Try to get any service by name
+		local success, service = pcall(function()
+			return game:GetService(parts[1])
+		end)
+
+		if success and service then
+			parent = service
+		else
+			-- Default to ServerScriptService if service doesn't exist
+			parent = ServerScriptService
+		end
 	end
 
 	-- Navigate nested path
@@ -445,23 +442,20 @@ local function findInstanceByPath(path)
 	local parts = string.split(path, ".")
 	local current = nil
 
-	-- Start with the root service
+	-- Start with the root service dynamically
 	if parts[1] == "Workspace" or parts[1] == "workspace" then
 		current = workspace
-	elseif parts[1] == "ServerScriptService" then
-		current = game:GetService("ServerScriptService")
-	elseif parts[1] == "StarterPlayer" then
-		current = game:GetService("StarterPlayer")
-	elseif parts[1] == "StarterGui" then
-		current = game:GetService("StarterGui")
-	elseif parts[1] == "ReplicatedStorage" then
-		current = game:GetService("ReplicatedStorage")
-	elseif parts[1] == "ServerStorage" then
-		current = game:GetService("ServerStorage")
-	elseif parts[1] == "StarterPack" then
-		current = game:GetService("StarterPack")
 	else
-		return nil
+		-- Try to get any service by name
+		local success, service = pcall(function()
+			return game:GetService(parts[1])
+		end)
+
+		if success and service then
+			current = service
+		else
+			return nil
+		end
 	end
 
 	-- Navigate the path
