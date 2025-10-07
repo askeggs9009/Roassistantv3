@@ -45,7 +45,8 @@
       "WebFetch(domain:devforum.roblox.com)",
       "WebFetch(domain:create.roblox.com)",
       "Bash(curl -s \"https://www.roassistant.me/project-chat.html\")",
-      "WebFetch(domain:www.roassistant.me)"
+      "WebFetch(domain:www.roassistant.me)",
+      "Bash(to send\" error.\n\nSolution:\n- Monitor window._codeBlocks count every 200ms\n- Wait for 400ms of stability (no changes)\n- Then trigger auto-send\n- Safety timeout: 5 seconds max\n\nThis ensures code blocks are fully parsed before attempting to send\nthem to Roblox Studio.\n\n🤖 Generated with Claude Code\nhttps://claude.com/claude-code\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []

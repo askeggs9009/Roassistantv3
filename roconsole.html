@@ -758,6 +758,11 @@
             checkRobloxConnection();
             setInterval(checkRobloxConnection, 5000);
 
+            // Listen for when code blocks are added to the global storage
+            // This ensures we wait for the typewriter effect to complete
+            let codeBlockCheckInterval = null;
+            let lastCodeBlockCount = 0;
+
             // Override the original addMessage to trigger auto-send when assistant messages complete
             if (window.chatManager) {
                 const originalAddMessage = window.chatManager.addMessage.bind(window.chatManager);
@@ -765,13 +770,47 @@
                 window.chatManager.addMessage = function(role, content, options) {
                     const result = originalAddMessage(role, content, options);
 
-                    // If this is an assistant message, trigger auto-send after a short delay
-                    // to ensure code blocks are processed
+                    // If this is an assistant message, set up code block monitoring
                     if (role === 'assistant') {
-                        setTimeout(() => {
-                            // Pass the full response content for structured script parsing
-                            autoSendToRoblox(content);
-                        }, 500);
+                        // Clear any existing interval
+                        if (codeBlockCheckInterval) {
+                            clearInterval(codeBlockCheckInterval);
+                        }
+
+                        // Store the content for structured parsing
+                        lastAIResponse = content;
+
+                        // Start checking for code blocks every 200ms
+                        let checksWithoutChange = 0;
+                        codeBlockCheckInterval = setInterval(() => {
+                            const currentCount = window._codeBlocks ? Object.keys(window._codeBlocks).length : 0;
+
+                            // If count hasn't changed for 2 checks (400ms of stability), send
+                            if (currentCount === lastCodeBlockCount) {
+                                checksWithoutChange++;
+
+                                if (checksWithoutChange >= 2) {
+                                    // Code blocks are stable, send them
+                                    clearInterval(codeBlockCheckInterval);
+                                    codeBlockCheckInterval = null;
+
+                                    console.log('[Roblox] Code blocks stable, triggering auto-send');
+                                    autoSendToRoblox(content);
+                                }
+                            } else {
+                                // Count changed, reset stability counter
+                                checksWithoutChange = 0;
+                                lastCodeBlockCount = currentCount;
+                            }
+
+                            // Safety timeout: after 5 seconds, send anyway
+                            if (checksWithoutChange >= 25) {
+                                clearInterval(codeBlockCheckInterval);
+                                codeBlockCheckInterval = null;
+                                console.log('[Roblox] Timeout reached, sending anyway');
+                                autoSendToRoblox(content);
+                            }
+                        }, 200);
                     }
 
                     return result;
