@@ -2,7 +2,7 @@
 	RoAssistant Studio Plugin - STANDALONE VERSION
 	Place this file directly in your Roblox Plugins folder
 
-	Version: 2.4.0 - Delete Support + Duplication Fix
+	Version: 2.5.0 - Property Type Conversion Fix
 
 	NEW FEATURES:
 	✅ Click scripts in Explorer to view their source code
@@ -13,6 +13,7 @@
 	✅ Automatic hierarchy creation (creates parent folders as needed)
 	✅ Support for RemoteEvents, RemoteFunctions, and Folders
 	✅ Smart placement for complete Roblox systems
+	✅ Proper UDim2, Vector2, Color3, and Enum property conversions
 
 	Examples:
 	"make a part that kills players" →
@@ -281,26 +282,109 @@ local function applyProperties(instance, properties)
 		return
 	end
 
+	local isGuiObject = instance:IsA("GuiObject")
+
 	for propertyName, propertyValue in pairs(properties) do
 		local success, error = pcall(function()
 			-- Handle special property types that need conversion
-			if propertyName == "Size" and typeof(propertyValue) == "table" then
+
+			-- UDim2 properties (GUI Position, Size, etc.)
+			if (propertyName == "Position" or propertyName == "Size") and typeof(propertyValue) == "table" and isGuiObject then
+				-- Convert {X, Y} or {Scale, Offset} to UDim2
+				if propertyValue.X and type(propertyValue.X) == "table" then
+					-- Format: {X: {Scale, Offset}, Y: {Scale, Offset}}
+					instance[propertyName] = UDim2.new(
+						propertyValue.X.Scale or propertyValue.X[1] or 0,
+						propertyValue.X.Offset or propertyValue.X[2] or 0,
+						propertyValue.Y.Scale or propertyValue.Y[1] or 0,
+						propertyValue.Y.Offset or propertyValue.Y[2] or 0
+					)
+				else
+					-- Format: {X, Y} shorthand (scale only)
+					instance[propertyName] = UDim2.new(
+						propertyValue.X or propertyValue[1] or 0,
+						0,
+						propertyValue.Y or propertyValue[2] or 0,
+						0
+					)
+				end
+			-- Vector3 properties (Part Position, Size)
+			elseif (propertyName == "Position" or propertyName == "Size") and typeof(propertyValue) == "table" and not isGuiObject then
 				-- Convert {X, Y, Z} to Vector3
-				instance.Size = Vector3.new(propertyValue.X or propertyValue[1], propertyValue.Y or propertyValue[2], propertyValue.Z or propertyValue[3])
-			elseif propertyName == "Position" and typeof(propertyValue) == "table" then
-				-- Convert {X, Y, Z} to Vector3
-				instance.Position = Vector3.new(propertyValue.X or propertyValue[1], propertyValue.Y or propertyValue[2], propertyValue.Z or propertyValue[3])
-			elseif propertyName == "Color" or propertyName == "BackgroundColor3" and typeof(propertyValue) == "table" then
-				-- Convert {R, G, B} to Color3
-				instance[propertyName] = Color3.fromRGB(propertyValue.R or propertyValue[1], propertyValue.G or propertyValue[2], propertyValue.B or propertyValue[3])
+				instance[propertyName] = Vector3.new(
+					propertyValue.X or propertyValue[1] or 0,
+					propertyValue.Y or propertyValue[2] or 0,
+					propertyValue.Z or propertyValue[3] or 0
+				)
+			-- Vector2 properties (AnchorPoint)
+			elseif (propertyName == "AnchorPoint" or propertyName == "ScrollBarImageColor3") and typeof(propertyValue) == "table" then
+				if propertyName == "AnchorPoint" then
+					instance.AnchorPoint = Vector2.new(
+						propertyValue.X or propertyValue[1] or 0,
+						propertyValue.Y or propertyValue[2] or 0
+					)
+				end
+			-- UDim properties (CornerRadius, Padding)
+			elseif propertyName == "CornerRadius" and typeof(propertyValue) == "table" then
+				instance.CornerRadius = UDim.new(
+					propertyValue.Scale or propertyValue[1] or 0,
+					propertyValue.Offset or propertyValue[2] or 0
+				)
+			-- UDim properties for padding
+			elseif string.match(propertyName, "^Padding") and typeof(propertyValue) == "table" then
+				instance[propertyName] = UDim.new(
+					propertyValue.Scale or propertyValue[1] or 0,
+					propertyValue.Offset or propertyValue[2] or 0
+				)
+			-- UDim2 properties (CanvasSize, CellSize, CellPadding)
+			elseif (propertyName == "CanvasSize" or propertyName == "CellSize" or propertyName == "CellPadding") and typeof(propertyValue) == "table" then
+				if propertyValue.X and type(propertyValue.X) == "table" then
+					instance[propertyName] = UDim2.new(
+						propertyValue.X.Scale or propertyValue.X[1] or 0,
+						propertyValue.X.Offset or propertyValue.X[2] or 0,
+						propertyValue.Y.Scale or propertyValue.Y[1] or 0,
+						propertyValue.Y.Offset or propertyValue.Y[2] or 0
+					)
+				else
+					instance[propertyName] = UDim2.new(
+						propertyValue.X or propertyValue[1] or 0,
+						0,
+						propertyValue.Y or propertyValue[2] or 0,
+						0
+					)
+				end
+			-- Color3 properties (all color properties)
+			elseif (propertyName == "Color" or propertyName == "BackgroundColor3" or propertyName == "TextColor3" or
+					propertyName == "BorderColor3" or propertyName == "ForegroundColor3" or
+					propertyName == "ScrollBarImageColor3" or string.match(propertyName, "Color")) and typeof(propertyValue) == "table" then
+				-- Convert {R, G, B} to Color3 (assumes 0-255 range)
+				instance[propertyName] = Color3.fromRGB(
+					propertyValue.R or propertyValue[1] or 0,
+					propertyValue.G or propertyValue[2] or 0,
+					propertyValue.B or propertyValue[3] or 0
+				)
+			-- BrickColor from string
 			elseif propertyName == "BrickColor" and type(propertyValue) == "string" then
-				-- Convert string to BrickColor
 				instance.BrickColor = BrickColor.new(propertyValue)
+			-- Material enum
 			elseif propertyName == "Material" and type(propertyValue) == "string" then
-				-- Convert string to Enum.Material
 				instance.Material = Enum.Material[propertyValue]
+			-- Font enum
+			elseif propertyName == "Font" and type(propertyValue) == "string" then
+				instance.Font = Enum.Font[propertyValue]
+			-- Enum properties (TextXAlignment, SortOrder, etc.)
+			elseif (propertyName == "TextXAlignment" or propertyName == "TextYAlignment" or
+					propertyName == "HorizontalAlignment" or propertyName == "VerticalAlignment" or
+					propertyName == "FillDirection" or propertyName == "SortOrder" or
+					propertyName == "ZIndexBehavior" or propertyName == "AutomaticSize" or
+					propertyName == "AspectType" or propertyName == "DominantAxis") and type(propertyValue) == "string" then
+				-- Try to find the enum value
+				local enumName = propertyName:match("Alignment$") and "TextXAlignment" or propertyName
+				if Enum[enumName] and Enum[enumName][propertyValue] then
+					instance[propertyName] = Enum[enumName][propertyValue]
+				end
 			else
-				-- Direct assignment for simple properties
+				-- Direct assignment for simple properties (numbers, booleans, strings)
 				instance[propertyName] = propertyValue
 			end
 		end)
