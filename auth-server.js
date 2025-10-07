@@ -3983,21 +3983,23 @@ app.get("/roblox/stream", (req, res) => {
  */
 app.post("/roblox/send-script", (req, res) => {
     try {
-        const { name, code, scriptType = "Script", location = "ServerScriptService" } = req.body;
+        const { name, code, scriptType = "Script", location = "ServerScriptService", instanceType } = req.body;
 
-        if (!name || !code) {
+        // For non-script instances (Part, Model, etc.), code is optional
+        if (!name) {
             return res.status(400).json({
                 success: false,
-                error: 'Missing required fields: name and code'
+                error: 'Missing required field: name'
             });
         }
 
         const command = {
             type: 'script',
             name,
-            code,
+            code: code || '', // Code optional for instances like Part, Model
             scriptType,
             location,
+            instanceType: instanceType || scriptType, // Pass instanceType for Part, Model, etc.
             timestamp: new Date().toISOString()
         };
 
