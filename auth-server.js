@@ -23,7 +23,7 @@ import { sendVerificationEmailWithResend, testResendConnection } from './resend-
 // Import optimization services
 import { getOptimizedSystemPrompt, analyzePromptWithAI } from './services/smart-prompt-optimizer.js';
 import simpleCache from './services/simple-cache.js';
-import { trimConversation } from './services/conversation-trimmer.js';
+import { trimConversation, smartTrimConversation } from './services/conversation-trimmer.js';
 
 // Email service status
 let emailServiceAvailable = true;
@@ -3355,9 +3355,18 @@ app.post("/ask-stream", optionalAuthenticateToken, checkUsageLimits, async (req,
         let inputTokens = 0;
         let outputTokens = 0;
 
-        // Trim conversation history to save tokens
-        const trimmedHistory = trimConversation(conversationHistory, 6);
-        console.log(`[CONVERSATION] Original history: ${conversationHistory.length} messages, Trimmed to: ${trimmedHistory.length} messages`);
+        // 🚀 SMART TRIMMING: AI-powered follow-up detection + Explorer search
+        // Wrap Explorer data in expected format
+        const explorerData = robloxExplorerData ? { children: robloxExplorerData } : null;
+
+        const trimmedHistory = await smartTrimConversation(
+            conversationHistory,
+            prompt,
+            explorerData,
+            openai,
+            3 // Keep max 3 message pairs
+        );
+        console.log(`[SMART TRIM] Original: ${conversationHistory.length} messages → Trimmed: ${trimmedHistory.length} messages`);
 
         // Build messages array with history + new prompt
         const messages = [
@@ -3630,9 +3639,18 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
         const maxTokens = getMaxTokensForPlan(isAuthenticated, isAuthenticated ? getUserSubscription(await DatabaseManager.findUserByEmail(req.user.email)) : null);
         console.log(`[DEBUG] Max tokens for response: ${maxTokens}`);
 
-        // Trim conversation history to save tokens
-        const trimmedHistory = trimConversation(conversationHistory, 6);
-        console.log(`[CONVERSATION] Original history: ${conversationHistory.length} messages, Trimmed to: ${trimmedHistory.length} messages`);
+        // 🚀 SMART TRIMMING: AI-powered follow-up detection + Explorer search
+        // Wrap Explorer data in expected format
+        const explorerData = robloxExplorerData ? { children: robloxExplorerData } : null;
+
+        const trimmedHistory = await smartTrimConversation(
+            conversationHistory,
+            prompt,
+            explorerData,
+            openai,
+            3 // Keep max 3 message pairs
+        );
+        console.log(`[SMART TRIM] Original: ${conversationHistory.length} messages → Trimmed: ${trimmedHistory.length} messages`);
 
         // Build messages array with history + new prompt
         const messages = [
