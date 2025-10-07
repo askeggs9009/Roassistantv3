@@ -268,49 +268,88 @@ const SUBSCRIPTION_PLANS = {
     free: {
         name: 'Free',
         limits: {
-            daily_messages: 10,
-            models: ['claude-4-sonnet'],  // Free: Only RoCode 3, limited
+            daily_messages: 50,
+            models: ['claude-4-sonnet'],  // Free: Only basic model
             max_file_size: 1048576, // 1MB
             scripts_storage: 5,
             projects: 1,  // Free: 1 project
             support: 'community'
         },
-        features: ['Basic AI assistant', 'GPT-4.1 access', 'Limited daily messages', 'Community support']
+        features: ['Basic AI assistant', 'Basic code generation', '50 requests/month', 'Community support']
     },
     pro: {
         name: 'Pro',
         limits: {
-            daily_messages: 200,  // Pro: 200 messages/day = ~$4-6 cost for 70%+ profit
+            daily_messages: 500,  // 500 AI requests per month = ~16/day
             models: ['claude-4-sonnet', 'claude-4-opus'],
             max_file_size: 10485760, // 10MB
             scripts_storage: -1, // unlimited
             projects: 5,  // Pro: 5 projects
             support: 'email',
-            daily_tokens: 150000  // ~150k tokens/day = $3-4.50 cost
+            daily_tokens: 150000  // ~150k tokens/day
         },
         stripe_price_ids: {
-            monthly: process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
-            annual: process.env.STRIPE_PRO_ANNUAL_PRICE_ID
+            monthly: process.env.STRIPE_PRO_MONTHLY_PRICE_ID || 'price_1SFjvnGsDklELrgDQ5jpu4ml',
+            annual: process.env.STRIPE_PRO_ANNUAL_PRICE_ID || 'price_1SFjwRGsDklELrgDrBstTq4R'
         },
-        features: ['Advanced AI models', 'Claude 3 Haiku', '500 messages/day', 'Priority support', 'No ads']
+        features: ['Advanced code generation', 'Code optimization', '500 requests/month', 'Priority support', 'Advanced debugging']
     },
-    enterprise: {
-        name: 'Enterprise',
+    max: {
+        name: 'Max',
         limits: {
-            daily_messages: 1000,  // Enterprise: 1000 messages/day = ~$15-20 cost for 60%+ profit
+            daily_messages: 2000,  // 2000 AI requests per month = ~66/day
+            models: ['claude-4-sonnet', 'claude-4-opus'],
+            max_file_size: 26214400, // 25MB
+            scripts_storage: -1, // unlimited
+            projects: 10,  // Max: 10 projects
+            support: 'priority',
+            daily_tokens: 300000,  // ~300k tokens/day
+            team_members: 5  // Team collaboration up to 5
+        },
+        stripe_price_ids: {
+            monthly: process.env.STRIPE_MAX_MONTHLY_PRICE_ID || 'price_1SFjxPGsDklELrgDBWICQ6lZ',
+            annual: process.env.STRIPE_MAX_ANNUAL_PRICE_ID || 'price_1SFjxtGsDklELrgD3ELTVyEI'
+        },
+        features: ['2,000 AI requests/month', 'Advanced features', 'Team collaboration (up to 5)', 'Priority support']
+    },
+    studio: {
+        name: 'Studio',
+        limits: {
+            daily_messages: -1,  // Unlimited
             models: ['claude-4-sonnet', 'claude-4-opus', 'rocode-studio'],
             max_file_size: 52428800, // 50MB
             scripts_storage: -1, // unlimited
-            projects: 20,  // Enterprise: 20 projects
-            support: 'priority',
-            daily_tokens: 600000,  // ~600k tokens/day = $12-18 cost
-            daily_studio: 50  // RoCode Studio: 50 messages/day = $10-15 cost
+            projects: -1,  // Unlimited projects
+            support: 'dedicated',
+            daily_tokens: -1,  // Unlimited tokens
+            daily_studio: -1,  // Unlimited RoCode Studio
+            team_members: -1  // Unlimited team members
         },
         stripe_price_ids: {
-            monthly: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID,
-            annual: process.env.STRIPE_ENTERPRISE_ANNUAL_PRICE_ID
+            monthly: process.env.STRIPE_STUDIO_MONTHLY_PRICE_ID || 'price_1SFjzWGsDklELrgDX2jdvdTN',
+            annual: process.env.STRIPE_STUDIO_ANNUAL_PRICE_ID || 'price_1SFk04GsDklELrgDrDn4XKQM'
         },
-        features: ['All AI models', 'Claude 3 Sonnet & Opus', 'Unlimited messages', 'Premium support', 'Custom integrations']
+        features: ['Unlimited AI requests', 'Custom AI models', 'Unlimited team collaboration', '24/7 dedicated support', 'Custom integrations', 'Advanced analytics']
+    },
+    // Keep enterprise as an alias for studio for backward compatibility
+    enterprise: {
+        name: 'Studio',
+        limits: {
+            daily_messages: -1,  // Unlimited
+            models: ['claude-4-sonnet', 'claude-4-opus', 'rocode-studio'],
+            max_file_size: 52428800, // 50MB
+            scripts_storage: -1, // unlimited
+            projects: -1,  // Unlimited projects
+            support: 'dedicated',
+            daily_tokens: -1,  // Unlimited tokens
+            daily_studio: -1,  // Unlimited RoCode Studio
+            team_members: -1  // Unlimited team members
+        },
+        stripe_price_ids: {
+            monthly: process.env.STRIPE_STUDIO_MONTHLY_PRICE_ID || 'price_1SFjzWGsDklELrgDX2jdvdTN',
+            annual: process.env.STRIPE_STUDIO_ANNUAL_PRICE_ID || 'price_1SFk04GsDklELrgDrDn4XKQM'
+        },
+        features: ['Unlimited AI requests', 'Custom AI models', 'Unlimited team collaboration', '24/7 dedicated support', 'Custom integrations', 'Advanced analytics']
     }
 };
 
