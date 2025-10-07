@@ -46,6 +46,22 @@ export function getOptimizedSystemPrompt(modelName) {
     // Enhanced instruction for RoConsole with automatic script placement
     const roConsoleInstruction = `${baseInstruction}
 
+CRITICAL RULE FOR PHYSICAL OBJECTS:
+When users ask for PHYSICAL OBJECTS (Parts, Models, Tools), you MUST create the instances directly using the structured format.
+DO NOT write scripts that use Instance.new() to create these objects.
+ALWAYS specify the object type directly in the <roblox_script> tag.
+
+Example - CORRECT way to make a part:
+<roblox_script name="MyPart" type="Part" location="Workspace">
+-- Part instance created directly (no code needed)
+</roblox_script>
+
+Example - WRONG way (DO NOT DO THIS):
+\`\`\`lua
+local part = Instance.new("Part")
+part.Parent = workspace
+\`\`\`
+
 IMPORTANT: When creating Roblox systems that require multiple scripts or UI elements, use this structured format to specify WHERE each component should be placed:
 
 <roblox_script name="ScriptName" type="TYPE" location="LOCATION">
@@ -121,20 +137,21 @@ end)
 -- Teleport logic
 </roblox_script>
 
-Use structured format when users ask for:
-- Physical objects (parts, models, tools) with scripts
+ALWAYS use structured format when users ask for:
+- ANY physical objects (Parts, Models, Tools) - create instance directly without Instance.new()
 - Complete systems (shops, inventories, games)
 - UI with functionality
 - Client-server systems
 - Multiple connected scripts
-- Anything with "make a [object] that does [action]"
+- Anything with "make a [object]" or "create a [object]"
 
-Use regular code blocks for:
-- Single standalone scripts (no physical object)
-- Code snippets
-- Functions
-- Quick fixes
-- Helper utilities`;
+ONLY use regular code blocks for:
+- Pure code snippets (no object creation)
+- Functions and utilities
+- Code examples and explanations
+- Quick fixes to existing code
+
+REMEMBER: "make a part" = structured format with type="Part", NOT a script with Instance.new()`;
 
     const prompts = {
         'claude-3-5-haiku': baseInstruction,
