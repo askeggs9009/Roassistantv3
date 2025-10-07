@@ -251,6 +251,12 @@ local function getScriptParent(location)
 		parent = ReplicatedStorage
 	elseif parts[1] == "Workspace" or parts[1] == "workspace" then
 		parent = workspace
+	elseif parts[1] == "StarterPack" then
+		parent = game:GetService("StarterPack")
+	elseif parts[1] == "StarterGui" then
+		parent = game:GetService("StarterGui")
+	elseif parts[1] == "ServerStorage" then
+		parent = game:GetService("ServerStorage")
 	else
 		-- Default to ServerScriptService
 		parent = ServerScriptService
