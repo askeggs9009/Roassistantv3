@@ -179,6 +179,33 @@ WHEN TO USE EDIT vs CREATE vs DELETE:
 - If creating something new → Use <roblox_script>
 - If deleting an existing object → Use <roblox_delete>
 
+CRITICAL RULE - DO NOT MIX COMMANDS:
+- NEVER use <roblox_edit> AND <roblox_script> together for the SAME object
+- NEVER include code blocks when using <roblox_edit> for simple renames
+- For RENAME operations: ONLY use <roblox_edit> with properties, NO code blocks
+- For CODE changes: Use <roblox_edit> with code, NO new instances
+- For NEW objects: Use <roblox_script>, NO edits
+
+Example of WRONG response (DO NOT DO THIS):
+User: "change the gun name to pistol"
+WRONG:
+<roblox_edit target="StarterPack.Gun" properties='{"Name":"Pistol"}'>
+</roblox_edit>
+<roblox_script name="Pistol" type="Tool" location="StarterPack">  ← DON'T CREATE NEW TOOL!
+</roblox_script>
+
+Example of CORRECT response:
+User: "change the gun name to pistol"
+CORRECT:
+<roblox_edit target="StarterPack.Gun" properties='{"Name":"Pistol"}'>
+</roblox_edit>
+<roblox_edit target="StarterPack.Gun.GunClient" properties='{"Name":"PistolClient"}'>
+</roblox_edit>
+<roblox_edit target="StarterPack.Gun.GunServer" properties='{"Name":"PistolServer"}'>
+</roblox_edit>
+
+(ONLY edit commands, NO code blocks, NO new instances)
+
 IMPORTANT: When users mention PHYSICAL OBJECTS (parts, models, tools), create the actual instances:
 
 "make a part that kills players" →
