@@ -2,7 +2,7 @@
 	RoAssistant Studio Plugin - STANDALONE VERSION
 	Place this file directly in your Roblox Plugins folder
 
-	Version: 2.2.2 - Script Viewer Update
+	Version: 2.3.0 - Dynamic Service Support
 
 	NEW FEATURES:
 	✅ Click scripts in Explorer to view their source code

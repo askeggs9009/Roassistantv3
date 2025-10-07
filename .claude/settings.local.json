@@ -4,7 +4,11 @@
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nMerge RoConsole and project-chat into unified interface\n\nMajor changes:\n- Created unified index.html combining ALL features from RoConsole and project-chat\n- Added project selector dropdown to header with full project context support\n- Updated all navigation links (scripts.html, projects.html) to point to unified interface\n- Added automatic redirects from roconsole.html and project-chat.html to index.html\n- Preserved all features: Explorer panel, auto-send to Roblox, script viewer, project mode\n- Chat.js already had full project support built-in - no changes needed\n\nThe unified interface is now the default, accessible at /index.html\nLegacy URLs automatically redirect to preserve backwards compatibility\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git push:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Read(//c/Users/askeg/AppData/Local/Roblox/Plugins/**)",
+      "Write(//c/Users/askeg/AppData/Local/Roblox/Plugins/**)",
+      "Bash(cat:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []
