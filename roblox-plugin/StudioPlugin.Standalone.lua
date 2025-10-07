@@ -2,9 +2,10 @@
 	RoAssistant Studio Plugin - STANDALONE VERSION
 	Place this file directly in your Roblox Plugins folder
 
-	Version: 2.2.1 - Explorer Debugging Update
+	Version: 2.2.2 - Script Viewer Update
 
 	NEW FEATURES:
+	✅ Click scripts in Explorer to view their source code
 	✅ Real-time Explorer hierarchy syncing with RoConsole
 	✅ Automatic physical object creation (Parts, Models, Tools)
 	✅ Creates Parts with scripts inside them automatically
@@ -124,6 +125,16 @@ local function serializeInstance(instance, depth, maxDepth)
 		className = instance.ClassName,
 		children = {}
 	}
+
+	-- Include script source code for Script, LocalScript, and ModuleScript
+	if instance:IsA("LuaSourceContainer") then
+		local success, source = pcall(function()
+			return instance.Source
+		end)
+		if success and source then
+			data.source = source
+		end
+	end
 
 	-- Get children
 	local children = instance:GetChildren()

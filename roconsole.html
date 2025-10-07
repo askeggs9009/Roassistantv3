@@ -360,6 +360,111 @@
         .main-content.explorer-visible {
             margin-right: 300px;
         }
+
+        /* Script Viewer Modal */
+        .script-viewer-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .script-viewer-modal.active {
+            display: flex;
+        }
+
+        .script-viewer-content {
+            background: rgba(22, 27, 34, 0.95);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .script-viewer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #30363d;
+            background: rgba(33, 38, 45, 0.6);
+            border-radius: 12px 12px 0 0;
+        }
+
+        .script-viewer-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #c9d1d9;
+        }
+
+        .script-viewer-title i {
+            color: #58a6ff;
+        }
+
+        .script-viewer-close {
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-size: 1.2rem;
+        }
+
+        .script-viewer-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #c9d1d9;
+        }
+
+        .script-viewer-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .script-viewer-body pre {
+            margin: 0;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .script-viewer-body code {
+            color: #c9d1d9;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* Make script items clickable */
+        .explorer-item.script-item {
+            cursor: pointer;
+        }
+
+        .explorer-item.script-item:hover {
+            background: rgba(88, 166, 255, 0.15);
+        }
+
+        .explorer-item.script-item:hover .explorer-item-name {
+            color: #58a6ff;
+        }
     </style>
 </head>
 
@@ -468,6 +573,24 @@
             <div class="explorer-empty">
                 <i class="fas fa-cube"></i>
                 <p>Connect Roblox Studio to view Explorer</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Viewer Modal -->
+    <div class="script-viewer-modal" id="scriptViewerModal">
+        <div class="script-viewer-content">
+            <div class="script-viewer-header">
+                <div class="script-viewer-title">
+                    <i class="fas fa-file-code"></i>
+                    <span id="scriptViewerName">Script</span>
+                </div>
+                <button class="script-viewer-close" onclick="closeScriptViewer()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="script-viewer-body">
+                <pre><code id="scriptViewerCode" class="language-lua"></code></pre>
             </div>
         </div>
     </div>
@@ -1057,9 +1180,31 @@
             return iconMap[className] || 'fas fa-circle icon-default';
         }
 
+        // Open script viewer modal
+        function openScriptViewer(scriptName, sourceCode) {
+            const modal = document.getElementById('scriptViewerModal');
+            const nameElement = document.getElementById('scriptViewerName');
+            const codeElement = document.getElementById('scriptViewerCode');
+
+            nameElement.textContent = scriptName;
+            codeElement.textContent = sourceCode;
+
+            modal.classList.add('active');
+        }
+
+        // Close script viewer modal
+        function closeScriptViewer() {
+            const modal = document.getElementById('scriptViewerModal');
+            modal.classList.remove('active');
+        }
+
+        // Make closeScriptViewer globally available
+        window.closeScriptViewer = closeScriptViewer;
+
         // Render explorer item
         function renderExplorerItem(item, level = 0) {
             const hasChildren = item.children && item.children.length > 0;
+            const isScript = item.source && (item.className === 'Script' || item.className === 'LocalScript' || item.className === 'ModuleScript');
 
             const itemDiv = document.createElement('div');
             itemDiv.className = 'explorer-item-wrapper';
@@ -1067,6 +1212,11 @@
 
             const itemHeader = document.createElement('div');
             itemHeader.className = 'explorer-item';
+
+            // Add script-item class if this is a script with source code
+            if (isScript) {
+                itemHeader.classList.add('script-item');
+            }
 
             // Toggle arrow for items with children
             if (hasChildren) {
@@ -1101,6 +1251,14 @@
 
             itemDiv.appendChild(itemHeader);
 
+            // Click handler for scripts - open viewer
+            if (isScript) {
+                itemHeader.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openScriptViewer(item.name, item.source);
+                });
+            }
+
             // Children container
             if (hasChildren) {
                 const childrenDiv = document.createElement('div');
@@ -1112,15 +1270,17 @@
 
                 itemDiv.appendChild(childrenDiv);
 
-                // Toggle click handler
-                itemHeader.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const toggle = itemHeader.querySelector('.explorer-item-toggle i');
-                    if (toggle) {
-                        toggle.classList.toggle('collapsed');
-                        childrenDiv.classList.toggle('collapsed');
-                    }
-                });
+                // Toggle click handler (only if not a script, to avoid conflict)
+                if (!isScript) {
+                    itemHeader.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const toggle = itemHeader.querySelector('.explorer-item-toggle i');
+                        if (toggle) {
+                            toggle.classList.toggle('collapsed');
+                            childrenDiv.classList.toggle('collapsed');
+                        }
+                    });
+                }
             }
 
             return itemDiv;
@@ -1189,6 +1349,13 @@
 
         // Initialize Explorer panel
         function initializeExplorerPanel() {
+            // Close modal on backdrop click
+            document.getElementById('scriptViewerModal').addEventListener('click', (e) => {
+                if (e.target.id === 'scriptViewerModal') {
+                    closeScriptViewer();
+                }
+            });
+
             // Toggle button
             document.getElementById('explorerToggleBtn').addEventListener('click', toggleExplorerPanel);
 
