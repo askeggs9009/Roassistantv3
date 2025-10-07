@@ -205,8 +205,9 @@
         }
 
         /* Shift Explorer left when code panel is open */
+        /* Initial position - will be overridden by JS with actual code panel width */
         body.code-panel-open .explorer-panel {
-            right: 50%; /* Move Explorer left by code panel width */
+            right: 50%;
         }
 
         .explorer-header {
@@ -1473,6 +1474,7 @@
         function closeCodePanel() {
             const codePanel = document.getElementById('codePanel');
             const mainContent = document.getElementById('mainContent');
+            const explorerPanel = document.getElementById('explorerPanel');
 
             if (codePanel) {
                 codePanel.classList.remove('active');
@@ -1482,6 +1484,11 @@
             }
             // Remove body class to shift Explorer back
             document.body.classList.remove('code-panel-open');
+
+            // Reset Explorer position
+            if (explorerPanel) {
+                explorerPanel.style.right = '';
+            }
         }
 
         // Make closeCodePanel globally available

@@ -1010,6 +1010,13 @@ class ChatManager {
             if (mainContent) mainContent.classList.add('code-panel-active');
             // Add class to body to shift Explorer panel
             document.body.classList.add('code-panel-open');
+
+            // Set Explorer position to match code panel width
+            const explorerPanel = document.getElementById('explorerPanel');
+            if (explorerPanel) {
+                const codePanelWidth = codePanel.offsetWidth;
+                explorerPanel.style.right = `${codePanelWidth}px`;
+            }
         }, 100);
     }
 
@@ -2045,6 +2052,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (newWidth >= minWidth && newWidth <= maxWidth) {
                 codePanel.style.width = `${newWidth}px`;
+
+                // Update Explorer position to stick to code panel
+                const explorerPanel = document.getElementById('explorerPanel');
+                if (explorerPanel && document.body.classList.contains('code-panel-open')) {
+                    explorerPanel.style.right = `${newWidth}px`;
+                }
             }
         });
 
