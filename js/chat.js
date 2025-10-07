@@ -1229,7 +1229,7 @@ class ChatManager {
 
             if (response.ok) {
                 const data = await response.json();
-                this.displayTokenDashboard(data);
+                // this.displayTokenDashboard(data); // Disabled: Token usage popup
             }
         } catch (error) {
             console.error('Error fetching token usage:', error);
