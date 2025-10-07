@@ -106,8 +106,50 @@ end
 ]]
 local function createScriptInstance(scriptData)
 	local scriptType = scriptData.scriptType or "Script"
+	local instanceType = scriptData.instanceType or scriptType
 	local scriptInstance
 
+	-- Check if this is a non-script instance (UI elements, folders, etc.)
+	if scriptType == "Instance" then
+		-- Create non-script instances (ScreenGui, Frame, RemoteEvent, etc.)
+		local success, result = pcall(function()
+			return Instance.new(instanceType)
+		end)
+
+		if success then
+			scriptInstance = result
+			scriptInstance.Name = scriptData.name or instanceType
+
+			-- For UI elements, set some default properties
+			if instanceType == "ScreenGui" then
+				scriptInstance.ResetOnSpawn = false
+			elseif instanceType == "Frame" then
+				scriptInstance.Size = UDim2.new(0.5, 0, 0.5, 0)
+				scriptInstance.Position = UDim2.new(0.25, 0, 0.25, 0)
+				scriptInstance.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			elseif instanceType == "TextButton" then
+				scriptInstance.Size = UDim2.new(0.3, 0, 0.1, 0)
+				scriptInstance.Position = UDim2.new(0.35, 0, 0.45, 0)
+				scriptInstance.Text = scriptData.name or "Button"
+				scriptInstance.TextScaled = true
+			elseif instanceType == "TextLabel" then
+				scriptInstance.Size = UDim2.new(0.8, 0, 0.1, 0)
+				scriptInstance.Position = UDim2.new(0.1, 0, 0.1, 0)
+				scriptInstance.Text = scriptData.name or "Label"
+				scriptInstance.TextScaled = true
+				scriptInstance.BackgroundTransparency = 1
+			end
+		else
+			warn("[RoAssistant] Failed to create instance type:", instanceType)
+			-- Fallback to Folder
+			scriptInstance = Instance.new("Folder")
+			scriptInstance.Name = scriptData.name or "GeneratedInstance"
+		end
+
+		return scriptInstance
+	end
+
+	-- Regular script instances
 	if scriptType == "LocalScript" then
 		scriptInstance = Instance.new("LocalScript")
 	elseif scriptType == "ModuleScript" then
@@ -123,6 +165,47 @@ local function createScriptInstance(scriptData)
 end
 
 --[[
+	Create parent hierarchy if it doesn't exist
+	Example: "StarterGui.ShopUI.Frame" creates ShopUI (ScreenGui) if it doesn't exist
+]]
+local function ensureParentHierarchy(location)
+	local parts = string.split(location, ".")
+	if #parts <= 1 then
+		-- No hierarchy needed, just get the service
+		return getScriptParent(location)
+	end
+
+	-- Start with the root service
+	local currentParent = getScriptParent(parts[1])
+
+	-- Navigate/create nested structure
+	for i = 2, #parts do
+		local childName = parts[i]
+		local child = currentParent:FindFirstChild(childName)
+
+		if not child then
+			-- Create a container (Folder or ScreenGui for StarterGui)
+			if currentParent == game:GetService("StarterGui") and i == 2 then
+				-- First level in StarterGui should be ScreenGui
+				child = Instance.new("ScreenGui")
+				child.Name = childName
+				child.ResetOnSpawn = false
+			else
+				-- Everything else is a Folder
+				child = Instance.new("Folder")
+				child.Name = childName
+			end
+			child.Parent = currentParent
+			print("[RoAssistant] 📁 Created hierarchy:", childName, "in", currentParent:GetFullName())
+		end
+
+		currentParent = child
+	end
+
+	return currentParent
+end
+
+--[[
 	Insert a script into Roblox Studio
 ]]
 local function insertScript(scriptData)
@@ -130,27 +213,31 @@ local function insertScript(scriptData)
 		-- Create the script instance
 		local scriptInstance = createScriptInstance(scriptData)
 
-		-- Get the parent location
-		local parent = getScriptParent(scriptData.location)
+		-- Ensure parent hierarchy exists (creates containers if needed)
+		local parent = ensureParentHierarchy(scriptData.location)
 
 		-- Set the parent
 		scriptInstance.Parent = parent
 
 		-- Record undo history
-		ChangeHistoryService:SetWaypoint("Insert RoAssistant Script: " .. scriptInstance.Name)
+		local actionName = scriptData.scriptType == "Instance"
+			and "Insert RoAssistant Instance: " .. scriptInstance.Name
+			or "Insert RoAssistant Script: " .. scriptInstance.Name
 
-		print("[RoAssistant] ✅ Inserted script:", scriptInstance.Name)
+		ChangeHistoryService:SetWaypoint(actionName)
+
+		print("[RoAssistant] ✅ Inserted:", scriptInstance.Name, "(" .. scriptInstance.ClassName .. ")")
 		print("              Location:", parent:GetFullName())
 
 		return scriptInstance
 	end)
 
 	if success then
-		sendStatus("success", "Script inserted successfully", scriptData.name)
+		sendStatus("success", "Component inserted successfully", scriptData.name)
 		return true, result
 	else
-		warn("[RoAssistant] ❌ Failed to insert script:", result)
-		sendStatus("error", "Failed to insert script: " .. tostring(result), scriptData.name)
+		warn("[RoAssistant] ❌ Failed to insert component:", result)
+		sendStatus("error", "Failed to insert component: " .. tostring(result), scriptData.name)
 		return false, result
 	end
 end
@@ -179,12 +266,13 @@ local function handleMessage(message)
 
 	-- Handle different message types
 	if data.type == "script" then
-		-- Insert the script
+		-- Insert the script or instance
 		insertScript({
 			name = data.name,
 			code = data.code,
 			scriptType = data.scriptType,
-			location = data.location
+			location = data.location,
+			instanceType = data.instanceType -- Support for non-script instances
 		})
 	elseif data.type == "ping" then
 		-- Respond to ping

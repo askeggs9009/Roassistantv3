@@ -484,6 +484,68 @@
         let robloxConnected = false;
         let sentCodeBlocks = new Set(); // Track which code blocks we've already sent
 
+        // ============================================
+        // STRUCTURED SCRIPT PARSER
+        // ============================================
+
+        /**
+         * Parse structured Roblox scripts from AI response
+         * Looks for <roblox_script> tags with metadata
+         * @param {string} response - The AI response text
+         * @returns {Array} Array of script objects with {name, type, location, code}
+         */
+        function parseStructuredScripts(response) {
+            const scripts = [];
+
+            // Regex to match <roblox_script> tags with attributes and content
+            const scriptRegex = /<roblox_script\s+name="([^"]+)"\s+type="([^"]+)"\s+location="([^"]+)">([\s\S]*?)<\/roblox_script>/gi;
+
+            let match;
+            while ((match = scriptRegex.exec(response)) !== null) {
+                const [, name, type, location, code] = match;
+
+                scripts.push({
+                    name: name.trim(),
+                    type: type.trim(),
+                    location: location.trim(),
+                    code: code.trim(),
+                    id: `structured_${Date.now()}_${scripts.length}` // Unique ID
+                });
+
+                console.log(`[Parser] Found structured script: ${name} (${type}) -> ${location}`);
+            }
+
+            return scripts;
+        }
+
+        /**
+         * Determine the appropriate scriptType for Roblox Studio
+         * @param {string} type - The type from the structured format
+         * @returns {string} Roblox script type (Script, LocalScript, or ModuleScript)
+         */
+        function getScriptType(type) {
+            const typeMap = {
+                'Script': 'Script',
+                'LocalScript': 'LocalScript',
+                'ModuleScript': 'ModuleScript',
+                'ScreenGui': 'Instance',
+                'Frame': 'Instance',
+                'TextButton': 'Instance',
+                'TextLabel': 'Instance',
+                'TextBox': 'Instance',
+                'ImageLabel': 'Instance',
+                'ImageButton': 'Instance',
+                'ScrollingFrame': 'Instance',
+                'Folder': 'Instance',
+                'RemoteEvent': 'Instance',
+                'RemoteFunction': 'Instance',
+                'Part': 'Instance',
+                'Model': 'Instance'
+            };
+
+            return typeMap[type] || 'Script';
+        }
+
         // Check Roblox connection status
         async function checkRobloxConnection() {
             try {
@@ -511,10 +573,14 @@
             }
         }
 
-        // Send code to Roblox Studio
+        // Send code to Roblox Studio (with support for structured scripts)
         async function sendCodeToRoblox(codeBlock) {
             try {
-                const scriptName = codeBlock.summary || codeBlock.id || 'GeneratedScript';
+                // Check if this is a structured script with metadata
+                const scriptName = codeBlock.name || codeBlock.summary || codeBlock.id || 'GeneratedScript';
+                const scriptType = codeBlock.type ? getScriptType(codeBlock.type) : 'Script';
+                const location = codeBlock.location || 'ServerScriptService';
+                const code = codeBlock.code || '';
 
                 const response = await fetch(`${getApiBaseUrl()}/roblox/send-script`, {
                     method: 'POST',
@@ -523,36 +589,93 @@
                     },
                     body: JSON.stringify({
                         name: scriptName,
-                        code: codeBlock.code,
-                        scriptType: 'Script',
-                        location: 'ServerScriptService'
+                        code: code,
+                        scriptType: scriptType,
+                        location: location,
+                        instanceType: codeBlock.type || scriptType // Pass original type for instances
                     })
                 });
 
                 const result = await response.json();
 
                 if (result.success) {
-                    console.log(`[Roblox] ✅ Sent script: ${scriptName}`);
-                    return { success: true, scriptName };
+                    console.log(`[Roblox] ✅ Sent ${codeBlock.type || 'script'}: ${scriptName} to ${location}`);
+                    return { success: true, scriptName, location };
                 } else {
                     console.error(`[Roblox] ❌ Failed to send script: ${scriptName}`);
-                    return { success: false, scriptName };
+                    return { success: false, scriptName, location };
                 }
             } catch (error) {
                 console.error('[Roblox] Error sending script:', error);
-                return { success: false, scriptName: codeBlock.summary || 'Unknown' };
+                return { success: false, scriptName: codeBlock.name || codeBlock.summary || 'Unknown' };
             }
         }
 
+        // Send structured scripts to Roblox Studio
+        async function sendStructuredScripts(scripts) {
+            if (!scripts || scripts.length === 0) {
+                console.log('[Roblox] No structured scripts to send');
+                return;
+            }
+
+            console.log(`[Roblox] Sending ${scripts.length} structured script(s)...`);
+
+            const results = [];
+            for (const script of scripts) {
+                // Mark as sent to avoid duplicate sending
+                sentCodeBlocks.add(script.id);
+
+                const result = await sendCodeToRoblox(script);
+                results.push(result);
+
+                // Small delay between scripts to ensure proper ordering
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+
+            // Show notification
+            const successCount = results.filter(r => r.success).length;
+            const totalCount = results.length;
+
+            if (successCount > 0) {
+                showRobloxNotification(`✅ Created ${successCount}/${totalCount} component(s) in Roblox Studio`);
+            } else {
+                showRobloxNotification(`❌ Failed to create components in Roblox Studio`, 'error');
+            }
+
+            return results;
+        }
+
+        // Store the last AI response for parsing
+        let lastAIResponse = '';
+
         // Auto-send NEW code blocks to Roblox Studio (always enabled in RoConsole)
-        async function autoSendToRoblox() {
+        async function autoSendToRoblox(fullResponse) {
             // Only check if we're connected
             if (!robloxConnected) {
                 console.log('[Roblox] Not connected to Roblox Studio');
                 return;
             }
 
-            // Get all code blocks from global storage
+            // Update last response if provided
+            if (fullResponse) {
+                lastAIResponse = fullResponse;
+            }
+
+            // PRIORITY 1: Check for structured scripts in the AI response
+            if (lastAIResponse) {
+                const structuredScripts = parseStructuredScripts(lastAIResponse);
+
+                if (structuredScripts.length > 0) {
+                    console.log(`[Roblox] Found ${structuredScripts.length} structured script(s) in AI response`);
+                    await sendStructuredScripts(structuredScripts);
+
+                    // Clear the response to avoid re-sending
+                    lastAIResponse = '';
+                    return; // Don't fallback to code blocks
+                }
+            }
+
+            // FALLBACK: Get all code blocks from global storage (old behavior)
             if (!window._codeBlocks || Object.keys(window._codeBlocks).length === 0) {
                 console.log('[Roblox] No code blocks to send');
                 return;
@@ -646,7 +769,8 @@
                     // to ensure code blocks are processed
                     if (role === 'assistant') {
                         setTimeout(() => {
-                            autoSendToRoblox();
+                            // Pass the full response content for structured script parsing
+                            autoSendToRoblox(content);
                         }, 500);
                     }
 
