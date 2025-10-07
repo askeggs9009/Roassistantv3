@@ -3922,6 +3922,10 @@ const robloxStatus = {
     pluginInfo: null
 };
 
+// State for Roblox Explorer data
+let robloxExplorerData = null;
+let explorerLastUpdate = null;
+
 /**
  * SSE endpoint for Roblox Studio plugin
  * Streams commands in real-time
@@ -4078,6 +4082,53 @@ app.get("/roblox/connection-status", (req, res) => {
         lastHeartbeat: robloxStatus.lastHeartbeat,
         queueLength: robloxCommandQueue.length,
         pluginInfo: robloxStatus.pluginInfo
+    });
+});
+
+/**
+ * Receive Explorer hierarchy data from Roblox Studio plugin
+ * POST /roblox/explorer
+ */
+app.post("/roblox/explorer", (req, res) => {
+    try {
+        const { hierarchy, timestamp } = req.body;
+
+        if (!hierarchy) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing hierarchy data'
+            });
+        }
+
+        // Store Explorer data
+        robloxExplorerData = hierarchy;
+        explorerLastUpdate = new Date(timestamp || Date.now());
+
+        console.log('[ROBLOX] Explorer data received');
+
+        res.json({
+            success: true,
+            received: true
+        });
+
+    } catch (error) {
+        console.error('[ROBLOX] Error receiving Explorer data:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * Get current Explorer hierarchy data
+ * GET /roblox/explorer
+ */
+app.get("/roblox/explorer", (req, res) => {
+    res.json({
+        hierarchy: robloxExplorerData,
+        lastUpdate: explorerLastUpdate,
+        connected: robloxStatus.connected
     });
 });
 

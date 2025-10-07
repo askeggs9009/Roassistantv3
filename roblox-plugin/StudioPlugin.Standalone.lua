@@ -2,9 +2,10 @@
 	RoAssistant Studio Plugin - STANDALONE VERSION
 	Place this file directly in your Roblox Plugins folder
 
-	Version: 2.1.0 - Physical Objects Update
+	Version: 2.2.0 - Explorer Integration Update
 
 	NEW FEATURES:
+	✅ Real-time Explorer hierarchy syncing with RoConsole
 	✅ Automatic physical object creation (Parts, Models, Tools)
 	✅ Creates Parts with scripts inside them automatically
 	✅ Automatic UI element creation (ScreenGui, Frame, TextButton, etc.)
@@ -69,6 +70,8 @@ local messageConnection = nil
 local closedConnection = nil
 local reconnectAttempt = 0
 local lastHeartbeat = 0
+local explorerChangeConnection = nil
+local lastExplorerUpdate = 0
 
 -- Create toolbar and buttons
 local toolbar = plugin:CreateToolbar("RoAssistant")
@@ -101,6 +104,120 @@ local function sendStatus(status, message, scriptName)
 
 	if not success then
 		warn("[RoAssistant] Failed to send status:", result)
+	end
+end
+
+--[[
+	Serialize an instance and its children for Explorer view
+	Returns a table with name, className, and children
+]]
+local function serializeInstance(instance, depth, maxDepth)
+	depth = depth or 0
+	maxDepth = maxDepth or 5 -- Limit depth to prevent huge payloads
+
+	if depth > maxDepth then
+		return nil
+	end
+
+	local data = {
+		name = instance.Name,
+		className = instance.ClassName,
+		children = {}
+	}
+
+	-- Get children
+	local children = instance:GetChildren()
+	for _, child in ipairs(children) do
+		-- Skip certain instances to reduce payload size
+		local skipClasses = {
+			"Camera", "Terrain", "Lighting", "SoundService",
+			"UserInputService", "RunService", "Players"
+		}
+
+		local shouldSkip = false
+		for _, skipClass in ipairs(skipClasses) do
+			if child.ClassName == skipClass then
+				shouldSkip = true
+				break
+			end
+		end
+
+		if not shouldSkip then
+			local childData = serializeInstance(child, depth + 1, maxDepth)
+			if childData then
+				table.insert(data.children, childData)
+			end
+		end
+	end
+
+	return data
+end
+
+--[[
+	Build Explorer hierarchy from game tree
+]]
+local function buildExplorerHierarchy()
+	local hierarchy = {}
+
+	-- Key services to include in Explorer
+	local services = {
+		game:GetService("Workspace"),
+		game:GetService("Players"),
+		game:GetService("Lighting"),
+		game:GetService("ReplicatedFirst"),
+		game:GetService("ReplicatedStorage"),
+		game:GetService("ServerScriptService"),
+		game:GetService("ServerStorage"),
+		game:GetService("StarterGui"),
+		game:GetService("StarterPack"),
+		game:GetService("StarterPlayer"),
+		game:GetService("SoundService")
+	}
+
+	for _, service in ipairs(services) do
+		local serviceData = serializeInstance(service, 0, 4) -- Max depth 4 for services
+		if serviceData then
+			table.insert(hierarchy, serviceData)
+		end
+	end
+
+	return hierarchy
+end
+
+--[[
+	Send Explorer hierarchy to website
+]]
+local function sendExplorerData()
+	-- Rate limit: only send once per second
+	local now = tick()
+	if now - lastExplorerUpdate < 1 then
+		return
+	end
+	lastExplorerUpdate = now
+
+	local success, result = pcall(function()
+		local hierarchy = buildExplorerHierarchy()
+
+		local payload = {
+			hierarchy = hierarchy,
+			timestamp = DateTime.now():ToIsoDate()
+		}
+
+		local explorerEndpoint = Config.WEBSITE_URL .. "/roblox/explorer"
+
+		return HttpService:PostAsync(
+			explorerEndpoint,
+			HttpService:JSONEncode(payload),
+			Enum.HttpContentType.ApplicationJson
+		)
+	end)
+
+	if success then
+		if Config.DEBUG then
+			print("[RoAssistant] 📂 Explorer data sent")
+		end
+	else
+		warn("[RoAssistant] Failed to send Explorer data:", result)
 	end
 end
 
@@ -406,6 +523,21 @@ local function connect()
 		print("[RoAssistant] ✅ Connected successfully!")
 		sendStatus("connected", "Plugin connected to RoAssistant")
 		updateConnectionStatus()
+
+		-- Send initial Explorer data
+		task.wait(0.5) -- Small delay to ensure connection is stable
+		sendExplorerData()
+
+		-- Watch for Explorer changes
+		if not explorerChangeConnection then
+			explorerChangeConnection = game.DescendantAdded:Connect(function()
+				sendExplorerData()
+			end)
+
+			game.DescendantRemoving:Connect(function()
+				sendExplorerData()
+			end)
+		end
 	end)
 
 	if not success then

@@ -183,6 +183,183 @@
         .usage-fill.danger {
             background: linear-gradient(90deg, #f85149, #da3633);
         }
+
+        /* Explorer Panel Styles */
+        .explorer-panel {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 300px;
+            height: 100vh;
+            background: rgba(22, 27, 34, 0.95);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid #30363d;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+
+        .explorer-panel.hidden {
+            transform: translateX(100%);
+        }
+
+        .explorer-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            border-bottom: 1px solid #30363d;
+            background: rgba(33, 38, 45, 0.6);
+        }
+
+        .explorer-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+            font-weight: 600;
+            color: #c9d1d9;
+        }
+
+        .explorer-title i {
+            color: #58a6ff;
+        }
+
+        .explorer-refresh, .explorer-toggle {
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            cursor: pointer;
+            padding: 0.4rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .explorer-refresh:hover, .explorer-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #c9d1d9;
+        }
+
+        .explorer-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            color: #8b949e;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid #30363d;
+        }
+
+        .explorer-status i {
+            font-size: 0.5rem;
+            color: #ed4245;
+        }
+
+        .explorer-status.connected i {
+            color: #57f287;
+        }
+
+        .explorer-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+
+        .explorer-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #8b949e;
+            text-align: center;
+        }
+
+        .explorer-empty i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .explorer-empty p {
+            font-size: 0.9rem;
+        }
+
+        /* Explorer Tree Styles */
+        .explorer-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.3rem 0.5rem;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.15s ease;
+            user-select: none;
+            font-size: 0.85rem;
+        }
+
+        .explorer-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .explorer-item-icon {
+            width: 16px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .explorer-item-toggle {
+            color: #8b949e;
+            font-size: 0.7rem;
+            width: 12px;
+            flex-shrink: 0;
+        }
+
+        .explorer-item-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .explorer-item-name {
+            color: #c9d1d9;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .explorer-item-class {
+            color: #8b949e;
+            font-size: 0.75rem;
+            opacity: 0.7;
+        }
+
+        .explorer-children {
+            margin-left: 1rem;
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            padding-left: 0.5rem;
+        }
+
+        .explorer-children.collapsed {
+            display: none;
+        }
+
+        /* Icon colors for different instance types */
+        .icon-script { color: #58a6ff; }
+        .icon-localscript { color: #79c0ff; }
+        .icon-modulescript { color: #f85149; }
+        .icon-folder { color: #8b949e; }
+        .icon-part { color: #57f287; }
+        .icon-model { color: #d2a8ff; }
+        .icon-screengui { color: #f0883e; }
+        .icon-default { color: #8b949e; }
+
+        /* Adjust main content when explorer is visible */
+        .main-content.explorer-visible {
+            margin-right: 300px;
+        }
     </style>
 </head>
 
@@ -266,6 +443,32 @@
         </div>
         <div class="code-panel-content" id="codePanelContent">
             <!-- Code blocks will be displayed here -->
+        </div>
+    </div>
+
+    <!-- Explorer Panel -->
+    <div class="explorer-panel" id="explorerPanel">
+        <div class="explorer-header">
+            <div class="explorer-title">
+                <i class="fas fa-folder-tree"></i>
+                <span>Explorer</span>
+            </div>
+            <button class="explorer-refresh" id="explorerRefreshBtn" title="Refresh Explorer">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <button class="explorer-toggle" id="explorerToggleBtn" title="Close Explorer">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="explorer-status" id="explorerStatus">
+            <i class="fas fa-circle"></i>
+            <span>Disconnected</span>
+        </div>
+        <div class="explorer-content" id="explorerContent">
+            <div class="explorer-empty">
+                <i class="fas fa-cube"></i>
+                <p>Connect Roblox Studio to view Explorer</p>
+            </div>
         </div>
     </div>
 
@@ -827,12 +1030,198 @@
         // END ROBLOX FUNCTIONALITY
         // ============================================
 
+        // ============================================
+        // EXPLORER PANEL FUNCTIONALITY
+        // ============================================
+
+        let explorerVisible = true;
+        let explorerData = null;
+
+        // Get icon for instance class
+        function getInstanceIcon(className) {
+            const iconMap = {
+                'Script': 'fas fa-file-code icon-script',
+                'LocalScript': 'fas fa-file-code icon-localscript',
+                'ModuleScript': 'fas fa-cube icon-modulescript',
+                'Folder': 'fas fa-folder icon-folder',
+                'Part': 'fas fa-cube icon-part',
+                'Model': 'fas fa-cubes icon-model',
+                'ScreenGui': 'fas fa-desktop icon-screengui',
+                'Frame': 'fas fa-square icon-default',
+                'TextButton': 'fas fa-mouse-pointer icon-default',
+                'TextLabel': 'fas fa-font icon-default',
+                'RemoteEvent': 'fas fa-bolt icon-default',
+                'RemoteFunction': 'fas fa-bolt icon-default'
+            };
+
+            return iconMap[className] || 'fas fa-circle icon-default';
+        }
+
+        // Render explorer item
+        function renderExplorerItem(item, level = 0) {
+            const hasChildren = item.children && item.children.length > 0;
+
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'explorer-item-wrapper';
+            itemDiv.style.marginLeft = (level * 0.5) + 'rem';
+
+            const itemHeader = document.createElement('div');
+            itemHeader.className = 'explorer-item';
+
+            // Toggle arrow for items with children
+            if (hasChildren) {
+                const toggle = document.createElement('span');
+                toggle.className = 'explorer-item-toggle';
+                toggle.innerHTML = '<i class="fas fa-chevron-down"></i>';
+                itemHeader.appendChild(toggle);
+            } else {
+                const spacer = document.createElement('span');
+                spacer.className = 'explorer-item-toggle';
+                spacer.innerHTML = '';
+                itemHeader.appendChild(spacer);
+            }
+
+            // Icon
+            const icon = document.createElement('span');
+            icon.className = 'explorer-item-icon';
+            icon.innerHTML = `<i class="${getInstanceIcon(item.className)}"></i>`;
+            itemHeader.appendChild(icon);
+
+            // Name
+            const name = document.createElement('span');
+            name.className = 'explorer-item-name';
+            name.textContent = item.name;
+            itemHeader.appendChild(name);
+
+            // Class name hint
+            const className = document.createElement('span');
+            className.className = 'explorer-item-class';
+            className.textContent = item.className;
+            itemHeader.appendChild(className);
+
+            itemDiv.appendChild(itemHeader);
+
+            // Children container
+            if (hasChildren) {
+                const childrenDiv = document.createElement('div');
+                childrenDiv.className = 'explorer-children';
+
+                for (const child of item.children) {
+                    childrenDiv.appendChild(renderExplorerItem(child, level + 1));
+                }
+
+                itemDiv.appendChild(childrenDiv);
+
+                // Toggle click handler
+                itemHeader.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const toggle = itemHeader.querySelector('.explorer-item-toggle i');
+                    if (toggle) {
+                        toggle.classList.toggle('collapsed');
+                        childrenDiv.classList.toggle('collapsed');
+                    }
+                });
+            }
+
+            return itemDiv;
+        }
+
+        // Fetch and display Explorer data
+        async function updateExplorerPanel() {
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/roblox/explorer`);
+                const data = await response.json();
+
+                const explorerContent = document.getElementById('explorerContent');
+                const explorerStatus = document.getElementById('explorerStatus');
+
+                if (data.connected && data.hierarchy && data.hierarchy.length > 0) {
+                    // Update status
+                    explorerStatus.classList.add('connected');
+                    explorerStatus.innerHTML = '<i class="fas fa-circle"></i><span>Connected</span>';
+
+                    // Clear content
+                    explorerContent.innerHTML = '';
+
+                    // Render hierarchy
+                    for (const service of data.hierarchy) {
+                        explorerContent.appendChild(renderExplorerItem(service));
+                    }
+
+                    explorerData = data.hierarchy;
+                } else {
+                    // Show empty state
+                    explorerStatus.classList.remove('connected');
+                    explorerStatus.innerHTML = '<i class="fas fa-circle"></i><span>Disconnected</span>';
+
+                    explorerContent.innerHTML = `
+                        <div class="explorer-empty">
+                            <i class="fas fa-cube"></i>
+                            <p>Connect Roblox Studio to view Explorer</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('[Explorer] Failed to fetch data:', error);
+            }
+        }
+
+        // Toggle Explorer panel
+        function toggleExplorerPanel() {
+            explorerVisible = !explorerVisible;
+            const panel = document.getElementById('explorerPanel');
+            const mainContent = document.getElementById('mainContent');
+
+            if (explorerVisible) {
+                panel.classList.remove('hidden');
+                mainContent.classList.add('explorer-visible');
+            } else {
+                panel.classList.add('hidden');
+                mainContent.classList.remove('explorer-visible');
+            }
+        }
+
+        // Initialize Explorer panel
+        function initializeExplorerPanel() {
+            // Toggle button
+            document.getElementById('explorerToggleBtn').addEventListener('click', toggleExplorerPanel);
+
+            // Refresh button
+            document.getElementById('explorerRefreshBtn').addEventListener('click', () => {
+                const btn = document.getElementById('explorerRefreshBtn');
+                btn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i>';
+
+                updateExplorerPanel().then(() => {
+                    setTimeout(() => {
+                        btn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+                    }, 500);
+                });
+            });
+
+            // Initial fetch
+            updateExplorerPanel();
+
+            // Auto-refresh every 3 seconds
+            setInterval(updateExplorerPanel, 3000);
+
+            // Show panel and adjust main content
+            const mainContent = document.getElementById('mainContent');
+            mainContent.classList.add('explorer-visible');
+        }
+
+        // ============================================
+        // END EXPLORER FUNCTIONALITY
+        // ============================================
+
         // Initialize RoConsole when DOM is ready
         window.addEventListener('DOMContentLoaded', function() {
             console.log('RoConsole DOM loaded');
 
             // Initialize Roblox auto-send functionality
             setTimeout(setupRobloxAutoSendHook, 500);
+
+            // Initialize Explorer panel
+            setTimeout(initializeExplorerPanel, 100);
         });
     </script>
 
