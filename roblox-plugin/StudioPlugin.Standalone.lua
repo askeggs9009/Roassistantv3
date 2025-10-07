@@ -2,7 +2,7 @@
 	RoAssistant Studio Plugin - STANDALONE VERSION
 	Place this file directly in your Roblox Plugins folder
 
-	Version: 2.2.0 - Explorer Integration Update
+	Version: 2.2.1 - Explorer Debugging Update
 
 	NEW FEATURES:
 	✅ Real-time Explorer hierarchy syncing with RoConsole
