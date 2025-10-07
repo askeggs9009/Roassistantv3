@@ -188,7 +188,8 @@ async function handleStripeWebhook(req, res) {
 app.post('/webhook/stripe', express.raw({type: 'application/json'}), handleStripeWebhook);
 app.post('/stripe/webhook', express.raw({type: 'application/json'}), handleStripeWebhook);
 
-app.use(express.json());
+// Increase JSON payload limit to support Roblox Explorer hierarchy data
+app.use(express.json({ limit: '10mb' }));
 
 // URL canonicalization middleware - force HTTPS and www
 app.use((req, res, next) => {
