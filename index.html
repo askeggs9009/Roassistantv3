@@ -1088,6 +1088,40 @@
             return scripts;
         }
 
+        // Parse edit commands from AI response
+        function parseEditCommands(response) {
+            const edits = [];
+            // Regex to capture edit commands: <roblox_edit target="path" properties='{}'>code</roblox_edit>
+            const editRegex = /<roblox_edit\s+target="([^"]+)"(?:\s+properties='([^']*)')?>([\s\S]*?)<\/roblox_edit>/gi;
+
+            let match;
+            while ((match = editRegex.exec(response)) !== null) {
+                const [, target, properties, code] = match;
+
+                const edit = {
+                    target: target.trim(),
+                    code: code.trim() || null,
+                    id: `edit_${Date.now()}_${edits.length}`
+                };
+
+                // Parse properties if present
+                if (properties) {
+                    try {
+                        edit.properties = JSON.parse(properties);
+                        console.log(`[Parser] Found edit properties for ${target}:`, edit.properties);
+                    } catch (error) {
+                        console.warn(`[Parser] Failed to parse edit properties for ${target}:`, error);
+                    }
+                }
+
+                edits.push(edit);
+
+                console.log(`[Parser] Found edit command: ${target}`);
+            }
+
+            return edits;
+        }
+
         function getScriptType(type) {
             const typeMap = {
                 'Script': 'Script',
@@ -1202,6 +1236,68 @@
             }
         }
 
+        // Send edit command to Roblox Studio
+        async function sendEditToRoblox(edit) {
+            try {
+                const payload = {
+                    target: edit.target,
+                    code: edit.code,
+                    properties: edit.properties
+                };
+
+                console.log(`[Roblox] Sending edit command for:`, edit.target);
+
+                const response = await fetch(`${getApiBaseUrl()}/roblox/edit-object`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log(`[Roblox] ✅ Edit sent: ${edit.target}`);
+                    return { success: true, target: edit.target };
+                } else {
+                    console.error(`[Roblox] ❌ Failed to send edit: ${edit.target}`);
+                    return { success: false, target: edit.target };
+                }
+            } catch (error) {
+                console.error('[Roblox] Error sending edit:', error);
+                return { success: false, target: edit.target };
+            }
+        }
+
+        // Send edit commands
+        async function sendEditCommands(edits) {
+            if (!edits || edits.length === 0) {
+                console.log('[Roblox] No edit commands to send');
+                return;
+            }
+
+            console.log(`[Roblox] Sending ${edits.length} edit command(s)...`);
+
+            const results = [];
+            for (const edit of edits) {
+                const result = await sendEditToRoblox(edit);
+                results.push(result);
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+
+            const successCount = results.filter(r => r.success).length;
+            const totalCount = results.length;
+
+            if (successCount > 0) {
+                showRobloxNotification(`✅ Edited ${successCount}/${totalCount} object(s) in Roblox Studio`);
+            } else {
+                showRobloxNotification(`❌ Failed to edit objects in Roblox Studio`, 'error');
+            }
+
+            return results;
+        }
+
         // Send structured scripts
         async function sendStructuredScripts(scripts) {
             if (!scripts || scripts.length === 0) {
@@ -1242,6 +1338,16 @@
 
             if (fullResponse) {
                 lastAIResponse = fullResponse;
+            }
+
+            // Check for edit commands FIRST
+            if (lastAIResponse) {
+                const editCommands = parseEditCommands(lastAIResponse);
+
+                if (editCommands.length > 0) {
+                    console.log(`[Roblox] Found ${editCommands.length} edit command(s) in AI response`);
+                    await sendEditCommands(editCommands);
+                }
             }
 
             // Check for structured scripts

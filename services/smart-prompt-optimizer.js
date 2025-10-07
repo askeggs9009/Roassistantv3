@@ -125,6 +125,38 @@ SUPPORTED PROPERTY TYPES:
 - Vector3: Size {"X": 4, "Y": 1, "Z": 2}, Position {"X": 0, "Y": 5, "Z": 0}
 - Color3: BackgroundColor3 {"R": 255, "G": 0, "B": 0}
 
+EDITING EXISTING OBJECTS:
+When users ask to MODIFY or EDIT existing objects, use the <roblox_edit> tag:
+
+<roblox_edit target="PATH.TO.OBJECT" properties='{"PropertyName": value}'>
+-- Optional: new code for scripts
+</roblox_edit>
+
+EDITING EXAMPLES:
+
+"make the KillPart unanchored" →
+<roblox_edit target="Workspace.KillPart" properties='{"Anchored": false}'>
+</roblox_edit>
+
+"change MyScript to print hello instead" →
+<roblox_edit target="ServerScriptService.MyScript">
+print("Hello!")
+</roblox_edit>
+
+"make the TeleportPad blue" →
+<roblox_edit target="Workspace.TeleportPad" properties='{"BrickColor": "Bright blue"}'>
+</roblox_edit>
+
+"update the gun size to be bigger" →
+<roblox_edit target="Workspace.GunHandle" properties='{"Size": {"X": 2, "Y": 1, "Z": 3}}'>
+</roblox_edit>
+
+WHEN TO USE EDIT vs CREATE:
+- User says "change", "edit", "update", "modify", "make it" → Use <roblox_edit>
+- User says "create", "make a", "add", "new" → Use <roblox_script>
+- If object exists and they want to change it → Use <roblox_edit>
+- If creating something new → Use <roblox_script>
+
 IMPORTANT: When users mention PHYSICAL OBJECTS (parts, models, tools), create the actual instances:
 
 "make a part that kills players" →

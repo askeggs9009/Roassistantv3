@@ -432,6 +432,91 @@ local function ensureParentHierarchy(location)
 end
 
 --[[
+	Find an existing instance by path
+	Example: "Workspace.KillPart" or "ServerScriptService.MyScript"
+]]
+local function findInstanceByPath(path)
+	local parts = string.split(path, ".")
+	local current = nil
+
+	-- Start with the root service
+	if parts[1] == "Workspace" or parts[1] == "workspace" then
+		current = workspace
+	elseif parts[1] == "ServerScriptService" then
+		current = game:GetService("ServerScriptService")
+	elseif parts[1] == "StarterPlayer" then
+		current = game:GetService("StarterPlayer")
+	elseif parts[1] == "StarterGui" then
+		current = game:GetService("StarterGui")
+	elseif parts[1] == "ReplicatedStorage" then
+		current = game:GetService("ReplicatedStorage")
+	elseif parts[1] == "ServerStorage" then
+		current = game:GetService("ServerStorage")
+	elseif parts[1] == "StarterPack" then
+		current = game:GetService("StarterPack")
+	else
+		return nil
+	end
+
+	-- Navigate the path
+	for i = 2, #parts do
+		local child = current:FindFirstChild(parts[i])
+		if not child then
+			return nil
+		end
+		current = child
+	end
+
+	return current
+end
+
+--[[
+	Edit an existing instance (properties or script source)
+]]
+local function editInstance(editData)
+	local success, result = pcall(function()
+		local target = editData.target or editData.location
+		if not target then
+			error("No target specified for edit")
+		end
+
+		-- Find the instance
+		local instance = findInstanceByPath(target)
+		if not instance then
+			error("Could not find instance at path: " .. target)
+		end
+
+		print("[RoAssistant] 📝 Editing:", instance:GetFullName())
+
+		-- Update script source if provided
+		if editData.code and instance:IsA("LuaSourceContainer") then
+			instance.Source = editData.code
+			print("[RoAssistant] ✅ Updated script source")
+		end
+
+		-- Apply properties if provided
+		if editData.properties then
+			applyProperties(instance, editData.properties)
+		end
+
+		-- Record undo history
+		ChangeHistoryService:SetWaypoint("Edit RoAssistant Object: " .. instance.Name)
+
+		return instance
+	end)
+
+	if success then
+		sendStatus("success", "Object edited successfully", editData.target)
+		print("[RoAssistant] ✅ Edit complete:", editData.target)
+		return true, result
+	else
+		warn("[RoAssistant] ❌ Failed to edit object:", result)
+		sendStatus("error", "Failed to edit object: " .. tostring(result), editData.target)
+		return false, result
+	end
+end
+
+--[[
 	Insert a script into Roblox Studio
 ]]
 local function insertScript(scriptData)
@@ -500,6 +585,13 @@ local function handleMessage(message)
 			location = data.location,
 			instanceType = data.instanceType, -- Support for non-script instances
 			properties = data.properties -- Custom properties support
+		})
+	elseif data.type == "edit" then
+		-- Edit an existing object
+		editInstance({
+			target = data.target,
+			code = data.code,
+			properties = data.properties
 		})
 	elseif data.type == "ping" then
 		-- Respond to ping
