@@ -1,32 +1,83 @@
 // Conversation History Trimmer
 // Keeps only recent relevant messages to save input tokens
 
-export function trimConversation(messages, maxMessages = 4) {
+/**
+ * Smart conversation trimmer that preserves context while minimizing tokens
+ * Strategy:
+ * 1. Keep the first user message (for initial context)
+ * 2. Keep the last N messages (for recent context)
+ * 3. Summarize everything in between
+ */
+export function trimConversation(messages, maxRecentMessages = 6) {
     if (!messages || messages.length === 0) {
-        return '';
+        return [];
     }
 
-    // Keep only the last few messages (2 exchanges = 4 messages)
-    const recentMessages = messages.slice(-maxMessages);
-
-    // If we trimmed anything, add a brief summary
-    let summary = '';
-    if (messages.length > maxMessages) {
-        summary = '[Earlier conversation summarized: User working on Roblox scripts]\n\n';
+    // If conversation is short enough, keep everything
+    if (messages.length <= maxRecentMessages + 2) {
+        return messages;
     }
 
-    // Format messages concisely
-    const formatted = recentMessages.map(msg => {
-        const role = msg.role === 'user' ? 'User' : 'Assistant';
-        // Truncate very long messages but keep code blocks intact
-        let content = msg.content;
-        if (content.length > 500 && !content.includes('```')) {
-            content = content.substring(0, 500) + '...';
+    const result = [];
+
+    // 1. Keep the first user message for context
+    const firstMessage = messages[0];
+    if (firstMessage.role === 'user') {
+        result.push({
+            role: 'user',
+            content: firstMessage.content
+        });
+    }
+
+    // 2. Add a summary of the middle messages
+    const middleCount = messages.length - maxRecentMessages - 1;
+    if (middleCount > 0) {
+        result.push({
+            role: 'user',
+            content: `[Earlier in conversation: ${middleCount} message(s) about Roblox scripting were exchanged]`
+        });
+    }
+
+    // 3. Keep the last N messages for recent context
+    const recentMessages = messages.slice(-maxRecentMessages);
+    result.push(...recentMessages);
+
+    return result;
+}
+
+/**
+ * Trim conversation with token budget
+ * More aggressive trimming based on estimated token count
+ */
+export function trimConversationByTokens(messages, maxTokens = 4000) {
+    if (!messages || messages.length === 0) {
+        return [];
+    }
+
+    let currentTokens = 0;
+    const result = [];
+
+    // Start from the most recent messages and work backwards
+    for (let i = messages.length - 1; i >= 0; i--) {
+        const msg = messages[i];
+        const msgTokens = estimateTokens(msg.content);
+
+        if (currentTokens + msgTokens > maxTokens) {
+            // If we can't fit this message, add a summary and break
+            if (i > 0) {
+                result.unshift({
+                    role: 'user',
+                    content: `[Earlier conversation: ${i + 1} message(s) trimmed to save tokens]`
+                });
+            }
+            break;
         }
-        return `${role}: ${content}`;
-    }).join('\n\n');
 
-    return summary + formatted;
+        result.unshift(msg);
+        currentTokens += msgTokens;
+    }
+
+    return result;
 }
 
 // Estimate tokens (rough approximation)
@@ -39,5 +90,6 @@ export function estimateTokens(text) {
 
 export default {
     trimConversation,
+    trimConversationByTokens,
     estimateTokens
 };

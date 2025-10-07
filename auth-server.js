@@ -3272,7 +3272,7 @@ app.get("/usage-limits", optionalAuthenticateToken, (req, res) => {
 // Streaming endpoint for real-time responses
 app.post("/ask-stream", optionalAuthenticateToken, checkUsageLimits, async (req, res) => {
     try {
-        const { prompt, model = "gpt-4.1" } = req.body;
+        const { prompt, model = "gpt-4.1", conversationHistory = [] } = req.body;
         const isAuthenticated = req.user !== null;
 
         // Check if authenticated user can use this model
@@ -3355,6 +3355,16 @@ app.post("/ask-stream", optionalAuthenticateToken, checkUsageLimits, async (req,
         let inputTokens = 0;
         let outputTokens = 0;
 
+        // Trim conversation history to save tokens
+        const trimmedHistory = trimConversation(conversationHistory, 6);
+        console.log(`[CONVERSATION] Original history: ${conversationHistory.length} messages, Trimmed to: ${trimmedHistory.length} messages`);
+
+        // Build messages array with history + new prompt
+        const messages = [
+            ...trimmedHistory,
+            { role: "user", content: prompt }
+        ];
+
         if (config.provider === 'anthropic') {
             // Use Claude streaming API with prompt caching
             const stream = await anthropic.messages.create({
@@ -3368,9 +3378,7 @@ app.post("/ask-stream", optionalAuthenticateToken, checkUsageLimits, async (req,
                         cache_control: { type: "ephemeral" }
                     }
                 ],
-                messages: [
-                    { role: "user", content: prompt }
-                ],
+                messages: messages,
                 stream: true
             });
 
@@ -3393,12 +3401,15 @@ app.post("/ask-stream", optionalAuthenticateToken, checkUsageLimits, async (req,
             }
         } else {
             // For OpenAI, implement streaming
+            const openaiMessages = [
+                { role: "system", content: systemPrompt },
+                ...trimmedHistory,
+                { role: "user", content: prompt }
+            ];
+
             const response = await openai.chat.completions.create({
                 model: config.model,
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: prompt }
-                ],
+                messages: openaiMessages,
                 max_tokens: maxTokens,
                 temperature: 0.7,
                 stream: true
@@ -3493,7 +3504,7 @@ app.post("/ask-stream", optionalAuthenticateToken, checkUsageLimits, async (req,
 
 app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) => {
     try {
-        const { prompt, model = "gpt-4.1" } = req.body;
+        const { prompt, model = "gpt-4.1", conversationHistory = [] } = req.body;
         const isAuthenticated = req.user !== null;
 
         // 🚀 OPTIMIZATION 1: Check cache for common requests (before expensive checks)
@@ -3619,6 +3630,16 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
         const maxTokens = getMaxTokensForPlan(isAuthenticated, isAuthenticated ? getUserSubscription(await DatabaseManager.findUserByEmail(req.user.email)) : null);
         console.log(`[DEBUG] Max tokens for response: ${maxTokens}`);
 
+        // Trim conversation history to save tokens
+        const trimmedHistory = trimConversation(conversationHistory, 6);
+        console.log(`[CONVERSATION] Original history: ${conversationHistory.length} messages, Trimmed to: ${trimmedHistory.length} messages`);
+
+        // Build messages array with history + new prompt
+        const messages = [
+            ...trimmedHistory,
+            { role: "user", content: prompt }
+        ];
+
         if (config.provider === 'anthropic') {
             // Use Claude/Anthropic API with prompt caching
             response = await anthropic.messages.create({
@@ -3632,9 +3653,7 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
                         cache_control: { type: "ephemeral" }
                     }
                 ],
-                messages: [
-                    { role: "user", content: prompt }
-                ]
+                messages: messages
             });
             reply = response.content[0].text;
 
@@ -3647,12 +3666,15 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             }
         } else {
             // Use OpenAI API
+            const openaiMessages = [
+                { role: "system", content: systemPrompt },
+                ...trimmedHistory,
+                { role: "user", content: prompt }
+            ];
+
             response = await openai.chat.completions.create({
                 model: config.model,
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: prompt }
-                ],
+                messages: openaiMessages,
                 max_tokens: maxTokens,
                 temperature: 0.7
             });

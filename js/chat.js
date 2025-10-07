@@ -75,10 +75,20 @@ class ChatManager {
                 headers['Authorization'] = `Bearer ${token}`;
             }
 
+            // Prepare conversation history for context
+            // Convert this.messages to API format (role + content)
+            const conversationHistory = this.messages
+                .filter(msg => msg.type === 'user' || msg.type === 'assistant')
+                .map(msg => ({
+                    role: msg.type === 'user' ? 'user' : 'assistant',
+                    content: msg.content
+                }));
+
             // Prepare request body
             const requestBody = {
                 prompt: message,
-                model: this.getSelectedModel() || 'claude-4-sonnet'
+                model: this.getSelectedModel() || 'claude-4-sonnet',
+                conversationHistory: conversationHistory // Send conversation history
             };
 
             // Add project context if available
