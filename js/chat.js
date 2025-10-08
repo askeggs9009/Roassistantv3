@@ -1318,6 +1318,10 @@ class ChatManager {
         }
 
         const usage = data.usage;
+        const plan = data.plan || 'free';
+        const isStudioPlan = plan === 'studio' || plan === 'enterprise';
+        const usageType = isStudioPlan ? 'Token' : 'Credit';
+
         const dailyPercentage = usage.dailyPercentage || 0;
         const monthlyPercentage = usage.monthlyPercentage || 0;
 
@@ -1375,7 +1379,7 @@ class ChatManager {
                     ">Upgrade</a>
                 </div>
             `;
-        } else if (usage.monthlyLimit !== -1 && monthlyPercentage >= 90 && dailyPercentage < 75) {
+        } else if (isStudioPlan && usage.monthlyLimit !== -1 && monthlyPercentage >= 90 && dailyPercentage < 75) {
             warningMessage = `
                 <div class="token-warning" style="
                     background: rgba(255, 130, 0, 0.15);
@@ -1402,43 +1406,66 @@ class ChatManager {
             `;
         }
 
-        dashboard.innerHTML = `
-            ${warningMessage}
-            <h4>Token Usage</h4>
-            ${usage.dailyLimit !== -1 ? `
-                <div class="token-stat">
-                    <span class="token-stat-label">Daily:</span>
-                    <span class="token-stat-value" style="color: ${getDailyColor()}; font-weight: 600;">
-                        ${dailyPercentage.toFixed(1)}%
-                    </span>
-                </div>
-                <div class="token-progress" style="margin-bottom: 10px;">
-                    <div class="token-progress-fill" style="width: ${Math.min(dailyPercentage, 100)}%; background: ${getDailyColor()};"></div>
-                </div>
-            ` : ''}
-            ${usage.monthlyLimit !== -1 ? `
-                <div class="token-stat">
-                    <span class="token-stat-label">Monthly:</span>
-                    <span class="token-stat-value" style="color: ${getMonthlyColor()}; font-weight: 600;">
-                        ${monthlyPercentage.toFixed(1)}%
-                    </span>
-                </div>
-                <div class="token-progress">
-                    <div class="token-progress-fill" style="width: ${Math.min(monthlyPercentage, 100)}%; background: ${getMonthlyColor()};"></div>
-                </div>
-                ${usage.daysUntilMonthlyReset ? `
-                    <div class="token-stat" style="margin-top: 8px; font-size: 11px; color: #8b949e;">
-                        <span>Resets in ${usage.daysUntilMonthlyReset} day${usage.daysUntilMonthlyReset !== 1 ? 's' : ''}</span>
+        if (isStudioPlan) {
+            // Studio plan: Show token usage
+            dashboard.innerHTML = `
+                ${warningMessage}
+                <h4>Token Usage</h4>
+                ${usage.dailyLimit !== -1 ? `
+                    <div class="token-stat">
+                        <span class="token-stat-label">Daily Tokens:</span>
+                        <span class="token-stat-value" style="color: ${getDailyColor()}; font-weight: 600;">
+                            ${usage.dailyTokensUsed ? usage.dailyTokensUsed.toLocaleString() : 0} / ${usage.dailyLimit.toLocaleString()}
+                        </span>
+                    </div>
+                    <div class="token-progress" style="margin-bottom: 10px;">
+                        <div class="token-progress-fill" style="width: ${Math.min(dailyPercentage, 100)}%; background: ${getDailyColor()};"></div>
                     </div>
                 ` : ''}
-            ` : ''}
-            ${data.costEstimate && data.costEstimate.monthly ? `
-                <div class="token-stat" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
-                    <span class="token-stat-label">Est. Cost/Month:</span>
-                    <span class="token-stat-value">$${data.costEstimate.monthly.estimated}</span>
-                </div>
-            ` : ''}
-        `;
+                ${usage.monthlyLimit !== -1 ? `
+                    <div class="token-stat">
+                        <span class="token-stat-label">Monthly Tokens:</span>
+                        <span class="token-stat-value" style="color: ${getMonthlyColor()}; font-weight: 600;">
+                            ${usage.monthlyTokensUsed ? usage.monthlyTokensUsed.toLocaleString() : 0} / ${usage.monthlyLimit.toLocaleString()}
+                        </span>
+                    </div>
+                    <div class="token-progress">
+                        <div class="token-progress-fill" style="width: ${Math.min(monthlyPercentage, 100)}%; background: ${getMonthlyColor()};"></div>
+                    </div>
+                    ${usage.daysUntilMonthlyReset ? `
+                        <div class="token-stat" style="margin-top: 8px; font-size: 11px; color: #8b949e;">
+                            <span>Resets in ${usage.daysUntilMonthlyReset} day${usage.daysUntilMonthlyReset !== 1 ? 's' : ''}</span>
+                        </div>
+                    ` : ''}
+                ` : ''}
+                ${data.costEstimate && data.costEstimate.monthly ? `
+                    <div class="token-stat" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <span class="token-stat-label">Est. Cost/Month:</span>
+                        <span class="token-stat-value">$${data.costEstimate.monthly.estimated}</span>
+                    </div>
+                ` : ''}
+            `;
+        } else {
+            // Free/Pro/Max: Show credit usage
+            const usedCredits = usage.daily_messages || 0;
+            const limitCredits = usage.dailyLimit === -1 ? '∞' : usage.dailyLimit;
+
+            dashboard.innerHTML = `
+                ${warningMessage}
+                <h4>${usageType} Usage</h4>
+                ${usage.dailyLimit !== -1 ? `
+                    <div class="token-stat">
+                        <span class="token-stat-label">Daily Credits:</span>
+                        <span class="token-stat-value" style="color: ${getDailyColor()}; font-weight: 600;">
+                            ${usedCredits} / ${limitCredits}
+                        </span>
+                    </div>
+                    <div class="token-progress" style="margin-bottom: 10px;">
+                        <div class="token-progress-fill" style="width: ${Math.min(dailyPercentage, 100)}%; background: ${getDailyColor()};"></div>
+                    </div>
+                ` : ''}
+            `;
+        }
 
         // Auto-hide dashboard after 10 seconds, show again on hover
         setTimeout(() => {

@@ -656,21 +656,21 @@
 
                     <div class="usage-stats">
                         <div class="usage-card">
-                            <div class="usage-number" id="daily-token-usage">0%</div>
-                            <div class="usage-label">Daily Tokens</div>
+                            <div class="usage-number" id="daily-usage-number">0/10</div>
+                            <div class="usage-label" id="daily-usage-label">Daily Credits</div>
                             <div class="progress-bar">
-                                <div class="progress-fill" id="daily-token-progress" style="width: 0%; background: #58a6ff;"></div>
+                                <div class="progress-fill" id="daily-usage-progress" style="width: 0%; background: #58a6ff;"></div>
                             </div>
                         </div>
-                        <div class="usage-card">
-                            <div class="usage-number" id="monthly-token-usage">0%</div>
+                        <div class="usage-card" id="monthly-usage-card" style="display: none;">
+                            <div class="usage-number" id="monthly-usage-number">0/0</div>
                             <div class="usage-label">Monthly Tokens</div>
                             <div class="progress-bar">
-                                <div class="progress-fill" id="monthly-token-progress" style="width: 0%; background: #58a6ff;"></div>
+                                <div class="progress-fill" id="monthly-usage-progress" style="width: 0%; background: #58a6ff;"></div>
                             </div>
                         </div>
-                        <div class="usage-card">
-                            <div class="usage-number" id="token-reset-days">--</div>
+                        <div class="usage-card" id="reset-card" style="display: none;">
+                            <div class="usage-number" id="usage-reset-days">--</div>
                             <div class="usage-label">Days Until Reset</div>
                         </div>
                     </div>
@@ -990,6 +990,8 @@
                 if (response.ok) {
                     const data = await response.json();
                     const usage = data.usage;
+                    const plan = currentSubscription?.plan || 'free';
+                    const isStudioPlan = plan === 'studio' || plan === 'enterprise';
 
                     // Get percentage color based on usage
                     const getDailyColor = () => {
@@ -1004,28 +1006,49 @@
                         return '#58a6ff';
                     };
 
-                    // Update daily token usage
-                    const dailyPercentage = usage.dailyPercentage || 0;
-                    document.getElementById('daily-token-usage').textContent = `${dailyPercentage.toFixed(1)}%`;
-                    document.getElementById('daily-token-usage').style.color = getDailyColor();
-                    const dailyProgress = document.getElementById('daily-token-progress');
-                    dailyProgress.style.width = `${Math.min(dailyPercentage, 100)}%`;
-                    dailyProgress.style.background = getDailyColor();
+                    if (isStudioPlan) {
+                        // Studio plan: Show token usage
+                        document.getElementById('daily-usage-label').textContent = 'Daily Tokens';
+                        document.getElementById('daily-usage-number').textContent =
+                            `${usage.dailyTokensUsed.toLocaleString()} / ${usage.dailyLimit.toLocaleString()}`;
 
-                    // Update monthly token usage
-                    const monthlyPercentage = usage.monthlyPercentage || 0;
-                    document.getElementById('monthly-token-usage').textContent = `${monthlyPercentage.toFixed(1)}%`;
-                    document.getElementById('monthly-token-usage').style.color = getMonthlyColor();
-                    const monthlyProgress = document.getElementById('monthly-token-progress');
-                    monthlyProgress.style.width = `${Math.min(monthlyPercentage, 100)}%`;
-                    monthlyProgress.style.background = getMonthlyColor();
+                        const dailyPercentage = usage.dailyPercentage || 0;
+                        const dailyProgress = document.getElementById('daily-usage-progress');
+                        dailyProgress.style.width = `${Math.min(dailyPercentage, 100)}%`;
+                        dailyProgress.style.background = getDailyColor();
 
-                    // Update days until reset
-                    const daysUntilReset = usage.daysUntilMonthlyReset || 0;
-                    document.getElementById('token-reset-days').textContent = daysUntilReset;
+                        // Show monthly tokens
+                        document.getElementById('monthly-usage-card').style.display = 'block';
+                        document.getElementById('monthly-usage-number').textContent =
+                            `${usage.monthlyTokensUsed.toLocaleString()} / ${usage.monthlyLimit.toLocaleString()}`;
+
+                        const monthlyPercentage = usage.monthlyPercentage || 0;
+                        const monthlyProgress = document.getElementById('monthly-usage-progress');
+                        monthlyProgress.style.width = `${Math.min(monthlyPercentage, 100)}%`;
+                        monthlyProgress.style.background = getMonthlyColor();
+
+                        // Show reset days
+                        document.getElementById('reset-card').style.display = 'block';
+                        document.getElementById('usage-reset-days').textContent = usage.daysUntilMonthlyReset || 0;
+                    } else {
+                        // Free/Pro/Max: Show credit usage
+                        document.getElementById('daily-usage-label').textContent = 'Daily Credits';
+                        const usedCredits = usage.daily_messages || 0;
+                        const limitCredits = usage.dailyLimit === -1 ? '∞' : usage.dailyLimit;
+                        document.getElementById('daily-usage-number').textContent = `${usedCredits} / ${limitCredits}`;
+
+                        const dailyPercentage = usage.dailyPercentage || 0;
+                        const dailyProgress = document.getElementById('daily-usage-progress');
+                        dailyProgress.style.width = `${Math.min(dailyPercentage, 100)}%`;
+                        dailyProgress.style.background = getDailyColor();
+
+                        // Hide monthly/reset for credit-based plans
+                        document.getElementById('monthly-usage-card').style.display = 'none';
+                        document.getElementById('reset-card').style.display = 'none';
+                    }
 
                     // Show warning banners based on daily usage
-                    showTokenWarningBanner(dailyPercentage, monthlyPercentage, currentSubscription?.plan || 'free');
+                    showTokenWarningBanner(usage.dailyPercentage || 0, usage.monthlyPercentage || 0, plan);
                 }
             } catch (error) {
                 console.error('Error loading token usage:', error);
@@ -1035,10 +1058,12 @@
         function showTokenWarningBanner(dailyPercentage, monthlyPercentage, plan) {
             const warningBanner = document.getElementById('token-warning-banner');
 
-            // Only show warnings if the user has token limits (not unlimited plans)
-            const hasUnlimitedTokens = plan === 'studio' || plan === 'enterprise';
+            // Only show warnings if the user has limits (not unlimited plans)
+            const hasUnlimitedUsage = plan === 'studio' || plan === 'enterprise';
+            const isStudioPlan = plan === 'studio' || plan === 'enterprise';
+            const usageType = isStudioPlan ? 'tokens' : 'credits';
 
-            if (!warningBanner || hasUnlimitedTokens) return;
+            if (!warningBanner || hasUnlimitedUsage) return;
 
             let warningHTML = '';
             let warningClass = '';
@@ -1049,8 +1074,8 @@
                 warningHTML = `
                     <i class="fas fa-exclamation-triangle warning-icon"></i>
                     <div class="warning-content">
-                        <div class="warning-title">Daily Token Limit Almost Reached!</div>
-                        <div class="warning-description">You've used ${dailyPercentage.toFixed(1)}% of your daily tokens. Consider upgrading for higher limits.</div>
+                        <div class="warning-title">Daily ${usageType === 'credits' ? 'Credit' : 'Token'} Limit Almost Reached!</div>
+                        <div class="warning-description">You've used ${dailyPercentage.toFixed(1)}% of your daily ${usageType}. Consider upgrading for higher limits.</div>
                     </div>
                     <a href="/pricing.html" class="warning-action">Upgrade Plan</a>
                 `;
@@ -1059,8 +1084,8 @@
                 warningHTML = `
                     <i class="fas fa-exclamation-circle warning-icon"></i>
                     <div class="warning-content">
-                        <div class="warning-title">Approaching Daily Token Limit</div>
-                        <div class="warning-description">You've used ${dailyPercentage.toFixed(1)}% of your daily tokens. Upgrade to avoid interruptions.</div>
+                        <div class="warning-title">Approaching Daily ${usageType === 'credits' ? 'Credit' : 'Token'} Limit</div>
+                        <div class="warning-description">You've used ${dailyPercentage.toFixed(1)}% of your daily ${usageType}. Upgrade to avoid interruptions.</div>
                     </div>
                     <a href="/pricing.html" class="warning-action">View Plans</a>
                 `;
@@ -1069,13 +1094,13 @@
                 warningHTML = `
                     <i class="fas fa-info-circle warning-icon"></i>
                     <div class="warning-content">
-                        <div class="warning-title">Daily Token Usage Notice</div>
-                        <div class="warning-description">You've used ${dailyPercentage.toFixed(1)}% of your daily tokens. Plan your usage accordingly.</div>
+                        <div class="warning-title">Daily ${usageType === 'credits' ? 'Credit' : 'Token'} Usage Notice</div>
+                        <div class="warning-description">You've used ${dailyPercentage.toFixed(1)}% of your daily ${usageType}. Plan your usage accordingly.</div>
                     </div>
                     <a href="/pricing.html" class="warning-action">Upgrade</a>
                 `;
-            } else if (monthlyPercentage >= 90) {
-                // Show monthly warning only if daily is under 75%
+            } else if (isStudioPlan && monthlyPercentage >= 90) {
+                // Show monthly warning only for Studio plan and if daily is under 75%
                 warningClass = 'warning-orange';
                 warningHTML = `
                     <i class="fas fa-exclamation-circle warning-icon"></i>

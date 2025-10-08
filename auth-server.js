@@ -268,61 +268,55 @@ const SUBSCRIPTION_PLANS = {
     free: {
         name: 'Free',
         limits: {
-            daily_messages: 50,
+            daily_messages: 10,  // 10 credits/day (1 credit = 1 prompt)
             models: ['nexus'],  // Free: Nexus only
             defaultModel: 'nexus',
             max_file_size: 1048576, // 1MB
             scripts_storage: 5,
             projects: 1,  // Free: 1 project
-            support: 'community',
-            daily_tokens: 5000,  // 5k tokens/day
-            monthly_tokens: 150000  // 150k tokens/month (5k * 30 days)
+            support: 'community'
         },
-        features: ['Basic AI assistant', 'Basic code generation', '50 requests/month', 'Community support']
+        features: ['Basic AI assistant', 'Basic code generation', '10 credits/day', 'Community support']
     },
     pro: {
         name: 'Pro',
         limits: {
-            daily_messages: 500,  // 500 AI requests per month = ~16/day
+            daily_messages: 30,  // 30 credits/day (1 credit = 1 prompt)
             models: ['nexus'],  // Nexus model
             defaultModel: 'nexus',
             max_file_size: 10485760, // 10MB
             scripts_storage: -1, // unlimited
             projects: 5,  // Pro: 5 projects
-            support: 'email',
-            daily_tokens: 37333,  // ~37k tokens/day (1.12M monthly / 30 days)
-            monthly_tokens: 1120000  // 1.12M tokens/month (35% profit margin on $19/month)
+            support: 'email'
         },
         stripe_price_ids: {
             monthly: process.env.STRIPE_PRO_MONTHLY_PRICE_ID || 'price_1SFjvnGsDklELrgDQ5jpu4ml',
             annual: process.env.STRIPE_PRO_ANNUAL_PRICE_ID || 'price_1SFjwRGsDklELrgDrBstTq4R'
         },
-        features: ['Advanced code generation', 'Code optimization', '500 requests/month', 'Priority support', 'Advanced debugging']
+        features: ['Advanced code generation', 'Code optimization', '30 credits/day', 'Priority support', 'Advanced debugging']
     },
     max: {
         name: 'Max',
         limits: {
-            daily_messages: 2000,  // 2000 AI requests per month = ~66/day
+            daily_messages: 70,  // 70 credits/day (1 credit = 1 prompt)
             models: ['nexus'],  // Nexus model
             defaultModel: 'nexus',
             max_file_size: 26214400, // 25MB
             scripts_storage: -1, // unlimited
             projects: 10,  // Max: 10 projects
             support: 'priority',
-            daily_tokens: 73000,  // ~73k tokens/day (2.19M monthly / 30 days)
-            monthly_tokens: 2190000,  // 2.19M tokens/month (35% profit margin on $37/month)
             team_members: 5  // Team collaboration up to 5
         },
         stripe_price_ids: {
             monthly: process.env.STRIPE_MAX_MONTHLY_PRICE_ID || 'price_1SFjxPGsDklELrgDBWICQ6lZ',
             annual: process.env.STRIPE_MAX_ANNUAL_PRICE_ID || 'price_1SFjxtGsDklELrgD3ELTVyEI'
         },
-        features: ['2,000 AI requests/month', 'Advanced features', 'Team collaboration (up to 5)', 'Priority support']
+        features: ['70 credits/day', 'Advanced features', 'Team collaboration (up to 5)', 'Priority support']
     },
     studio: {
         name: 'Studio',
         limits: {
-            daily_messages: -1,  // Unlimited
+            daily_messages: -1,  // Unlimited messages
             models: ['studio'],  // Studio model
             defaultModel: 'studio',
             max_file_size: 52428800, // 50MB
@@ -338,13 +332,13 @@ const SUBSCRIPTION_PLANS = {
             monthly: process.env.STRIPE_STUDIO_MONTHLY_PRICE_ID || 'price_1SFjzWGsDklELrgDX2jdvdTN',
             annual: process.env.STRIPE_STUDIO_ANNUAL_PRICE_ID || 'price_1SFk04GsDklELrgDrDn4XKQM'
         },
-        features: ['Unlimited AI requests', 'Custom AI models', 'Unlimited team collaboration', '24/7 dedicated support', 'Custom integrations', 'Advanced analytics']
+        features: ['Unlimited prompts', '171k tokens/day', '5.14M tokens/month', 'Custom AI models', 'Unlimited team collaboration', '24/7 dedicated support', 'Custom integrations', 'Advanced analytics']
     },
     // Keep enterprise as an alias for studio for backward compatibility
     enterprise: {
         name: 'Studio',
         limits: {
-            daily_messages: -1,  // Unlimited
+            daily_messages: -1,  // Unlimited messages
             models: ['studio'],  // Studio model
             defaultModel: 'studio',
             max_file_size: 52428800, // 50MB
@@ -360,7 +354,7 @@ const SUBSCRIPTION_PLANS = {
             monthly: process.env.STRIPE_STUDIO_MONTHLY_PRICE_ID || 'price_1SFjzWGsDklELrgDX2jdvdTN',
             annual: process.env.STRIPE_STUDIO_ANNUAL_PRICE_ID || 'price_1SFk04GsDklELrgDrDn4XKQM'
         },
-        features: ['Unlimited AI requests', 'Custom AI models', 'Unlimited team collaboration', '24/7 dedicated support', 'Custom integrations', 'Advanced analytics']
+        features: ['Unlimited prompts', '171k tokens/day', '5.14M tokens/month', 'Custom AI models', 'Unlimited team collaboration', '24/7 dedicated support', 'Custom integrations', 'Advanced analytics']
     }
 };
 
@@ -671,33 +665,32 @@ function checkAuthenticatedUserLimits(user, subscription, model) {
     const usageKey = `${user.id}_${today}`;
     const currentUsage = dailyUsage.get(usageKey) || 0;
 
-    // Check daily message limit
-    if (currentUsage >= subscription.limits.daily_messages) {
+    // Check daily credit/message limit (for non-Studio plans)
+    if (subscription.limits.daily_messages !== -1 && currentUsage >= subscription.limits.daily_messages) {
         return {
             allowed: false,
-            error: `Daily message limit reached (${subscription.limits.daily_messages}). Resets at midnight.`,
+            error: `Daily credit limit reached (${subscription.limits.daily_messages} credits). Resets at midnight.`,
             upgradeUrl: subscription.plan === 'free' ? '/pricing.html' : null,
             resetTime: 'Tomorrow at midnight'
         };
     }
 
-    // Check daily token limits if defined
-    if (subscription.limits.daily_tokens) {
-        // Reset daily tokens if it's a new day
+    // Check daily token limits for Studio plan only
+    if ((subscription.plan === 'studio' || subscription.plan === 'enterprise') && subscription.limits.daily_tokens) {
         const currentTokenUsage = (user.dailyTokensDate === today) ? (user.dailyTokensUsed || 0) : 0;
 
         if (currentTokenUsage >= subscription.limits.daily_tokens) {
             return {
                 allowed: false,
                 error: `Daily token limit reached (${subscription.limits.daily_tokens.toLocaleString()}). Resets at midnight.`,
-                upgradeUrl: subscription.plan !== 'enterprise' && subscription.plan !== 'studio' ? '/pricing.html' : null,
+                upgradeUrl: null,
                 resetTime: 'Tomorrow at midnight'
             };
         }
     }
 
-    // Check monthly token limits if defined
-    if (subscription.limits.monthly_tokens) {
+    // Check monthly token limits for Studio plan only
+    if ((subscription.plan === 'studio' || subscription.plan === 'enterprise') && subscription.limits.monthly_tokens) {
         const monthlyTokensUsed = user.monthlyTokensUsed || 0;
 
         if (monthlyTokensUsed >= subscription.limits.monthly_tokens) {
@@ -718,7 +711,7 @@ function checkAuthenticatedUserLimits(user, subscription, model) {
             return {
                 allowed: false,
                 error: `Monthly token limit reached (${subscription.limits.monthly_tokens.toLocaleString()}). Resets in ${daysRemaining} days.`,
-                upgradeUrl: subscription.plan !== 'enterprise' && subscription.plan !== 'studio' ? '/pricing.html' : null,
+                upgradeUrl: null,
                 resetTime: `Resets on ${periodEnd.toLocaleDateString()}`
             };
         }
@@ -3772,37 +3765,10 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             { role: "user", content: prompt }
         ];
 
-        // Estimate token usage AFTER trimming, with actual messages array that will be sent
+        // Estimate token usage for logging/analytics only (not for limit enforcement)
+        // Note: This includes cached system prompt, so it will be higher than actual usage
         const tokenEstimation = await estimateTokenUsage(model, systemPrompt, messages);
-        console.log(`[TOKEN ESTIMATION] Input: ${tokenEstimation.inputTokens}, Estimated Output: ${tokenEstimation.estimatedOutputTokens}, Total: ${tokenEstimation.estimatedTotal}`);
-
-        // Check if estimated usage would exceed daily token limits for authenticated users
-        if (isAuthenticated) {
-            let user = await DatabaseManager.findUserByEmail(req.user.email);
-            // Reset monthly tokens if billing period has passed
-            user = await checkAndResetMonthlyTokens(user);
-            const subscription = getUserSubscription(user);
-
-            if (subscription.limits.daily_tokens) {
-                const today = new Date().toISOString().split('T')[0];
-                const currentTokenUsage = (user.dailyTokensDate === today) ? (user.dailyTokensUsed || 0) : 0;
-
-                // Check if estimated total would exceed daily limit
-                if (currentTokenUsage + tokenEstimation.estimatedTotal > subscription.limits.daily_tokens) {
-                    const remaining = subscription.limits.daily_tokens - currentTokenUsage;
-                    return res.status(403).json({
-                        error: `This request would exceed your daily token limit. You have ${remaining.toLocaleString()} tokens remaining today.`,
-                        tokenEstimation: {
-                            estimated: tokenEstimation.estimatedTotal,
-                            remaining: remaining,
-                            dailyLimit: subscription.limits.daily_tokens
-                        },
-                        upgradeUrl: subscription.plan !== 'enterprise' ? '/pricing.html' : null,
-                        resetTime: 'Tomorrow at midnight'
-                    });
-                }
-            }
-        }
+        console.log(`[TOKEN ESTIMATION] Estimated (includes cached prompt): ${tokenEstimation.estimatedTotal} tokens`);
 
         if (config.provider === 'anthropic') {
             // Use Claude/Anthropic API with prompt caching
@@ -3906,12 +3872,6 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
                 inputTokens: inputTokens,
                 outputTokens: outputTokens,
                 totalTokens: totalTokens
-            },
-            tokenEstimation: {
-                estimatedInput: tokenEstimation.inputTokens,
-                estimatedOutput: tokenEstimation.estimatedOutputTokens,
-                estimatedTotal: tokenEstimation.estimatedTotal,
-                actualAccuracy: totalTokens ? Math.round((tokenEstimation.estimatedTotal / totalTokens) * 100) : null
             }
         };
 
