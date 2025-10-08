@@ -1334,7 +1334,76 @@ class ChatManager {
             return '#58a6ff';
         };
 
+        // Generate warning message based on usage
+        let warningMessage = '';
+        if (usage.dailyLimit !== -1 && dailyPercentage >= 75) {
+            let warningColor, warningIcon, warningText;
+            if (dailyPercentage >= 95) {
+                warningColor = '#f85149';
+                warningIcon = '⚠️';
+                warningText = `Almost at daily limit! (${dailyPercentage.toFixed(1)}%)`;
+            } else if (dailyPercentage >= 85) {
+                warningColor = '#ff8200';
+                warningIcon = '⚡';
+                warningText = `Approaching daily limit (${dailyPercentage.toFixed(1)}%)`;
+            } else {
+                warningColor = '#d4ac0d';
+                warningIcon = 'ℹ️';
+                warningText = `Daily usage at ${dailyPercentage.toFixed(1)}%`;
+            }
+            warningMessage = `
+                <div class="token-warning" style="
+                    background: rgba(${warningColor === '#f85149' ? '248, 81, 73' : warningColor === '#ff8200' ? '255, 130, 0' : '212, 172, 13'}, 0.15);
+                    border: 1px solid ${warningColor};
+                    color: ${warningColor};
+                    padding: 8px;
+                    border-radius: 8px;
+                    margin-bottom: 12px;
+                    font-size: 12px;
+                    font-weight: 600;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                ">
+                    <span>${warningIcon}</span>
+                    <span>${warningText}</span>
+                    <a href="/pricing.html" style="
+                        margin-left: auto;
+                        color: ${warningColor};
+                        text-decoration: underline;
+                        font-size: 11px;
+                    ">Upgrade</a>
+                </div>
+            `;
+        } else if (usage.monthlyLimit !== -1 && monthlyPercentage >= 90 && dailyPercentage < 75) {
+            warningMessage = `
+                <div class="token-warning" style="
+                    background: rgba(255, 130, 0, 0.15);
+                    border: 1px solid #ff8200;
+                    color: #ff8200;
+                    padding: 8px;
+                    border-radius: 8px;
+                    margin-bottom: 12px;
+                    font-size: 12px;
+                    font-weight: 600;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                ">
+                    <span>⚡</span>
+                    <span>Monthly limit at ${monthlyPercentage.toFixed(1)}%</span>
+                    <a href="/pricing.html" style="
+                        margin-left: auto;
+                        color: #ff8200;
+                        text-decoration: underline;
+                        font-size: 11px;
+                    ">Upgrade</a>
+                </div>
+            `;
+        }
+
         dashboard.innerHTML = `
+            ${warningMessage}
             <h4>Token Usage</h4>
             ${usage.dailyLimit !== -1 ? `
                 <div class="token-stat">
