@@ -815,22 +815,7 @@
 
                         <!-- Input row -->
                         <div class="input-row">
-                            <button class="model-button" id="modelButton" onclick="toggleModelSelector()" title="Select AI Model">
-                                <span><i class="fas fa-sliders-h"></i></span>
-                            </button>
-
-                            <!-- Model Selector Dropdown -->
-                            <div class="model-dropdown" id="modelDropdown" style="display: none;">
-                                <div class="model-dropdown-header">Select Model</div>
-                                <div class="model-option selected" data-model="claude-4-sonnet" onclick="selectModel('claude-4-sonnet')">
-                                    <div class="model-name">RoCode 3</div>
-                                    <i class="fas fa-check model-check"></i>
-                                </div>
-                                <div class="model-option premium" data-model="claude-4-opus" onclick="selectModel('claude-4-opus')">
-                                    <div class="model-name">RoCode Nexus 3</div>
-                                    <i class="fas fa-check model-check" style="display: none;"></i>
-                                </div>
-                            </div>
+                            <!-- Model selector removed - auto-selects based on plan -->
 
                             <textarea
                                 class="input-area"

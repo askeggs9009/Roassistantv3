@@ -269,7 +269,8 @@ const SUBSCRIPTION_PLANS = {
         name: 'Free',
         limits: {
             daily_messages: 50,
-            models: ['claude-4-sonnet'],  // Free: Only basic model
+            models: ['nexus'],  // Free: Nexus only
+            defaultModel: 'nexus',
             max_file_size: 1048576, // 1MB
             scripts_storage: 5,
             projects: 1,  // Free: 1 project
@@ -281,7 +282,8 @@ const SUBSCRIPTION_PLANS = {
         name: 'Pro',
         limits: {
             daily_messages: 500,  // 500 AI requests per month = ~16/day
-            models: ['claude-4-sonnet', 'claude-4-opus'],
+            models: ['nexus'],  // Nexus model
+            defaultModel: 'nexus',
             max_file_size: 10485760, // 10MB
             scripts_storage: -1, // unlimited
             projects: 5,  // Pro: 5 projects
@@ -299,7 +301,8 @@ const SUBSCRIPTION_PLANS = {
         name: 'Max',
         limits: {
             daily_messages: 2000,  // 2000 AI requests per month = ~66/day
-            models: ['claude-4-sonnet', 'claude-4-opus'],
+            models: ['nexus'],  // Nexus model
+            defaultModel: 'nexus',
             max_file_size: 26214400, // 25MB
             scripts_storage: -1, // unlimited
             projects: 10,  // Max: 10 projects
@@ -318,7 +321,8 @@ const SUBSCRIPTION_PLANS = {
         name: 'Studio',
         limits: {
             daily_messages: -1,  // Unlimited
-            models: ['claude-4-sonnet', 'claude-4-opus', 'rocode-studio'],
+            models: ['studio'],  // Studio model
+            defaultModel: 'studio',
             max_file_size: 52428800, // 50MB
             scripts_storage: -1, // unlimited
             projects: -1,  // Unlimited projects
@@ -339,7 +343,8 @@ const SUBSCRIPTION_PLANS = {
         name: 'Studio',
         limits: {
             daily_messages: -1,  // Unlimited
-            models: ['claude-4-sonnet', 'claude-4-opus', 'rocode-studio'],
+            models: ['studio'],  // Studio model
+            defaultModel: 'studio',
             max_file_size: 52428800, // 50MB
             scripts_storage: -1, // unlimited
             projects: -1,  // Unlimited projects
@@ -836,44 +841,16 @@ function recordUsage(userIdentifier, model) {
 }
 
 const MODEL_CONFIGS = {
-    "gpt-4o-mini": {
-        model: "gpt-4o-mini",
-        requiresPlan: 'free',
-        provider: 'openai'
-    },
-    "gpt-4.1": {
-        model: "gpt-4",
-        requiresPlan: 'pro',
-        provider: 'openai'
-    },
-    "gpt-5": {
-        model: "gpt-4-turbo-preview",
-        requiresPlan: 'enterprise',
-        provider: 'openai'
-    },
-    "claude-3-5-haiku": {
-        model: "claude-3-5-haiku-20241022",
+    "nexus": {
+        model: "claude-sonnet-4-5-20250929",  // Sonnet 4.5 for standard users
+        fastModel: "claude-3-5-haiku-20241022",  // Haiku for simple tasks
         requiresPlan: 'free',
         provider: 'anthropic'
     },
-    "claude-3-7-sonnet": {
-        model: "claude-3-7-sonnet-20250219",
-        requiresPlan: 'pro',
-        provider: 'anthropic'
-    },
-    "claude-4-sonnet": {
-        model: "claude-sonnet-4-5-20250929",
-        requiresPlan: 'free',
-        provider: 'anthropic'
-    },
-    "claude-4-opus": {
-        model: "claude-opus-4-20250514",
-        requiresPlan: 'pro',  // Pro and Enterprise only
-        provider: 'anthropic'
-    },
-    "rocode-studio": {
-        model: "claude-sonnet-4-5-20250929",
-        requiresPlan: 'enterprise',
+    "studio": {
+        model: "claude-opus-4-20250514",  // Opus 4 for complex tasks
+        fastModel: "claude-sonnet-4-5-20250929",  // Sonnet 4.5 for simple tasks
+        requiresPlan: 'studio',
         provider: 'anthropic'
     }
 };
@@ -3435,9 +3412,8 @@ app.post("/ask-stream", optionalAuthenticateToken, checkUsageLimits, async (req,
             user = await checkAndResetMonthlyTokens(user);
             const subscription = getUserSubscription(user);
 
-            // Special case: Free users get limited access to claude-4-opus (RoCode Nexus 3)
-            const hasModelAccess = subscription.limits.models.includes(model) ||
-                                 (model === 'claude-4-opus' && subscription.plan === 'free');
+            // Check if user has access to the requested model
+            const hasModelAccess = subscription.limits.models.includes(model);
 
             if (!hasModelAccess) {
                 return res.status(403).json({
@@ -3459,28 +3435,24 @@ app.post("/ask-stream", optionalAuthenticateToken, checkUsageLimits, async (req,
                 });
             }
 
-            // Increment special usage BEFORE API call for authenticated users
-            if (model === 'rocode-studio') {
-                incrementSpecialUsage(user, model);
-            }
-
-            // Track Nexus usage for free users BEFORE API call
-            if (subscription.plan === 'free' && model === 'claude-4-opus') {
-                incrementSpecialUsage(user, model);
-            }
+            // Track model usage
+            incrementSpecialUsage(user, model);
         }
 
         // 🚀 OPTIMIZATION: AI-powered model routing (GPT-4o-mini decides)
-        let selectedModel = model;
-        const analysis = await analyzePromptWithAI(prompt, openai);
-        if (analysis.suggestedModel === 'claude-3-5-haiku' && model.startsWith('claude')) {
-            selectedModel = 'claude-3-5-haiku';
-            console.log(`[MODEL ROUTING STREAM] ${analysis.analyzedBy} chose Haiku for simple task (95% cheaper)`);
-        }
-
-        const config = MODEL_CONFIGS[selectedModel];
+        const config = MODEL_CONFIGS[model];
         if (!config) {
             return res.status(400).json({ error: "Invalid model selected" });
+        }
+
+        let selectedModel = model;
+        let actualModelId = config.model;  // Default to main model
+
+        // Use fast model for simple tasks if AI suggests it
+        const analysis = await analyzePromptWithAI(prompt, openai);
+        if (analysis.suggestedModel === 'claude-3-5-haiku' && config.fastModel) {
+            actualModelId = config.fastModel;
+            console.log(`[MODEL ROUTING STREAM] ${analysis.analyzedBy} chose fast model for simple task`);
         }
 
         const systemPrompt = getSystemPrompt(selectedModel);
@@ -3532,7 +3504,7 @@ app.post("/ask-stream", optionalAuthenticateToken, checkUsageLimits, async (req,
         if (config.provider === 'anthropic') {
             // Use Claude streaming API with prompt caching
             const stream = await anthropic.messages.create({
-                model: config.model,
+                model: actualModelId,
                 max_tokens: maxTokens,
                 temperature: 0.7,
                 system: [
@@ -3690,9 +3662,8 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             user = await checkAndResetMonthlyTokens(user);
             const subscription = getUserSubscription(user);
 
-            // Special case: Free users get limited access to claude-4-opus (RoCode Nexus 3)
-            const hasModelAccess = subscription.limits.models.includes(model) ||
-                                 (model === 'claude-4-opus' && subscription.plan === 'free');
+            // Check if user has access to the requested model
+            const hasModelAccess = subscription.limits.models.includes(model);
 
             if (!hasModelAccess) {
                 return res.status(403).json({
@@ -3714,28 +3685,24 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
                 });
             }
 
-            // Increment special usage BEFORE API call for authenticated users
-            if (model === 'rocode-studio') {
-                incrementSpecialUsage(user, model);
-            }
-
-            // Track Nexus usage for free users BEFORE API call
-            if (subscription.plan === 'free' && model === 'claude-4-opus') {
-                incrementSpecialUsage(user, model);
-            }
+            // Track model usage
+            incrementSpecialUsage(user, model);
         }
 
         // 🚀 OPTIMIZATION 2: AI-powered model routing (GPT-4o-mini decides)
-        let selectedModel = model;
-        const analysis = await analyzePromptWithAI(prompt, openai);
-        if (analysis.suggestedModel === 'claude-3-5-haiku' && model.startsWith('claude')) {
-            selectedModel = 'claude-3-5-haiku';
-            console.log(`[MODEL ROUTING] ${analysis.analyzedBy} chose Haiku for simple task (95% cheaper)`);
-        }
-
-        const config = MODEL_CONFIGS[selectedModel];
+        const config = MODEL_CONFIGS[model];
         if (!config) {
             return res.status(400).json({ error: "Invalid model selected" });
+        }
+
+        let selectedModel = model;
+        let actualModelId = config.model;  // Default to main model
+
+        // Use fast model for simple tasks if AI suggests it
+        const analysis = await analyzePromptWithAI(prompt, openai);
+        if (analysis.suggestedModel === 'claude-3-5-haiku' && config.fastModel) {
+            actualModelId = config.fastModel;
+            console.log(`[MODEL ROUTING] ${analysis.analyzedBy} chose fast model for simple task`);
         }
 
         let response;
@@ -3819,7 +3786,7 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
         if (config.provider === 'anthropic') {
             // Use Claude/Anthropic API with prompt caching
             response = await anthropic.messages.create({
-                model: config.model,
+                model: actualModelId,
                 max_tokens: maxTokens,
                 temperature: 0.7,
                 system: [

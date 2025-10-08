@@ -87,7 +87,7 @@ class ChatManager {
             // Prepare request body
             const requestBody = {
                 prompt: message,
-                model: this.getSelectedModel() || 'claude-4-sonnet',
+                model: this.getSelectedModel() || 'nexus',
                 conversationHistory: conversationHistory // Send conversation history
             };
 
@@ -1084,10 +1084,13 @@ class ChatManager {
         }
     }
 
-    // Get selected model
+    // Get selected model based on user's subscription
     getSelectedModel() {
-        // Use the global selectedModel variable from the page
-        return window.selectedModel || 'claude-4-sonnet';
+        // Use subscription's default model
+        if (window.userSubscription && window.userSubscription.limits) {
+            return window.userSubscription.limits.defaultModel || 'nexus';
+        }
+        return 'nexus';  // Default to nexus for free/guest users
     }
 
     // Update usage display

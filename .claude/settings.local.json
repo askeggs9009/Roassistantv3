@@ -8,7 +8,11 @@
       "Read(//c/Users/askeg/AppData/Local/Roblox/Plugins/**)",
       "Write(//c/Users/askeg/AppData/Local/Roblox/Plugins/**)",
       "Bash(cat:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "mcp__stripe__list_products",
+      "mcp__stripe__get_stripe_account_info",
+      "mcp__stripe__create_product",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []
