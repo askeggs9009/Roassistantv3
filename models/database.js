@@ -107,6 +107,14 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    monthlyTokensUsed: {
+        type: Number,
+        default: 0
+    },
+    monthlyTokensPeriodStart: {
+        type: Date,
+        default: Date.now
+    },
     recaptchaScores: [{
         score: Number,
         action: String,

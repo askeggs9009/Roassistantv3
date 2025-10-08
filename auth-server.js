@@ -286,7 +286,8 @@ const SUBSCRIPTION_PLANS = {
             scripts_storage: -1, // unlimited
             projects: 5,  // Pro: 5 projects
             support: 'email',
-            daily_tokens: 150000  // ~150k tokens/day
+            daily_tokens: 37333,  // ~37k tokens/day (1.12M monthly / 30 days)
+            monthly_tokens: 1120000  // 1.12M tokens/month (35% profit margin on $19/month)
         },
         stripe_price_ids: {
             monthly: process.env.STRIPE_PRO_MONTHLY_PRICE_ID || 'price_1SFjvnGsDklELrgDQ5jpu4ml',
@@ -303,7 +304,8 @@ const SUBSCRIPTION_PLANS = {
             scripts_storage: -1, // unlimited
             projects: 10,  // Max: 10 projects
             support: 'priority',
-            daily_tokens: 300000,  // ~300k tokens/day
+            daily_tokens: 73000,  // ~73k tokens/day (2.19M monthly / 30 days)
+            monthly_tokens: 2190000,  // 2.19M tokens/month (35% profit margin on $37/month)
             team_members: 5  // Team collaboration up to 5
         },
         stripe_price_ids: {
@@ -321,7 +323,8 @@ const SUBSCRIPTION_PLANS = {
             scripts_storage: -1, // unlimited
             projects: -1,  // Unlimited projects
             support: 'dedicated',
-            daily_tokens: -1,  // Unlimited tokens
+            daily_tokens: 171333,  // ~171k tokens/day (5.14M monthly / 30 days)
+            monthly_tokens: 5140000,  // 5.14M tokens/month (35% profit margin on $87/month)
             daily_studio: -1,  // Unlimited RoCode Studio
             team_members: -1  // Unlimited team members
         },
@@ -341,7 +344,8 @@ const SUBSCRIPTION_PLANS = {
             scripts_storage: -1, // unlimited
             projects: -1,  // Unlimited projects
             support: 'dedicated',
-            daily_tokens: -1,  // Unlimited tokens
+            daily_tokens: 171333,  // ~171k tokens/day (5.14M monthly / 30 days)
+            monthly_tokens: 5140000,  // 5.14M tokens/month (35% profit margin on $87/month)
             daily_studio: -1,  // Unlimited RoCode Studio
             team_members: -1  // Unlimited team members
         },
@@ -375,6 +379,40 @@ function resetDailyUsage() {
     dailyTokenUsage.clear();
     dailyOpusUsage.clear();
     console.log('[USAGE] Daily usage, token counts, and Opus usage reset');
+}
+
+// Check and reset monthly tokens if the billing period has passed
+async function checkAndResetMonthlyTokens(user) {
+    if (!user.monthlyTokensPeriodStart) {
+        // Initialize if not set
+        user.monthlyTokensPeriodStart = new Date();
+        user.monthlyTokensUsed = 0;
+        await DatabaseManager.updateUser(user.email, {
+            monthlyTokensPeriodStart: user.monthlyTokensPeriodStart,
+            monthlyTokensUsed: 0
+        });
+        return user;
+    }
+
+    const now = new Date();
+    const periodStart = new Date(user.monthlyTokensPeriodStart);
+
+    // Calculate 30 days from period start
+    const periodEnd = new Date(periodStart);
+    periodEnd.setDate(periodEnd.getDate() + 30);
+
+    // If current time is past the period end, reset monthly tokens
+    if (now >= periodEnd) {
+        console.log(`[TOKENS] Resetting monthly tokens for user ${user.email}`);
+        user.monthlyTokensUsed = 0;
+        user.monthlyTokensPeriodStart = now;
+        await DatabaseManager.updateUser(user.email, {
+            monthlyTokensUsed: 0,
+            monthlyTokensPeriodStart: now
+        });
+    }
+
+    return user;
 }
 
 // Schedule daily reset (runs at midnight)
@@ -604,7 +642,7 @@ function checkAuthenticatedUserLimits(user, subscription, model) {
         };
     }
 
-    // Check token limits if defined
+    // Check daily token limits if defined
     if (subscription.limits.daily_tokens) {
         const tokenUsageKey = `tokens_${user.id}_${today}`;
         const currentTokenUsage = dailyTokenUsage.get(tokenUsageKey) || 0;
@@ -613,8 +651,27 @@ function checkAuthenticatedUserLimits(user, subscription, model) {
             return {
                 allowed: false,
                 error: `Daily token limit reached (${subscription.limits.daily_tokens.toLocaleString()}). Resets at midnight.`,
-                upgradeUrl: subscription.plan !== 'enterprise' ? '/pricing.html' : null,
+                upgradeUrl: subscription.plan !== 'enterprise' && subscription.plan !== 'studio' ? '/pricing.html' : null,
                 resetTime: 'Tomorrow at midnight'
+            };
+        }
+    }
+
+    // Check monthly token limits if defined
+    if (subscription.limits.monthly_tokens) {
+        const monthlyTokensUsed = user.monthlyTokensUsed || 0;
+
+        if (monthlyTokensUsed >= subscription.limits.monthly_tokens) {
+            const periodStart = new Date(user.monthlyTokensPeriodStart || new Date());
+            const periodEnd = new Date(periodStart);
+            periodEnd.setDate(periodEnd.getDate() + 30);
+            const daysRemaining = Math.ceil((periodEnd - new Date()) / (1000 * 60 * 60 * 24));
+
+            return {
+                allowed: false,
+                error: `Monthly token limit reached (${subscription.limits.monthly_tokens.toLocaleString()}). Resets in ${daysRemaining} days.`,
+                upgradeUrl: subscription.plan !== 'enterprise' && subscription.plan !== 'studio' ? '/pricing.html' : null,
+                resetTime: `Resets on ${periodEnd.toLocaleDateString()}`
             };
         }
     }
@@ -1815,26 +1872,33 @@ app.get("/api/token-usage", authenticateToken, async (req, res) => {
             });
         }
 
-        // Get subscription plan token limits (if any)
+        // Get subscription plan token limits
         const subscription = user.subscription || { plan: 'free' };
         const plan = SUBSCRIPTION_PLANS[subscription.plan] || SUBSCRIPTION_PLANS.free;
 
-        // You can define token limits per plan if needed
-        const tokenLimits = {
-            free: 10000,      // 10k tokens per day
-            pro: 100000,      // 100k tokens per day
-            enterprise: -1    // Unlimited
-        };
+        // Get daily and monthly limits from subscription plan
+        const dailyTokenLimit = plan.limits?.daily_tokens || -1;
+        const monthlyTokenLimit = plan.limits?.monthly_tokens || -1;
+        const monthlyTokensUsed = user.monthlyTokensUsed || 0;
 
-        const dailyTokenLimit = tokenLimits[subscription.plan] || tokenLimits.free;
+        // Calculate days until monthly reset
+        const periodStart = new Date(user.monthlyTokensPeriodStart || new Date());
+        const periodEnd = new Date(periodStart);
+        periodEnd.setDate(periodEnd.getDate() + 30);
+        const daysUntilReset = Math.ceil((periodEnd - new Date()) / (1000 * 60 * 60 * 24));
 
         res.json({
             usage: {
                 daily: dailyTokens,
                 dailyByModel: tokensByModel,
-                total: user.totalTokens || 0,
                 dailyLimit: dailyTokenLimit,
-                percentage: dailyTokenLimit === -1 ? 0 : Math.round((dailyTokens / dailyTokenLimit) * 100)
+                dailyPercentage: dailyTokenLimit === -1 ? 0 : Math.round((dailyTokens / dailyTokenLimit) * 100),
+                monthly: monthlyTokensUsed,
+                monthlyLimit: monthlyTokenLimit,
+                monthlyPercentage: monthlyTokenLimit === -1 ? 0 : Math.round((monthlyTokensUsed / monthlyTokenLimit) * 100),
+                monthlyResetDate: periodEnd.toISOString(),
+                daysUntilMonthlyReset: daysUntilReset,
+                total: user.totalTokens || 0
             },
             subscription: {
                 plan: subscription.plan,
@@ -1842,6 +1906,7 @@ app.get("/api/token-usage", authenticateToken, async (req, res) => {
             },
             costEstimate: {
                 daily: calculateTokenCost(dailyTokens, subscription.plan),
+                monthly: calculateTokenCost(monthlyTokensUsed, subscription.plan),
                 total: calculateTokenCost(user.totalTokens || 0, subscription.plan)
             }
         });
@@ -3316,7 +3381,9 @@ app.post("/ask-stream", optionalAuthenticateToken, checkUsageLimits, async (req,
 
         // Check if authenticated user can use this model
         if (isAuthenticated) {
-            const user = await DatabaseManager.findUserByEmail(req.user.email);
+            let user = await DatabaseManager.findUserByEmail(req.user.email);
+            // Reset monthly tokens if billing period has passed
+            user = await checkAndResetMonthlyTokens(user);
             const subscription = getUserSubscription(user);
 
             // Special case: Free users get limited access to claude-4-opus (RoCode Nexus 3)
@@ -3569,7 +3636,9 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
 
         // Check if authenticated user can use this model
         if (isAuthenticated) {
-            const user = await DatabaseManager.findUserByEmail(req.user.email);
+            let user = await DatabaseManager.findUserByEmail(req.user.email);
+            // Reset monthly tokens if billing period has passed
+            user = await checkAndResetMonthlyTokens(user);
             const subscription = getUserSubscription(user);
 
             // Special case: Free users get limited access to claude-4-opus (RoCode Nexus 3)
@@ -3633,7 +3702,9 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
 
         // Check if estimated usage would exceed daily token limits for authenticated users
         if (isAuthenticated) {
-            const user = await DatabaseManager.findUserByEmail(req.user.email);
+            let user = await DatabaseManager.findUserByEmail(req.user.email);
+            // Reset monthly tokens if billing period has passed
+            user = await checkAndResetMonthlyTokens(user);
             const subscription = getUserSubscription(user);
 
             if (subscription.limits.daily_tokens) {
@@ -3821,7 +3892,8 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             await DatabaseManager.updateUser(req.user.email, {
                 $inc: {
                     totalMessages: 1,
-                    totalTokens: totalTokens
+                    totalTokens: totalTokens,
+                    monthlyTokensUsed: totalTokens
                 },
                 lastActive: new Date()
             });

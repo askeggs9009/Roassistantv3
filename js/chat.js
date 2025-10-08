@@ -1296,7 +1296,7 @@ class ChatManager {
 
             if (response.ok) {
                 const data = await response.json();
-                // this.displayTokenDashboard(data); // Disabled: Token usage popup
+                this.displayTokenDashboard(data); // Show token usage dashboard
             }
         } catch (error) {
             console.error('Error fetching token usage:', error);
@@ -1315,32 +1315,55 @@ class ChatManager {
         }
 
         const usage = data.usage;
-        const percentage = usage.percentage || 0;
-        const dailyLimit = usage.dailyLimit === -1 ? '∞' : usage.dailyLimit.toLocaleString();
+        const dailyPercentage = usage.dailyPercentage || 0;
+        const monthlyPercentage = usage.monthlyPercentage || 0;
+
+        // Format percentage color based on usage
+        const getDailyColor = () => {
+            if (dailyPercentage >= 90) return '#f85149';
+            if (dailyPercentage >= 75) return '#d4ac0d';
+            return '#58a6ff';
+        };
+
+        const getMonthlyColor = () => {
+            if (monthlyPercentage >= 90) return '#f85149';
+            if (monthlyPercentage >= 75) return '#d4ac0d';
+            return '#58a6ff';
+        };
 
         dashboard.innerHTML = `
-            <h4>Token Usage Today</h4>
-            <div class="token-stat">
-                <span class="token-stat-label">Daily Usage:</span>
-                <span class="token-stat-value">${usage.daily.toLocaleString()} / ${dailyLimit}</span>
-            </div>
-            <div class="token-stat">
-                <span class="token-stat-label">Total All-Time:</span>
-                <span class="token-stat-value">${usage.total.toLocaleString()}</span>
-            </div>
+            <h4>Token Usage</h4>
             ${usage.dailyLimit !== -1 ? `
-                <div class="token-progress">
-                    <div class="token-progress-fill" style="width: ${Math.min(percentage, 100)}%"></div>
+                <div class="token-stat">
+                    <span class="token-stat-label">Daily:</span>
+                    <span class="token-stat-value" style="color: ${getDailyColor()}; font-weight: 600;">
+                        ${dailyPercentage.toFixed(1)}%
+                    </span>
                 </div>
-                <div class="token-stat" style="margin-top: 5px;">
-                    <span class="token-stat-label">Remaining:</span>
-                    <span class="token-stat-value">${Math.max(0, usage.dailyLimit - usage.daily).toLocaleString()}</span>
+                <div class="token-progress" style="margin-bottom: 10px;">
+                    <div class="token-progress-fill" style="width: ${Math.min(dailyPercentage, 100)}%; background: ${getDailyColor()};"></div>
                 </div>
             ` : ''}
-            ${data.costEstimate ? `
+            ${usage.monthlyLimit !== -1 ? `
+                <div class="token-stat">
+                    <span class="token-stat-label">Monthly:</span>
+                    <span class="token-stat-value" style="color: ${getMonthlyColor()}; font-weight: 600;">
+                        ${monthlyPercentage.toFixed(1)}%
+                    </span>
+                </div>
+                <div class="token-progress">
+                    <div class="token-progress-fill" style="width: ${Math.min(monthlyPercentage, 100)}%; background: ${getMonthlyColor()};"></div>
+                </div>
+                ${usage.daysUntilMonthlyReset ? `
+                    <div class="token-stat" style="margin-top: 8px; font-size: 11px; color: #8b949e;">
+                        <span>Resets in ${usage.daysUntilMonthlyReset} day${usage.daysUntilMonthlyReset !== 1 ? 's' : ''}</span>
+                    </div>
+                ` : ''}
+            ` : ''}
+            ${data.costEstimate && data.costEstimate.monthly ? `
                 <div class="token-stat" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
-                    <span class="token-stat-label">Est. Cost Today:</span>
-                    <span class="token-stat-value">$${data.costEstimate.daily.estimated}</span>
+                    <span class="token-stat-label">Est. Cost/Month:</span>
+                    <span class="token-stat-value">$${data.costEstimate.monthly.estimated}</span>
                 </div>
             ` : ''}
         `;
