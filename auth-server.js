@@ -875,17 +875,30 @@ async function estimateTokenUsage(model, systemPrompt, userMessage) {
 
         if (config.provider === 'anthropic') {
             try {
-                // Use Anthropic's official count_tokens API for exact input token count
-                const tokenResponse = await anthropic.messages.countTokens({
-                    model: config.model,
-                    system: systemPrompt,
-                    messages: [
-                        { role: "user", content: userMessage }
-                    ]
+                // Use Anthropic's official count_tokens API via direct HTTP call
+                const response = await fetch('https://api.anthropic.com/v1/messages/count_tokens', {
+                    method: 'POST',
+                    headers: {
+                        'x-api-key': process.env.ANTHROPIC_API_KEY,
+                        'anthropic-version': '2023-06-01',
+                        'content-type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: config.model,
+                        system: systemPrompt,
+                        messages: [
+                            { role: "user", content: userMessage }
+                        ]
+                    })
                 });
 
-                inputTokens = tokenResponse.input_tokens || 0;
-                console.log(`[TOKEN ESTIMATION] Exact input tokens from Anthropic API: ${inputTokens}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    inputTokens = data.input_tokens || 0;
+                    console.log(`[TOKEN ESTIMATION] Exact input tokens from Anthropic API: ${inputTokens}`);
+                } else {
+                    throw new Error(`API returned ${response.status}`);
+                }
 
             } catch (apiError) {
                 console.error('[TOKEN ESTIMATION] Anthropic count_tokens API error:', apiError.message);
