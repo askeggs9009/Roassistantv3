@@ -297,6 +297,9 @@ class ChatManager {
             if (data.subscription) {
                 this.updateSubscriptionDisplay(data.subscription);
             }
+
+            // Update credit counter after successful message
+            this.updateCreditCounter();
         } else {
             // Check if this is a limit error that should show the upgrade popup
             if (data.upgradeUrl && data.error && data.error.includes('Nexus')) {
@@ -1306,6 +1309,60 @@ class ChatManager {
         }
     }
 
+    // Update credit counter in chat input area
+    async updateCreditCounter() {
+        const creditCounter = document.getElementById('creditCounter');
+        const creditCounterText = document.getElementById('creditCounterText');
+
+        if (!creditCounter || !creditCounterText) return;
+
+        try {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                creditCounter.style.display = 'none';
+                return;
+            }
+
+            const response = await fetch(`${this.API_BASE_URL}/api/token-usage`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const plan = data.plan || 'free';
+                const isStudioPlan = plan === 'studio' || plan === 'enterprise';
+
+                if (isStudioPlan) {
+                    // Studio plan shows "Unlimited" or token count
+                    creditCounterText.textContent = 'Unlimited prompts';
+                    creditCounter.style.display = 'block';
+                } else {
+                    // Free/Pro/Max plans show credit usage
+                    const used = data.usage.daily_messages || 0;
+                    const limit = data.usage.dailyLimit || 0;
+                    const percentage = limit > 0 ? (used / limit) * 100 : 0;
+
+                    // Color based on usage
+                    let color = '#8b949e';
+                    if (percentage >= 90) color = '#f85149';
+                    else if (percentage >= 75) color = '#ff8200';
+                    else if (percentage >= 50) color = '#d4ac0d';
+
+                    creditCounterText.textContent = `${used} / ${limit} credits used today`;
+                    creditCounter.style.color = color;
+                    creditCounter.style.display = 'block';
+                }
+            } else {
+                creditCounter.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error updating credit counter:', error);
+            creditCounter.style.display = 'none';
+        }
+    }
+
     // Display token usage dashboard
     displayTokenDashboard(data) {
         let dashboard = document.getElementById('tokenUsageDashboard');
@@ -2151,6 +2208,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.chatManager.sendMessage();
             }
         });
+    }
+
+    // Update credit counter when page loads
+    if (window.chatManager) {
+        window.chatManager.updateCreditCounter();
     }
 
     // Code panel resize functionality
