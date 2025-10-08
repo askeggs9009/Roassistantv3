@@ -862,43 +862,7 @@ function getSystemPrompt(modelName) {
     return getOptimizedSystemPrompt(modelName);
 }
 
-// Accurate token estimation using improved heuristics
-function estimateTokensFromText(text) {
-    // Claude uses a similar tokenizer to GPT (BPE-based)
-    // More accurate estimation considering:
-    // - Words are typically 1.3-1.5 tokens
-    // - Punctuation and special characters
-    // - Code has different tokenization patterns
-
-    const words = text.split(/\s+/).filter(w => w.length > 0);
-    const wordCount = words.length;
-
-    // Base token count from words (average 1.3 tokens per word)
-    let tokenCount = Math.ceil(wordCount * 1.3);
-
-    // Count special characters and punctuation (each typically adds tokens)
-    const specialChars = (text.match(/[^\w\s]/g) || []).length;
-    tokenCount += Math.ceil(specialChars * 0.5);
-
-    // Code blocks increase token count (symbols, indentation, etc.)
-    const hasCodePatterns = /```|function|const|let|var|=>|==|!=|\{|\}|\[|\]|\(|\)/g;
-    const codeMatches = (text.match(hasCodePatterns) || []).length;
-    if (codeMatches > 5) {
-        tokenCount = Math.ceil(tokenCount * 1.2); // 20% increase for code-heavy content
-    }
-
-    // Account for newlines (each newline can be a token)
-    const newlines = (text.match(/\n/g) || []).length;
-    tokenCount += newlines;
-
-    // Minimum floor: use character-based estimation as safety net
-    const charBasedEstimate = Math.ceil(text.length / 3.5);
-    tokenCount = Math.max(tokenCount, charBasedEstimate);
-
-    return tokenCount;
-}
-
-// Token estimation function with improved accuracy
+// Token estimation function using Anthropic's count_tokens API
 async function estimateTokenUsage(model, systemPrompt, userMessage) {
     try {
         const config = MODEL_CONFIGS[model];
@@ -906,21 +870,35 @@ async function estimateTokenUsage(model, systemPrompt, userMessage) {
             throw new Error('Invalid model');
         }
 
-        // Calculate input tokens using improved estimation
+        // Calculate input tokens accurately
         let inputTokens = 0;
 
         if (config.provider === 'anthropic') {
-            // Use improved heuristic-based estimation for Claude models
-            const systemTokens = estimateTokensFromText(systemPrompt);
-            const userTokens = estimateTokensFromText(userMessage);
-            inputTokens = systemTokens + userTokens;
+            try {
+                // Use Anthropic's official count_tokens API for exact input token count
+                const tokenResponse = await anthropic.messages.countTokens({
+                    model: config.model,
+                    system: systemPrompt,
+                    messages: [
+                        { role: "user", content: userMessage }
+                    ]
+                });
 
-            console.log(`[TOKEN ESTIMATION] Input tokens (improved estimation): ${inputTokens}`);
-            console.log(`  - System prompt: ${systemTokens} tokens`);
-            console.log(`  - User message: ${userTokens} tokens`);
+                inputTokens = tokenResponse.input_tokens || 0;
+                console.log(`[TOKEN ESTIMATION] Exact input tokens from Anthropic API: ${inputTokens}`);
+
+            } catch (apiError) {
+                console.error('[TOKEN ESTIMATION] Anthropic count_tokens API error:', apiError.message);
+                // Fallback to character-based estimation
+                inputTokens = Math.ceil((systemPrompt.length + userMessage.length) / 3.5);
+                console.log(`[TOKEN ESTIMATION] Using fallback character estimation: ${inputTokens} tokens`);
+            }
         } else if (config.provider === 'openai') {
-            // For OpenAI, use similar estimation
-            inputTokens = estimateTokensFromText(systemPrompt + userMessage);
+            // For OpenAI, use character-based estimation
+            // GPT models use roughly 1 token per 4 characters for English text
+            const systemTokens = Math.ceil(systemPrompt.length / 4);
+            const userTokens = Math.ceil(userMessage.length / 4);
+            inputTokens = systemTokens + userTokens;
         }
 
         // Estimate output tokens based on prompt complexity and typical response patterns
@@ -978,7 +956,7 @@ async function estimateTokenUsage(model, systemPrompt, userMessage) {
             inputTokens: inputTokens,
             estimatedOutputTokens: estimatedOutputTokens,
             estimatedTotal: estimatedTotal,
-            confidence: 'medium'  // Using improved heuristic estimation
+            confidence: config.provider === 'anthropic' ? 'high' : 'medium'
         };
 
     } catch (error) {
