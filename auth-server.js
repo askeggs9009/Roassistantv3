@@ -1903,41 +1903,64 @@ app.get("/api/token-usage", authenticateToken, async (req, res) => {
             });
         }
 
-        // Get subscription plan token limits
+        // Get subscription plan limits
         const subscription = user.subscription || { plan: 'free' };
         const plan = SUBSCRIPTION_PLANS[subscription.plan] || SUBSCRIPTION_PLANS.free;
+        const isStudioPlan = subscription.plan === 'studio' || subscription.plan === 'enterprise';
 
-        // Get daily and monthly limits from subscription plan
-        const dailyTokenLimit = plan.limits?.daily_tokens || -1;
-        const monthlyTokenLimit = plan.limits?.monthly_tokens || -1;
-        const monthlyTokensUsed = user.monthlyTokensUsed || 0;
+        // Get daily message usage (credits for non-Studio plans)
+        const usageKey = `${user.id}_${today}`;
+        const dailyMessageUsage = dailyUsage.get(usageKey) || 0;
 
-        // Calculate days until monthly reset
-        let periodEnd;
-        const hasStripeBilling = user.subscription?.currentPeriodEnd;
+        // Get limits based on plan type
+        let dailyLimit, monthlyLimit, dailyUsed, monthlyUsed;
 
-        if (hasStripeBilling) {
-            // Use Stripe's actual billing period end date
-            periodEnd = new Date(user.subscription.currentPeriodEnd);
+        if (isStudioPlan) {
+            // Studio plan: Use token limits
+            dailyLimit = plan.limits?.daily_tokens || -1;
+            monthlyLimit = plan.limits?.monthly_tokens || -1;
+            dailyUsed = dailyTokens;
+            monthlyUsed = user.monthlyTokensUsed || 0;
         } else {
-            // Fallback to manual 30-day calculation for free users
-            const periodStart = new Date(user.monthlyTokensPeriodStart || new Date());
-            periodEnd = new Date(periodStart);
-            periodEnd.setDate(periodEnd.getDate() + 30);
+            // Free/Pro/Max: Use credit limits (daily_messages)
+            dailyLimit = plan.limits?.daily_messages || -1;
+            monthlyLimit = -1; // No monthly limit for credit-based plans
+            dailyUsed = dailyMessageUsage;
+            monthlyUsed = 0;
         }
 
-        const daysUntilReset = Math.max(0, Math.ceil((periodEnd - new Date()) / (1000 * 60 * 60 * 24)));
+        // Calculate days until monthly reset (only for Studio)
+        let periodEnd;
+        let daysUntilReset = 0;
+
+        if (isStudioPlan) {
+            const hasStripeBilling = user.subscription?.currentPeriodEnd;
+
+            if (hasStripeBilling) {
+                // Use Stripe's actual billing period end date
+                periodEnd = new Date(user.subscription.currentPeriodEnd);
+            } else {
+                // Fallback to manual 30-day calculation
+                const periodStart = new Date(user.monthlyTokensPeriodStart || new Date());
+                periodEnd = new Date(periodStart);
+                periodEnd.setDate(periodEnd.getDate() + 30);
+            }
+
+            daysUntilReset = Math.max(0, Math.ceil((periodEnd - new Date()) / (1000 * 60 * 60 * 24)));
+        }
 
         res.json({
+            plan: subscription.plan,
             usage: {
-                daily: dailyTokens,
+                daily_messages: dailyMessageUsage,
+                dailyTokensUsed: dailyTokens,
                 dailyByModel: tokensByModel,
-                dailyLimit: dailyTokenLimit,
-                dailyPercentage: dailyTokenLimit === -1 ? 0 : Math.round((dailyTokens / dailyTokenLimit) * 100),
-                monthly: monthlyTokensUsed,
-                monthlyLimit: monthlyTokenLimit,
-                monthlyPercentage: monthlyTokenLimit === -1 ? 0 : Math.round((monthlyTokensUsed / monthlyTokenLimit) * 100),
-                monthlyResetDate: periodEnd.toISOString(),
+                dailyLimit: dailyLimit,
+                dailyPercentage: dailyLimit === -1 ? 0 : Math.round((dailyUsed / dailyLimit) * 100),
+                monthlyTokensUsed: user.monthlyTokensUsed || 0,
+                monthlyLimit: monthlyLimit,
+                monthlyPercentage: monthlyLimit === -1 ? 0 : Math.round((monthlyUsed / monthlyLimit) * 100),
+                monthlyResetDate: periodEnd ? periodEnd.toISOString() : null,
                 daysUntilMonthlyReset: daysUntilReset,
                 total: user.totalTokens || 0
             },
