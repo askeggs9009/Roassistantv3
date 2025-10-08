@@ -576,19 +576,22 @@
                     </h2>
                     <div class="usage-stats">
                         <div class="usage-card">
-                            <div class="usage-number" id="daily-usage">0</div>
-                            <div class="usage-label">Messages Today</div>
+                            <div class="usage-number" id="daily-token-usage">0%</div>
+                            <div class="usage-label">Daily Tokens</div>
                             <div class="progress-bar">
-                                <div class="progress-fill" id="usage-progress" style="width: 0%"></div>
+                                <div class="progress-fill" id="daily-token-progress" style="width: 0%; background: #58a6ff;"></div>
                             </div>
                         </div>
                         <div class="usage-card">
-                            <div class="usage-number" id="daily-limit">10</div>
-                            <div class="usage-label">Daily Limit</div>
+                            <div class="usage-number" id="monthly-token-usage">0%</div>
+                            <div class="usage-label">Monthly Tokens</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="monthly-token-progress" style="width: 0%; background: #58a6ff;"></div>
+                            </div>
                         </div>
                         <div class="usage-card">
-                            <div class="usage-number" id="models-count">1</div>
-                            <div class="usage-label">Available Models</div>
+                            <div class="usage-number" id="token-reset-days">--</div>
+                            <div class="usage-label">Days Until Reset</div>
                         </div>
                     </div>
                 </div>
@@ -879,21 +882,8 @@
                 }
             }
 
-            // Usage statistics
-            const dailyUsage = subscription.usage?.daily_messages || 0;
-            const dailyLimit = subscription.usage?.daily_limit || 10;
-
-            document.getElementById('daily-usage').textContent = dailyUsage;
-            document.getElementById('daily-limit').textContent = dailyLimit === -1 ? '∞' : dailyLimit;
-            document.getElementById('models-count').textContent = subscription.limits?.models?.length || 1;
-
-            // Update usage progress bar
-            if (dailyLimit !== -1) {
-                const progressPercent = Math.min((dailyUsage / dailyLimit) * 100, 100);
-                document.getElementById('usage-progress').style.width = `${progressPercent}%`;
-            } else {
-                document.getElementById('usage-progress').style.width = '100%';
-            }
+            // Load token usage statistics
+            loadTokenUsageStats();
         }
 
         function updatePreferencesUI(preferences) {
@@ -907,6 +897,55 @@
                 if (preferences.workSubtype) {
                     document.getElementById('work-subtype-select').value = preferences.workSubtype;
                 }
+            }
+        }
+
+        async function loadTokenUsageStats() {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/token-usage', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const usage = data.usage;
+
+                    // Get percentage color based on usage
+                    const getDailyColor = () => {
+                        if (usage.dailyPercentage >= 90) return '#f85149';
+                        if (usage.dailyPercentage >= 75) return '#d4ac0d';
+                        return '#58a6ff';
+                    };
+
+                    const getMonthlyColor = () => {
+                        if (usage.monthlyPercentage >= 90) return '#f85149';
+                        if (usage.monthlyPercentage >= 75) return '#d4ac0d';
+                        return '#58a6ff';
+                    };
+
+                    // Update daily token usage
+                    const dailyPercentage = usage.dailyPercentage || 0;
+                    document.getElementById('daily-token-usage').textContent = `${dailyPercentage.toFixed(1)}%`;
+                    document.getElementById('daily-token-usage').style.color = getDailyColor();
+                    const dailyProgress = document.getElementById('daily-token-progress');
+                    dailyProgress.style.width = `${Math.min(dailyPercentage, 100)}%`;
+                    dailyProgress.style.background = getDailyColor();
+
+                    // Update monthly token usage
+                    const monthlyPercentage = usage.monthlyPercentage || 0;
+                    document.getElementById('monthly-token-usage').textContent = `${monthlyPercentage.toFixed(1)}%`;
+                    document.getElementById('monthly-token-usage').style.color = getMonthlyColor();
+                    const monthlyProgress = document.getElementById('monthly-token-progress');
+                    monthlyProgress.style.width = `${Math.min(monthlyPercentage, 100)}%`;
+                    monthlyProgress.style.background = getMonthlyColor();
+
+                    // Update days until reset
+                    const daysUntilReset = usage.daysUntilMonthlyReset || 0;
+                    document.getElementById('token-reset-days').textContent = daysUntilReset;
+                }
+            } catch (error) {
+                console.error('Error loading token usage:', error);
             }
         }
 
