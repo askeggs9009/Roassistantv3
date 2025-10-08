@@ -115,6 +115,14 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
+    dailyTokensUsed: {
+        type: Number,
+        default: 0
+    },
+    dailyTokensDate: {
+        type: String,  // Format: YYYY-MM-DD
+        default: null
+    },
     recaptchaScores: [{
         score: Number,
         action: String,

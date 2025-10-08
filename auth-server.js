@@ -376,9 +376,10 @@ async function getUserPlan(userId) {
 // Reset daily usage at midnight
 function resetDailyUsage() {
     dailyUsage.clear();
-    dailyTokenUsage.clear();
+    dailyTokenUsage.clear();  // Legacy - daily tokens now in MongoDB
     dailyOpusUsage.clear();
     console.log('[USAGE] Daily usage, token counts, and Opus usage reset');
+    // Note: Daily token usage in MongoDB auto-resets via date check (dailyTokensDate field)
 }
 
 // Check and reset monthly tokens if the billing period has passed
@@ -675,8 +676,8 @@ function checkAuthenticatedUserLimits(user, subscription, model) {
 
     // Check daily token limits if defined
     if (subscription.limits.daily_tokens) {
-        const tokenUsageKey = `tokens_${user.id}_${today}`;
-        const currentTokenUsage = dailyTokenUsage.get(tokenUsageKey) || 0;
+        // Reset daily tokens if it's a new day
+        const currentTokenUsage = (user.dailyTokensDate === today) ? (user.dailyTokensUsed || 0) : 0;
 
         if (currentTokenUsage >= subscription.limits.daily_tokens) {
             return {
@@ -1836,9 +1837,8 @@ app.get("/api/user-subscription", authenticateToken, async (req, res) => {
         const usageKey = `${user.id}_${today}`;
         const usage = dailyUsage.get(usageKey) || 0;
         
-        // Get token usage
-        const tokenUsageKey = `tokens_${user.id}_${today}`;
-        const tokenUsage = dailyTokenUsage.get(tokenUsageKey) || 0;
+        // Get token usage from MongoDB
+        const tokenUsage = (user.dailyTokensDate === today) ? (user.dailyTokensUsed || 0) : 0;
 
         // Get Studio usage for enterprise users
         const studioUsageKey = `studio_${user.id}_${today}`;
@@ -1875,8 +1875,8 @@ app.get("/api/token-usage", authenticateToken, async (req, res) => {
         }
 
         const today = new Date().toISOString().split('T')[0];
-        const tokenUsageKey = `tokens_${user.id}_${today}`;
-        const dailyTokens = dailyTokenUsage.get(tokenUsageKey) || 0;
+        // Read daily tokens from MongoDB (auto-resets if new day)
+        const dailyTokens = (user.dailyTokensDate === today) ? (user.dailyTokensUsed || 0) : 0;
 
         // Get recent chat logs to calculate token usage by model
         const recentChats = await DatabaseManager.getChatLogs(
@@ -2838,8 +2838,7 @@ app.post("/api/estimate-tokens", optionalAuthenticateToken, async (req, res) => 
 
             if (subscription.limits.daily_tokens) {
                 const today = new Date().toISOString().split('T')[0];
-                const tokenUsageKey = `tokens_${user.id}_${today}`;
-                const currentTokenUsage = dailyTokenUsage.get(tokenUsageKey) || 0;
+                const currentTokenUsage = (user.dailyTokensDate === today) ? (user.dailyTokensUsed || 0) : 0;
                 const remaining = subscription.limits.daily_tokens - currentTokenUsage;
 
                 responseData.userContext = {
@@ -3759,8 +3758,7 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
 
             if (subscription.limits.daily_tokens) {
                 const today = new Date().toISOString().split('T')[0];
-                const tokenUsageKey = `tokens_${user.id}_${today}`;
-                const currentTokenUsage = dailyTokenUsage.get(tokenUsageKey) || 0;
+                const currentTokenUsage = (user.dailyTokensDate === today) ? (user.dailyTokensUsed || 0) : 0;
 
                 // Check if estimated total would exceed daily limit
                 if (currentTokenUsage + tokenEstimation.estimatedTotal > subscription.limits.daily_tokens) {
@@ -3939,17 +3937,29 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             // to ensure proper limit enforcement
 
             // Update user's total messages and token count
-            await DatabaseManager.updateUser(req.user.email, {
+            const today = new Date().toISOString().split('T')[0];
+
+            // Check if it's a new day and reset daily tokens if needed
+            const updateData = {
                 $inc: {
                     totalMessages: 1,
                     totalTokens: totalTokens,
                     monthlyTokensUsed: totalTokens
                 },
                 lastActive: new Date()
-            });
+            };
 
-            // Track daily token usage
-            const today = new Date().toISOString().split('T')[0];
+            // If it's a new day, reset daily tokens; otherwise increment
+            if (user.dailyTokensDate !== today) {
+                updateData.dailyTokensUsed = totalTokens;
+                updateData.dailyTokensDate = today;
+            } else {
+                updateData.$inc.dailyTokensUsed = totalTokens;
+            }
+
+            await DatabaseManager.updateUser(req.user.email, updateData);
+
+            // Also track in memory for backward compatibility (can be removed later)
             const tokenUsageKey = `tokens_${user.id}_${today}`;
             const currentTokenUsage = dailyTokenUsage.get(tokenUsageKey) || 0;
             dailyTokenUsage.set(tokenUsageKey, currentTokenUsage + totalTokens);
