@@ -275,8 +275,8 @@ const SUBSCRIPTION_PLANS = {
             scripts_storage: 5,
             projects: 1,  // Free: 1 project
             support: 'community',
-            daily_tokens: 1000,  // 1k tokens/day (temporary limit)
-            monthly_tokens: 30000  // 30k tokens/month (1k * 30 days)
+            daily_tokens: 3000,  // 3k tokens/day
+            monthly_tokens: 90000  // 90k tokens/month (3k * 30 days)
         },
         features: ['Basic AI assistant', 'Basic code generation', '50 requests/month', 'Community support']
     },
