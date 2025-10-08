@@ -383,33 +383,64 @@ function resetDailyUsage() {
 
 // Check and reset monthly tokens if the billing period has passed
 async function checkAndResetMonthlyTokens(user) {
-    if (!user.monthlyTokensPeriodStart) {
-        // Initialize if not set
-        user.monthlyTokensPeriodStart = new Date();
-        user.monthlyTokensUsed = 0;
-        await DatabaseManager.updateUser(user.email, {
-            monthlyTokensPeriodStart: user.monthlyTokensPeriodStart,
-            monthlyTokensUsed: 0
-        });
-        return user;
-    }
-
     const now = new Date();
-    const periodStart = new Date(user.monthlyTokensPeriodStart);
 
-    // Calculate 30 days from period start
-    const periodEnd = new Date(periodStart);
-    periodEnd.setDate(periodEnd.getDate() + 30);
+    // Use Stripe billing period if available, otherwise fallback to manual tracking
+    const hasStripeBilling = user.subscription?.currentPeriodStart && user.subscription?.currentPeriodEnd;
 
-    // If current time is past the period end, reset monthly tokens
-    if (now >= periodEnd) {
-        console.log(`[TOKENS] Resetting monthly tokens for user ${user.email}`);
-        user.monthlyTokensUsed = 0;
-        user.monthlyTokensPeriodStart = now;
-        await DatabaseManager.updateUser(user.email, {
-            monthlyTokensUsed: 0,
-            monthlyTokensPeriodStart: now
-        });
+    if (hasStripeBilling) {
+        // Use Stripe's billing period
+        const stripePeriodEnd = new Date(user.subscription.currentPeriodEnd);
+
+        // Initialize monthlyTokensPeriodStart if not set
+        if (!user.monthlyTokensPeriodStart) {
+            user.monthlyTokensPeriodStart = new Date(user.subscription.currentPeriodStart);
+            user.monthlyTokensUsed = 0;
+            await DatabaseManager.updateUser(user.email, {
+                monthlyTokensPeriodStart: user.monthlyTokensPeriodStart,
+                monthlyTokensUsed: 0
+            });
+        }
+
+        // Check if Stripe billing period has rolled over
+        const lastTrackedPeriodStart = new Date(user.monthlyTokensPeriodStart);
+        const currentStripePeriodStart = new Date(user.subscription.currentPeriodStart);
+
+        // If Stripe's period has changed (new billing cycle), reset tokens
+        if (currentStripePeriodStart > lastTrackedPeriodStart) {
+            console.log(`[TOKENS] Resetting monthly tokens for user ${user.email} - Stripe billing cycle renewed`);
+            user.monthlyTokensUsed = 0;
+            user.monthlyTokensPeriodStart = currentStripePeriodStart;
+            await DatabaseManager.updateUser(user.email, {
+                monthlyTokensUsed: 0,
+                monthlyTokensPeriodStart: currentStripePeriodStart
+            });
+        }
+    } else {
+        // Fallback to manual 30-day tracking for free users or users without Stripe
+        if (!user.monthlyTokensPeriodStart) {
+            user.monthlyTokensPeriodStart = now;
+            user.monthlyTokensUsed = 0;
+            await DatabaseManager.updateUser(user.email, {
+                monthlyTokensPeriodStart: user.monthlyTokensPeriodStart,
+                monthlyTokensUsed: 0
+            });
+            return user;
+        }
+
+        const periodStart = new Date(user.monthlyTokensPeriodStart);
+        const periodEnd = new Date(periodStart);
+        periodEnd.setDate(periodEnd.getDate() + 30);
+
+        if (now >= periodEnd) {
+            console.log(`[TOKENS] Resetting monthly tokens for user ${user.email} - 30-day period ended`);
+            user.monthlyTokensUsed = 0;
+            user.monthlyTokensPeriodStart = now;
+            await DatabaseManager.updateUser(user.email, {
+                monthlyTokensUsed: 0,
+                monthlyTokensPeriodStart: now
+            });
+        }
     }
 
     return user;
@@ -662,10 +693,19 @@ function checkAuthenticatedUserLimits(user, subscription, model) {
         const monthlyTokensUsed = user.monthlyTokensUsed || 0;
 
         if (monthlyTokensUsed >= subscription.limits.monthly_tokens) {
-            const periodStart = new Date(user.monthlyTokensPeriodStart || new Date());
-            const periodEnd = new Date(periodStart);
-            periodEnd.setDate(periodEnd.getDate() + 30);
-            const daysRemaining = Math.ceil((periodEnd - new Date()) / (1000 * 60 * 60 * 24));
+            // Calculate period end using Stripe billing if available
+            let periodEnd;
+            const hasStripeBilling = user.subscription?.currentPeriodEnd;
+
+            if (hasStripeBilling) {
+                periodEnd = new Date(user.subscription.currentPeriodEnd);
+            } else {
+                const periodStart = new Date(user.monthlyTokensPeriodStart || new Date());
+                periodEnd = new Date(periodStart);
+                periodEnd.setDate(periodEnd.getDate() + 30);
+            }
+
+            const daysRemaining = Math.max(0, Math.ceil((periodEnd - new Date()) / (1000 * 60 * 60 * 24)));
 
             return {
                 allowed: false,
@@ -1882,10 +1922,20 @@ app.get("/api/token-usage", authenticateToken, async (req, res) => {
         const monthlyTokensUsed = user.monthlyTokensUsed || 0;
 
         // Calculate days until monthly reset
-        const periodStart = new Date(user.monthlyTokensPeriodStart || new Date());
-        const periodEnd = new Date(periodStart);
-        periodEnd.setDate(periodEnd.getDate() + 30);
-        const daysUntilReset = Math.ceil((periodEnd - new Date()) / (1000 * 60 * 60 * 24));
+        let periodEnd;
+        const hasStripeBilling = user.subscription?.currentPeriodEnd;
+
+        if (hasStripeBilling) {
+            // Use Stripe's actual billing period end date
+            periodEnd = new Date(user.subscription.currentPeriodEnd);
+        } else {
+            // Fallback to manual 30-day calculation for free users
+            const periodStart = new Date(user.monthlyTokensPeriodStart || new Date());
+            periodEnd = new Date(periodStart);
+            periodEnd.setDate(periodEnd.getDate() + 30);
+        }
+
+        const daysUntilReset = Math.max(0, Math.ceil((periodEnd - new Date()) / (1000 * 60 * 60 * 24)));
 
         res.json({
             usage: {
