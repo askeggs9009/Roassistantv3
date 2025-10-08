@@ -1978,7 +1978,7 @@ app.get("/api/token-usage", authenticateToken, async (req, res) => {
             },
             costEstimate: {
                 daily: calculateTokenCost(dailyTokens, subscription.plan),
-                monthly: calculateTokenCost(monthlyTokensUsed, subscription.plan),
+                monthly: calculateTokenCost(monthlyUsed, subscription.plan),
                 total: calculateTokenCost(user.totalTokens || 0, subscription.plan)
             }
         });
