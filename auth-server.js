@@ -3940,21 +3940,34 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             const today = new Date().toISOString().split('T')[0];
 
             // Check if it's a new day and reset daily tokens if needed
-            const updateData = {
-                $inc: {
-                    totalMessages: 1,
-                    totalTokens: totalTokens,
-                    monthlyTokensUsed: totalTokens
-                },
-                lastActive: new Date()
-            };
-
-            // If it's a new day, reset daily tokens; otherwise increment
+            let updateData;
             if (user.dailyTokensDate !== today) {
-                updateData.dailyTokensUsed = totalTokens;
-                updateData.dailyTokensDate = today;
+                // New day: reset daily tokens
+                updateData = {
+                    $inc: {
+                        totalMessages: 1,
+                        totalTokens: totalTokens,
+                        monthlyTokensUsed: totalTokens
+                    },
+                    $set: {
+                        dailyTokensUsed: totalTokens,
+                        dailyTokensDate: today,
+                        lastActive: new Date()
+                    }
+                };
             } else {
-                updateData.$inc.dailyTokensUsed = totalTokens;
+                // Same day: increment daily tokens
+                updateData = {
+                    $inc: {
+                        totalMessages: 1,
+                        totalTokens: totalTokens,
+                        monthlyTokensUsed: totalTokens,
+                        dailyTokensUsed: totalTokens
+                    },
+                    $set: {
+                        lastActive: new Date()
+                    }
+                };
             }
 
             await DatabaseManager.updateUser(req.user.email, updateData);
