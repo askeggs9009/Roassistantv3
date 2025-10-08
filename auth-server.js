@@ -628,14 +628,18 @@ function canUserSendMessage(user) {
 
 // Increment user's daily usage
 function incrementUserUsage(user) {
-    if (!user) return;
+    if (!user) {
+        console.log('[USAGE] ERROR: No user provided to incrementUserUsage');
+        return;
+    }
 
     const today = new Date().toISOString().split('T')[0];
     const usageKey = `${user.id}_${today}`;
     const currentUsage = dailyUsage.get(usageKey) || 0;
     dailyUsage.set(usageKey, currentUsage + 1);
 
-    console.log(`[USAGE] User ${user.email} usage: ${currentUsage + 1}`);
+    console.log(`[USAGE] User ${user.email} (ID: ${user.id}) usage: ${currentUsage + 1}, Key: ${usageKey}`);
+    console.log(`[USAGE] Map now has ${dailyUsage.size} entries`);
 }
 
 // Increment free user's Opus usage (now used for Studio tracking too)
@@ -664,6 +668,8 @@ function checkAuthenticatedUserLimits(user, subscription, model) {
     const today = new Date().toISOString().split('T')[0];
     const usageKey = `${user.id}_${today}`;
     const currentUsage = dailyUsage.get(usageKey) || 0;
+
+    console.log(`[LIMIT CHECK] User ${user.email} (ID: ${user.id}), Key: ${usageKey}, Usage: ${currentUsage}/${subscription.limits.daily_messages}`);
 
     // Check daily credit/message limit (for non-Studio plans)
     if (subscription.limits.daily_messages !== -1 && currentUsage >= subscription.limits.daily_messages) {
@@ -1911,6 +1917,8 @@ app.get("/api/token-usage", authenticateToken, async (req, res) => {
         // Get daily message usage (credits for non-Studio plans)
         const usageKey = `${user.id}_${today}`;
         const dailyMessageUsage = dailyUsage.get(usageKey) || 0;
+
+        console.log(`[TOKEN USAGE API] User ${user.email} (ID: ${user.id}), Key: ${usageKey}, Usage from Map: ${dailyMessageUsage}`);
 
         // Get limits based on plan type
         let dailyLimit, monthlyLimit, dailyUsed, monthlyUsed;
