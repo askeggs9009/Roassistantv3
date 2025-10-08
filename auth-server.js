@@ -917,13 +917,18 @@ async function estimateTokenUsage(model, systemPrompt, messages) {
         // Estimate output tokens based on prompt complexity and typical response patterns
         let estimatedOutputTokens = 0;
 
+        // Get the last user message for pattern analysis
+        const lastMessage = Array.isArray(messages) ?
+            (messages[messages.length - 1]?.content || '') :
+            messages;
+
         // Base estimation on prompt characteristics
-        const promptWords = userMessage.split(/\s+/).length;
-        const hasCodeRequest = /code|script|function|implementation|create|write|fix|debug|make|build|develop|program|luau|roblox|game|gui|tool|system|module/i.test(userMessage);
-        const hasExplanationRequest = /explain|how|what|why|describe|tell/i.test(userMessage);
-        const hasListRequest = /list|steps|enumerate|options/i.test(userMessage);
-        const isGreeting = /^(hi|hello|hey|good morning|good afternoon|good evening)\.?$/i.test(userMessage.trim());
-        const isSimpleQuestion = promptWords <= 3 && /\?$/.test(userMessage.trim());
+        const promptWords = lastMessage.split(/\s+/).length;
+        const hasCodeRequest = /code|script|function|implementation|create|write|fix|debug|make|build|develop|program|luau|roblox|game|gui|tool|system|module/i.test(lastMessage);
+        const hasExplanationRequest = /explain|how|what|why|describe|tell/i.test(lastMessage);
+        const hasListRequest = /list|steps|enumerate|options/i.test(lastMessage);
+        const isGreeting = /^(hi|hello|hey|good morning|good afternoon|good evening)\.?$/i.test(lastMessage.trim());
+        const isSimpleQuestion = promptWords <= 3 && /\?$/.test(lastMessage.trim());
 
         // Calculate base output estimation based on ACTUAL usage patterns from logs
         if (isGreeting) {
@@ -976,7 +981,8 @@ async function estimateTokenUsage(model, systemPrompt, messages) {
         console.error('[TOKEN ESTIMATION] Error:', error.message);
 
         // Final fallback estimation using simple character ratio
-        const charCount = systemPrompt.length + userMessage.length;
+        const messageContent = Array.isArray(messages) ? messages.map(m => m.content).join('\n') : messages;
+        const charCount = systemPrompt.length + messageContent.length;
         const roughInputTokens = Math.ceil(charCount / 3.5);
         const roughOutputTokens = Math.min(roughInputTokens * 2, 4000);
 
