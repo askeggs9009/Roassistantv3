@@ -274,7 +274,9 @@ const SUBSCRIPTION_PLANS = {
             max_file_size: 1048576, // 1MB
             scripts_storage: 5,
             projects: 1,  // Free: 1 project
-            support: 'community'
+            support: 'community',
+            daily_tokens: 12000,  // 12k tokens/day
+            monthly_tokens: 360000  // 360k tokens/month (12k * 30 days)
         },
         features: ['Basic AI assistant', 'Basic code generation', '50 requests/month', 'Community support']
     },
