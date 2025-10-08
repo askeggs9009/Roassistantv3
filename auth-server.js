@@ -863,7 +863,7 @@ function getSystemPrompt(modelName) {
 }
 
 // Token estimation function using Anthropic's count_tokens API
-async function estimateTokenUsage(model, systemPrompt, userMessage) {
+async function estimateTokenUsage(model, systemPrompt, messages) {
     try {
         const config = MODEL_CONFIGS[model];
         if (!config) {
@@ -876,6 +876,7 @@ async function estimateTokenUsage(model, systemPrompt, userMessage) {
         if (config.provider === 'anthropic') {
             try {
                 // Use Anthropic's official count_tokens API via direct HTTP call
+                // Pass the actual messages array structure
                 const response = await fetch('https://api.anthropic.com/v1/messages/count_tokens', {
                     method: 'POST',
                     headers: {
@@ -886,9 +887,7 @@ async function estimateTokenUsage(model, systemPrompt, userMessage) {
                     body: JSON.stringify({
                         model: config.model,
                         system: systemPrompt,
-                        messages: [
-                            { role: "user", content: userMessage }
-                        ]
+                        messages: Array.isArray(messages) ? messages : [{ role: "user", content: messages }]
                     })
                 });
 
@@ -903,14 +902,15 @@ async function estimateTokenUsage(model, systemPrompt, userMessage) {
             } catch (apiError) {
                 console.error('[TOKEN ESTIMATION] Anthropic count_tokens API error:', apiError.message);
                 // Fallback to character-based estimation
-                inputTokens = Math.ceil((systemPrompt.length + userMessage.length) / 3.5);
+                const messageContent = Array.isArray(messages) ? messages.map(m => m.content).join('\n') : messages;
+                inputTokens = Math.ceil((systemPrompt.length + messageContent.length) / 3.5);
                 console.log(`[TOKEN ESTIMATION] Using fallback character estimation: ${inputTokens} tokens`);
             }
         } else if (config.provider === 'openai') {
             // For OpenAI, use character-based estimation
-            // GPT models use roughly 1 token per 4 characters for English text
+            const messageContent = Array.isArray(messages) ? messages.map(m => m.content).join('\n') : messages;
             const systemTokens = Math.ceil(systemPrompt.length / 4);
-            const userTokens = Math.ceil(userMessage.length / 4);
+            const userTokens = Math.ceil(messageContent.length / 4);
             inputTokens = systemTokens + userTokens;
         }
 
@@ -3727,38 +3727,6 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
         console.log(`[DEBUG] Model: ${selectedModel} (requested: ${model}), Provider: ${config.provider}`);
         console.log(`[DEBUG] System prompt starts with: ${systemPrompt.substring(0, 100)}...`);
 
-        // Estimate token usage before making the API call
-        const tokenEstimation = await estimateTokenUsage(model, systemPrompt, prompt);
-        console.log(`[TOKEN ESTIMATION] Input: ${tokenEstimation.inputTokens}, Estimated Output: ${tokenEstimation.estimatedOutputTokens}, Total: ${tokenEstimation.estimatedTotal}`);
-
-        // Check if estimated usage would exceed daily token limits for authenticated users
-        if (isAuthenticated) {
-            let user = await DatabaseManager.findUserByEmail(req.user.email);
-            // Reset monthly tokens if billing period has passed
-            user = await checkAndResetMonthlyTokens(user);
-            const subscription = getUserSubscription(user);
-
-            if (subscription.limits.daily_tokens) {
-                const today = new Date().toISOString().split('T')[0];
-                const currentTokenUsage = (user.dailyTokensDate === today) ? (user.dailyTokensUsed || 0) : 0;
-
-                // Check if estimated total would exceed daily limit
-                if (currentTokenUsage + tokenEstimation.estimatedTotal > subscription.limits.daily_tokens) {
-                    const remaining = subscription.limits.daily_tokens - currentTokenUsage;
-                    return res.status(403).json({
-                        error: `This request would exceed your daily token limit. You have ${remaining.toLocaleString()} tokens remaining today.`,
-                        tokenEstimation: {
-                            estimated: tokenEstimation.estimatedTotal,
-                            remaining: remaining,
-                            dailyLimit: subscription.limits.daily_tokens
-                        },
-                        upgradeUrl: subscription.plan !== 'enterprise' ? '/pricing.html' : null,
-                        resetTime: 'Tomorrow at midnight'
-                    });
-                }
-            }
-        }
-
         let inputTokens = 0;
         let outputTokens = 0;
         let totalTokens = 0;
@@ -3797,6 +3765,38 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             ...trimmedHistory,
             { role: "user", content: prompt }
         ];
+
+        // Estimate token usage AFTER trimming, with actual messages array that will be sent
+        const tokenEstimation = await estimateTokenUsage(model, systemPrompt, messages);
+        console.log(`[TOKEN ESTIMATION] Input: ${tokenEstimation.inputTokens}, Estimated Output: ${tokenEstimation.estimatedOutputTokens}, Total: ${tokenEstimation.estimatedTotal}`);
+
+        // Check if estimated usage would exceed daily token limits for authenticated users
+        if (isAuthenticated) {
+            let user = await DatabaseManager.findUserByEmail(req.user.email);
+            // Reset monthly tokens if billing period has passed
+            user = await checkAndResetMonthlyTokens(user);
+            const subscription = getUserSubscription(user);
+
+            if (subscription.limits.daily_tokens) {
+                const today = new Date().toISOString().split('T')[0];
+                const currentTokenUsage = (user.dailyTokensDate === today) ? (user.dailyTokensUsed || 0) : 0;
+
+                // Check if estimated total would exceed daily limit
+                if (currentTokenUsage + tokenEstimation.estimatedTotal > subscription.limits.daily_tokens) {
+                    const remaining = subscription.limits.daily_tokens - currentTokenUsage;
+                    return res.status(403).json({
+                        error: `This request would exceed your daily token limit. You have ${remaining.toLocaleString()} tokens remaining today.`,
+                        tokenEstimation: {
+                            estimated: tokenEstimation.estimatedTotal,
+                            remaining: remaining,
+                            dailyLimit: subscription.limits.daily_tokens
+                        },
+                        upgradeUrl: subscription.plan !== 'enterprise' ? '/pricing.html' : null,
+                        resetTime: 'Tomorrow at midnight'
+                    });
+                }
+            }
+        }
 
         if (config.provider === 'anthropic') {
             // Use Claude/Anthropic API with prompt caching
