@@ -4529,11 +4529,8 @@ app.post("/roblox/search-toolbox", async (req, res) => {
                     return false;
                 }
 
-                // Only models without scripts (models with scripts have restricted access)
-                if (item.asset?.hasScripts) {
-                    console.log('[ROBLOX] ⚠️ Skipping model with scripts:', item.asset.name);
-                    return false;
-                }
+                // ✅ REMOVED: Script filter - game:GetObjects() can now insert models with scripts!
+                // We'll show a warning badge instead and let users decide
 
                 return true;
             })
@@ -4553,17 +4550,44 @@ app.post("/roblox/search-toolbox", async (req, res) => {
                     debugCount++;
                 }
 
+                // Extract rating metrics
+                const favoriteCount = item.asset?.favoriteCount || 0;
+                const upVotes = item.voting?.upVotes || 0;
+                const downVotes = item.voting?.downVotes || 0;
+                const totalVotes = upVotes + downVotes;
+
+                // Calculate rating percentage (0-100%)
+                // Priority: Use voting ratio if available, otherwise use favorites as proxy
+                let rating = 0;
+                if (totalVotes > 0) {
+                    // If we have voting data, use upvote percentage
+                    rating = Math.round((upVotes / totalVotes) * 100);
+                } else if (favoriteCount > 0) {
+                    // Fallback: Use favorites as quality indicator (scaled to 100%)
+                    // Popular models (1000+ favs) = ~100%, unpopular (<100) = lower
+                    rating = Math.min(100, Math.round((favoriteCount / 10) + 50));
+                } else {
+                    // No data available, default to 50% (neutral)
+                    rating = 50;
+                }
+
                 return {
                     name: item.asset.name,
                     assetId: assetId,
                     creator: item.creator.name,
                     creatorType: item.creator.type,
-                    hasScripts: item.asset.hasScripts || false,
+                    hasScripts: item.asset.hasScripts || false,  // ⚠️ Warning flag for UI
                     description: item.asset.description || '',
+                    rating: rating,  // 0-100% quality score
+                    favoriteCount: favoriteCount,
+                    upVotes: upVotes,
+                    downVotes: downVotes,
                     // Note: API doesn't provide assetVersionId, we'll use assetId only
                     assetVersionId: null
                 };
-            });
+            })
+            // Sort by rating (highest first) - safer/better quality models shown first
+            .sort((a, b) => b.rating - a.rating);
 
         const results = {
             query: query,
