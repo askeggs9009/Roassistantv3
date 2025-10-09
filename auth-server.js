@@ -4523,7 +4523,7 @@ app.post("/roblox/search-toolbox", async (req, res) => {
 
                 // Skip models from unverified users (only allow groups/Roblox/verified users)
                 // Unverified user models are more likely to have access issues
-                const creatorType = item.creator?.type?.toLowerCase();
+                const creatorType = String(item.creator?.type || '').toLowerCase();
                 if (creatorType === 'user' && !item.creator?.isVerifiedCreator) {
                     console.log('[ROBLOX] ⚠️ Skipping unverified user model:', item.asset.name);
                     return false;
