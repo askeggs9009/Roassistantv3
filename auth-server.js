@@ -4495,6 +4495,11 @@ app.post("/roblox/search-toolbox", async (req, res) => {
 
         const detailsData = await detailsResponse.json();
 
+        // Debug: Log the first item's full structure to see available fields
+        if (detailsData.data && detailsData.data.length > 0) {
+            console.log('[ROBLOX] 📋 First item structure:', JSON.stringify(detailsData.data[0], null, 2));
+        }
+
         // Filter and format results - only show models that are likely to work
         let debugCount = 0;
         const filteredModels = detailsData.data
