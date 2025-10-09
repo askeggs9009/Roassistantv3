@@ -1889,12 +1889,17 @@
                         lastCodeBlockCount = 0;
                         lastAIResponse = content;
 
+                        // Check for ANY structured commands (scripts, search, edit, delete)
                         const hasStructuredScripts = /<roblox_script\s+name="[^"]+"\s+type="[^"]+"\s+location="[^"]+">/.test(content);
+                        const hasSearchCommands = /<roblox_search\s+query="[^"]+"\s*\/?>/.test(content);
+                        const hasEditCommands = /<roblox_edit\s+target="[^"]+">/.test(content);
+                        const hasDeleteCommands = /<roblox_delete\s+target="[^"]+"\s*\/?>/.test(content);
+                        const hasAnyStructuredCommands = hasStructuredScripts || hasSearchCommands || hasEditCommands || hasDeleteCommands;
 
-                        if (hasStructuredScripts) {
-                            console.log('[Roblox] Detected structured scripts, will auto-send after render');
+                        if (hasAnyStructuredCommands) {
+                            console.log('[Roblox] Detected structured commands, will auto-send after render');
                             setTimeout(() => {
-                                console.log('[Roblox] Triggering auto-send for structured scripts');
+                                console.log('[Roblox] Triggering auto-send for structured commands');
                                 autoSendToRoblox(content);
                             }, 500);
                             return result;
