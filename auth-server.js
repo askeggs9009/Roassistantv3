@@ -4439,10 +4439,10 @@ app.post("/roblox/delete-object", (req, res) => {
 });
 
 /**
- * Search the Roblox Toolbox for models
+ * Search the Roblox Toolbox for models using web APIs
  * POST /roblox/search-toolbox
  */
-app.post("/roblox/search-toolbox", (req, res) => {
+app.post("/roblox/search-toolbox", async (req, res) => {
     try {
         const { query, page = 0 } = req.body;
 
@@ -4453,46 +4453,73 @@ app.post("/roblox/search-toolbox", (req, res) => {
             });
         }
 
-        const command = {
-            type: 'search',
+        console.log('[ROBLOX] 🔍 Searching Roblox Catalog API for:', query);
+
+        // Step 1: Search Roblox Catalog API for model asset IDs
+        const searchUrl = `https://catalog.roblox.com/v1/search/items?Category=Model&Keyword=${encodeURIComponent(query)}&Limit=20`;
+        const searchResponse = await fetch(searchUrl);
+
+        if (!searchResponse.ok) {
+            throw new Error(`Catalog API returned ${searchResponse.status}`);
+        }
+
+        const searchData = await searchResponse.json();
+        const assetIds = searchData.data.map(item => item.id);
+
+        console.log('[ROBLOX] ✅ Found', assetIds.length, 'models from Catalog API');
+
+        // Step 2: Fetch detailed information for each asset from Economy API
+        const modelsWithDetails = await Promise.all(
+            assetIds.map(async (assetId) => {
+                try {
+                    const detailsUrl = `https://economy.roblox.com/v2/assets/${assetId}/details`;
+                    const detailsResponse = await fetch(detailsUrl);
+
+                    if (!detailsResponse.ok) {
+                        console.warn('[ROBLOX] ⚠️ Could not fetch details for asset:', assetId);
+                        return null;
+                    }
+
+                    const details = await detailsResponse.json();
+
+                    return {
+                        assetId: details.AssetId || assetId,
+                        name: details.Name || 'Unknown',
+                        creator: details.Creator?.Name || 'Unknown',
+                        creatorId: details.Creator?.Id || 0,
+                        description: details.Description || '',
+                        price: details.PriceInRobux || 0,
+                        created: details.Created,
+                        updated: details.Updated
+                    };
+                } catch (error) {
+                    console.error('[ROBLOX] ❌ Error fetching details for asset:', assetId, error.message);
+                    return null;
+                }
+            })
+        );
+
+        // Filter out null results (failed fetches)
+        const validModels = modelsWithDetails.filter(model => model !== null);
+
+        console.log('[ROBLOX] ✅ Retrieved details for', validModels.length, 'models');
+
+        // Step 3: Store results for frontend to poll
+        lastSearchResults = {
             query: query,
-            page: page,
+            totalCount: validModels.length,
+            models: validModels,
             timestamp: new Date().toISOString()
         };
 
-        // If plugin is connected, send immediately
-        if (robloxClients.size > 0) {
-            let sent = false;
-            robloxClients.forEach(client => {
-                if (!client.writableEnded) {
-                    client.write(`data: ${JSON.stringify(command)}\n\n`);
-                    sent = true;
-                }
-            });
-
-            if (sent) {
-                console.log('[ROBLOX] 🔍 Search command sent to plugin:', query);
-                return res.json({
-                    success: true,
-                    message: 'Search command sent to Roblox Studio',
-                    sentImmediately: true
-                });
-            }
-        }
-
-        // Otherwise, queue for when plugin connects
-        robloxCommandQueue.push(command);
-        console.log('[ROBLOX] 📥 Search command queued (plugin not connected):', query);
-
         res.json({
             success: true,
-            message: 'Search command queued. Will be sent when plugin connects.',
-            queued: true,
-            queueLength: robloxCommandQueue.length
+            message: 'Search completed',
+            results: lastSearchResults
         });
 
     } catch (error) {
-        console.error('[ROBLOX] Error sending search command:', error);
+        console.error('[ROBLOX] ❌ Error searching Roblox Catalog:', error);
         res.status(500).json({
             success: false,
             error: error.message

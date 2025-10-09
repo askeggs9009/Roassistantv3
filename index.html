@@ -1626,11 +1626,17 @@
             } else {
                 body.innerHTML = results.models.map(model => `
                     <div class="search-result-item" onclick="insertModelFromSearch('${model.assetId}', '${model.name.replace(/'/g, "\\'")}')">
-                        <div class="search-result-name">${model.name}</div>
-                        <div class="search-result-creator">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                            <div class="search-result-name">${model.name}</div>
+                            <div style="background: ${model.price === 0 ? '#238636' : '#f85149'}; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">
+                                ${model.price === 0 ? 'FREE' : model.price + ' R$'}
+                            </div>
+                        </div>
+                        <div class="search-result-creator" style="margin-bottom: 0.5rem;">
                             <i class="fas fa-user"></i>
                             <span>by ${model.creator}</span>
                         </div>
+                        ${model.description ? `<div style="font-size: 0.8rem; color: #8b949e; line-height: 1.4;">${model.description.substring(0, 100)}${model.description.length > 100 ? '...' : ''}</div>` : ''}
                     </div>
                 `).join('');
             }
