@@ -2,9 +2,12 @@
 	RoAssistant Studio Plugin - STANDALONE VERSION
 	Place this file directly in your Roblox Plugins folder
 
-	Version: 2.5.0 - Property Type Conversion Fix
+	Version: 3.0.0 - Toolbox Search Integration
 
 	NEW FEATURES:
+	✨ AI can now search Roblox Toolbox for free models!
+	✨ Insert existing models directly from the toolbox
+	✨ Search for cars, weapons, buildings, and more
 	✅ Click scripts in Explorer to view their source code
 	✅ Real-time Explorer hierarchy syncing with RoConsole
 	✅ Automatic physical object creation (Parts, Models, Tools)
@@ -16,6 +19,11 @@
 	✅ Proper UDim2, Vector2, Color3, and Enum property conversions
 
 	Examples:
+	"find me a car from the toolbox" →
+	- AI searches Roblox Toolbox
+	- Shows available car models
+	- Inserts selected model into Workspace
+
 	"make a part that kills players" →
 	- Creates Part in Workspace
 	- Adds Script inside the Part with touch logic
@@ -64,6 +72,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local StarterPlayer = game:GetService("StarterPlayer")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ChangeHistoryService = game:GetService("ChangeHistoryService")
+local InsertService = game:GetService("InsertService")
 
 -- Plugin state
 local isConnected = false
@@ -680,6 +689,139 @@ local function insertScript(scriptData)
 end
 
 --[[
+	Search for free models in the Roblox Toolbox
+]]
+local function searchToolbox(searchData)
+	local success, result = pcall(function()
+		local searchQuery = searchData.query or "model"
+		local pageNum = searchData.page or 0
+
+		print("[RoAssistant] 🔍 Searching toolbox for:", searchQuery)
+
+		-- Use InsertService to search for free models
+		local resultsWrapper = InsertService:GetFreeModels(searchQuery, pageNum)
+
+		-- Unwrap the results (GetFreeModels returns a table wrapped in a table)
+		local results = unpack(resultsWrapper)
+
+		-- Format the results for display
+		local formattedResults = {
+			query = searchQuery,
+			page = pageNum,
+			totalCount = results.TotalCount or 0,
+			models = {}
+		}
+
+		-- Add each result
+		if results.Results then
+			for i, item in ipairs(results.Results) do
+				-- Limit to top 10 results for performance
+				if i > 10 then break end
+
+				table.insert(formattedResults.models, {
+					name = item.Name,
+					assetId = item.AssetId,
+					creator = item.CreatorName,
+					assetVersionId = item.AssetVersionId
+				})
+			end
+		end
+
+		print("[RoAssistant] ✅ Found", formattedResults.totalCount, "models")
+
+		-- Send results back to website
+		sendSearchResults(formattedResults)
+
+		return formattedResults
+	end)
+
+	if success then
+		sendStatus("success", "Search completed: " .. result.totalCount .. " models found", searchData.query)
+		return true, result
+	else
+		warn("[RoAssistant] ❌ Search failed:", result)
+		sendStatus("error", "Search failed: " .. tostring(result), searchData.query)
+		return false, result
+	end
+end
+
+--[[
+	Insert a model from the Roblox Toolbox by Asset ID
+]]
+local function insertModel(modelData)
+	local success, result = pcall(function()
+		local assetId = modelData.assetId
+		local location = modelData.location or "Workspace"
+
+		print("[RoAssistant] 📦 Inserting model:", assetId)
+
+		-- Use InsertService to load the asset
+		local model = InsertService:LoadAsset(assetId)
+
+		if not model then
+			error("Failed to load asset: " .. tostring(assetId))
+		end
+
+		-- Get the first child (the actual model)
+		local actualModel = model:GetChildren()[1]
+
+		if not actualModel then
+			error("Asset contains no model")
+		end
+
+		-- Get the parent location
+		local parent = getScriptParent(location)
+
+		-- Move the model to the target location
+		actualModel.Parent = parent
+
+		-- Clean up the wrapper model
+		model:Destroy()
+
+		-- Record undo history
+		ChangeHistoryService:SetWaypoint("Insert RoAssistant Model: " .. actualModel.Name)
+
+		print("[RoAssistant] ✅ Inserted model:", actualModel.Name, "to", parent:GetFullName())
+
+		return actualModel
+	end)
+
+	if success then
+		sendStatus("success", "Model inserted successfully", modelData.assetId)
+		return true, result
+	else
+		warn("[RoAssistant] ❌ Failed to insert model:", result)
+		sendStatus("error", "Failed to insert model: " .. tostring(result), modelData.assetId)
+		return false, result
+	end
+end
+
+--[[
+	Send search results to website
+]]
+local function sendSearchResults(results)
+	local success, err = pcall(function()
+		local payload = {
+			type = "search_results",
+			results = results,
+			timestamp = DateTime.now():ToIsoDate()
+		}
+
+		local endpoint = Config.WEBSITE_URL .. "/roblox/search-results"
+
+		return HttpService:PostAsync(
+			endpoint,
+			HttpService:JSONEncode(payload),
+			Enum.HttpContentType.ApplicationJson
+		)
+	end)
+
+	if not success then
+		warn("[RoAssistant] Failed to send search results:", err)
+	end
+end
+
+--[[
 	Handle incoming SSE messages
 ]]
 local function handleMessage(message)
@@ -723,6 +865,18 @@ local function handleMessage(message)
 		-- Delete an existing object
 		deleteInstance({
 			target = data.target
+		})
+	elseif data.type == "search" then
+		-- Search for models in the toolbox
+		searchToolbox({
+			query = data.query,
+			page = data.page or 0
+		})
+	elseif data.type == "insert_model" then
+		-- Insert a model by asset ID
+		insertModel({
+			assetId = data.assetId,
+			location = data.location
 		})
 	elseif data.type == "ping" then
 		-- Respond to ping

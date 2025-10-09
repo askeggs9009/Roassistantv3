@@ -3526,6 +3526,8 @@ app.post("/ask-stream", optionalAuthenticateToken, checkUsageLimits, async (req,
         let fullResponse = '';
         let inputTokens = 0;
         let outputTokens = 0;
+        let cacheReadTokens = 0;
+        let cacheCreationTokens = 0;
 
         // 🚀 SMART TRIMMING: AI-powered follow-up detection + Explorer search
         // Wrap Explorer data in expected format
@@ -3573,6 +3575,8 @@ app.post("/ask-stream", optionalAuthenticateToken, checkUsageLimits, async (req,
                 } else if (chunk.type === 'message_start') {
                     if (chunk.message.usage) {
                         inputTokens = chunk.message.usage.input_tokens || 0;
+                        cacheReadTokens = chunk.message.usage.cache_read_input_tokens || 0;
+                        cacheCreationTokens = chunk.message.usage.cache_creation_input_tokens || 0;
                     }
                 } else if (chunk.type === 'message_delta') {
                     if (chunk.usage) {
@@ -3674,6 +3678,60 @@ app.post("/ask-stream", optionalAuthenticateToken, checkUsageLimits, async (req,
             console.error('[CHAT LOG] Failed to save chat log:', logError);
         }
 
+        // Update user's credit usage for authenticated users
+        if (isAuthenticated) {
+            try {
+                const user = await DatabaseManager.findUserByEmail(req.user.email);
+
+                // Calculate credits used: 1 credit per message, unless cached
+                // Cached messages (cache_read_input_tokens > 0) don't count as credits
+                const creditsUsed = cacheReadTokens > 0 ? 0 : 1;
+                console.log(`[CREDITS] Streaming - Message ${creditsUsed === 0 ? 'was cached - no credit used' : 'used 1 credit'}`);
+
+                const today = new Date().toISOString().split('T')[0];
+
+                // Check if it's a new day and reset daily tokens if needed
+                let updateData;
+                if (user.dailyTokensDate !== today) {
+                    // New day: reset daily credits
+                    updateData = {
+                        $inc: {
+                            totalMessages: 1,
+                            totalTokens: creditsUsed,
+                            monthlyTokensUsed: creditsUsed
+                        },
+                        $set: {
+                            dailyTokensUsed: creditsUsed,
+                            dailyTokensDate: today,
+                            lastActive: new Date()
+                        }
+                    };
+                } else {
+                    // Same day: increment daily credits
+                    updateData = {
+                        $inc: {
+                            totalMessages: 1,
+                            totalTokens: creditsUsed,
+                            monthlyTokensUsed: creditsUsed,
+                            dailyTokensUsed: creditsUsed
+                        },
+                        $set: {
+                            lastActive: new Date()
+                        }
+                    };
+                }
+
+                await DatabaseManager.updateUser(req.user.email, updateData);
+
+                // Also track in memory for backward compatibility
+                const tokenUsageKey = `tokens_${user.id}_${today}`;
+                const currentTokenUsage = dailyTokenUsage.get(tokenUsageKey) || 0;
+                dailyTokenUsage.set(tokenUsageKey, currentTokenUsage + creditsUsed);
+            } catch (usageError) {
+                console.error('[CREDITS] Failed to update user credit usage:', usageError);
+            }
+        }
+
         res.end();
 
     } catch (error) {
@@ -3760,6 +3818,8 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
         let inputTokens = 0;
         let outputTokens = 0;
         let totalTokens = 0;
+        let cacheReadTokens = 0;
+        let cacheCreationTokens = 0;
 
         // Determine max tokens per response based on subscription plan
         const getMaxTokensForPlan = (isAuth, subscription) => {
@@ -3823,7 +3883,9 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
                 inputTokens = response.usage.input_tokens || 0;
                 outputTokens = response.usage.output_tokens || 0;
                 totalTokens = inputTokens + outputTokens;
-                console.log(`[TOKENS] Anthropic - Input: ${inputTokens}, Output: ${outputTokens}, Total: ${totalTokens}`);
+                cacheReadTokens = response.usage.cache_read_input_tokens || 0;
+                cacheCreationTokens = response.usage.cache_creation_input_tokens || 0;
+                console.log(`[TOKENS] Anthropic - Input: ${inputTokens}, Output: ${outputTokens}, Total: ${totalTokens}, Cache Read: ${cacheReadTokens}, Cache Creation: ${cacheCreationTokens}`);
             }
         } else {
             // Use OpenAI API
@@ -3915,7 +3977,12 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             // Note: Special usage (studio/nexus) is now incremented BEFORE API call
             // to ensure proper limit enforcement
 
-            // Update user's total messages and token count
+            // Calculate credits used: 1 credit per message, unless cached
+            // Cached messages (cache_read_input_tokens > 0) don't count as credits
+            const creditsUsed = cacheReadTokens > 0 ? 0 : 1;
+            console.log(`[CREDITS] Message ${creditsUsed === 0 ? 'was cached - no credit used' : 'used 1 credit'}`);
+
+            // Update user's total messages and credit count
             const today = new Date().toISOString().split('T')[0];
 
             // Check if it's a new day and reset daily tokens if needed
@@ -3925,11 +3992,11 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
                 updateData = {
                     $inc: {
                         totalMessages: 1,
-                        totalTokens: totalTokens,
-                        monthlyTokensUsed: totalTokens
+                        totalTokens: creditsUsed,
+                        monthlyTokensUsed: creditsUsed
                     },
                     $set: {
-                        dailyTokensUsed: totalTokens,
+                        dailyTokensUsed: creditsUsed,
                         dailyTokensDate: today,
                         lastActive: new Date()
                     }
@@ -3939,9 +4006,9 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
                 updateData = {
                     $inc: {
                         totalMessages: 1,
-                        totalTokens: totalTokens,
-                        monthlyTokensUsed: totalTokens,
-                        dailyTokensUsed: totalTokens
+                        totalTokens: creditsUsed,
+                        monthlyTokensUsed: creditsUsed,
+                        dailyTokensUsed: creditsUsed
                     },
                     $set: {
                         lastActive: new Date()
@@ -3954,7 +4021,7 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
             // Also track in memory for backward compatibility (can be removed later)
             const tokenUsageKey = `tokens_${user.id}_${today}`;
             const currentTokenUsage = dailyTokenUsage.get(tokenUsageKey) || 0;
-            dailyTokenUsage.set(tokenUsageKey, currentTokenUsage + totalTokens);
+            dailyTokenUsage.set(tokenUsageKey, currentTokenUsage + creditsUsed);
 
             responseData.subscription = {
                 plan: subscription.plan,
@@ -4364,6 +4431,161 @@ app.post("/roblox/delete-object", (req, res) => {
 
     } catch (error) {
         console.error('[ROBLOX] Error sending delete command:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * Search the Roblox Toolbox for models
+ * POST /roblox/search-toolbox
+ */
+app.post("/roblox/search-toolbox", (req, res) => {
+    try {
+        const { query, page = 0 } = req.body;
+
+        if (!query) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required field: query'
+            });
+        }
+
+        const command = {
+            type: 'search',
+            query: query,
+            page: page,
+            timestamp: new Date().toISOString()
+        };
+
+        // If plugin is connected, send immediately
+        if (robloxClients.size > 0) {
+            let sent = false;
+            robloxClients.forEach(client => {
+                if (!client.writableEnded) {
+                    client.write(`data: ${JSON.stringify(command)}\n\n`);
+                    sent = true;
+                }
+            });
+
+            if (sent) {
+                console.log('[ROBLOX] 🔍 Search command sent to plugin:', query);
+                return res.json({
+                    success: true,
+                    message: 'Search command sent to Roblox Studio',
+                    sentImmediately: true
+                });
+            }
+        }
+
+        // Otherwise, queue for when plugin connects
+        robloxCommandQueue.push(command);
+        console.log('[ROBLOX] 📥 Search command queued (plugin not connected):', query);
+
+        res.json({
+            success: true,
+            message: 'Search command queued. Will be sent when plugin connects.',
+            queued: true,
+            queueLength: robloxCommandQueue.length
+        });
+
+    } catch (error) {
+        console.error('[ROBLOX] Error sending search command:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * Insert a model from the Roblox Toolbox
+ * POST /roblox/insert-model
+ */
+app.post("/roblox/insert-model", (req, res) => {
+    try {
+        const { assetId, location = "Workspace" } = req.body;
+
+        if (!assetId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required field: assetId'
+            });
+        }
+
+        const command = {
+            type: 'insert_model',
+            assetId: assetId,
+            location: location,
+            timestamp: new Date().toISOString()
+        };
+
+        // If plugin is connected, send immediately
+        if (robloxClients.size > 0) {
+            let sent = false;
+            robloxClients.forEach(client => {
+                if (!client.writableEnded) {
+                    client.write(`data: ${JSON.stringify(command)}\n\n`);
+                    sent = true;
+                }
+            });
+
+            if (sent) {
+                console.log('[ROBLOX] 📦 Insert model command sent to plugin:', assetId);
+                return res.json({
+                    success: true,
+                    message: 'Model insert command sent to Roblox Studio',
+                    sentImmediately: true
+                });
+            }
+        }
+
+        // Otherwise, queue for when plugin connects
+        robloxCommandQueue.push(command);
+        console.log('[ROBLOX] 📥 Insert model command queued (plugin not connected):', assetId);
+
+        res.json({
+            success: true,
+            message: 'Insert model command queued. Will be sent when plugin connects.',
+            queued: true,
+            queueLength: robloxCommandQueue.length
+        });
+
+    } catch (error) {
+        console.error('[ROBLOX] Error sending insert model command:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * Receive search results from Roblox Studio plugin
+ * POST /roblox/search-results
+ */
+app.post("/roblox/search-results", (req, res) => {
+    try {
+        const { results, timestamp } = req.body;
+
+        console.log('[ROBLOX] Search results received:', results.totalCount, 'models found for query:', results.query);
+
+        // Store search results temporarily (you can expand this with Redis or database)
+        // For now, we'll just log them and send to connected web clients
+        robloxStatus.lastSearchResults = results;
+        robloxStatus.lastSearchTimestamp = new Date(timestamp || Date.now());
+
+        // TODO: Broadcast search results to connected web clients via WebSocket/SSE
+
+        res.json({
+            success: true,
+            received: true
+        });
+
+    } catch (error) {
+        console.error('[ROBLOX] Error receiving search results:', error);
         res.status(500).json({
             success: false,
             error: error.message
