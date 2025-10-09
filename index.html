@@ -603,6 +603,129 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(46, 160, 67, 0.4);
         }
+
+        /* Search Results Modal */
+        .search-results-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-results-modal.active {
+            display: flex;
+        }
+
+        .search-results-content {
+            background: rgba(22, 27, 34, 0.95);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .search-results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #30363d;
+            background: rgba(33, 38, 45, 0.6);
+            border-radius: 12px 12px 0 0;
+        }
+
+        .search-results-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #c9d1d9;
+        }
+
+        .search-results-title i {
+            color: #58a6ff;
+        }
+
+        .search-results-close {
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-size: 1.2rem;
+        }
+
+        .search-results-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #c9d1d9;
+        }
+
+        .search-results-body {
+            padding: 1rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .search-result-item {
+            background: rgba(33, 38, 45, 0.6);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .search-result-item:hover {
+            background: rgba(88, 166, 255, 0.1);
+            border-color: #58a6ff;
+            transform: translateX(4px);
+        }
+
+        .search-result-name {
+            font-weight: 600;
+            color: #c9d1d9;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .search-result-creator {
+            font-size: 0.85rem;
+            color: #8b949e;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .search-result-creator i {
+            font-size: 0.75rem;
+        }
+
+        .search-results-empty {
+            text-align: center;
+            padding: 2rem;
+            color: #8b949e;
+        }
+
+        .search-results-empty i {
+            font-size: 3rem;
+            opacity: 0.3;
+            margin-bottom: 1rem;
+        }
     </style>
 </head>
 
@@ -725,6 +848,27 @@
             </div>
             <div class="script-viewer-body">
                 <pre><code id="scriptViewerCode" class="language-lua"></code></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Results Modal -->
+    <div class="search-results-modal" id="searchResultsModal">
+        <div class="search-results-content">
+            <div class="search-results-header">
+                <div class="search-results-title">
+                    <i class="fas fa-search"></i>
+                    <span id="searchResultsTitle">Search Results</span>
+                </div>
+                <button class="search-results-close" onclick="closeSearchResults()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="search-results-body" id="searchResultsBody">
+                <div class="search-results-empty">
+                    <i class="fas fa-cube"></i>
+                    <p>Searching...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -1421,6 +1565,10 @@
                 if (result.success) {
                     console.log(`[Roblox] ✅ Search sent: ${searchCmd.query}`);
                     showRobloxNotification(`🔍 Searching toolbox for "${searchCmd.query}"...`);
+
+                    // Start polling for results
+                    pollSearchResults(searchCmd.query);
+
                     return { success: true, query: searchCmd.query };
                 } else {
                     console.error(`[Roblox] ❌ Failed to send search: ${searchCmd.query}`);
@@ -1431,6 +1579,107 @@
                 return { success: false, query: searchCmd.query };
             }
         }
+
+        // Poll for search results from backend
+        async function pollSearchResults(query) {
+            let attempts = 0;
+            const maxAttempts = 10; // 10 seconds total
+
+            const pollInterval = setInterval(async () => {
+                try {
+                    attempts++;
+
+                    const response = await fetch(`${getApiBaseUrl()}/roblox/connection-status`);
+                    const data = await response.json();
+
+                    if (data.lastSearchResults && data.lastSearchResults.query === query) {
+                        clearInterval(pollInterval);
+                        showSearchResults(data.lastSearchResults);
+                    }
+
+                    if (attempts >= maxAttempts) {
+                        clearInterval(pollInterval);
+                        showRobloxNotification('❌ Search timed out', 'error');
+                    }
+                } catch (error) {
+                    console.error('[Roblox] Error polling search results:', error);
+                    clearInterval(pollInterval);
+                }
+            }, 1000);
+        }
+
+        // Show search results in modal
+        function showSearchResults(results) {
+            const modal = document.getElementById('searchResultsModal');
+            const title = document.getElementById('searchResultsTitle');
+            const body = document.getElementById('searchResultsBody');
+
+            title.textContent = `Search: "${results.query}" (${results.totalCount} results)`;
+
+            if (!results.models || results.models.length === 0) {
+                body.innerHTML = `
+                    <div class="search-results-empty">
+                        <i class="fas fa-search"></i>
+                        <p>No models found for "${results.query}"</p>
+                    </div>
+                `;
+            } else {
+                body.innerHTML = results.models.map(model => `
+                    <div class="search-result-item" onclick="insertModelFromSearch('${model.assetId}', '${model.name.replace(/'/g, "\\'")}')">
+                        <div class="search-result-name">${model.name}</div>
+                        <div class="search-result-creator">
+                            <i class="fas fa-user"></i>
+                            <span>by ${model.creator}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            modal.classList.add('active');
+        }
+
+        // Close search results modal
+        function closeSearchResults() {
+            const modal = document.getElementById('searchResultsModal');
+            modal.classList.remove('active');
+        }
+
+        // Insert model from search results
+        async function insertModelFromSearch(assetId, name) {
+            try {
+                const payload = {
+                    assetId: parseInt(assetId),
+                    location: 'Workspace'
+                };
+
+                console.log(`[Roblox] Inserting model: ${name} (${assetId})`);
+
+                const response = await fetch(`${getApiBaseUrl()}/roblox/insert-model`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log(`[Roblox] ✅ Model inserted: ${name}`);
+                    showRobloxNotification(`✅ Inserted "${name}" into Workspace`);
+                    closeSearchResults();
+                } else {
+                    console.error(`[Roblox] ❌ Failed to insert model: ${name}`);
+                    showRobloxNotification(`❌ Failed to insert "${name}"`, 'error');
+                }
+            } catch (error) {
+                console.error('[Roblox] Error inserting model:', error);
+                showRobloxNotification('❌ Error inserting model', 'error');
+            }
+        }
+
+        // Make closeSearchResults available globally
+        window.closeSearchResults = closeSearchResults;
 
         // Send search commands
         async function sendSearchCommands(searches) {
