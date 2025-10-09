@@ -815,8 +815,15 @@ local function insertModel(modelData)
 		sendStatus("success", "Model inserted successfully", modelData.assetId)
 		return true, result
 	else
-		warn("[RoAssistant] ❌ Failed to insert model:", result)
-		sendStatus("error", "Failed to insert model: " .. tostring(result), modelData.assetId)
+		local errorMessage = tostring(result)
+
+		-- Provide a more user-friendly error message
+		if errorMessage:find("not authorized") or errorMessage:find("permission") then
+			errorMessage = "This model has restricted access. Try another one!"
+		end
+
+		warn("[RoAssistant] ❌ Failed to insert model:", errorMessage)
+		sendStatus("error", errorMessage, modelData.assetId)
 		return false, result
 	end
 end
