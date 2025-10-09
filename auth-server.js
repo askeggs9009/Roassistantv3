@@ -4496,6 +4496,7 @@ app.post("/roblox/search-toolbox", async (req, res) => {
         const detailsData = await detailsResponse.json();
 
         // Filter and format results - only show models that are likely to work
+        let debugCount = 0;
         const filteredModels = detailsData.data
             .filter(item => {
                 // Only free models
@@ -4522,16 +4523,31 @@ app.post("/roblox/search-toolbox", async (req, res) => {
 
                 return true;
             })
-            .map(item => ({
-                name: item.asset.name,
-                assetId: item.asset.id,
-                creator: item.creator.name,
-                creatorType: item.creator.type,
-                hasScripts: item.asset.hasScripts || false,
-                description: item.asset.description || '',
-                // Note: API doesn't provide assetVersionId, we'll use assetId only
-                assetVersionId: null
-            }));
+            .map(item => {
+                const assetId = item.asset.id;
+
+                // Debug: Log asset ID type and value for first 3 models
+                if (debugCount < 3) {
+                    console.log('[ROBLOX] 🔍 Asset ID Debug:', {
+                        name: item.asset.name,
+                        assetId: assetId,
+                        type: typeof assetId,
+                        length: String(assetId).length
+                    });
+                    debugCount++;
+                }
+
+                return {
+                    name: item.asset.name,
+                    assetId: assetId,
+                    creator: item.creator.name,
+                    creatorType: item.creator.type,
+                    hasScripts: item.asset.hasScripts || false,
+                    description: item.asset.description || '',
+                    // Note: API doesn't provide assetVersionId, we'll use assetId only
+                    assetVersionId: null
+                };
+            });
 
         const results = {
             query: query,
