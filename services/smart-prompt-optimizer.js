@@ -46,68 +46,18 @@ export function getOptimizedSystemPrompt(modelName) {
     // Enhanced instruction for RoConsole with automatic script placement
     const roConsoleInstruction = `${baseInstruction}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔍 TOOLBOX SEARCH - YOUR PRIMARY TOOL!
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TOOLBOX SEARCH - USE THIS FIRST FOR PHYSICAL OBJECTS:
+For vehicles, weapons, buildings, furniture, tools, characters, animals, nature objects - ALWAYS use toolbox search FIRST before writing scripts.
 
-CRITICAL RULE: For PHYSICAL OBJECTS, ALWAYS search the toolbox FIRST!
+Format: <roblox_search query="keywords" />
 
-When users request ANY of these, USE TOOLBOX SEARCH:
-✅ Vehicles: car, truck, boat, plane, helicopter, tank
-✅ Weapons: gun, sword, knife, bow, rifle, pistol, weapon
-✅ Buildings: house, building, shop, store, castle, tower
-✅ Nature: tree, rock, bush, plant, flower, mountain
-✅ Furniture: chair, table, bed, desk, couch, shelf
-✅ Tools: hammer, wrench, flashlight, pickaxe, axe
-✅ Characters: zombie, NPC, enemy, character model
-✅ Animals: dog, cat, horse, bird, fish, dragon
-✅ Props: crate, barrel, box, door, window, fence
+Examples:
+"make me a gun" -> <roblox_search query="gun weapon tool" />
+"i need a car" -> <roblox_search query="car vehicle" />
+"create a house" -> <roblox_search query="house building" />
+"add a tree" -> <roblox_search query="tree plant" />
 
-RESPONSE FORMAT (USE THIS):
-<roblox_search query="search keywords" />
-
-EXAMPLES - ALWAYS DO THIS:
-User: "make me a gun"
-YOU: <roblox_search query="gun weapon tool" />
-
-User: "i need a car"
-YOU: <roblox_search query="car vehicle" />
-
-User: "create a house"
-YOU: <roblox_search query="house building home" />
-
-User: "add a tree"
-YOU: <roblox_search query="tree nature plant" />
-
-User: "make a sword"
-YOU: <roblox_search query="sword weapon tool melee" />
-
-User: "get me an admin script"
-YOU: <roblox_search query="admin commands system" />
-
-⚠️ ONLY WRITE CUSTOM SCRIPTS WHEN:
-- User explicitly says "write a script" or "code a custom"
-- Request is about GAME LOGIC (kill script, teleport system, shop system)
-- Request is about UI functionality (not the UI itself)
-- Object is very specific and custom (e.g., "a gun that shoots fireballs")
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-CRITICAL RULE FOR PHYSICAL OBJECTS (when not using toolbox):
-When you DO create instances, use the structured format.
-DO NOT write scripts that use Instance.new() to create these objects.
-ALWAYS specify the object type directly in the <roblox_script> tag.
-
-Example - CORRECT way to make a part:
-<roblox_script name="MyPart" type="Part" location="Workspace">
--- Part instance created directly (no code needed)
-</roblox_script>
-
-Example - WRONG way (DO NOT DO THIS):
-\`\`\`lua
-local part = Instance.new("Part")
-part.Parent = workspace
-\`\`\`
+Only write custom scripts for game logic, UI functionality, or very specific custom requests.
 
 IMPORTANT: When creating Roblox systems that require multiple scripts or UI elements, use this structured format to specify WHERE each component should be placed:
 
