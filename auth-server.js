@@ -4439,8 +4439,10 @@ app.post("/roblox/delete-object", (req, res) => {
 });
 
 /**
- * Search the Roblox Toolbox for models using web APIs
+ * Search the Roblox Toolbox for models using Roblox Toolbox API
  * POST /roblox/search-toolbox
+ *
+ * New implementation: Calls Roblox API directly (fast, no Studio plugin involved)
  */
 app.post("/roblox/search-toolbox", async (req, res) => {
     try {
@@ -4453,49 +4455,107 @@ app.post("/roblox/search-toolbox", async (req, res) => {
             });
         }
 
-        console.log('[ROBLOX] 🔍 Sending toolbox search command to plugin:', query);
+        console.log('[ROBLOX] 🔍 Searching Roblox Toolbox API for:', query, '(page', page + ')');
 
-        // Send search command to plugin (plugin uses InsertService:GetFreeModels)
-        const command = {
-            type: 'search',
-            query: query,
-            page: page,
-            timestamp: new Date().toISOString()
-        };
+        // Call Roblox Toolbox API directly (category 13 = Models)
+        const limit = 30; // Max results per page
+        const searchUrl = `https://apis.roblox.com/toolbox-service/v1/marketplace/13?limit=${limit}&pageNumber=${page}&keyword=${encodeURIComponent(query)}`;
 
-        // If plugin is connected, send immediately
-        if (robloxClients.size > 0) {
-            let sent = false;
-            robloxClients.forEach(client => {
-                if (!client.writableEnded) {
-                    client.write(`data: ${JSON.stringify(command)}\n\n`);
-                    sent = true;
-                }
-            });
+        const searchResponse = await fetch(searchUrl);
 
-            if (sent) {
-                console.log('[ROBLOX] ✅ Search command sent to plugin');
-                return res.json({
-                    success: true,
-                    message: 'Search command sent to Roblox Studio',
-                    sentImmediately: true
-                });
-            }
+        if (!searchResponse.ok) {
+            throw new Error(`Roblox API returned ${searchResponse.status}: ${searchResponse.statusText}`);
         }
 
-        // Otherwise, queue for when plugin connects
-        robloxCommandQueue.push(command);
-        console.log('[ROBLOX] 📥 Search command queued (plugin not connected)');
+        const searchData = await searchResponse.json();
 
+        if (!searchData.data || searchData.data.length === 0) {
+            console.log('[ROBLOX] ❌ No results found for:', query);
+            return res.json({
+                success: true,
+                results: {
+                    query: query,
+                    page: page,
+                    totalCount: 0,
+                    models: []
+                }
+            });
+        }
+
+        // Extract asset IDs from search results
+        const assetIds = searchData.data.map(item => item.id).join(',');
+
+        // Get detailed information about each asset
+        const detailsUrl = `https://apis.roblox.com/toolbox-service/v1/items/details?assetIds=${assetIds}`;
+        const detailsResponse = await fetch(detailsUrl);
+
+        if (!detailsResponse.ok) {
+            throw new Error(`Roblox Details API returned ${detailsResponse.status}`);
+        }
+
+        const detailsData = await detailsResponse.json();
+
+        // Filter and format results - only show models that are likely to work
+        const filteredModels = detailsData.data
+            .filter(item => {
+                // Only free models
+                if (item.fiatProduct?.purchasePrice?.quantity?.significand !== 0) {
+                    return false;
+                }
+
+                // Only purchasable models
+                if (!item.fiatProduct?.purchasable) {
+                    return false;
+                }
+
+                // Prefer verified creators (more reliable)
+                if (!item.creator?.isVerifiedCreator) {
+                    console.log('[ROBLOX] ⚠️ Skipping unverified creator:', item.asset.name);
+                    return false;
+                }
+
+                // Prefer models without scripts (safer and more likely to insert successfully)
+                // Note: Models with scripts might still work, but they're more likely to be restricted
+                // We're being lenient here - just log it, don't filter
+                if (item.asset?.hasScripts) {
+                    console.log('[ROBLOX] ⚠️ Model has scripts:', item.asset.name);
+                }
+
+                return true;
+            })
+            .map(item => ({
+                name: item.asset.name,
+                assetId: item.asset.id,
+                creator: item.creator.name,
+                creatorType: item.creator.type,
+                hasScripts: item.asset.hasScripts || false,
+                description: item.asset.description || '',
+                // Note: API doesn't provide assetVersionId, we'll use assetId only
+                assetVersionId: null
+            }));
+
+        const results = {
+            query: query,
+            page: page,
+            totalCount: filteredModels.length,
+            totalResults: searchData.totalResults,
+            models: filteredModels
+        };
+
+        // Store in server status for polling (backward compatibility)
+        robloxStatus.lastSearchResults = results;
+        robloxStatus.lastSearchTimestamp = new Date();
+
+        console.log('[ROBLOX] ✅ Found', filteredModels.length, 'insertable models (filtered from', searchData.data.length, 'total)');
+
+        // Return results immediately (no plugin delay!)
         res.json({
             success: true,
-            message: 'Search command queued. Will be sent when plugin connects.',
-            queued: true,
-            queueLength: robloxCommandQueue.length
+            results: results
         });
 
     } catch (error) {
-        console.error('[ROBLOX] ❌ Error searching Roblox Catalog:', error);
+        console.error('[ROBLOX] ❌ Error searching Roblox Toolbox API:', error);
         res.status(500).json({
             success: false,
             error: error.message

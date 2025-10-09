@@ -2,7 +2,7 @@
 	RoAssistant Studio Plugin - STANDALONE VERSION
 	Place this file directly in your Roblox Plugins folder
 
-	Version: 3.2.0 - Smart Filtering (Only Shows Insertable Models)
+	Version: 4.0.0 - Server-Side Search (Instant Results)
 
 	NEW FEATURES:
 	✨ AI can now search Roblox Toolbox for free models!
@@ -715,148 +715,42 @@ end
 
 --[[
 	Search for free models in the Roblox Toolbox
-	Pre-validates each model to ensure it can actually be inserted
+	NOTE: Search is now handled server-side for instant results!
+	This function is kept for backward compatibility but is no longer used.
 ]]
 local function searchToolbox(searchData)
-	local success, result = pcall(function()
-		local searchQuery = searchData.query or "model"
-		local pageNum = searchData.page or 0
+	-- Search is now done server-side using Roblox Toolbox API
+	-- This is MUCH faster (instant vs 10-30 seconds)
+	-- Plugin only handles insertion now
 
-		print("[RoAssistant] 🔍 Searching toolbox for:", searchQuery)
+	print("[RoAssistant] ℹ️ Search is now handled server-side")
+	print("[RoAssistant] ℹ️ This plugin function is deprecated")
 
-		-- Use InsertService to search for free models
-		local resultsWrapper = InsertService:GetFreeModels(searchQuery, pageNum)
+	sendStatus("info", "Search is handled by server (instant results!)", searchData.query or "")
 
-		-- Unwrap the results (GetFreeModels returns a table wrapped in a table)
-		local results = unpack(resultsWrapper)
-
-		-- Format the results for display
-		local formattedResults = {
-			query = searchQuery,
-			page = pageNum,
-			totalCount = results.TotalCount or 0,
-			models = {}
-		}
-
-		-- Create temporary folder for validation tests
-		local tempFolder = Instance.new("Folder")
-		tempFolder.Name = "_RoAssistantValidationTemp"
-		tempFolder.Parent = game:GetService("ReplicatedStorage")
-
-		print("[RoAssistant] 🧪 Validating", #results.Results, "models for insertability...")
-
-		-- Test each result to see if it can be inserted
-		if results.Results then
-			for i, item in ipairs(results.Results) do
-				-- Limit to top 20 results for performance
-				if i > 20 then break end
-
-				local assetId = item.AssetId
-				local assetVersionId = item.AssetVersionId
-
-				-- Try to insert the model as a test
-				local testSuccess, testModel = pcall(function()
-					local model = nil
-
-					-- Try LoadAssetVersion first (same logic as real insertion)
-					if assetVersionId then
-						local versionSuccess, versionResult = pcall(function()
-							return InsertService:LoadAssetVersion(assetVersionId)
-						end)
-
-						if versionSuccess then
-							model = versionResult
-						end
-					end
-
-					-- Fallback to LoadAsset if LoadAssetVersion didn't work
-					if not model then
-						model = InsertService:LoadAsset(assetId)
-					end
-
-					return model
-				end)
-
-				if testSuccess and testModel then
-					-- Successfully loaded! This model can be inserted
-					print("[RoAssistant] ✅", item.Name)
-
-					-- Clean up the test model immediately
-					testModel:Destroy()
-
-					-- Add to results (only insertable models)
-					table.insert(formattedResults.models, {
-						name = item.Name,
-						assetId = assetId,
-						creator = item.CreatorName,
-						assetVersionId = assetVersionId
-					})
-				else
-					-- Failed to load, skip this model
-					if Config.DEBUG then
-						print("[RoAssistant] ❌ Skipped:", item.Name, "(restricted access)")
-					end
-				end
-			end
-		end
-
-		-- Clean up temporary folder
-		tempFolder:Destroy()
-
-		local validCount = #formattedResults.models
-		print("[RoAssistant] ✅ Found", validCount, "insertable models (filtered from", formattedResults.totalCount, "total)")
-
-		-- Update count to reflect only insertable models
-		formattedResults.totalCount = validCount
-
-		-- Send results back to website
-		sendSearchResults(formattedResults)
-
-		return formattedResults
-	end)
-
-	if success then
-		local count = result and #result.models or 0
-		sendStatus("success", "Search completed: " .. count .. " insertable models found", searchData.query)
-		return true, result
-	else
-		warn("[RoAssistant] ❌ Search failed:", result)
-		sendStatus("error", "Search failed: " .. tostring(result), searchData.query)
-		return false, result
-	end
+	return true, {
+		query = searchData.query or "",
+		page = searchData.page or 0,
+		totalCount = 0,
+		models = {},
+		message = "Search handled by server"
+	}
 end
 
 --[[
 	Insert a model from the Roblox Toolbox by Asset ID
+	Server-side filtering ensures only verified, free models are sent here
 ]]
 local function insertModel(modelData)
 	local success, result = pcall(function()
 		local assetId = modelData.assetId
-		local assetVersionId = modelData.assetVersionId
 		local location = modelData.location or "Workspace"
 
-		print("[RoAssistant] 📦 Inserting model - AssetID:", assetId, "VersionID:", assetVersionId)
+		print("[RoAssistant] 📦 Inserting model - AssetID:", assetId)
 
-		local model = nil
-
-		-- Try LoadAssetVersion first (works better for free marketplace models)
-		if assetVersionId then
-			local versionSuccess, versionResult = pcall(function()
-				return InsertService:LoadAssetVersion(assetVersionId)
-			end)
-
-			if versionSuccess then
-				model = versionResult
-				print("[RoAssistant] ✅ Loaded asset using LoadAssetVersion")
-			else
-				warn("[RoAssistant] ⚠️ LoadAssetVersion failed, trying LoadAsset:", versionResult)
-			end
-		end
-
-		-- Fallback to LoadAsset if LoadAssetVersion didn't work
-		if not model then
-			model = InsertService:LoadAsset(assetId)
-		end
+		-- Load the asset from Roblox
+		-- Server already filtered for verified creators and free models
+		local model = InsertService:LoadAsset(assetId)
 
 		if not model then
 			error("Failed to load asset: " .. tostring(assetId))
@@ -894,7 +788,7 @@ local function insertModel(modelData)
 
 		-- Provide a more user-friendly error message
 		if errorMessage:find("not authorized") or errorMessage:find("permission") then
-			errorMessage = "This model has restricted access. Try another one!"
+			errorMessage = "This model has restricted access (rare - server-side filtering should prevent this)"
 		end
 
 		warn("[RoAssistant] ❌ Failed to insert model:", errorMessage)
