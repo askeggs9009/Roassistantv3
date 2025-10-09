@@ -4457,9 +4457,9 @@ app.post("/roblox/search-toolbox", async (req, res) => {
 
         console.log('[ROBLOX] 🔍 Searching Roblox Toolbox API for:', query, '(page', page + ')');
 
-        // Call Roblox Toolbox API directly (category 13 = Models)
+        // Call Roblox Toolbox API directly (category 10 = Models, NOT 13 which is Decals!)
         const limit = 30; // Max results per page
-        const searchUrl = `https://apis.roblox.com/toolbox-service/v1/marketplace/13?limit=${limit}&pageNumber=${page}&keyword=${encodeURIComponent(query)}`;
+        const searchUrl = `https://apis.roblox.com/toolbox-service/v1/marketplace/10?limit=${limit}&pageNumber=${page}&keyword=${encodeURIComponent(query)}`;
 
         const searchResponse = await fetch(searchUrl);
 
