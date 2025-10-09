@@ -4634,7 +4634,8 @@ app.get("/roblox/connection-status", (req, res) => {
         clients: robloxClients.size,
         lastHeartbeat: robloxStatus.lastHeartbeat,
         queueLength: robloxCommandQueue.length,
-        pluginInfo: robloxStatus.pluginInfo
+        pluginInfo: robloxStatus.pluginInfo,
+        lastSearchResults: robloxStatus.lastSearchResults
     });
 });
 
