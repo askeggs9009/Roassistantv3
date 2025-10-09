@@ -4514,11 +4514,10 @@ app.post("/roblox/search-toolbox", async (req, res) => {
                     return false;
                 }
 
-                // Prefer models without scripts (safer and more likely to insert successfully)
-                // Note: Models with scripts might still work, but they're more likely to be restricted
-                // We're being lenient here - just log it, don't filter
+                // Only models without scripts (models with scripts have restricted access)
                 if (item.asset?.hasScripts) {
-                    console.log('[ROBLOX] ⚠️ Model has scripts:', item.asset.name);
+                    console.log('[ROBLOX] ⚠️ Skipping model with scripts:', item.asset.name);
+                    return false;
                 }
 
                 return true;
