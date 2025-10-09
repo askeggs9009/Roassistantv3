@@ -740,10 +740,13 @@ end
 
 --[[
 	Insert a model from the Roblox Toolbox by Asset ID
-	Uses new AssetService:LoadAssetAsync() with fallback to InsertService:LoadAsset()
+	Uses 3-tier fallback system for maximum compatibility:
 
-	AssetService can load third-party free models (Roblox 2025 update)
-	InsertService only works for models you own
+	1. AssetService:LoadAssetAsync() - Supports third-party free models (Roblox 2025 update)
+	2. InsertService:LoadAsset() - Only works for models you own
+	3. game:GetObjects() - Studio context bypass (works like manual Toolbox insertion)
+
+	Method 3 is the key - it runs with Studio permissions, not plugin sandbox!
 ]]
 local function insertModel(modelData)
 	local assetId = modelData.assetId
@@ -823,18 +826,53 @@ local function insertModel(modelData)
 		return true, insertServiceResult
 	end
 
-	-- Both methods failed - provide manual insertion instructions
-	local errorMessage = tostring(insertServiceResult)
+	-- InsertService failed, try game:GetObjects()
+	print("[RoAssistant] ⚠️ InsertService failed:", tostring(insertServiceResult))
+	print("[RoAssistant] 🔄 Trying game:GetObjects() (Studio context)...")
+
+	-- Try Method 3: game:GetObjects() (Studio context - bypasses plugin restrictions)
+	local getObjectsSuccess, getObjectsResult = pcall(function()
+		local objects = game:GetObjects("rbxassetid://" .. assetId)
+
+		if not objects or #objects == 0 then
+			error("game:GetObjects returned no objects")
+		end
+
+		local model = objects[1]
+
+		-- Get the parent location
+		local parent = getScriptParent(location)
+
+		-- Move the model to the target location
+		model.Name = modelName
+		model.Parent = parent
+
+		-- Record undo history
+		ChangeHistoryService:SetWaypoint("Insert RoAssistant Model: " .. model.Name)
+
+		print("[RoAssistant] ✅ Inserted via game:GetObjects:", model.Name, "to", parent:GetFullName())
+
+		return model
+	end)
+
+	if getObjectsSuccess then
+		sendStatus("success", "Model inserted successfully (Studio context)", assetId)
+		return true, getObjectsResult
+	end
+
+	-- All 3 methods failed - provide manual insertion instructions
+	local errorMessage = tostring(getObjectsResult)
 
 	-- Provide helpful error message with manual insertion instructions
 	if errorMessage:find("not authorized") or errorMessage:find("permission") or errorMessage:find("restricted") then
 		errorMessage = string.format(
-			"⚠️ Cannot auto-insert this model (Roblox plugin restriction)\n\n" ..
+			"⚠️ Cannot auto-insert this model (all 3 methods failed)\n\n" ..
 			"✅ Manual insertion steps:\n" ..
 			"1. Open Roblox Toolbox (View → Toolbox)\n" ..
 			"2. Click 'Search' and enter: %s\n" ..
 			"3. Find '%s' and click to insert\n\n" ..
-			"Why? Roblox plugins can only insert models you own. Free models from other creators require manual insertion.",
+			"Tried: AssetService, InsertService, and game:GetObjects().\n" ..
+			"This model may have restrictions or the asset ID may be invalid.",
 			assetId,
 			modelName
 		)
