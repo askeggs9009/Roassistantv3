@@ -4521,9 +4521,11 @@ app.post("/roblox/search-toolbox", async (req, res) => {
                     return false;
                 }
 
-                // Prefer verified creators (more reliable)
-                if (!item.creator?.isVerifiedCreator) {
-                    console.log('[ROBLOX] ⚠️ Skipping unverified creator:', item.asset.name);
+                // Skip models from unverified users (only allow groups/Roblox/verified users)
+                // Unverified user models are more likely to have access issues
+                const creatorType = item.creator?.type?.toLowerCase();
+                if (creatorType === 'user' && !item.creator?.isVerifiedCreator) {
+                    console.log('[ROBLOX] ⚠️ Skipping unverified user model:', item.asset.name);
                     return false;
                 }
 
@@ -4598,7 +4600,7 @@ app.post("/roblox/search-toolbox", async (req, res) => {
  */
 app.post("/roblox/insert-model", (req, res) => {
     try {
-        const { assetId, assetVersionId, location = "Workspace" } = req.body;
+        const { assetId, assetVersionId, location = "Workspace", name } = req.body;
 
         if (!assetId) {
             return res.status(400).json({
@@ -4611,6 +4613,7 @@ app.post("/roblox/insert-model", (req, res) => {
             type: 'insert_model',
             assetId: assetId,
             assetVersionId: assetVersionId, // Include assetVersionId for better compatibility
+            name: name || 'Model', // Include model name for better error messages
             location: location,
             timestamp: new Date().toISOString()
         };

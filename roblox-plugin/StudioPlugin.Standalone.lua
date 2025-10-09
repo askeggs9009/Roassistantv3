@@ -73,6 +73,7 @@ local StarterPlayer = game:GetService("StarterPlayer")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ChangeHistoryService = game:GetService("ChangeHistoryService")
 local InsertService = game:GetService("InsertService")
+local AssetService = game:GetService("AssetService")
 
 -- Plugin state
 local isConnected = false
@@ -739,21 +740,58 @@ end
 
 --[[
 	Insert a model from the Roblox Toolbox by Asset ID
-	Server-side filtering ensures only verified, free models are sent here
+	Uses new AssetService:LoadAssetAsync() with fallback to InsertService:LoadAsset()
+
+	AssetService can load third-party free models (Roblox 2025 update)
+	InsertService only works for models you own
 ]]
 local function insertModel(modelData)
-	local success, result = pcall(function()
-		local assetId = modelData.assetId
-		local location = modelData.location or "Workspace"
+	local assetId = modelData.assetId
+	local location = modelData.location or "Workspace"
+	local modelName = modelData.name or "Model"
 
-		print("[RoAssistant] 📦 Inserting model - AssetID:", assetId)
+	print("[RoAssistant] 📦 Inserting model - AssetID:", assetId)
 
-		-- Load the asset from Roblox
-		-- Server already filtered for verified creators and free models
+	-- Try Method 1: AssetService:LoadAssetAsync() (supports third-party free models)
+	local assetServiceSuccess, assetServiceResult = pcall(function()
+		print("[RoAssistant] 🔄 Trying AssetService:LoadAssetAsync()...")
+
+		local model = AssetService:LoadAssetAsync(assetId)
+
+		if not model then
+			error("AssetService returned nil")
+		end
+
+		-- Get the parent location
+		local parent = getScriptParent(location)
+
+		-- Move the model to the target location
+		model.Name = modelName
+		model.Parent = parent
+
+		-- Record undo history
+		ChangeHistoryService:SetWaypoint("Insert RoAssistant Model: " .. model.Name)
+
+		print("[RoAssistant] ✅ Inserted via AssetService:", model.Name, "to", parent:GetFullName())
+
+		return model
+	end)
+
+	if assetServiceSuccess then
+		sendStatus("success", "Model inserted successfully (AssetService)", assetId)
+		return true, assetServiceResult
+	end
+
+	-- AssetService failed, log why and try InsertService
+	print("[RoAssistant] ⚠️ AssetService failed:", tostring(assetServiceResult))
+	print("[RoAssistant] 🔄 Trying InsertService:LoadAsset() fallback...")
+
+	-- Try Method 2: InsertService:LoadAsset() (only works for owned models)
+	local insertServiceSuccess, insertServiceResult = pcall(function()
 		local model = InsertService:LoadAsset(assetId)
 
 		if not model then
-			error("Failed to load asset: " .. tostring(assetId))
+			error("InsertService returned nil")
 		end
 
 		-- Get the first child (the actual model)
@@ -775,26 +813,36 @@ local function insertModel(modelData)
 		-- Record undo history
 		ChangeHistoryService:SetWaypoint("Insert RoAssistant Model: " .. actualModel.Name)
 
-		print("[RoAssistant] ✅ Inserted model:", actualModel.Name, "to", parent:GetFullName())
+		print("[RoAssistant] ✅ Inserted via InsertService:", actualModel.Name, "to", parent:GetFullName())
 
 		return actualModel
 	end)
 
-	if success then
-		sendStatus("success", "Model inserted successfully", modelData.assetId)
-		return true, result
-	else
-		local errorMessage = tostring(result)
-
-		-- Provide a more user-friendly error message
-		if errorMessage:find("not authorized") or errorMessage:find("permission") then
-			errorMessage = "This model has restricted access (rare - server-side filtering should prevent this)"
-		end
-
-		warn("[RoAssistant] ❌ Failed to insert model:", errorMessage)
-		sendStatus("error", errorMessage, modelData.assetId)
-		return false, result
+	if insertServiceSuccess then
+		sendStatus("success", "Model inserted successfully (InsertService)", assetId)
+		return true, insertServiceResult
 	end
+
+	-- Both methods failed - provide manual insertion instructions
+	local errorMessage = tostring(insertServiceResult)
+
+	-- Provide helpful error message with manual insertion instructions
+	if errorMessage:find("not authorized") or errorMessage:find("permission") or errorMessage:find("restricted") then
+		errorMessage = string.format(
+			"⚠️ Cannot auto-insert this model (Roblox plugin restriction)\n\n" ..
+			"✅ Manual insertion steps:\n" ..
+			"1. Open Roblox Toolbox (View → Toolbox)\n" ..
+			"2. Click 'Search' and enter: %s\n" ..
+			"3. Find '%s' and click to insert\n\n" ..
+			"Why? Roblox plugins can only insert models you own. Free models from other creators require manual insertion.",
+			assetId,
+			modelName
+		)
+	end
+
+	warn("[RoAssistant] ❌ Failed to insert model:", errorMessage)
+	sendStatus("error", errorMessage, assetId)
+	return false, insertServiceResult
 end
 
 --[[
