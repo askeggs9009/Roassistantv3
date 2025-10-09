@@ -1140,6 +1140,29 @@
             return deletes;
         }
 
+        // Parse search commands from AI response
+        function parseSearchCommands(response) {
+            const searches = [];
+            // Regex to capture search commands: <roblox_search query="search terms" />
+            const searchRegex = /<roblox_search\s+query="([^"]+)"(?:\s*\/>|><\/roblox_search>)/gi;
+
+            let match;
+            while ((match = searchRegex.exec(response)) !== null) {
+                const [, query] = match;
+
+                const searchCmd = {
+                    query: query.trim(),
+                    id: `search_${Date.now()}_${searches.length}`
+                };
+
+                searches.push(searchCmd);
+
+                console.log(`[Parser] Found search command: ${query}`);
+            }
+
+            return searches;
+        }
+
         function getScriptType(type) {
             const typeMap = {
                 'Script': 'Script',
@@ -1375,6 +1398,59 @@
             return results;
         }
 
+        // Send search command to Roblox Studio
+        async function sendSearchToRoblox(searchCmd) {
+            try {
+                const payload = {
+                    query: searchCmd.query,
+                    page: 0
+                };
+
+                console.log(`[Roblox] Sending toolbox search for:`, searchCmd.query);
+
+                const response = await fetch(`${getApiBaseUrl()}/roblox/search-toolbox`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log(`[Roblox] ✅ Search sent: ${searchCmd.query}`);
+                    showRobloxNotification(`🔍 Searching toolbox for "${searchCmd.query}"...`);
+                    return { success: true, query: searchCmd.query };
+                } else {
+                    console.error(`[Roblox] ❌ Failed to send search: ${searchCmd.query}`);
+                    return { success: false, query: searchCmd.query };
+                }
+            } catch (error) {
+                console.error('[Roblox] Error sending search:', error);
+                return { success: false, query: searchCmd.query };
+            }
+        }
+
+        // Send search commands
+        async function sendSearchCommands(searches) {
+            if (!searches || searches.length === 0) {
+                console.log('[Roblox] No search commands to send');
+                return;
+            }
+
+            console.log(`[Roblox] Sending ${searches.length} search command(s)...`);
+
+            const results = [];
+            for (const searchCmd of searches) {
+                const result = await sendSearchToRoblox(searchCmd);
+                results.push(result);
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+
+            return results;
+        }
+
         // Send structured scripts
         async function sendStructuredScripts(scripts) {
             if (!scripts || scripts.length === 0) {
@@ -1420,7 +1496,18 @@
             // Track if we processed ANY structured commands
             let processedCommands = false;
 
-            // Check for edit commands FIRST
+            // Check for search commands FIRST (highest priority)
+            if (lastAIResponse) {
+                const searchCommands = parseSearchCommands(lastAIResponse);
+
+                if (searchCommands.length > 0) {
+                    console.log(`[Roblox] Found ${searchCommands.length} search command(s) in AI response`);
+                    await sendSearchCommands(searchCommands);
+                    processedCommands = true;
+                }
+            }
+
+            // Check for edit commands
             if (lastAIResponse) {
                 const editCommands = parseEditCommands(lastAIResponse);
 
