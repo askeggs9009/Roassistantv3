@@ -726,6 +726,62 @@
             opacity: 0.3;
             margin-bottom: 1rem;
         }
+
+        /* Rating and Script Warning Badges */
+        .model-badges {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: 0.5rem;
+        }
+
+        .rating-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .rating-high {
+            background: linear-gradient(45deg, #238636, #2ea043);
+        }
+
+        .rating-medium {
+            background: linear-gradient(45deg, #d4ac0d, #f39c12);
+        }
+
+        .rating-low {
+            background: linear-gradient(45deg, #f85149, #da3633);
+        }
+
+        .script-warning-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.2rem 0.6rem;
+            background: linear-gradient(45deg, #ff9800, #f57c00);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .favorites-count {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.8rem;
+            color: #8b949e;
+            margin-top: 0.25rem;
+        }
+
+        .favorites-count i {
+            color: #f85149;
+        }
     </style>
 </head>
 
@@ -1624,21 +1680,50 @@
                     </div>
                 `;
             } else {
-                body.innerHTML = results.models.map(model => `
-                    <div class="search-result-item" onclick="insertModelFromSearch('${model.assetId}', '${model.assetVersionId || ''}', '${model.name.replace(/'/g, "\\'")}')">
+                body.innerHTML = results.models.map(model => {
+                    // Determine rating class
+                    const rating = model.rating || 50;
+                    let ratingClass = 'rating-low';
+                    if (rating >= 80) ratingClass = 'rating-high';
+                    else if (rating >= 60) ratingClass = 'rating-medium';
+
+                    // Build model card HTML
+                    return `
+                    <div class="search-result-item" onclick="insertModelFromSearch('${model.assetId}', '${model.assetVersionId || ''}', '${model.name.replace(/'/g, "\\'")}', ${model.hasScripts || false})">
                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
                             <div class="search-result-name">${model.name}</div>
-                            <div style="background: ${model.price === 0 ? '#238636' : '#f85149'}; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">
-                                ${model.price === 0 ? 'FREE' : model.price + ' R$'}
+                            <div class="model-badges">
+                                ${model.rating ? `
+                                    <div class="rating-badge ${ratingClass}">
+                                        <i class="fas fa-star"></i>
+                                        ${rating}%
+                                    </div>
+                                ` : ''}
+                                ${model.hasScripts ? `
+                                    <div class="script-warning-badge">
+                                        <i class="fas fa-code"></i>
+                                        Scripts
+                                    </div>
+                                ` : ''}
+                                <div style="background: #238636; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">
+                                    FREE
+                                </div>
                             </div>
                         </div>
                         <div class="search-result-creator" style="margin-bottom: 0.5rem;">
                             <i class="fas fa-user"></i>
                             <span>by ${model.creator}</span>
                         </div>
-                        ${model.description ? `<div style="font-size: 0.8rem; color: #8b949e; line-height: 1.4;">${model.description.substring(0, 100)}${model.description.length > 100 ? '...' : ''}</div>` : ''}
+                        ${model.favoriteCount > 0 ? `
+                            <div class="favorites-count">
+                                <i class="fas fa-heart"></i>
+                                <span>${model.favoriteCount.toLocaleString()} favorites</span>
+                            </div>
+                        ` : ''}
+                        ${model.description ? `<div style="font-size: 0.8rem; color: #8b949e; line-height: 1.4; margin-top: 0.5rem;">${model.description.substring(0, 100)}${model.description.length > 100 ? '...' : ''}</div>` : ''}
                     </div>
-                `).join('');
+                `;
+                }).join('');
             }
 
             modal.classList.add('active');
@@ -1651,7 +1736,23 @@
         }
 
         // Insert model from search results
-        async function insertModelFromSearch(assetId, assetVersionId, name) {
+        async function insertModelFromSearch(assetId, assetVersionId, name, hasScripts = false) {
+            // ⚠️ Safety confirmation for models with scripts
+            if (hasScripts) {
+                const confirmed = confirm(
+                    `⚠️ This model contains scripts!\n\n` +
+                    `Model: ${name}\n` +
+                    `Asset ID: ${assetId}\n\n` +
+                    `Scripts may contain malicious code. Only insert if you trust this creator.\n\n` +
+                    `Continue with insertion?`
+                );
+
+                if (!confirmed) {
+                    console.log(`[Roblox] User canceled insertion of script model: ${name}`);
+                    return;
+                }
+            }
+
             try {
                 const payload = {
                     assetId: parseInt(assetId),
