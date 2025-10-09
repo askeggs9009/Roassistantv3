@@ -689,6 +689,31 @@ local function insertScript(scriptData)
 end
 
 --[[
+	Send search results to website
+]]
+local function sendSearchResults(results)
+	local success, err = pcall(function()
+		local payload = {
+			type = "search_results",
+			results = results,
+			timestamp = DateTime.now():ToIsoDate()
+		}
+
+		local endpoint = Config.WEBSITE_URL .. "/roblox/search-results"
+
+		return HttpService:PostAsync(
+			endpoint,
+			HttpService:JSONEncode(payload),
+			Enum.HttpContentType.ApplicationJson
+		)
+	end)
+
+	if not success then
+		warn("[RoAssistant] Failed to send search results:", err)
+	end
+end
+
+--[[
 	Search for free models in the Roblox Toolbox
 ]]
 local function searchToolbox(searchData)
@@ -793,31 +818,6 @@ local function insertModel(modelData)
 		warn("[RoAssistant] ❌ Failed to insert model:", result)
 		sendStatus("error", "Failed to insert model: " .. tostring(result), modelData.assetId)
 		return false, result
-	end
-end
-
---[[
-	Send search results to website
-]]
-local function sendSearchResults(results)
-	local success, err = pcall(function()
-		local payload = {
-			type = "search_results",
-			results = results,
-			timestamp = DateTime.now():ToIsoDate()
-		}
-
-		local endpoint = Config.WEBSITE_URL .. "/roblox/search-results"
-
-		return HttpService:PostAsync(
-			endpoint,
-			HttpService:JSONEncode(payload),
-			Enum.HttpContentType.ApplicationJson
-		)
-	end)
-
-	if not success then
-		warn("[RoAssistant] Failed to send search results:", err)
 	end
 end
 
