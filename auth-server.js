@@ -4482,7 +4482,13 @@ app.post("/roblox/search-toolbox", async (req, res) => {
             });
         }
 
-        // Extract asset IDs from search results
+        // Extract asset IDs from search results and create a mapping
+        // Note: Search data has correct public asset IDs, details API returns corrupted internal IDs
+        const assetIdMap = new Map();
+        searchData.data.forEach(item => {
+            assetIdMap.set(item.id, item.id); // Map search ID to itself for lookup
+        });
+
         const assetIds = searchData.data.map(item => item.id).join(',');
 
         // Get detailed information about each asset
@@ -4495,14 +4501,15 @@ app.post("/roblox/search-toolbox", async (req, res) => {
 
         const detailsData = await detailsResponse.json();
 
-        // Debug: Log the first item's full structure to see available fields
-        if (detailsData.data && detailsData.data.length > 0) {
-            console.log('[ROBLOX] 📋 First item structure:', JSON.stringify(detailsData.data[0], null, 2));
-        }
+        // Map details back to search results by index (APIs return in same order)
+        const detailsWithCorrectIds = detailsData.data.map((item, index) => ({
+            ...item,
+            correctAssetId: searchData.data[index]?.id || item.asset.id
+        }));
 
         // Filter and format results - only show models that are likely to work
         let debugCount = 0;
-        const filteredModels = detailsData.data
+        const filteredModels = detailsWithCorrectIds
             .filter(item => {
                 // Only free models
                 if (item.fiatProduct?.purchasePrice?.quantity?.significand !== 0) {
@@ -4529,15 +4536,17 @@ app.post("/roblox/search-toolbox", async (req, res) => {
                 return true;
             })
             .map(item => {
-                const assetId = item.asset.id;
+                // Use the correct asset ID from search results, NOT the corrupted internal ID
+                const assetId = item.correctAssetId;
 
-                // Debug: Log asset ID type and value for first 3 models
+                // Debug: Log asset ID comparison for first 3 models
                 if (debugCount < 3) {
                     console.log('[ROBLOX] 🔍 Asset ID Debug:', {
                         name: item.asset.name,
-                        assetId: assetId,
-                        type: typeof assetId,
-                        length: String(assetId).length
+                        correctId: item.correctAssetId,
+                        corruptedId: item.asset.id,
+                        correctLength: String(item.correctAssetId).length,
+                        corruptedLength: String(item.asset.id).length
                     });
                     debugCount++;
                 }
