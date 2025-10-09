@@ -57,4 +57,4 @@ fs.writeFileSync(pluginPath, rbxmxContent, 'utf8');
 
 console.log('✅ Plugin updated successfully!');
 console.log('📍 Location:', pluginPath);
-console.log('📝 Version: 2.3.0 - Dynamic Service Support');
+console.log('📝 Version: 3.2.0 - Smart Filtering (Only Shows Insertable Models)');

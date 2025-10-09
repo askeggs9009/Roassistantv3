@@ -2,7 +2,7 @@
 	RoAssistant Studio Plugin - STANDALONE VERSION
 	Place this file directly in your Roblox Plugins folder
 
-	Version: 3.1.0 - Fixed Asset Insertion with LoadAssetVersion
+	Version: 3.2.0 - Smart Filtering (Only Shows Insertable Models)
 
 	NEW FEATURES:
 	✨ AI can now search Roblox Toolbox for free models!
@@ -715,6 +715,7 @@ end
 
 --[[
 	Search for free models in the Roblox Toolbox
+	Pre-validates each model to ensure it can actually be inserted
 ]]
 local function searchToolbox(searchData)
 	local success, result = pcall(function()
@@ -737,22 +738,76 @@ local function searchToolbox(searchData)
 			models = {}
 		}
 
-		-- Add each result
+		-- Create temporary folder for validation tests
+		local tempFolder = Instance.new("Folder")
+		tempFolder.Name = "_RoAssistantValidationTemp"
+		tempFolder.Parent = game:GetService("ReplicatedStorage")
+
+		print("[RoAssistant] 🧪 Validating", #results.Results, "models for insertability...")
+
+		-- Test each result to see if it can be inserted
 		if results.Results then
 			for i, item in ipairs(results.Results) do
-				-- Limit to top 10 results for performance
-				if i > 10 then break end
+				-- Limit to top 20 results for performance
+				if i > 20 then break end
 
-				table.insert(formattedResults.models, {
-					name = item.Name,
-					assetId = item.AssetId,
-					creator = item.CreatorName,
-					assetVersionId = item.AssetVersionId
-				})
+				local assetId = item.AssetId
+				local assetVersionId = item.AssetVersionId
+
+				-- Try to insert the model as a test
+				local testSuccess, testModel = pcall(function()
+					local model = nil
+
+					-- Try LoadAssetVersion first (same logic as real insertion)
+					if assetVersionId then
+						local versionSuccess, versionResult = pcall(function()
+							return InsertService:LoadAssetVersion(assetVersionId)
+						end)
+
+						if versionSuccess then
+							model = versionResult
+						end
+					end
+
+					-- Fallback to LoadAsset if LoadAssetVersion didn't work
+					if not model then
+						model = InsertService:LoadAsset(assetId)
+					end
+
+					return model
+				end)
+
+				if testSuccess and testModel then
+					-- Successfully loaded! This model can be inserted
+					print("[RoAssistant] ✅", item.Name)
+
+					-- Clean up the test model immediately
+					testModel:Destroy()
+
+					-- Add to results (only insertable models)
+					table.insert(formattedResults.models, {
+						name = item.Name,
+						assetId = assetId,
+						creator = item.CreatorName,
+						assetVersionId = assetVersionId
+					})
+				else
+					-- Failed to load, skip this model
+					if Config.DEBUG then
+						print("[RoAssistant] ❌ Skipped:", item.Name, "(restricted access)")
+					end
+				end
 			end
 		end
 
-		print("[RoAssistant] ✅ Found", formattedResults.totalCount, "models")
+		-- Clean up temporary folder
+		tempFolder:Destroy()
+
+		local validCount = #formattedResults.models
+		print("[RoAssistant] ✅ Found", validCount, "insertable models (filtered from", formattedResults.totalCount, "total)")
+
+		-- Update count to reflect only insertable models
+		formattedResults.totalCount = validCount
 
 		-- Send results back to website
 		sendSearchResults(formattedResults)
@@ -761,7 +816,8 @@ local function searchToolbox(searchData)
 	end)
 
 	if success then
-		sendStatus("success", "Search completed: " .. result.totalCount .. " models found", searchData.query)
+		local count = result and #result.models or 0
+		sendStatus("success", "Search completed: " .. count .. " insertable models found", searchData.query)
 		return true, result
 	else
 		warn("[RoAssistant] ❌ Search failed:", result)
