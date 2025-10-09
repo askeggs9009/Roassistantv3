@@ -4533,7 +4533,7 @@ app.post("/roblox/search-toolbox", async (req, res) => {
  */
 app.post("/roblox/insert-model", (req, res) => {
     try {
-        const { assetId, location = "Workspace" } = req.body;
+        const { assetId, assetVersionId, location = "Workspace" } = req.body;
 
         if (!assetId) {
             return res.status(400).json({
@@ -4545,6 +4545,7 @@ app.post("/roblox/insert-model", (req, res) => {
         const command = {
             type: 'insert_model',
             assetId: assetId,
+            assetVersionId: assetVersionId, // Include assetVersionId for better compatibility
             location: location,
             timestamp: new Date().toISOString()
         };

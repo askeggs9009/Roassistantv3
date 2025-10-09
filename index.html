@@ -1625,7 +1625,7 @@
                 `;
             } else {
                 body.innerHTML = results.models.map(model => `
-                    <div class="search-result-item" onclick="insertModelFromSearch('${model.assetId}', '${model.name.replace(/'/g, "\\'")}')">
+                    <div class="search-result-item" onclick="insertModelFromSearch('${model.assetId}', '${model.assetVersionId || ''}', '${model.name.replace(/'/g, "\\'")}')">
                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
                             <div class="search-result-name">${model.name}</div>
                             <div style="background: ${model.price === 0 ? '#238636' : '#f85149'}; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">
@@ -1651,14 +1651,19 @@
         }
 
         // Insert model from search results
-        async function insertModelFromSearch(assetId, name) {
+        async function insertModelFromSearch(assetId, assetVersionId, name) {
             try {
                 const payload = {
                     assetId: parseInt(assetId),
                     location: 'Workspace'
                 };
 
-                console.log(`[Roblox] Inserting model: ${name} (${assetId})`);
+                // Include assetVersionId if available (helps with permissions)
+                if (assetVersionId && assetVersionId !== '') {
+                    payload.assetVersionId = parseInt(assetVersionId);
+                }
+
+                console.log(`[Roblox] Inserting model: ${name} (AssetID: ${assetId}, VersionID: ${assetVersionId || 'N/A'})`);
 
                 const response = await fetch(`${getApiBaseUrl()}/roblox/insert-model`, {
                     method: 'POST',

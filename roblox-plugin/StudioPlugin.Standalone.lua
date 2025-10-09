@@ -2,7 +2,7 @@
 	RoAssistant Studio Plugin - STANDALONE VERSION
 	Place this file directly in your Roblox Plugins folder
 
-	Version: 3.0.0 - Toolbox Search Integration
+	Version: 3.1.0 - Fixed Asset Insertion with LoadAssetVersion
 
 	NEW FEATURES:
 	✨ AI can now search Roblox Toolbox for free models!
@@ -776,12 +776,31 @@ end
 local function insertModel(modelData)
 	local success, result = pcall(function()
 		local assetId = modelData.assetId
+		local assetVersionId = modelData.assetVersionId
 		local location = modelData.location or "Workspace"
 
-		print("[RoAssistant] 📦 Inserting model:", assetId)
+		print("[RoAssistant] 📦 Inserting model - AssetID:", assetId, "VersionID:", assetVersionId)
 
-		-- Use InsertService to load the asset
-		local model = InsertService:LoadAsset(assetId)
+		local model = nil
+
+		-- Try LoadAssetVersion first (works better for free marketplace models)
+		if assetVersionId then
+			local versionSuccess, versionResult = pcall(function()
+				return InsertService:LoadAssetVersion(assetVersionId)
+			end)
+
+			if versionSuccess then
+				model = versionResult
+				print("[RoAssistant] ✅ Loaded asset using LoadAssetVersion")
+			else
+				warn("[RoAssistant] ⚠️ LoadAssetVersion failed, trying LoadAsset:", versionResult)
+			end
+		end
+
+		-- Fallback to LoadAsset if LoadAssetVersion didn't work
+		if not model then
+			model = InsertService:LoadAsset(assetId)
+		end
 
 		if not model then
 			error("Failed to load asset: " .. tostring(assetId))
@@ -883,6 +902,7 @@ local function handleMessage(message)
 		-- Insert a model by asset ID
 		insertModel({
 			assetId = data.assetId,
+			assetVersionId = data.assetVersionId,
 			location = data.location
 		})
 	elseif data.type == "ping" then
