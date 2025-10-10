@@ -975,6 +975,12 @@
                 </div>
             </div>
 
+            <!-- AI Thinking Process Toggle -->
+            <div class="roblox-status" id="aiThinkingToggle" title="Toggle AI thinking process display" onclick="toggleAIThinking()" style="cursor: pointer;">
+                <i class="fas fa-brain" style="color: #8b949e; font-size: 0.9rem;"></i>
+                <span class="roblox-status-text" id="aiThinkingText">AI Thinking</span>
+            </div>
+
             <!-- Roblox Connection Status -->
             <div class="roblox-status" id="robloxStatus" title="Click to check connection">
                 <div class="roblox-status-dot disconnected" id="robloxStatusDot"></div>
@@ -1239,6 +1245,64 @@
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('active');
+        }
+
+        // ============================================
+        // AI THINKING PROCESS TOGGLE
+        // ============================================
+
+        function toggleAIThinking() {
+            // Get current state from localStorage (default: enabled)
+            const currentState = localStorage.getItem('showAIThinking') !== 'false';
+            const newState = !currentState;
+
+            // Save new state
+            localStorage.setItem('showAIThinking', newState.toString());
+
+            // Update UI
+            updateAIThinkingUI(newState);
+
+            // Update existing todo lists visibility
+            const todoMessages = document.querySelectorAll('.todo-message');
+            todoMessages.forEach(msg => {
+                msg.style.display = newState ? 'flex' : 'none';
+            });
+
+            console.log(`[AI Thinking] Toggled ${newState ? 'ON' : 'OFF'}`);
+        }
+
+        function updateAIThinkingUI(isEnabled) {
+            const toggle = document.getElementById('aiThinkingToggle');
+            const text = document.getElementById('aiThinkingText');
+            const icon = toggle.querySelector('i');
+
+            if (isEnabled) {
+                // ON state - show as active
+                icon.style.color = '#58a6ff';
+                text.textContent = 'AI Thinking: ON';
+                text.style.color = '#c9d1d9';
+                toggle.style.borderColor = '#58a6ff';
+                toggle.style.background = 'rgba(88, 166, 255, 0.15)';
+            } else {
+                // OFF state - show as inactive
+                icon.style.color = '#6e7681';
+                text.textContent = 'AI Thinking: OFF';
+                text.style.color = '#6e7681';
+                toggle.style.borderColor = '#30363d';
+                toggle.style.background = 'rgba(33, 38, 45, 0.6)';
+            }
+        }
+
+        // Initialize AI thinking toggle state on page load
+        function initAIThinkingToggle() {
+            const isEnabled = localStorage.getItem('showAIThinking') !== 'false'; // Default: enabled
+            updateAIThinkingUI(isEnabled);
+
+            // Apply to existing todo messages if any
+            const todoMessages = document.querySelectorAll('.todo-message');
+            todoMessages.forEach(msg => {
+                msg.style.display = isEnabled ? 'flex' : 'none';
+            });
         }
 
         // ============================================
@@ -2265,6 +2329,9 @@
 
             // Load project from URL if present
             loadProjectFromUrl();
+
+            // Initialize AI thinking toggle
+            initAIThinkingToggle();
 
             // Initialize Roblox features
             setTimeout(setupRobloxAutoSendHook, 500);

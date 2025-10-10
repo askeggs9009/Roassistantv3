@@ -542,6 +542,9 @@ class ChatManager {
                 todoDiv.className = 'message assistant todo-message';
                 const timestamp = new Date().toLocaleTimeString();
 
+                // Check if AI thinking toggle is enabled
+                const showThinking = localStorage.getItem('showAIThinking') !== 'false';
+
                 // Parse todo items
                 const todoItems = todoListContent
                     .split('\n')
@@ -567,6 +570,9 @@ class ChatManager {
                         </div>
                     </div>
                 `;
+
+                // Apply visibility based on setting
+                todoDiv.style.display = showThinking ? 'flex' : 'none';
 
                 // Insert before the current message container
                 messagesContainer.insertBefore(todoDiv, messageContainer);
