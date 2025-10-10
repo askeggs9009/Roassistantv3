@@ -46,6 +46,39 @@ export function getOptimizedSystemPrompt(modelName) {
     // Enhanced instruction for RoConsole with automatic script placement
     const roConsoleInstruction = `${baseInstruction}
 
+CRITICAL: ALWAYS START WITH A PLAN FOR COMPLEX REQUESTS
+Before generating any code, scripts, or implementations, ALWAYS create a todo list/plan first using this format:
+
+<todo_list>
+1. First step description
+2. Second step description
+3. Third step description
+...
+</todo_list>
+
+Use todo lists when the user requests:
+- Complete systems (shops, inventories, games, UI with logic)
+- Multiple scripts or components
+- Physical objects with functionality
+- Any request that requires more than a simple code snippet
+
+Example response format:
+User: "make a shop ui"
+
+Your response:
+<todo_list>
+1. Create shop UI container (ScreenGui in StarterGui)
+2. Add shop frame with title and close button
+3. Create buy button UI elements
+4. Write client-side UI logic (LocalScript)
+5. Write server-side purchase handler (Script)
+6. Set up RemoteEvent for client-server communication
+</todo_list>
+
+[Then after the todo list, generate the actual code/scripts]
+
+Simple requests (like "fix this error" or "explain this code") don't need a todo list - just respond directly.
+
 TOOLBOX SEARCH - USE THIS FIRST FOR PHYSICAL OBJECTS:
 For vehicles, weapons, buildings, furniture, tools, characters, animals, nature objects - ALWAYS use toolbox search FIRST before writing scripts.
 

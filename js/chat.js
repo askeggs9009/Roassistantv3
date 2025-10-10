@@ -522,12 +522,60 @@ class ChatManager {
 
     // Finalize streaming message with proper formatting
     finalizeStreamingMessage(messageId, content) {
+        // Extract todo list if present
+        const todoListMatch = content.match(/<todo_list>([\s\S]*?)<\/todo_list>/);
+        let todoListContent = null;
+        let contentWithoutTodo = content;
+
+        if (todoListMatch) {
+            todoListContent = todoListMatch[1].trim();
+            // Remove todo list from content that will be displayed
+            contentWithoutTodo = content.replace(/<todo_list>[\s\S]*?<\/todo_list>/, '').trim();
+        }
+
         const messageContainer = document.querySelector(`[data-message-id="${messageId}"]`);
         if (messageContainer) {
-            // Remove streaming cursor and apply proper formatting
+            // If there's a todo list, create it before the main message
+            if (todoListContent) {
+                const messagesContainer = document.getElementById('messagesContainer');
+                const todoDiv = document.createElement('div');
+                todoDiv.className = 'message assistant todo-message';
+                const timestamp = new Date().toLocaleTimeString();
+
+                // Parse todo items
+                const todoItems = todoListContent
+                    .split('\n')
+                    .filter(line => line.trim())
+                    .map(line => line.trim());
+
+                const todoHtml = todoItems
+                    .map(item => `<div class="todo-item">📋 ${item}</div>`)
+                    .join('');
+
+                todoDiv.innerHTML = `
+                    <div class="message-avatar message-avatar-ai">
+                        <img src="./noob.png" alt="AI" class="message-avatar-img" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                    </div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-sender">RoAssistant</span>
+                            <span class="message-time">${timestamp}</span>
+                        </div>
+                        <div class="todo-list-container">
+                            <div class="todo-list-header">📝 Implementation Plan</div>
+                            ${todoHtml}
+                        </div>
+                    </div>
+                `;
+
+                // Insert before the current message container
+                messagesContainer.insertBefore(todoDiv, messageContainer);
+            }
+
+            // Remove streaming cursor and apply proper formatting (without todo list)
             messageContainer.innerHTML = `
                 <div class="message-content">
-                    <div class="message-text">${this.formatAssistantMessage(content)}</div>
+                    <div class="message-text">${this.formatAssistantMessage(contentWithoutTodo)}</div>
                 </div>
             `;
         }
@@ -2081,6 +2129,52 @@ class ChatManager {
         const messagesContainer = document.getElementById('messagesContainer');
         if (!messagesContainer) return;
 
+        // Extract todo list if present
+        const todoListMatch = content.match(/<todo_list>([\s\S]*?)<\/todo_list>/);
+        let todoListContent = null;
+        let contentWithoutTodo = content;
+
+        if (todoListMatch) {
+            todoListContent = todoListMatch[1].trim();
+            // Remove todo list from content that will be typed
+            contentWithoutTodo = content.replace(/<todo_list>[\s\S]*?<\/todo_list>/, '').trim();
+        }
+
+        // If there's a todo list, display it first in a special format
+        if (todoListContent) {
+            const todoDiv = document.createElement('div');
+            todoDiv.className = 'message assistant todo-message';
+            const timestamp = new Date().toLocaleTimeString();
+
+            // Parse todo items
+            const todoItems = todoListContent
+                .split('\n')
+                .filter(line => line.trim())
+                .map(line => line.trim());
+
+            const todoHtml = todoItems
+                .map(item => `<div class="todo-item">📋 ${item}</div>`)
+                .join('');
+
+            todoDiv.innerHTML = `
+                <div class="message-avatar message-avatar-ai">
+                    <img src="./noob.png" alt="AI" class="message-avatar-img" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                </div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="message-sender">RoAssistant</span>
+                        <span class="message-time">${timestamp}</span>
+                    </div>
+                    <div class="todo-list-container">
+                        <div class="todo-list-header">📝 Implementation Plan</div>
+                        ${todoHtml}
+                    </div>
+                </div>
+            `;
+
+            messagesContainer.appendChild(todoDiv);
+        }
+
         const messageDiv = document.createElement('div');
         messageDiv.className = 'message assistant';
 
@@ -2102,8 +2196,8 @@ class ChatManager {
         messagesContainer.appendChild(messageDiv);
         // No auto-scrolling when AI message starts
 
-        // Start typewriter effect
-        this.typewriterEffect(messageDiv, content, () => {
+        // Start typewriter effect (using content without todo list)
+        this.typewriterEffect(messageDiv, contentWithoutTodo, () => {
             // After typing is complete, extract and save scripts
             if (window.scriptsManager) {
                 const chatId = this.getCurrentChatId();
