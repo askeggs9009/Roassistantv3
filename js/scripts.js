@@ -145,31 +145,69 @@ class ScriptsManager {
 
     // Extract scripts from content
     extractScriptsFromContent(content, chatId, chatTitle, targetArray) {
-        const codeBlockRegex = /```(?:lua|luau)?\n?([\s\S]*?)```/g;
+        // IMPORTANT: Remove todo lists from content before extracting scripts
+        let cleanContent = content.replace(/<todo_list>[\s\S]*?<\/todo_list>/g, '');
+
+        // First, extract structured <roblox_script> tags
+        const robloxScriptRegex = /<roblox_script[^>]*name="([^"]*)"[^>]*>([\s\S]*?)<\/roblox_script>/g;
         let match;
-        
-        while ((match = codeBlockRegex.exec(content)) !== null) {
+
+        while ((match = robloxScriptRegex.exec(cleanContent)) !== null) {
+            const scriptName = match[1];
+            const scriptContent = match[2].trim();
+
+            if (scriptContent.length > 30) {
+                let description = 'Roblox script';
+                if (scriptContent.includes('RemoteEvent')) description += ' with RemoteEvents';
+                if (scriptContent.includes('UserInputService')) description += ' with user input';
+                if (scriptContent.includes('TweenService')) description += ' with animations';
+                if (scriptContent.includes('function')) description += ' with custom functions';
+
+                const scriptId = chatId + '_' + Date.now().toString() + Math.random().toString(36).substr(2, 9);
+
+                const newScript = {
+                    id: scriptId,
+                    title: scriptName || 'Untitled Script',
+                    description: description,
+                    content: scriptContent,
+                    createdAt: new Date().toISOString(),
+                    source: 'ai_generated',
+                    chatId: chatId,
+                    chatTitle: chatTitle
+                };
+
+                targetArray.push(newScript);
+            }
+        }
+
+        // Then extract regular code blocks with filtering
+        const codeBlockRegex = /```(?:lua|luau)\n?([\s\S]*?)```/g;
+
+        while ((match = codeBlockRegex.exec(cleanContent)) !== null) {
             const scriptContent = match[1].trim();
-            
-            if (scriptContent.length > 50 && scriptContent.includes('\n')) {
+
+            // Only extract if it's actual Roblox script code
+            const hasRobloxKeywords = /\b(game|script|local|function|Instance\.new|workspace|Players|ReplicatedStorage|ServerScriptService|StarterGui)\b/.test(scriptContent);
+
+            if (scriptContent.length > 50 && scriptContent.includes('\n') && hasRobloxKeywords) {
                 let title = 'Untitled Script';
                 const lines = scriptContent.split('\n');
                 const firstLine = lines[0].trim();
-                
+
                 if (firstLine.startsWith('--')) {
                     title = firstLine.replace(/^--\s*/, '').trim();
                 } else {
                     title = `Script from: ${chatTitle}`;
                 }
-                
+
                 let description = 'Generated Luau script';
                 if (scriptContent.includes('RemoteEvent')) description += ' with RemoteEvents';
                 if (scriptContent.includes('UserInputService')) description += ' with user input';
                 if (scriptContent.includes('TweenService')) description += ' with animations';
                 if (scriptContent.includes('function')) description += ' with custom functions';
-                
+
                 const scriptId = chatId + '_' + Date.now().toString() + Math.random().toString(36).substr(2, 9);
-                
+
                 const newScript = {
                     id: scriptId,
                     title: title,
@@ -180,7 +218,7 @@ class ScriptsManager {
                     chatId: chatId,
                     chatTitle: chatTitle
                 };
-                
+
                 targetArray.push(newScript);
             }
         }
@@ -351,35 +389,80 @@ class ScriptsManager {
 
     // Extract and save scripts from chat
     extractAndSaveScriptsFromChat(content, chatId, chatTitle) {
-        const codeBlockRegex = /```(?:lua|luau)?\n?([\s\S]*?)```/g;
-        let match;
+        // IMPORTANT: Remove todo lists from content before extracting scripts
+        // This prevents todo list content from appearing in the script box
+        let cleanContent = content.replace(/<todo_list>[\s\S]*?<\/todo_list>/g, '');
+
         let scriptsAdded = false;
-        
-        while ((match = codeBlockRegex.exec(content)) !== null) {
+
+        // First, try to extract structured <roblox_script> tags (these are actual scripts)
+        const robloxScriptRegex = /<roblox_script[^>]*name="([^"]*)"[^>]*>([\s\S]*?)<\/roblox_script>/g;
+        let match;
+
+        while ((match = robloxScriptRegex.exec(cleanContent)) !== null) {
+            const scriptName = match[1];
+            const scriptContent = match[2].trim();
+
+            // Skip if it's too short or doesn't have actual code
+            if (scriptContent.length > 30) {
+                let description = 'Roblox script';
+                if (scriptContent.includes('RemoteEvent')) description += ' with RemoteEvents';
+                if (scriptContent.includes('UserInputService')) description += ' with user input';
+                if (scriptContent.includes('TweenService')) description += ' with animations';
+                if (scriptContent.includes('function')) description += ' with custom functions';
+
+                const scriptId = chatId + '_' + Date.now().toString() + Math.random().toString(36).substr(2, 9);
+
+                const newScript = {
+                    id: scriptId,
+                    title: scriptName || 'Untitled Script',
+                    description: description,
+                    content: scriptContent,
+                    createdAt: new Date().toISOString(),
+                    source: 'ai_generated',
+                    chatId: chatId,
+                    chatTitle: chatTitle
+                };
+
+                this.scripts.push(newScript);
+                scriptsAdded = true;
+            }
+        }
+
+        // Then extract regular Lua/Luau code blocks (only if they look like actual scripts)
+        const codeBlockRegex = /```(?:lua|luau)\n?([\s\S]*?)```/g;
+
+        while ((match = codeBlockRegex.exec(cleanContent)) !== null) {
             const scriptContent = match[1].trim();
-            
-            if (scriptContent.length > 50 && scriptContent.includes('\n')) {
-                
+
+            // Filter criteria: Must be substantial code (not just examples or explanations)
+            // - At least 50 characters
+            // - Has multiple lines
+            // - Contains Lua/Roblox keywords (game, script, local, function, etc.)
+            const hasRobloxKeywords = /\b(game|script|local|function|Instance\.new|workspace|Players|ReplicatedStorage|ServerScriptService|StarterGui)\b/.test(scriptContent);
+
+            if (scriptContent.length > 50 && scriptContent.includes('\n') && hasRobloxKeywords) {
+
                 let title = 'Untitled Script';
                 const lines = scriptContent.split('\n');
                 const firstLine = lines[0].trim();
-                
+
                 if (firstLine.startsWith('--')) {
                     title = firstLine.replace(/^--\s*/, '').trim();
                 } else {
-                    title = chatTitle && chatTitle !== 'New Chat' ? 
-                          `Script from: ${chatTitle}` : 
+                    title = chatTitle && chatTitle !== 'New Chat' ?
+                          `Script from: ${chatTitle}` :
                           `Script (${new Date().toLocaleDateString()})`;
                 }
-                
+
                 let description = 'Generated Luau script';
                 if (scriptContent.includes('RemoteEvent')) description += ' with RemoteEvents';
                 if (scriptContent.includes('UserInputService')) description += ' with user input';
                 if (scriptContent.includes('TweenService')) description += ' with animations';
                 if (scriptContent.includes('function')) description += ' with custom functions';
-                
+
                 const scriptId = chatId + '_' + Date.now().toString() + Math.random().toString(36).substr(2, 9);
-                
+
                 const newScript = {
                     id: scriptId,
                     title: title,
@@ -390,12 +473,12 @@ class ScriptsManager {
                     chatId: chatId,
                     chatTitle: chatTitle
                 };
-                
+
                 this.scripts.push(newScript);
                 scriptsAdded = true;
             }
         }
-        
+
         if (scriptsAdded) {
             if (window.storageUtils) {
                 window.storageUtils.setUserData('roblox_ai_scripts', this.scripts);
