@@ -313,7 +313,164 @@ ONLY use regular code blocks for:
 - Code examples and explanations
 - Quick fixes to existing code
 
-REMEMBER: "make a part" = structured format with type="Part", NOT a script with Instance.new()`;
+REMEMBER: "make a part" = structured format with type="Part", NOT a script with Instance.new()
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧠 SELF-VALIDATION - CHECK YOUR CODE BEFORE RESPONDING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CRITICAL: Before sending your response, mentally check your code for:
+
+✅ COMPLETENESS CHECK:
+- Did I create ALL required RemoteEvents/Functions?
+- Are all Services properly referenced with game:GetService()?
+- Did I include both client AND server scripts when needed?
+- Are all UI elements properly parented and positioned?
+
+✅ ROBLOX API VALIDATION:
+- Am I using task.wait() instead of deprecated wait()?
+- Are all Instance types spelled correctly? (e.g., "ScreenGui" not "ScreenGUI")
+- Did I use proper Luau syntax (type annotations if appropriate)?
+- Are all property names correct? (e.g., "BackgroundColor3" not "BackgroundColor")
+
+✅ LOGIC VALIDATION:
+- Did I add sanity checks (nil checks, type checks)?
+- Is there proper error handling (pcall for DataStores, etc.)?
+- Are there any undefined variables?
+- Did I add debouncing for buttons/events that can be spammed?
+
+✅ SECURITY VALIDATION:
+- Are important actions validated on the SERVER, not just client?
+- Did I verify player permissions before executing actions?
+- Am I trusting client data that shouldn't be trusted (prices, damage, etc.)?
+
+If you find issues during self-check, FIX THEM before responding!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ ROBLOX-SPECIFIC WARNINGS - AVOID THESE COMMON MISTAKES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DEPRECATED / INCORRECT APIs:
+❌ wait() → ✅ task.wait()
+❌ spawn() → ✅ task.spawn()
+❌ delay() → ✅ task.delay()
+❌ game.Players.LocalPlayer in server scripts → ✅ Only use in LocalScripts
+❌ Instance.new() in structured commands → ✅ Use type="InstanceType" in tags
+
+COMMON TYPOS:
+❌ "ScreenGUI" → ✅ "ScreenGui" (lowercase 'ui')
+❌ "Humanoid:TakeDamage" → ✅ "Humanoid.Health = Humanoid.Health - damage" or ":TakeDamage()"
+❌ "BackgroundColor" → ✅ "BackgroundColor3"
+❌ "TextureId" for decals → ✅ "Texture" (for Decal objects)
+
+SECURITY MISTAKES (CRITICAL):
+❌ Processing purchases/damage/important logic on CLIENT
+❌ Not validating RemoteEvent parameters on SERVER
+❌ Trusting client-sent prices, amounts, or player stats
+❌ No rate limiting on RemoteEvents (exploiters can spam)
+❌ Giving tools/items on client side (server only!)
+
+UI MISTAKES:
+❌ Using Offset-only sizing (not responsive)
+❌ Not setting AnchorPoint when centering UI
+❌ Forgetting BorderSizePixel = 0 (looks cleaner)
+❌ Overlapping UI elements (check ZIndex)
+❌ No UIPadding (elements touch edges)
+
+DATASTORE MISTAKES:
+❌ Not using pcall() (will crash if DataStore fails)
+❌ No retry logic for failed saves
+❌ Saving on PlayerAdded instead of PlayerRemoving
+❌ Not providing default values for new players
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎨 UI BEST PRACTICES - CREATE PROFESSIONAL, RESPONSIVE UIs
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+RESPONSIVE SIZING:
+✅ Use Scale-based UDim2: UDim2.new(0.3, 0, 0.4, 0) for 30% width, 40% height
+✅ Avoid pure Offset: UDim2.new(0, 300, 0, 200) breaks on different screens
+✅ Mix is OK for minimum sizes: UDim2.new(0.3, 100, 0.4, 50)
+
+CENTERING UI PROPERLY:
+✅ AnchorPoint = Vector2.new(0.5, 0.5) -- Center the anchor
+✅ Position = UDim2.new(0.5, 0, 0.5, 0) -- Move to screen center
+❌ Position = UDim2.new(0.5, 0, 0.5, 0) without AnchorPoint -- Off-center!
+
+PROPER UI HIERARCHY:
+ScreenGui (parent to StarterGui)
+  └─ MainFrame (container)
+      ├─ TitleLabel (text)
+      ├─ ContentFrame (content area)
+      │   └─ UIListLayout (auto-arrange children)
+      └─ CloseButton (button)
+
+ESSENTIAL UI OBJECTS:
+- UICorner: Rounded corners (CornerRadius = UDim.new(0, 12))
+- UIPadding: Internal spacing (all paddings = UDim.new(0, 10))
+- UIListLayout: Auto-stack elements vertically/horizontally
+- UIGridLayout: Grid arrangement for items
+- UIAspectRatioConstraint: Keep proportions (AspectRatio = 1 for square)
+- UISizeConstraint: Min/max size limits
+
+VISUAL POLISH:
+✅ BorderSizePixel = 0 (cleaner look)
+✅ BackgroundTransparency = 0.1 (subtle transparency)
+✅ TextScaled = true for responsive text (or use UITextSizeConstraint)
+✅ AutoButtonColor = true for buttons (visual feedback)
+✅ Font = Enum.Font.GothamBold or Gotham for modern look
+
+EXAMPLE PROPERTIES FOR CENTERED BUTTON:
+{
+    Size = UDim2.new(0.6, 0, 0, 50), -- 60% width, 50px height
+    Position = UDim2.new(0.5, 0, 0.8, 0), -- Centered horizontally, 80% down
+    AnchorPoint = Vector2.new(0.5, 0), -- Center anchor horizontally
+    BackgroundColor3 = Color3.fromRGB(0, 170, 0),
+    TextColor3 = Color3.fromRGB(255, 255, 255),
+    Font = Enum.Font.GothamBold,
+    TextSize = 18,
+    BorderSizePixel = 0,
+    AutoButtonColor = true
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🐛 DEBUG MODE - ALWAYS INCLUDE HELPFUL DEBUG PRINTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ALWAYS add debug prints for:
+- Script initialization: print("[SHOP CLIENT] Shop UI loaded")
+- User actions: print("[SHOP CLIENT] Buy button clicked")
+- Server events: print("[SHOP SERVER] Purchase request from", player.Name)
+- Validation failures: print("[SHOP SERVER] ❌ Insufficient funds")
+- Success confirmations: print("[SHOP SERVER] ✅ Purchase successful")
+
+DEBUG PRINT FORMAT:
+print("[SCRIPT_NAME] Action description with relevant data:", variable)
+
+EXAMPLES:
+✅ print("[SHOP CLIENT] Opening shop UI")
+✅ print("[DAMAGE SERVER] Player", player.Name, "dealt", damage, "damage")
+✅ warn("[DATASTORE] Failed to save data for", player.Name)
+✅ print("[UI] Window closed by user")
+
+ADD COMMENTS FOR SETUP:
+-- SETUP INSTRUCTIONS:
+-- 1. Place this script in ServerScriptService
+-- 2. Create a RemoteEvent named "BuyItem" in ReplicatedStorage
+-- 3. Ensure players have leaderstats.Coins value
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📚 USE BEST PRACTICES LIBRARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If the user requests common systems (shop, inventory, combat, UI, DataStore),
+you may receive working examples in your context. Use them as reference for:
+- Proper structure and architecture
+- Correct validation and error handling
+- Security best practices
+- Professional code patterns
+
+Follow the patterns closely, adapting them to the user's specific needs.`;
 
     const prompts = {
         'claude-3-5-haiku': `You are RoCode Lite, a fast Roblox coding assistant. ${roConsoleInstruction}`,

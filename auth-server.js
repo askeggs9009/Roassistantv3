@@ -24,6 +24,7 @@ import { sendVerificationEmailWithResend, testResendConnection } from './resend-
 import { getOptimizedSystemPrompt, analyzePromptWithAI } from './services/smart-prompt-optimizer.js';
 import simpleCache from './services/simple-cache.js';
 import { trimConversation, smartTrimConversation } from './services/conversation-trimmer.js';
+import { getRelevantPatterns, formatPatternsForContext } from './services/roblox-patterns.js';
 
 // Email service status
 let emailServiceAvailable = true;
@@ -3500,7 +3501,15 @@ app.post("/ask-stream", optionalAuthenticateToken, checkUsageLimits, async (req,
             console.log(`[MODEL ROUTING STREAM] ${analysis.analyzedBy} chose fast model for simple task`);
         }
 
-        const systemPrompt = getSystemPrompt(selectedModel);
+        let systemPrompt = getSystemPrompt(selectedModel);
+
+        // 📚 INJECT BEST PRACTICES: Check if user is asking for common Roblox systems
+        const relevantPatterns = getRelevantPatterns(prompt);
+        if (relevantPatterns.length > 0) {
+            const patternsContext = formatPatternsForContext(relevantPatterns);
+            systemPrompt += patternsContext;
+            console.log(`[PATTERNS] Injected ${relevantPatterns.length} best practice pattern(s):`, relevantPatterns.map(p => p.name).join(', '));
+        }
 
         // Set up SSE headers
         res.setHeader('Content-Type', 'text/event-stream');
@@ -3811,7 +3820,16 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
         let response;
         let reply;
 
-        const systemPrompt = getSystemPrompt(selectedModel);
+        let systemPrompt = getSystemPrompt(selectedModel);
+
+        // 📚 INJECT BEST PRACTICES: Check if user is asking for common Roblox systems
+        const relevantPatterns = getRelevantPatterns(prompt);
+        if (relevantPatterns.length > 0) {
+            const patternsContext = formatPatternsForContext(relevantPatterns);
+            systemPrompt += patternsContext;
+            console.log(`[PATTERNS] Injected ${relevantPatterns.length} best practice pattern(s):`, relevantPatterns.map(p => p.name).join(', '));
+        }
+
         console.log(`[DEBUG] Model: ${selectedModel} (requested: ${model}), Provider: ${config.provider}`);
         console.log(`[DEBUG] System prompt starts with: ${systemPrompt.substring(0, 100)}...`);
 
