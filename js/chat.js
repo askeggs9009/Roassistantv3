@@ -965,7 +965,9 @@ class ChatManager {
         });
 
         // Store code blocks globally for reliable access
-        if (codeBlocks.length > 0) {
+        // IMPORTANT: Only store blocks when NOT in streaming/typewriter mode (skipPanel = false)
+        // This prevents hundreds of duplicate storage calls during typewriter animation
+        if (codeBlocks.length > 0 && !skipPanel) {
             // Use window object for global storage
             if (!window._codeBlocks) {
                 window._codeBlocks = {};
