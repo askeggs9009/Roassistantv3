@@ -316,9 +316,17 @@ class ChatManager {
 
     // Handle streaming response
     async handleStreamingResponse(requestBody, headers) {
-        // Create message container for streaming response
+        // Show AI thinking indicator initially
+        this.showAiThinking();
+
+        // Track if we've shown the todo list yet
+        let todoListShown = false;
+        let hasStartedStreaming = false;
+
+        // Create message container for streaming response (hidden initially)
         const messageId = Date.now();
         const messageContainer = this.createStreamingMessage(messageId);
+        messageContainer.style.display = 'none'; // Hide until we have content to show
 
         try {
             const response = await fetch(`${this.API_BASE_URL}/ask-stream`, {
@@ -335,7 +343,8 @@ class ChatManager {
                 } else {
                     this.addMessage('error', errorData.error || 'An error occurred while processing your request.');
                 }
-                // Re-enable input on error
+                // Hide thinking indicator and re-enable input on error
+                this.hideAiThinking();
                 this.isLoading = false;
                 this.updateSendButton(false);
                 return;
@@ -359,7 +368,31 @@ class ChatManager {
 
                             if (data.type === 'chunk') {
                                 fullResponse += data.text;
-                                this.updateStreamingMessage(messageId, fullResponse);
+
+                                // Check if we have a todo list in the accumulated response
+                                if (!todoListShown) {
+                                    const todoListMatch = fullResponse.match(/<todo_list>([\s\S]*?)<\/todo_list>/);
+                                    if (todoListMatch) {
+                                        // Extract and display todo list immediately
+                                        const todoListContent = todoListMatch[1].trim();
+                                        this.displayTodoList(todoListContent, messageContainer);
+                                        todoListShown = true;
+                                    }
+                                }
+
+                                // Remove todo list from displayed content
+                                const contentWithoutTodo = fullResponse.replace(/<todo_list>[\s\S]*?<\/todo_list>/, '').trim();
+
+                                // Only start showing content after todo list is extracted (or if no todo list exists)
+                                if (contentWithoutTodo || !fullResponse.includes('<todo_list>')) {
+                                    // Hide AI thinking indicator when we start showing actual content
+                                    if (!hasStartedStreaming) {
+                                        this.hideAiThinking();
+                                        messageContainer.style.display = ''; // Show the message container
+                                        hasStartedStreaming = true;
+                                    }
+                                    this.updateStreamingMessage(messageId, contentWithoutTodo);
+                                }
                             } else if (data.type === 'complete') {
                                 // 🔍 Log AI routing process to console
                                 console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #00ff00');
@@ -522,62 +555,11 @@ class ChatManager {
 
     // Finalize streaming message with proper formatting
     finalizeStreamingMessage(messageId, content) {
-        // Extract todo list if present
-        const todoListMatch = content.match(/<todo_list>([\s\S]*?)<\/todo_list>/);
-        let todoListContent = null;
-        let contentWithoutTodo = content;
-
-        if (todoListMatch) {
-            todoListContent = todoListMatch[1].trim();
-            // Remove todo list from content that will be displayed
-            contentWithoutTodo = content.replace(/<todo_list>[\s\S]*?<\/todo_list>/, '').trim();
-        }
+        // Extract todo list if present (but don't display it - it's already shown during streaming)
+        const contentWithoutTodo = content.replace(/<todo_list>[\s\S]*?<\/todo_list>/, '').trim();
 
         const messageContainer = document.querySelector(`[data-message-id="${messageId}"]`);
         if (messageContainer) {
-            // If there's a todo list, create it before the main message
-            if (todoListContent) {
-                const messagesContainer = document.getElementById('messagesContainer');
-                const todoDiv = document.createElement('div');
-                todoDiv.className = 'message assistant todo-message';
-                const timestamp = new Date().toLocaleTimeString();
-
-                // Check if AI thinking toggle is enabled
-                const showThinking = localStorage.getItem('showAIThinking') !== 'false';
-
-                // Parse todo items
-                const todoItems = todoListContent
-                    .split('\n')
-                    .filter(line => line.trim())
-                    .map(line => line.trim());
-
-                const todoHtml = todoItems
-                    .map(item => `<div class="todo-item">📋 ${item}</div>`)
-                    .join('');
-
-                todoDiv.innerHTML = `
-                    <div class="message-avatar message-avatar-ai">
-                        <img src="./noob.png" alt="AI" class="message-avatar-img" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
-                    </div>
-                    <div class="message-content">
-                        <div class="message-header">
-                            <span class="message-sender">RoAssistant</span>
-                            <span class="message-time">${timestamp}</span>
-                        </div>
-                        <div class="todo-list-container">
-                            <div class="todo-list-header">📝 Implementation Plan</div>
-                            ${todoHtml}
-                        </div>
-                    </div>
-                `;
-
-                // Apply visibility based on setting
-                todoDiv.style.display = showThinking ? 'flex' : 'none';
-
-                // Insert before the current message container
-                messagesContainer.insertBefore(todoDiv, messageContainer);
-            }
-
             // Remove streaming cursor and apply proper formatting (without todo list)
             messageContainer.innerHTML = `
                 <div class="message-content">
@@ -624,6 +606,56 @@ class ChatManager {
         const thinkingDiv = document.getElementById('aiThinking');
         if (thinkingDiv) {
             thinkingDiv.remove();
+        }
+    }
+
+    // Display todo list before streaming content
+    displayTodoList(todoListContent, beforeElement) {
+        const messagesContainer = document.getElementById('messagesContainer');
+        if (!messagesContainer || !todoListContent) return;
+
+        // Check if AI thinking toggle is enabled
+        const showThinking = localStorage.getItem('showAIThinking') !== 'false';
+        if (!showThinking) return; // Don't show todo list if thinking is disabled
+
+        const todoDiv = document.createElement('div');
+        todoDiv.className = 'message assistant todo-message';
+        const timestamp = new Date().toLocaleTimeString();
+
+        // Parse todo items
+        const todoItems = todoListContent
+            .split('\n')
+            .filter(line => line.trim())
+            .map(line => line.trim());
+
+        const todoHtml = todoItems
+            .map(item => `<div class="todo-item">📋 ${item}</div>`)
+            .join('');
+
+        todoDiv.innerHTML = `
+            <div class="message-avatar message-avatar-ai">
+                <img src="./noob.png" alt="AI" class="message-avatar-img" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+            </div>
+            <div class="message-content">
+                <div class="message-header">
+                    <span class="message-sender">RoAssistant</span>
+                    <span class="message-time">${timestamp}</span>
+                </div>
+                <div class="todo-list-container">
+                    <div class="todo-list-header">📝 Implementation Plan</div>
+                    ${todoHtml}
+                </div>
+            </div>
+        `;
+
+        // Insert before the AI thinking indicator or the message container
+        const aiThinking = document.getElementById('aiThinking');
+        if (aiThinking) {
+            messagesContainer.insertBefore(todoDiv, aiThinking);
+        } else if (beforeElement) {
+            messagesContainer.insertBefore(todoDiv, beforeElement);
+        } else {
+            messagesContainer.appendChild(todoDiv);
         }
     }
 
