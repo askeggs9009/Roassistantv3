@@ -939,7 +939,7 @@ class ChatManager {
                 location: location
             });
 
-            return `<div class="object-list-item">• <strong>${name}</strong> (${typeLabel}) → ${location}${trimmedCode ? ` • ${lineCount} lines` : ''}</div>`;
+            return `<div class="object-list-item">Created <strong>${name}</strong> (${typeLabel}) in ${location}</div>`;
         });
 
         // PRIORITY 2: Regular code blocks as clickable boxes (like Claude's artifacts)
@@ -965,7 +965,7 @@ class ChatManager {
                 summary: codeSummary
             });
 
-            return `<div class="code-list-item">• <strong>${codeSummary}</strong> • ${lineCount} lines</div>`;
+            return `<div class="code-list-item"><strong>${codeSummary}</strong> (${lineCount} lines)</div>`;
         });
 
         // Store code blocks globally for reliable access
