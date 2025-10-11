@@ -988,6 +988,33 @@
     }
 }
 
+/* Simple list items for objects and code */
+.object-list-item,
+.code-list-item {
+    margin: 0.5rem 0;
+    padding: 0.75rem 1rem;
+    background: rgba(88, 166, 255, 0.05);
+    border-left: 3px solid rgba(88, 166, 255, 0.4);
+    border-radius: 6px;
+    color: #e6edf3;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    transition: all 0.2s ease;
+}
+
+.object-list-item:hover,
+.code-list-item:hover {
+    background: rgba(88, 166, 255, 0.08);
+    border-left-color: rgba(88, 166, 255, 0.6);
+    padding-left: 1.2rem;
+}
+
+.object-list-item strong,
+.code-list-item strong {
+    color: #58a6ff;
+    font-weight: 600;
+}
+
 /* Streaming dots animation */
 .streaming-dots {
     display: flex;

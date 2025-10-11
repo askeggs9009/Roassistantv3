@@ -939,24 +939,7 @@ class ChatManager {
                 location: location
             });
 
-            return `
-                <div class="code-artifact-box structured" data-block-id="${blockId}" onclick="console.log('Clicked:', '${blockId}'); window.openCodePanel('${blockId}');">
-                    <div class="artifact-icon">
-                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-                        </svg>
-                    </div>
-                    <div class="artifact-content">
-                        <div class="artifact-title">${name}</div>
-                        <div class="artifact-meta">${typeLabel} → ${location}${trimmedCode ? ` • ${lineCount} lines` : ''}</div>
-                    </div>
-                    <div class="artifact-arrow">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-                        </svg>
-                    </div>
-                </div>
-            `;
+            return `<div class="object-list-item">• <strong>${name}</strong> (${typeLabel}) → ${location}${trimmedCode ? ` • ${lineCount} lines` : ''}</div>`;
         });
 
         // PRIORITY 2: Regular code blocks as clickable boxes (like Claude's artifacts)
@@ -982,24 +965,7 @@ class ChatManager {
                 summary: codeSummary
             });
 
-            return `
-                <div class="code-artifact-box" data-block-id="${blockId}" onclick="console.log('Clicked:', '${blockId}'); window.openCodePanel('${blockId}');">
-                    <div class="artifact-icon">
-                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
-                        </svg>
-                    </div>
-                    <div class="artifact-content">
-                        <div class="artifact-title">${codeSummary}</div>
-                        <div class="artifact-meta">${lineCount} lines • Click to view</div>
-                    </div>
-                    <div class="artifact-arrow">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-                        </svg>
-                    </div>
-                </div>
-            `;
+            return `<div class="code-list-item">• <strong>${codeSummary}</strong> • ${lineCount} lines</div>`;
         });
 
         // Store code blocks globally for reliable access
