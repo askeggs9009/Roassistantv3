@@ -3519,14 +3519,14 @@ app.post("/ask-stream", optionalAuthenticateToken, checkUsageLimits, async (req,
 
         // Determine max tokens per response based on subscription plan
         const getMaxTokensForPlan = (isAuth, subscription) => {
-            if (!isAuth) return 1500; // Guests get limited tokens
+            if (!isAuth) return 30000; // Guests get 30k tokens
 
             const plan = subscription?.plan || 'free';
             switch (plan) {
-                case 'free': return 4000;      // Free users get more tokens per response
-                case 'pro': return 8000;       // Pro users get higher limits
-                case 'enterprise': return 12000; // Enterprise gets maximum
-                default: return 2000;
+                case 'free': return 30000;      // Free users get 30k tokens per response
+                case 'pro': return 30000;       // Pro users get 30k tokens
+                case 'enterprise': return 30000; // Enterprise gets 30k tokens
+                default: return 30000;
             }
         };
 
@@ -3841,14 +3841,14 @@ app.post("/ask", optionalAuthenticateToken, checkUsageLimits, async (req, res) =
 
         // Determine max tokens per response based on subscription plan
         const getMaxTokensForPlan = (isAuth, subscription) => {
-            if (!isAuth) return 1500; // Guests get limited tokens
+            if (!isAuth) return 30000; // Guests get 30k tokens
 
             const plan = subscription?.plan || 'free';
             switch (plan) {
-                case 'free': return 4000;      // Free users get more tokens per response
-                case 'pro': return 8000;       // Pro users get higher limits
-                case 'enterprise': return 12000; // Enterprise gets maximum
-                default: return 2000;
+                case 'free': return 30000;      // Free users get 30k tokens per response
+                case 'pro': return 30000;       // Pro users get 30k tokens
+                case 'enterprise': return 30000; // Enterprise gets 30k tokens
+                default: return 30000;
             }
         };
 
